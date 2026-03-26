@@ -1,11 +1,13 @@
 
 Provides issue search, detail, comments, and transitions against
-the Jira REST API v3 using API token basic auth (impl notes §6).
+the Jira REST API v3 using Bearer token auth.
 """
 
-import base64
 from typing import Any, Dict, List, Optional
 
+from fastmcp import Context
+
+from ..auth import TokenValidationError, get_bearer_token
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_jira_settings
@@ -16,22 +18,14 @@ LOGGER = get_logger(__name__)
 # ── HTTP helpers ─────────────────────────────────────────────────────
 
 
-def _build_auth_header() -> str:
-    """Build Basic auth header from Jira email + API token."""
-    settings = load_jira_settings()
-    credentials = f"{settings.email}:{settings.api_token}"
-    encoded = base64.b64encode(credentials.encode()).decode()
-    return f"Basic {encoded}"
-
-
 async def _jira_get(
-    path: str, params: Optional[Dict[str, Any]] = None
+    path: str, ctx: Optional[Context] = None, params: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Make an authenticated GET request to Jira REST API v3."""
     settings = load_jira_settings()
     url = f"{settings.base_url.rstrip('/')}/rest/api/3{path}"
     headers = {
-        "Authorization": _build_auth_header(),
+        "Authorization": f"Bearer {get_bearer_token(ctx)}",
         "Accept": "application/json",
     }
     async with create_async_client() as client:
@@ -40,12 +34,12 @@ async def _jira_get(
         return resp.json()
 
 
-async def _jira_post(path: str, body: Dict[str, Any]) -> Dict[str, Any]:
+async def _jira_post(path: str, body: Dict[str, Any], ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Make an authenticated POST request to Jira REST API v3."""
     settings = load_jira_settings()
     url = f"{settings.base_url.rstrip('/')}/rest/api/3{path}"
     headers = {
-        "Authorization": _build_auth_header(),
+        "Authorization": f"Bearer {get_bearer_token(ctx)}",
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
@@ -57,12 +51,13 @@ async def _jira_post(path: str, body: Dict[str, Any]) -> Dict[str, Any]:
             return resp.json()
         return {"status": "ok"}
 
-async def _jira_put(path: str, body: Dict[str, Any]) -> Dict[str, Any]:
+
+async def _jira_put(path: str, body: Dict[str, Any], ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Make an authenticated PUT request to Jira REST API v3."""
     settings = load_jira_settings()
     url = f"{settings.base_url.rstrip('/')}/rest/api/3{path}"
     headers = {
-        "Authorization": _build_auth_header(),
+        "Authorization": f"Bearer {get_bearer_token(ctx)}",
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
@@ -76,17 +71,13 @@ async def _jira_put(path: str, body: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def _jira_search(
-    jql: str, max_results: int = 50, fields: Optional[str] = None
+    jql: str, max_results: int = 50, fields: Optional[str] = None, ctx: Optional[Context] = None
 ) -> Dict[str, Any]:
-    """Search issues via POST /rest/api/3/search/jql.
-
-    The legacy GET /search endpoint was removed (410 Gone) in newer
-    Jira Cloud versions.  The new endpoint expects a JSON body.
-    """
+    """Search issues via POST /rest/api/3/search/jql."""
     body: Dict[str, Any] = {"jql": jql, "maxResults": max_results}
     if fields:
         body["fields"] = [f.strip() for f in fields.split(",")]
-    return await _jira_post("/search/jql", body)
+    return await _jira_post("/search/jql", body, ctx)
 
 # ── Data helpers ─────────────────────────────────────────────────────
 
@@ -168,6 +159,7 @@ async def tool_list_issues(
     status: Optional[str] = None,
     assignee: Optional[str] = None,
     limit: int = 20,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Search Jira issues using JQL or common filters.
 
@@ -198,7 +190,7 @@ async def tool_list_issues(
 
     LOGGER.info("jira_search", jql=jql, limit=safe_limit)
 
-    data = await _jira_search(jql, max_results=safe_limit, fields=_SEARCH_FIELDS)
+    data = await _jira_search(jql, max_results=safe_limit, fields=_SEARCH_FIELDS, ctx=ctx)
 
     issues = [_simplify_issue(i) for i in data.get("issues", [])]
     return {
@@ -208,7 +200,7 @@ async def tool_list_issues(
     }
 
 
-async def tool_get_issue(key: str) -> Dict[str, Any]:
+async def tool_get_issue(key: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Get full details, comments, and transitions for a Jira issue.
 
     Args:
@@ -216,12 +208,11 @@ async def tool_get_issue(key: str) -> Dict[str, Any]:
     """
     LOGGER.info("jira_get_issue", key=key)
 
-    raw = await _jira_get(f"/issue/{key}")
-    issue = _simplify_issue(raw)
+    raw = await _jira_get(f"/issue/{key}", ctx)
 
     # Fetch comments
     comments_data = await _jira_get(
-        f"/issue/{key}/comment", params={"maxResults": 50}
+        f"/issue/{key}/comment", ctx, params={"maxResults": 50}
     )
     comments = []
     for c in comments_data.get("comments", []):
@@ -240,7 +231,10 @@ async def tool_get_issue(key: str) -> Dict[str, Any]:
         )
 
     # Fetch available transitions (requires transition ID for actions)
-    transitions_data = await _jira_get(f"/issue/{key}/transitions")
+    transitions_data = await _jira_get(f"/issue/{key}/transitions", ctx)
+    raw = await _jira_get(f"/issue/{key}", ctx)
+    issue = _simplify_issue(raw)
+
     transitions = [
         {"id": t.get("id"), "name": t.get("name")}
         for t in transitions_data.get("transitions", [])
@@ -257,6 +251,7 @@ async def tool_get_issue(key: str) -> Dict[str, Any]:
 async def tool_add_comment(
     key: str,
     body: str,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Add a comment to a Jira issue.
 
@@ -279,7 +274,7 @@ async def tool_add_comment(
             ],
         }
 
-        result = await _jira_post(f"/issue/{key}/comment", {"body": adf_body})
+        result = await _jira_post(f"/issue/{key}/comment", {"body": adf_body}, ctx)
         return {
             "success": True,
             "commentId": result.get("id"),
@@ -294,6 +289,7 @@ async def tool_transition_issue(
     key: str,
     transition_id: str,
     comment: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Transition a Jira issue to a new status.
 
@@ -334,11 +330,11 @@ async def tool_transition_issue(
                 ]
             }
 
-        await _jira_post(f"/issue/{key}/transitions", payload)
+        await _jira_post(f"/issue/{key}/transitions", payload, ctx)
 
         # Fetch updated issue
         updated = await _jira_get(
-            f"/issue/{key}", params={"fields": _SEARCH_FIELDS}
+            f"/issue/{key}", ctx, params={"fields": _SEARCH_FIELDS}
         )
 
         return {
@@ -360,6 +356,7 @@ async def tool_create_project(
     description: Optional[str] = None,
     lead_account_id: Optional[str] = None,
     project_type: str = "software",
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Create a new Jira project.
 
@@ -376,7 +373,7 @@ async def tool_create_project(
     try:
         # Resolve lead account ID — default to the authenticated user
         if not lead_account_id:
-            me = await _jira_get("/myself")
+            me = await _jira_get("/myself", ctx)
             lead_account_id = me.get("accountId")
 
         template_key = (
@@ -395,7 +392,7 @@ async def tool_create_project(
         if description:
             payload["description"] = description
 
-        result = await _jira_post("/project", payload)
+        result = await _jira_post("/project", payload, ctx)
 
         return {
             "created": True,
@@ -433,6 +430,7 @@ async def tool_create_issue(
     priority: Optional[str] = None,
     assignee_account_id: Optional[str] = None,
     labels: Optional[List[str]] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Create a new Jira issue in a project.
 
@@ -462,11 +460,11 @@ async def tool_create_issue(
         if labels:
             fields["labels"] = labels
 
-        result = await _jira_post("/issue", {"fields": fields})
+        result = await _jira_post("/issue", {"fields": fields}, ctx)
         issue_key = result.get("key")
 
         # Fetch created issue for full details
-        raw = await _jira_get(f"/issue/{issue_key}")
+        raw = await _jira_get(f"/issue/{issue_key}", ctx)
         return {
             "created": True,
             "issue": _simplify_issue(raw),
