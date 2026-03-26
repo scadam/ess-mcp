@@ -1,0 +1,140 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --input-bg: #0f131a; --btn-bg: #152235; --btn-border: #243145; --btn-primary-bg: linear-gradient(135deg,#1a6dff,#4cc2ff); --btn-primary-border: #2a80ff; --success-border: #1a5a3a; --success-glow: rgba(43,212,143,.16); --error-bg: rgba(255,107,107,.08); --error-border: rgba(255,107,107,.25); --compliance-accent: #9966cc; --compliance-glow: rgba(153,102,204,.12); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --input-bg: #ffffff; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-primary-bg: linear-gradient(135deg,#0078d4,#4cc2ff); --btn-primary-border: #0078d4; --success-border: #107c10; --success-glow: rgba(16,124,16,.08); --error-bg: rgba(209,52,56,.06); --error-border: rgba(209,52,56,.25); --compliance-accent: #7b2d8e; --compliance-glow: rgba(123,45,142,.08); }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .compliance-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--compliance-glow); border: 1px solid var(--compliance-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+      .section-label { font-size: 11px; color: var(--compliance-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .full-width { grid-column: 1 / -1; }
+      .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+      .field input, .field select, .field textarea { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; font-family: inherit; }
+      .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+      .field textarea { resize: vertical; }
+      .actions { margin-top: 14px; display: flex; gap: 8px; }
+      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; }
+      .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-border); font-weight: 600; }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .success-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--success-glow); border: 1px solid var(--success-border); font-size: 12px; color: var(--pos); }
+      .error-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--error-bg); border: 1px solid var(--error-border); font-size: 12px; color: var(--neg); }
+      .info-banner { background: var(--compliance-glow); border: 1px solid var(--compliance-accent); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text); display: flex; align-items: flex-start; gap: 8px; }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="compliance-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--compliance-accent)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <div class="title" id="pageTitle">Raise Compliance Case</div>
+            <div class="subtitle" id="pageSubtitle">Salesforce &middot; Compliance</div>
+          </div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div class="info-banner">
+        <span style="font-size:16px">&#x1f6e1;&#xfe0f;</span>
+        <div>All compliance matters are confidential and handled in accordance with regulatory obligations.</div>
+      </div>
+      <div id="formView">
+        <div class="card">
+          <div class="section-label">Compliance Case Details</div>
+          <div class="form-grid">
+            <div class="field full-width">
+              <label for="compliance_type">Compliance Category *</label>
+              <select id="compliance_type">
+                <option value="">-- Select category --</option>
+                <option>AML / KYC</option><option>Sanctions Screening</option><option>Fraud Investigation</option>
+                <option>Market Abuse / Insider Trading</option><option>Data Privacy (GDPR / CCPA)</option>
+                <option>Regulatory Reporting</option><option>Conflicts of Interest</option>
+                <option>Gifts &amp; Entertainment</option><option>Whistleblower Report</option>
+                <option>Trade Surveillance</option><option>Customer Complaint</option>
+                <option>Policy Breach</option><option>Third-Party / Vendor Risk</option>
+                <option>Operational Risk Event</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field"><label for="priority">Priority</label><select id="priority"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select></div>
+            <div class="field"><label for="status">Status</label><select id="status"><option value="New">New</option><option value="Working">Working</option><option value="Escalated">Escalated</option><option value="Closed">Closed</option></select></div>
+            <div class="field full-width"><label for="subject">Subject *</label><input id="subject" type="text" placeholder="Brief summary of the compliance concern" /></div>
+            <div class="field full-width"><label for="description">Description</label><textarea id="description" rows="4" placeholder="Provide a detailed description of the compliance matter"></textarea></div>
+            <div class="field full-width"><label for="comment">Comment</label><textarea id="comment" rows="2" placeholder="Additional notes for the Compliance team"></textarea></div>
+          </div>
+          <div id="errorMsg"></div>
+          <div class="actions">
+            <button class="btn btn-primary" id="submitBtn" disabled>Raise Case</button>
+            <button class="btn" id="resetBtn">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div class="footer">Powered by <strong>salesforce / create_case</strong> via MCP</div>
+    </div>
+    <script>
+      var toolInput = (window.openai && window.openai.toolInput) || {};
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      var compTypeEl = document.getElementById("compliance_type"), priorityEl = document.getElementById("priority"), statusEl = document.getElementById("status"), subjectEl = document.getElementById("subject"), descEl = document.getElementById("description"), commentEl = document.getElementById("comment"), submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), errorMsg = document.getElementById("errorMsg");
+      var isUpdate = false, currentCaseId = null;
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function validate() { submitBtn.disabled = !(compTypeEl.value && subjectEl.value.trim()); }
+      [compTypeEl, subjectEl].forEach(function(el) { el.addEventListener("input", validate); el.addEventListener("change", validate); });
+      resetBtn.addEventListener("click", function() { compTypeEl.value = ""; priorityEl.value = "Medium"; statusEl.value = "New"; subjectEl.value = ""; descEl.value = ""; commentEl.value = ""; errorMsg.innerHTML = ""; isUpdate = false; currentCaseId = null; submitBtn.textContent = "Raise Case"; document.getElementById("pageTitle").textContent = "Raise Compliance Case"; submitBtn.disabled = true; reportHeight(); });
+      submitBtn.addEventListener("click", async function() {
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        submitBtn.disabled = true; submitBtn.textContent = "Submitting\u2026"; errorMsg.innerHTML = "";
+        try {
+          var output;
+          if (isUpdate && currentCaseId) {
+            var updateArgs = { case_id: currentCaseId };
+            if (statusEl.value) updateArgs.status = statusEl.value;
+            if (priorityEl.value) updateArgs.priority = priorityEl.value;
+            if (descEl.value.trim()) updateArgs.description = descEl.value.trim();
+            if (subjectEl.value.trim()) updateArgs.subject = subjectEl.value.trim();
+            if (compTypeEl.value) updateArgs.compliance_type = compTypeEl.value;
+            if (commentEl.value.trim()) updateArgs.comment = commentEl.value.trim();
+            output = await window.openai.callTool("update_case", updateArgs);
+            var data = output && output.structuredContent ? output.structuredContent : output;
+            if (!data || !data.success) throw new Error((data && data.error) || "Case update failed");
+            errorMsg.innerHTML = '<div class="success-msg">\u2713 Case updated successfully.</div>';
+          } else {
+            var args = { subject: subjectEl.value.trim(), compliance_type: compTypeEl.value, priority: priorityEl.value || "Medium" };
+            if (descEl.value.trim()) args.description = descEl.value.trim();
+            if (commentEl.value.trim()) args.reason = commentEl.value.trim();
+            output = await window.openai.callTool("create_case", args);
+            var data = output && output.structuredContent ? output.structuredContent : output;
+            if (!data || !data.created) throw new Error((data && data.error) || "Case creation failed");
+            var c = data.case || {};
+            isUpdate = true; currentCaseId = c.id; submitBtn.textContent = "Update Case";
+            document.getElementById("pageTitle").textContent = "Update Compliance Case";
+            document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + (c.case_number || "Case");
+            errorMsg.innerHTML = '<div class="success-msg">\u2713 Case <strong>' + esc(c.case_number || "") + '</strong> created and assigned to Compliance.</div>';
+          }
+        } catch (err) { errorMsg.innerHTML = '<div class="error-msg">' + esc(err.message || "Operation failed") + '</div>'; }
+        finally { submitBtn.textContent = isUpdate ? "Update Case" : "Raise Case"; validate(); reportHeight(); }
+      });
+      var existingCase = toolOutput.case || toolOutput;
+      isUpdate = !!(existingCase && (existingCase.id || existingCase.case_number));
+      if (isUpdate) { currentCaseId = existingCase.id; submitBtn.textContent = "Update Case"; document.getElementById("pageTitle").textContent = "Update Compliance Case"; document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + (existingCase.case_number || "Case"); }
+      var inp = isUpdate ? Object.assign({}, existingCase, toolInput) : toolInput;
+      if (inp.compliance_type || inp.type) compTypeEl.value = inp.compliance_type || inp.type || "";
+      if (inp.subject) subjectEl.value = inp.subject;
+      if (inp.description) descEl.value = inp.description;
+      if (inp.priority) priorityEl.value = inp.priority;
+      if (inp.status) statusEl.value = inp.status;
+      validate(); reportHeight();
+    </script>
+  </body>
+</html>

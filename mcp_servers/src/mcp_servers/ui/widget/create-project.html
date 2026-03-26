@@ -1,0 +1,136 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --border: #1f2630; --input-bg: #0f131a; --neg: #ff6b6b; --pos: #2bd48f; --success-bg: rgba(43,212,143,.06); --success-border: #1a5a3a; --jira-accent: #0052cc; --jira-mid: #4e8ff5; --jira-glow: rgba(0,82,204,.12); --badge-bg: #1a2540; --badge-text: #4e8ff5; }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --border: #e0e0e0; --input-bg: #f9f9f9; --neg: #d13438; --pos: #107c10; --success-bg: rgba(16,124,16,.04); --success-border: #107c10; --jira-accent: #0052cc; --jira-mid: #2563eb; --jira-glow: rgba(0,82,204,.08); --badge-bg: #e8f0fe; --badge-text: #0052cc; }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .jira-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--jira-glow); border: 1px solid var(--jira-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .header-text .title { font-size: 15px; font-weight: 600; }
+      .header-text .subtitle { font-size: 11px; color: var(--muted); margin-top: 1px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+      .field { margin-bottom: 14px; }
+      .field-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+      .field-label .required { color: var(--neg); }
+      .field-row { display: flex; gap: 10px; }
+      .field-row .field { flex: 1; margin-bottom: 0; }
+      input[type="text"], textarea, select { width: 100%; box-sizing: border-box; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .15s; resize: vertical; }
+      input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--jira-mid); }
+      textarea { min-height: 80px; }
+      .key-preview { font-size: 11px; margin-top: 4px; color: var(--muted); }
+      .key-badge { font-family: monospace; font-weight: 700; font-size: 12px; color: var(--jira-mid); background: var(--badge-bg); padding: 1px 7px; border-radius: 5px; margin-left: 4px; }
+      .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .type-option { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: border-color .15s, background .15s; user-select: none; }
+      .type-option.selected { border-color: var(--jira-mid); background: var(--jira-glow); }
+      .type-option-title { font-size: 13px; font-weight: 600; }
+      .type-option-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+      .btn-primary { width: 100%; padding: 10px; border-radius: 8px; border: none; cursor: pointer; background: var(--jira-accent); color: #fff; font-size: 14px; font-weight: 600; font-family: inherit; transition: opacity .15s; margin-top: 4px; }
+      .btn-primary:hover:not(:disabled) { opacity: .88; }
+      .btn-primary:disabled { opacity: .45; cursor: default; }
+      .status-banner { display: none; border-radius: 10px; padding: 12px 14px; font-size: 13px; margin-bottom: 12px; }
+      .status-banner.success { display: flex; gap: 8px; align-items: flex-start; background: var(--success-bg); border: 1px solid var(--success-border); color: var(--pos); }
+      .status-banner.error { display: flex; gap: 8px; align-items: flex-start; background: rgba(255,107,107,.06); border: 1px solid rgba(255,107,107,.3); color: var(--neg); }
+      .result-card { display: none; border-radius: 12px; padding: 16px; background: var(--jira-glow); border: 1px solid var(--jira-mid); margin-bottom: 12px; }
+      .result-card.show { display: block; }
+      .result-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+      .result-row { display: flex; gap: 6px; align-items: center; font-size: 12px; margin-top: 4px; }
+      .result-label { color: var(--muted); min-width: 60px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="jira-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--jira-mid);width:18px;height:18px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <div class="title">Create Jira Project</div>
+          <div class="subtitle">Jira &bull; New Project</div>
+        </div>
+      </div>
+      <div id="statusBanner" class="status-banner"></div>
+      <div id="resultCard" class="result-card">
+        <div class="result-title">&#10003; Project Created</div>
+        <div class="result-row"><span class="result-label">Name</span><span id="resultName"></span></div>
+        <div class="result-row"><span class="result-label">Key</span><span id="resultKey" style="font-family:monospace;font-weight:700;color:var(--jira-mid)"></span></div>
+      </div>
+      <div class="card" id="formCard">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Project Details</div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label">Project Name <span class="required">*</span></div>
+            <input type="text" id="nameInput" maxlength="200" placeholder="e.g. AML Compliance Review" />
+          </div>
+          <div class="field" style="flex:0 0 130px">
+            <div class="field-label">Project Key <span class="required">*</span></div>
+            <input type="text" id="keyInput" maxlength="10" placeholder="e.g. AMLREV" style="text-transform:uppercase" />
+          </div>
+        </div>
+        <div class="key-preview">Key preview: <span class="key-badge" id="keyPreview">&mdash;</span></div>
+        <div class="field" style="margin-top:14px">
+          <div class="field-label">Description</div>
+          <textarea id="descInput" placeholder="Optional project description"></textarea>
+        </div>
+        <div class="field">
+          <div class="field-label">Project Type</div>
+          <div class="type-grid">
+            <div class="type-option selected" data-type="software" id="typeSoftware"><div class="type-option-title">&#128187; Software</div><div class="type-option-desc">Scrum or kanban boards</div></div>
+            <div class="type-option" data-type="business" id="typeBusiness"><div class="type-option-title">&#128217; Business</div><div class="type-option-desc">Task tracking for teams</div></div>
+          </div>
+        </div>
+        <button id="submitBtn" class="btn-primary" disabled>Create Project</button>
+      </div>
+    </div>
+    <script>
+    (async function() {
+      var toolInput = {};
+      try { toolInput = JSON.parse(window.openai.toolInput || "{}"); } catch(_) {}
+      var nameInput = document.getElementById("nameInput"), keyInput = document.getElementById("keyInput"), descInput = document.getElementById("descInput"), keyPreview = document.getElementById("keyPreview"), submitBtn = document.getElementById("submitBtn"), banner = document.getElementById("statusBanner");
+      if (toolInput.name) nameInput.value = toolInput.name;
+      if (toolInput.key) keyInput.value = toolInput.key.toUpperCase();
+      if (toolInput.description) descInput.value = toolInput.description;
+      var selectedType = toolInput.project_type === "business" ? "business" : "software";
+      setType(selectedType);
+      updateKeyPreview(); validateForm();
+      var keyModified = !!toolInput.key;
+      nameInput.addEventListener("input", function() { if (!keyModified) { keyInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10); } updateKeyPreview(); validateForm(); });
+      keyInput.addEventListener("input", function() { keyInput.value = keyInput.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); keyModified = true; updateKeyPreview(); validateForm(); });
+      descInput.addEventListener("input", validateForm);
+      document.getElementById("typeSoftware").addEventListener("click", function() { setType("software"); });
+      document.getElementById("typeBusiness").addEventListener("click", function() { setType("business"); });
+      submitBtn.addEventListener("click", async function() {
+        var name = nameInput.value.trim(), key = keyInput.value.trim().toUpperCase(), desc = descInput.value.trim();
+        if (!name || !key || key.length < 2) { validateForm(); return; }
+        submitBtn.disabled = true; submitBtn.textContent = "Creating\u2026"; banner.style.display = "none";
+        var payload = { name: name, key: key, project_type: selectedType };
+        if (desc) payload.description = desc;
+        try {
+          var result = await window.openai.callTool("create_project", payload);
+          var proj = (result && result.project) ? result.project : {};
+          document.getElementById("resultName").textContent = proj.name || name;
+          document.getElementById("resultKey").textContent = proj.key || key;
+          document.getElementById("resultCard").classList.add("show");
+          document.getElementById("formCard").style.display = "none";
+          banner.className = "status-banner success";
+          banner.innerHTML = "<span>&#10003;</span><div><strong>Project created.</strong> Key: <strong>" + escHtml(proj.key || key) + "</strong></div>";
+          banner.style.display = "flex";
+        } catch (err) {
+          banner.className = "status-banner error";
+          banner.innerHTML = "<span>&#9888;</span><div><strong>Failed to create project:</strong> " + escHtml(String(err)) + "</div>";
+          banner.style.display = "flex"; submitBtn.disabled = false; submitBtn.textContent = "Create Project";
+        }
+      });
+      function setType(type) { selectedType = type; document.getElementById("typeSoftware").classList.toggle("selected", type === "software"); document.getElementById("typeBusiness").classList.toggle("selected", type === "business"); }
+      function updateKeyPreview() { keyPreview.textContent = keyInput.value || "\u2014"; }
+      function validateForm() { submitBtn.disabled = !(nameInput.value.trim().length > 0 && keyInput.value.trim().length >= 2); }
+      function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    })();
+    </script>
+  </body>
+</html>

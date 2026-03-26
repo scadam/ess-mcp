@@ -1,0 +1,112 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --btn-bg: #152235; --btn-border: #243145; --btn-primary-bg: linear-gradient(135deg,#1a6dff,#4cc2ff); --btn-primary-border: #2a80ff; --sf-accent: #1589ee; --sf-glow: rgba(21,137,238,.14); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-primary-bg: linear-gradient(135deg,#0078d4,#4cc2ff); --btn-primary-border: #0078d4; --sf-accent: #0070d2; --sf-glow: rgba(0,112,210,.08); }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sf-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sf-glow); border: 1px solid var(--sf-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+      .section-label { font-size: 11px; color: var(--sf-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .acct-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+      .acct-meta { font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+      .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; }
+      .stat { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; }
+      .stat-value { font-size: 18px; font-weight: 700; color: var(--sf-accent); }
+      .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+      .item-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; }
+      .item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; position: relative; }
+      .item-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .item-meta { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; margin-top: 3px; }
+      .badge-open { background: rgba(43,212,143,.12); color: var(--pos); border: 1px solid var(--pos); }
+      .badge-closed { background: rgba(169,177,189,.1); color: var(--muted); border: 1px solid var(--border); }
+      .badge-active { background: rgba(21,137,238,.12); color: var(--sf-accent); border: 1px solid var(--sf-accent); }
+      .more-note { font-size: 11px; color: var(--muted); margin-top: 6px; }
+      .btn-ask { position: absolute; top: 6px; right: 6px; background: transparent; color: var(--sf-accent); border: 1px solid var(--sf-accent); border-radius: 6px; padding: 1px 4px; font-size: 12px; line-height: 1.4; cursor: pointer; opacity: .55; transition: opacity .15s, background .15s; }
+      .btn-ask:hover { opacity: 1; background: var(--sf-glow); }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--sf-accent); border-color: var(--sf-accent); }
+      .loading { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sf-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sf-accent)"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <div>
+            <div class="title" id="pageTitle">Account 360&#xb0;</div>
+            <div class="subtitle" id="pageSubtitle">Salesforce &middot; CRM</div>
+          </div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="root"><div class="loading">Loading account data&hellip;</div></div>
+      <div class="footer">Powered by <strong>salesforce / get_account_360</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var _isFS = false, _data360 = {}, _sectionItems = {};
+      var _maxBtn = document.getElementById("maximizeBtn");
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function money(n) { var x = Number(n || 0); if (isNaN(x)) return String(n || "\u2014"); return "$" + x.toLocaleString("en-US", {maximumFractionDigits: 0}); }
+      function stageBadge(stage) { var s = (stage || "").toLowerCase(); if (s === "closed won") return '<span class="badge badge-open">'+esc(stage)+'</span>'; if (s.indexOf("closed") !== -1) return '<span class="badge badge-closed">'+esc(stage)+'</span>'; return '<span class="badge badge-active">'+esc(stage)+'</span>'; }
+      function renderItems(items, type, limit) {
+        if (!items || !items.length) return '<div class="more-note">None on record.</div>';
+        var shown = _isFS ? items.length : Math.min(limit || 3, items.length);
+        var html = '<div class="item-grid">';
+        for (var i = 0; i < shown; i++) {
+          var x = items[i];
+          if (type === "contact") html += '<div class="item"><div class="item-name">'+esc(x.name)+'</div><div class="item-meta">'+esc(x.title||"\u2014")+'</div><div class="item-meta">'+esc(x.email||"")+'</div></div>';
+          else if (type === "opp") html += '<div class="item"><div class="item-name">'+esc(x.name)+'</div>'+stageBadge(x.stage_name)+'<div class="item-meta" style="margin-top:4px">'+money(x.amount)+' \u00b7 Close: '+esc(x.close_date||"\u2014")+'</div></div>';
+          else if (type === "event") html += '<div class="item"><div class="item-name">'+esc(x.subject)+'</div><div class="item-meta">'+esc((x.start_datetime||x.activity_date||"").substring(0,16).replace("T"," "))+'</div></div>';
+          else if (type === "task") html += '<div class="item"><div class="item-name">'+esc(x.subject)+'</div><div class="item-meta">'+esc(x.status||"\u2014")+' \u00b7 '+esc(x.priority||"")+'</div></div>';
+          else if (type === "case") html += '<div class="item"><div class="item-name">'+esc(x.case_number||"")+" "+esc((x.subject||"").substring(0,28))+'</div><div class="item-meta">'+esc(x.status||"")+" \u00b7 "+esc(x.priority||"")+'</div></div>';
+        }
+        html += '</div>';
+        if (!_isFS && items.length > shown) html += '<div class="more-note">+ '+(items.length-shown)+' more</div>';
+        return html;
+      }
+      function render(d) {
+        if (!d || !d.account) { document.getElementById("root").innerHTML = '<div class="loading">No account data available.</div>'; reportHeight(); return; }
+        _data360 = d; _sectionItems.contact = d.contacts||[]; _sectionItems.opp = d.opportunities||[]; _sectionItems.event = d.events||[]; _sectionItems.task = d.tasks||[]; _sectionItems['case'] = d.cases||[];
+        var a = d.account, s = d.summary || {};
+        document.getElementById("pageTitle").textContent = a.name || "Account 360\u00b0";
+        document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + (a.industry || "CRM");
+        var html = '<div class="card"><div class="acct-name">'+esc(a.name)+'</div><div class="acct-meta">';
+        if (a.industry) html += '<span>'+esc(a.industry)+'</span>';
+        if (a.type) html += '<span>'+esc(a.type)+'</span>';
+        if (a.phone) html += '<span>&#128222;&nbsp;'+esc(a.phone)+'</span>';
+        if (a.billing_city) html += '<span>&#128205;&nbsp;'+esc(a.billing_city)+(a.billing_country?", "+esc(a.billing_country):"")+'</span>';
+        html += '</div><div class="stats-grid"><div class="stat"><div class="stat-value">'+(s.contacts||0)+'</div><div class="stat-label">Contacts</div></div><div class="stat"><div class="stat-value">'+(s.opportunities||0)+'</div><div class="stat-label">Opps</div></div><div class="stat"><div class="stat-value">'+(s.open_opportunities||0)+'</div><div class="stat-label">Open</div></div><div class="stat"><div class="stat-value" style="font-size:13px">'+money(s.open_pipeline_amount)+'</div><div class="stat-label">Pipeline</div></div><div class="stat"><div class="stat-value">'+(s.cases||0)+'</div><div class="stat-label">Cases</div></div></div></div>';
+        if (d.contacts && d.contacts.length) html += '<div class="card"><div class="section-label">Contacts ('+d.contacts.length+')</div>'+renderItems(d.contacts,"contact",3)+'</div>';
+        if (d.opportunities && d.opportunities.length) html += '<div class="card"><div class="section-label">Opportunities ('+d.opportunities.length+')</div>'+renderItems(d.opportunities,"opp",3)+'</div>';
+        if (d.events && d.events.length) html += '<div class="card"><div class="section-label">Recent Events ('+d.events.length+')</div>'+renderItems(d.events,"event",3)+'</div>';
+        if (d.tasks && d.tasks.length) html += '<div class="card"><div class="section-label">Open Tasks ('+d.tasks.length+')</div>'+renderItems(d.tasks,"task",3)+'</div>';
+        if (d.cases && d.cases.length) html += '<div class="card"><div class="section-label">Cases ('+d.cases.length+')</div>'+renderItems(d.cases,"case",3)+'</div>';
+        document.getElementById("root").innerHTML = html; reportHeight();
+      }
+      async function init() {
+        if (toolOutput && toolOutput.account) { render(toolOutput); return; }
+        if (window.openai && typeof window.openai.callTool === "function") { try { var out = await window.openai.callTool("get_account_360", toolInput); render((out && out.structuredContent) || out); } catch (e) { document.getElementById("root").innerHTML = '<div class="loading">'+esc(e.message||"Error loading data")+'</div>'; reportHeight(); } }
+        else { document.getElementById("root").innerHTML = '<div class="loading">Skybridge unavailable.</div>'; reportHeight(); }
+      }
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; reportHeight(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+      init();
+    </script>
+  </body>
+</html>

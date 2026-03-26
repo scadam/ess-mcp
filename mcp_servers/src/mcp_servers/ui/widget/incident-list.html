@@ -1,0 +1,458 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14;
+        --card: #151a21;
+        --muted: #a9b1bd;
+        --text: #e6edf3;
+        --accent: #4cc2ff;
+        --border: #1f2630;
+        --pos: #2bd48f;
+        --warn: #f0b232;
+        --neg: #ff6b6b;
+        --pill-border: #253040;
+        --card-hover-border: #2a3442;
+        --tag-bg: #0f131a;
+        --btn-bg: #152235;
+        --btn-border: #243145;
+        --on-hold: #9966cc;
+        --sn-accent: #3eb489;
+        --sn-glow: rgba(62,180,137,.12);
+      }
+      :root[data-theme="light"] {
+          --bg: #f5f5f5;
+          --card: #ffffff;
+          --muted: #65707d;
+          --text: #1e1e1e;
+          --accent: #0078d4;
+          --border: #e0e0e0;
+          --pos: #107c10;
+          --warn: #ca5010;
+          --neg: #d13438;
+          --pill-border: #d0d0d0;
+          --card-hover-border: #c8c8c8;
+          --tag-bg: #f5f5f5;
+          --btn-bg: #f0f0f0;
+          --btn-border: #d0d0d0;
+          --on-hold: #7b4fbd;
+          --sn-accent: #2e9968;
+          --sn-glow: rgba(46,153,104,.08);
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+      }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header {
+        display: flex; align-items: center;
+        justify-content: space-between; margin-bottom: 10px;
+      }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sn-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        background: var(--sn-glow);
+        border: 1px solid var(--sn-accent);
+        display: flex; align-items: center; justify-content: center;
+      }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { color: var(--muted); font-size: 12px; }
+      .pill {
+        font-size: 11px; color: var(--muted);
+        border: 1px solid var(--pill-border); padding: 2px 8px; border-radius: 999px;
+      }
+      .filters {
+        display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+      }
+      .filters input, .filters select {
+        background: var(--card); color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 6px 10px; font-size: 12px; outline: none;
+      }
+      .filters input { flex: 1; min-width: 120px; }
+      .filters select { min-width: 90px; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px; padding: 12px; margin-bottom: 8px;
+        cursor: pointer; transition: border-color .15s;
+      }
+      .card:hover { border-color: var(--card-hover-border); }
+      .card-detail {
+        margin-top: 10px; padding-top: 10px;
+        border-top: 1px solid var(--border);
+        display: none;
+      }
+      .card-detail.open { display: block; }
+      .detail-grid {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 8px; margin-bottom: 8px;
+      }
+      .detail-field .label {
+        margin: 0; font-size: 10px; color: var(--muted);
+        text-transform: uppercase; letter-spacing: .5px;
+      }
+      .detail-field .value {
+        margin: 2px 0 0; font-size: 12px; font-weight: 500;
+      }
+      .detail-desc {
+        font-size: 12px; color: var(--muted); line-height: 1.4;
+        margin-top: 6px;
+      }
+      .detail-section-title {
+        font-size: 11px; text-transform: uppercase;
+        letter-spacing: .5px; color: var(--muted); margin: 10px 0 4px;
+      }
+      .card-header {
+        display: flex; justify-content: space-between;
+        align-items: flex-start; gap: 8px;
+      }
+      .card-header h3 {
+        margin: 0; font-size: 13px; font-weight: 600;
+        flex: 1; line-height: 1.3;
+      }
+      .card-header .number {
+        font-size: 11px; color: var(--accent);
+        font-weight: 600; white-space: nowrap;
+      }
+      .card-meta {
+        display: flex; gap: 8px; flex-wrap: wrap;
+        margin-top: 6px; font-size: 11px; color: var(--muted);
+      }
+      .tag {
+        display: inline-block; padding: 2px 6px;
+        border-radius: 6px; background: var(--tag-bg);
+        border: 1px solid var(--border); font-size: 10px;
+      }
+      .tag.state-new { border-color: var(--accent); color: var(--accent); }
+      .tag.state-in-progress,
+      .tag.state-in_progress { border-color: var(--warn); color: var(--warn); }
+      .tag.state-resolved { border-color: var(--pos); color: var(--pos); }
+      .tag.state-closed { color: var(--muted); }
+      .tag.state-on-hold,
+      .tag.state-on_hold { border-color: var(--on-hold); color: var(--on-hold); }
+      .tag.state-canceled { color: var(--muted); opacity: .6; }
+      .tag.p1 { border-color: var(--neg); color: var(--neg); }
+      .tag.p2 { border-color: var(--warn); color: var(--warn); }
+      .btn {
+        background: var(--btn-bg); color: var(--text);
+        border: 1px solid var(--btn-border); border-radius: 8px;
+        padding: 7px 14px; font-size: 12px; cursor: pointer;
+      }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .footer { margin-top: 10px; display: flex; gap: 8px; }
+      .btn-copilot {
+        background: transparent; color: var(--accent);
+        border: 1px solid var(--accent); border-radius: 8px;
+        padding: 5px 12px; font-size: 11px; cursor: pointer;
+      }
+      .btn-copilot:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+      .card-actions { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+      .sn-link { font-size: 11px; color: var(--muted); text-decoration: none; margin-left: auto; }
+      .sn-link:hover { color: var(--accent); }
+      .loading, .error, .empty {
+        text-align: center; padding: 32px 0; font-size: 13px; color: var(--muted);
+      }
+      .error { color: var(--neg); }
+      .stat-bar {
+        display: flex; gap: 12px; margin-bottom: 12px; font-size: 12px;
+      }
+      .stat { color: var(--muted); }
+      .stat strong { color: var(--text); font-weight: 700; }
+      .maximize-btn {
+        background: transparent; color: var(--muted);
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 4px 8px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: color .15s, border-color .15s;
+      }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sn-accent)">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <div>
+            <div class="title">Incidents</div>
+            <div class="subtitle">ServiceNow &middot; Recent Activity</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="pill" id="countPill">0 incidents</div>
+          <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <input type="text" id="searchInput" placeholder="Search incidents&hellip;" />
+        <select id="stateFilter">
+          <option value="">All states</option>
+          <option value="new">New</option>
+          <option value="in_progress">In Progress</option>
+          <option value="on_hold">On Hold</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+        <button class="btn" id="searchBtn">Search</button>
+      </div>
+
+      <div id="statBar" class="stat-bar"></div>
+      <div id="list"></div>
+
+      <div class="footer">
+        <button class="btn" id="refreshBtn">Refresh</button>
+      </div>
+    </div>
+
+    <script>
+      var toolInput  = (window.openai && window.openai.toolInput)  || {};
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
+
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+
+      function stateClass(state) {
+        return "tag state-" + (state || "").toLowerCase().replace(/\s+/g, "-");
+      }
+
+      function priorityClass(p) {
+        if (!p) return "tag";
+        var n = parseInt(p, 10);
+        if (isNaN(n)) {
+          if (p.toLowerCase().indexOf("critical") >= 0) return "tag p1";
+          if (p.toLowerCase().indexOf("high") >= 0) return "tag p2";
+          return "tag";
+        }
+        if (n <= 1) return "tag p1";
+        if (n <= 2) return "tag p2";
+        return "tag";
+      }
+
+      function detailField(label, value) {
+        if (!value) return '';
+        return '<div class="detail-field">' +
+          '<p class="label">' + label + '</p>' +
+          '<p class="value">' + esc(String(value)) + '</p></div>';
+      }
+
+      function renderCard(inc, idx) {
+        var meta = [];
+        if (inc.priority) meta.push('<span class="' + priorityClass(inc.priority) + '">P' + esc(String(inc.priority)) + '</span>');
+        if (inc.state) meta.push('<span class="' + stateClass(inc.state) + '">' + esc(inc.state) + '</span>');
+        if (inc.category) meta.push('<span class="tag">' + esc(inc.category) + '</span>');
+        if (inc.assigned_to) meta.push('<span>' + esc(inc.assigned_to) + '</span>');
+        if (inc.opened_at) meta.push('<span>' + esc(inc.opened_at) + '</span>');
+
+        var snLink = (inc.sys_id && _instanceUrl)
+          ? '<a class="sn-link" href="' + esc(_instanceUrl) + '/nav_to.do?uri=incident.do?sys_id=' + esc(inc.sys_id) + '" target="_blank" onclick="event.stopPropagation()">&#8599; Open in ServiceNow</a>'
+          : '';
+        var detail = '<div class="card-detail" id="detail-' + idx + '">' +
+          '<div class="detail-grid">' +
+            detailField('Number', inc.number) +
+            detailField('State', inc.state) +
+            detailField('Priority', inc.priority ? 'P' + inc.priority : null) +
+            detailField('Category', inc.category) +
+            detailField('Assigned To', inc.assigned_to) +
+            detailField('Opened', inc.opened_at) +
+            detailField('Updated', inc.updated_at || inc.sys_updated_on) +
+            detailField('Resolved', inc.resolved_at) +
+            detailField('Closed', inc.closed_at) +
+            detailField('Impact', inc.impact) +
+            detailField('Urgency', inc.urgency) +
+            detailField('Caller', inc.caller_id || inc.caller) +
+            detailField('Assignment Group', inc.assignment_group) +
+            detailField('SLA Due', inc.sla_due) +
+            detailField('Sys ID', inc.sys_id) +
+          '</div>' +
+          (inc.description ? '<div class="detail-section-title">Description</div><div class="detail-desc">' + esc(inc.description) + '</div>' : '') +
+          (inc.close_notes ? '<div class="detail-section-title">Close Notes</div><div class="detail-desc">' + esc(inc.close_notes) + '</div>' : '') +
+          (inc.work_notes ? '<div class="detail-section-title">Work Notes</div><div class="detail-desc">' + esc(inc.work_notes) + '</div>' : '') +
+          '<div class="card-actions">' +
+            '<button class="btn-copilot" onclick="event.stopPropagation();askCopilotIncident(' + idx + ')">&#129504; Ask Copilot</button>' +
+            snLink +
+          '</div>' +
+        '</div>';
+
+        return '<div class="card" onclick="toggleDetail(' + idx + ')">' +
+          '<div class="card-header">' +
+            '<h3>' + esc(inc.short_description || "(no description)") + '</h3>' +
+            '<span class="number">' + esc(inc.number || "") + '</span>' +
+          '</div>' +
+          '<div class="card-meta">' + meta.join("") + '</div>' +
+          detail +
+        '</div>';
+      }
+
+      function renderStats(incidents) {
+        var states = {};
+        incidents.forEach(function(inc) {
+          var s = inc.state || "Unknown";
+          states[s] = (states[s] || 0) + 1;
+        });
+        var html = "";
+        Object.keys(states).sort().forEach(function(s) {
+          html += '<span class="stat"><strong>' + states[s] + '</strong> ' + esc(s) + '</span>';
+        });
+        document.getElementById("statBar").innerHTML = html;
+      }
+
+      var listDiv = document.getElementById("list");
+      var countPill = document.getElementById("countPill");
+      var _instanceUrl = "";
+
+      function reportHeight() {
+        if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") {
+          window.openai.notifyIntrinsicHeight(document.body.scrollHeight);
+        }
+      }
+
+      function render(data) {
+        if (data && data._instance_url) _instanceUrl = data._instance_url;
+        var incidents = (data && data.incidents) || [];
+        countPill.textContent = incidents.length + " incident" + (incidents.length !== 1 ? "s" : "");
+        if (incidents.length === 0) {
+          listDiv.innerHTML = '<div class="empty">No incidents found.</div>';
+          document.getElementById("statBar").innerHTML = "";
+          reportHeight();
+          return;
+        }
+        renderStats(incidents);
+        listDiv.innerHTML = incidents.map(function(inc, idx) { return renderCard(inc, idx); }).join("");
+        reportHeight();
+      }
+
+      async function load(search, state) {
+        listDiv.innerHTML = '<div class="loading">Loading incidents&hellip;</div>';
+        try {
+          var args = { limit: 20 };
+          if (search) args.search_text = search;
+          if (state) args.state = state;
+          if (!window.openai || typeof window.openai.callTool !== "function") {
+            listDiv.innerHTML = '<div class="error">Skybridge not available</div>';
+            return;
+          }
+          var output = await window.openai.callTool("list_incidents", args);
+          if (output && output.structuredContent) {
+            window.openai.toolOutput = output.structuredContent;
+            render(output.structuredContent);
+          } else {
+            render(output);
+          }
+        } catch (err) {
+          listDiv.innerHTML = '<div class="error">' + esc(err.message || "Failed to load incidents") + '</div>';
+        }
+      }
+
+      window.toggleDetail = function(idx) {
+        var el = document.getElementById('detail-' + idx);
+        if (!el) return;
+        el.classList.toggle('open');
+        reportHeight();
+      };
+
+      document.getElementById("searchBtn").addEventListener("click", function() {
+        load(document.getElementById("searchInput").value, document.getElementById("stateFilter").value);
+      });
+      document.getElementById("searchInput").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") load(this.value, document.getElementById("stateFilter").value);
+      });
+      document.getElementById("refreshBtn").addEventListener("click", function() {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("stateFilter").value = "";
+        load();
+      });
+
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      var _isFullscreen = false;
+      var _maxBtn = document.getElementById("maximizeBtn");
+
+      function _applyFullscreenLayout() {
+        var root = document.querySelector(".wrap");
+        if (window.openai) {
+          if (window.openai.maxHeight) { root.style.height = window.openai.maxHeight + "px"; root.style.overflow = "auto"; }
+          var sa = window.openai.safeArea;
+          if (sa && sa.insets) {
+            root.style.paddingTop = (sa.insets.top || 16) + "px";
+            root.style.paddingBottom = (sa.insets.bottom || 16) + "px";
+            root.style.paddingLeft = (sa.insets.left || 16) + "px";
+            root.style.paddingRight = (sa.insets.right || 16) + "px";
+          }
+        }
+      }
+
+      function _resetLayout() {
+        var root = document.querySelector(".wrap");
+        root.style.height = ""; root.style.overflow = "";
+        root.style.paddingTop = ""; root.style.paddingBottom = "";
+        root.style.paddingLeft = ""; root.style.paddingRight = "";
+      }
+
+      async function toggleFullscreen() {
+        if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return;
+        var mode = _isFullscreen ? "inline" : "fullscreen";
+        try {
+          await window.openai.requestDisplayMode({ mode: mode });
+          _isFullscreen = !_isFullscreen;
+          _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg;
+          _maxBtn.title = _isFullscreen ? "Restore" : "Maximize";
+          if (_isFullscreen) _applyFullscreenLayout(); else _resetLayout();
+          reportHeight();
+        } catch (e) {}
+      }
+
+      if (_maxBtn) {
+        if (window.openai && typeof window.openai.requestDisplayMode === "function") {
+          _maxBtn.addEventListener("click", toggleFullscreen);
+        } else {
+          _maxBtn.style.display = "none";
+        }
+      }
+
+      var _incidents = [];
+      var _origRender = render;
+      render = function(data) {
+        if (data && data.incidents) _incidents = data.incidents;
+        _origRender(data);
+      };
+
+      window.askCopilotIncident = function(idx) {
+        if (!window.openai || typeof window.openai.sendFollowUpMessage !== 'function') return;
+        var inc = _incidents[idx];
+        if (!inc) return;
+        var msg = 'Please tell me about ServiceNow incident ' + (inc.number || '') + ': "' + (inc.short_description || '') + '".';
+        if (inc.state)    msg += '\nState: '    + inc.state;
+        if (inc.priority) msg += '\nPriority: P' + inc.priority;
+        if (inc.category) msg += '\nCategory: ' + inc.category;
+        if (inc.assigned_to) msg += '\nAssigned to: ' + inc.assigned_to;
+        if (inc.description) msg += '\nDescription: ' + inc.description;
+        window.openai.sendFollowUpMessage({ prompt: msg });
+      };
+
+      if (toolOutput && toolOutput.incidents) {
+        render(toolOutput);
+      } else {
+        setTimeout(function() {
+          var freshOutput = (window.openai && window.openai.toolOutput) || {};
+          if (freshOutput && freshOutput.incidents) {
+            render(freshOutput);
+          } else {
+            load();
+          }
+        }, 0);
+      }
+    </script>
+  </body>
+</html>

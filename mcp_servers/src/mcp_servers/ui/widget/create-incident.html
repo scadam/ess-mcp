@@ -1,0 +1,122 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --input-bg: #0f131a; --btn-bg: #152235; --btn-border: #243145; --btn-primary-bg: linear-gradient(135deg,#1a6dff,#4cc2ff); --btn-primary-border: #2a80ff; --success-border: #1a5a3a; --success-glow: rgba(43,212,143,.16); --error-bg: rgba(255,107,107,.08); --error-border: rgba(255,107,107,.25); --sn-accent: #3eb489; --sn-glow: rgba(62,180,137,.12); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --input-bg: #ffffff; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-primary-bg: linear-gradient(135deg,#0078d4,#4cc2ff); --btn-primary-border: #0078d4; --success-border: #107c10; --success-glow: rgba(16,124,16,.08); --error-bg: rgba(209,52,56,.06); --error-border: rgba(209,52,56,.25); --sn-accent: #2e9968; --sn-glow: rgba(46,153,104,.08); }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sn-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sn-glow); border: 1px solid var(--sn-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .full-width { grid-column: 1 / -1; }
+      .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+      .field input, .field select, .field textarea { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; font-family: inherit; }
+      .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+      .field textarea { resize: vertical; }
+      .actions { margin-top: 14px; display: flex; gap: 8px; }
+      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; }
+      .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-border); font-weight: 600; }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .success-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--success-glow); border: 1px solid var(--success-border); font-size: 12px; color: var(--pos); }
+      .error-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--error-bg); border: 1px solid var(--error-border); font-size: 12px; color: var(--neg); }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sn-accent)">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <div>
+            <div class="title" id="pageTitle">Create Incident</div>
+            <div class="subtitle" id="pageSubtitle">ServiceNow &middot; New Ticket</div>
+          </div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="formView">
+        <div class="card">
+          <div class="form-grid">
+            <div class="field"><label for="caller">Caller *</label><input id="caller" type="text" placeholder="e.g. System Administrator" /></div>
+            <div class="field"><label for="urgency">Urgency</label><select id="urgency"><option value="">-- Default --</option><option value="1">1 - High</option><option value="2">2 - Medium</option><option value="3">3 - Low</option></select></div>
+            <div class="field"><label for="category">Category</label><select id="category"><option value="">-- None --</option><option value="inquiry">Inquiry / Help</option><option value="software">Software</option><option value="hardware">Hardware</option><option value="network">Network</option><option value="database">Database</option></select></div>
+            <div class="field"><label for="impact">Impact</label><select id="impact"><option value="">-- Default --</option><option value="1">1 - High</option><option value="2">2 - Medium</option><option value="3">3 - Low</option></select></div>
+            <div class="field full-width"><label for="short_description">Short Description *</label><input id="short_description" type="text" placeholder="Brief summary of the issue" /></div>
+            <div class="field full-width"><label for="description">Description</label><textarea id="description" rows="3" placeholder="Provide more detail about the issue"></textarea></div>
+            <div class="field full-width"><label for="comments">Comments</label><textarea id="comments" rows="2" placeholder="Initial comment (visible to caller)"></textarea></div>
+          </div>
+          <div id="errorMsg"></div>
+          <div class="actions">
+            <button class="btn btn-primary" id="submitBtn" disabled>Create Incident</button>
+            <button class="btn" id="resetBtn">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div id="successView" style="display:none;"></div>
+      <div class="footer">Powered by <strong>servicenow / create_incident</strong> via MCP</div>
+    </div>
+    <script>
+      var toolInput = (window.openai && window.openai.toolInput) || {};
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      var callerEl = document.getElementById("caller"), shortDescEl = document.getElementById("short_description"), descEl = document.getElementById("description"), categoryEl = document.getElementById("category"), urgencyEl = document.getElementById("urgency"), impactEl = document.getElementById("impact"), commentsEl = document.getElementById("comments"), submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), errorMsg = document.getElementById("errorMsg");
+      var isUpdate = false;
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function validate() { submitBtn.disabled = !(callerEl.value.trim() && shortDescEl.value.trim()); }
+      [callerEl, shortDescEl].forEach(function(el) { el.addEventListener("input", validate); });
+      function normalizeUrgencyImpact(val) { if (!val) return ""; var s = String(val).trim().toLowerCase(); if (/^1\b/.test(s) || s === "high" || s === "critical") return "1"; if (/^2\b/.test(s) || s === "medium") return "2"; if (/^3\b/.test(s) || s === "low") return "3"; if (/^[123]$/.test(s)) return s; return ""; }
+      function normalizeCategory(val) { if (!val) return ""; var s = String(val).trim().toLowerCase(); var map = {"inquiry":"inquiry","inquiry / help":"inquiry","help":"inquiry","software":"software","hardware":"hardware","network":"network","database":"database"}; if (map[s]) return map[s]; for (var k in map) { if (k.indexOf(s) === 0 || s.indexOf(k) === 0) return map[k]; } return val; }
+      function setSelectValue(el, rawVal, normFn) { if (!rawVal) return; var n = normFn ? normFn(rawVal) : String(rawVal); el.value = n; if (!el.value && n !== String(rawVal)) el.value = String(rawVal); }
+      resetBtn.addEventListener("click", function() { [callerEl, shortDescEl, descEl, commentsEl].forEach(function(el) { el.value = ""; }); [categoryEl, urgencyEl, impactEl].forEach(function(el) { el.value = ""; }); errorMsg.innerHTML = ""; isUpdate = false; submitBtn.textContent = "Create Incident"; document.getElementById("pageTitle").textContent = "Create Incident"; document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 New Ticket"; submitBtn.disabled = true; reportHeight(); });
+      submitBtn.addEventListener("click", async function() {
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        submitBtn.disabled = true; submitBtn.textContent = "Submitting\u2026"; errorMsg.innerHTML = "";
+        var args = { short_description: shortDescEl.value.trim(), caller: callerEl.value.trim() };
+        if (descEl.value.trim()) args.description = descEl.value.trim();
+        if (categoryEl.value) args.category = categoryEl.value;
+        if (urgencyEl.value) args.urgency = urgencyEl.value;
+        if (impactEl.value) args.impact = impactEl.value;
+        if (commentsEl.value.trim()) args.comments = commentsEl.value.trim();
+        try {
+          var output = await window.openai.callTool("create_incident", args);
+          var data = output && output.structuredContent ? output.structuredContent : output;
+          if (!data || !data.created) throw new Error((data && data.error) || "Incident creation failed");
+          isUpdate = true;
+          document.getElementById("pageTitle").textContent = "Update Incident";
+          document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 " + (data.number || "Existing Ticket");
+          errorMsg.innerHTML = '<div class="success-msg">\u2713 Incident <strong>' + esc(data.number || "") + '</strong> created successfully.</div>';
+        } catch (err) { errorMsg.innerHTML = '<div class="error-msg">' + esc(err.message || "Failed to create incident") + '</div>'; }
+        finally { submitBtn.textContent = isUpdate ? "Update Incident" : "Create Incident"; validate(); reportHeight(); }
+      });
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      var _isFullscreen = false, _maxBtn = document.getElementById("maximizeBtn");
+      async function toggleFullscreen() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; var mode = _isFullscreen ? "inline" : "fullscreen"; try { await window.openai.requestDisplayMode({mode:mode}); _isFullscreen = !_isFullscreen; _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg; _maxBtn.title = _isFullscreen ? "Restore" : "Maximize"; reportHeight(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFullscreen); else _maxBtn.style.display = "none"; }
+      isUpdate = !!(toolOutput && (toolOutput.number || toolOutput.sys_id));
+      if (isUpdate) { submitBtn.textContent = "Update Incident"; document.getElementById("pageTitle").textContent = "Update Incident"; document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 " + (toolOutput.number || "Existing Ticket"); }
+      var inp = isUpdate ? Object.assign({}, toolOutput, toolInput) : toolInput;
+      if (inp.caller) callerEl.value = inp.caller;
+      if (inp.short_description) shortDescEl.value = inp.short_description;
+      if (inp.description) descEl.value = inp.description;
+      if (inp.category) setSelectValue(categoryEl, inp.category, normalizeCategory);
+      if (inp.urgency) setSelectValue(urgencyEl, inp.urgency, normalizeUrgencyImpact);
+      if (inp.impact) setSelectValue(impactEl, inp.impact, normalizeUrgencyImpact);
+      if (inp.comments) commentsEl.value = inp.comments;
+      if (!callerEl.value.trim() && window.openai && window.openai.userInfo && window.openai.userInfo.name) callerEl.value = window.openai.userInfo.name;
+      validate();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,115 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --border: #1f2630; --input-bg: #0f131a; --btn-bg: #152235; --btn-border: #243145; --neg: #ff6b6b; --pos: #2bd48f; --success-bg: rgba(43,212,143,.06); --success-border: #1a5a3a; --success-glow: rgba(43,212,143,.16); --wd-accent: #f68620; --wd-glow: rgba(246,134,32,.12); --wd-light: #c2670d; }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --border: #e0e0e0; --input-bg: #f9f9f9; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --neg: #d13438; --pos: #107c10; --success-bg: rgba(16,124,16,.04); --success-border: #107c10; --success-glow: rgba(16,124,16,.08); --wd-accent: #c2670d; --wd-glow: rgba(194,103,13,.08); --wd-light: #9e520a; }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .wd-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--wd-glow); border: 1px solid var(--wd-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .header-text .title { font-size: 15px; font-weight: 600; }
+      .header-text .subtitle { font-size: 11px; color: var(--muted); margin-top: 1px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+      .worker-row { display: flex; align-items: center; gap: 12px; }
+      .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--wd-glow); border: 1.5px solid var(--wd-accent); display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; color: var(--wd-accent); flex-shrink: 0; }
+      .worker-name { font-size: 14px; font-weight: 600; }
+      .worker-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+      .current-title-card { display: flex; align-items: center; gap: 8px; background: var(--wd-glow); border: 1px solid var(--wd-accent); border-radius: 8px; padding: 10px 14px; margin-top: 12px; }
+      .current-title-label { font-size: 11px; color: var(--wd-accent); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+      .current-title-value { font-size: 13px; font-weight: 500; margin-top: 2px; }
+      .field-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+      .field-label span { color: var(--neg); }
+      input[type="text"] { width: 100%; box-sizing: border-box; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .15s; }
+      input[type="text"]:focus { border-color: var(--wd-accent); }
+      .char-count { font-size: 11px; color: var(--muted); text-align: right; margin-top: 4px; }
+      .btn-primary { width: 100%; padding: 10px; border-radius: 8px; border: none; cursor: pointer; background: var(--wd-accent); color: #fff; font-size: 14px; font-weight: 600; font-family: inherit; transition: opacity .15s; margin-top: 4px; }
+      .btn-primary:hover:not(:disabled) { opacity: .88; }
+      .btn-primary:disabled { opacity: .45; cursor: default; }
+      .status-banner { display: none; border-radius: 10px; padding: 12px 14px; font-size: 13px; margin-bottom: 12px; }
+      .status-banner.success { display: flex; gap: 8px; align-items: flex-start; background: var(--success-bg); border: 1px solid var(--success-border); color: var(--pos); }
+      .status-banner.error { display: flex; gap: 8px; align-items: flex-start; background: rgba(255,107,107,.06); border: 1px solid rgba(255,107,107,.3); color: var(--neg); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="wd-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--wd-accent);width:18px;height:18px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <div class="title">Change Business Title</div>
+          <div class="subtitle">Workday HR &bull; Self-Service</div>
+        </div>
+      </div>
+      <div id="statusBanner" class="status-banner"></div>
+      <div class="card" id="workerCard">
+        <div class="worker-row">
+          <div class="avatar" id="avatarEl">?</div>
+          <div>
+            <div class="worker-name" id="workerNameEl">Loading&hellip;</div>
+            <div class="worker-meta" id="workerMetaEl"></div>
+          </div>
+        </div>
+        <div class="current-title-card">
+          <div>
+            <div class="current-title-label">Current Business Title</div>
+            <div class="current-title-value" id="currentTitleEl">&mdash;</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="field-label">New Business Title <span>*</span></div>
+        <input type="text" id="newTitleInput" maxlength="255" placeholder="Enter new business title&hellip;" />
+        <div class="char-count"><span id="charCount">0</span> / 255</div>
+        <div style="margin-top:14px">
+          <button id="submitBtn" class="btn-primary" disabled>Submit Change Request</button>
+        </div>
+      </div>
+    </div>
+    <script>
+    (async function () {
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
+      var toolInput  = (window.openai && window.openai.toolInput)  || {};
+      var worker = toolOutput.worker || {};
+      var workerName = worker.name || toolInput.worker_name || "";
+      var currentTitle = worker.businessTitle || "";
+      document.getElementById("avatarEl").textContent = workerName ? workerName.charAt(0).toUpperCase() : "?";
+      document.getElementById("workerNameEl").textContent = workerName || "Current Worker";
+      var meta = [worker.workerType, worker.supervisoryOrganization, worker.location].filter(Boolean).join(" \u00b7 ");
+      document.getElementById("workerMetaEl").textContent = meta;
+      document.getElementById("currentTitleEl").textContent = currentTitle || "\u2014";
+      var input = document.getElementById("newTitleInput");
+      var charCountEl = document.getElementById("charCount");
+      var submitBtn = document.getElementById("submitBtn");
+      var banner = document.getElementById("statusBanner");
+      input.addEventListener("input", function () { charCountEl.textContent = input.value.length; submitBtn.disabled = input.value.trim().length === 0; });
+      submitBtn.addEventListener("click", async function () {
+        var newTitle = input.value.trim();
+        if (!newTitle) return;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting\u2026";
+        banner.className = "status-banner"; banner.style.display = "none";
+        try {
+          await window.openai.callTool("change_business_title", { proposedBusinessTitle: newTitle });
+          banner.className = "status-banner success";
+          banner.innerHTML = "<span>&#10003;</span><div><strong>Change request submitted.</strong><br>Your business title change to <em>" + escHtml(newTitle) + "</em> has been submitted to Workday.</div>";
+          banner.style.display = "flex";
+          document.getElementById("currentTitleEl").textContent = newTitle;
+          input.value = ""; charCountEl.textContent = "0"; submitBtn.disabled = true; submitBtn.textContent = "Submit Change Request";
+        } catch (err) {
+          banner.className = "status-banner error";
+          banner.innerHTML = "<span>&#9888;</span><div><strong>Submission failed.</strong><br>" + escHtml(String(err)) + "</div>";
+          banner.style.display = "flex"; submitBtn.disabled = false; submitBtn.textContent = "Submit Change Request";
+        }
+      });
+      function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    })();
+    </script>
+  </body>
+</html>
