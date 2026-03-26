@@ -1,0 +1,2 @@
+# Allow example env files (they contain no secrets)
+!env/*.example.env
