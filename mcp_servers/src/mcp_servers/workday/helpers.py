@@ -1,15 +1,13 @@
-"""Shared Workday helper functions ported from the Azure Functions project."""
-
+"""Shared Workday helper functions."""
 from __future__ import annotations
-
+import base64
+import json
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 from urllib.parse import quote
-
-from ..auth import EntraTokenValidator, WorkdayTokenProvider
 from ..http import create_async_client
 from ..logging import get_logger
-from ..settings import GraphSettings, WorkdayOAuthSettings, load_graph_settings, load_workday_oauth_settings
+from ..settings import WorkdaySettings, load_workday_settings
 from .config import DEFAULT_ENDPOINTS, WorkdayApiEndpoints
 
 LOGGER = get_logger(__name__)
@@ -21,70 +19,35 @@ def _require(value: Optional[str], name: str) -> str:
     return value
 
 
-async def get_workday_access_token() -> str:
-    provider = WorkdayTokenProvider()
-    token = await provider.get_access_token()
-    return token.access_token
+def _parse_worker_id_from_token(token: str) -> Optional[str]:
+    """Try to extract worker/employee ID from JWT token claims (no validation).
 
-
-async def get_graph_access_token(settings: Optional[GraphSettings] = None) -> str:
-    cfg = settings or load_graph_settings()
-    token_url = f"https://login.microsoftonline.com/{cfg.tenant_id}/oauth2/v2.0/token"
-    data = {
-        "client_id": cfg.client_id,
-        "client_secret": cfg.client_secret,
-        "scope": "https://graph.microsoft.com/.default",
-        "grant_type": "client_credentials",
-    }
-    async with create_async_client() as client:
-        response = await client.post(token_url, data=data)
-        response.raise_for_status()
-        payload = response.json()
-    return payload["access_token"]
-
-
-async def get_employee_id_from_graph(user_identifier: str) -> str:
-    graph_token = await get_graph_access_token()
-    encoded_identifier = quote(user_identifier, safe="@")
-    url = f"https://graph.microsoft.com/v1.0/users/{encoded_identifier}"
-    params = {"$select": "employeeId,userPrincipalName,id"}
-    async with create_async_client() as client:
-        response = await client.get(url, params=params, headers={"Authorization": f"Bearer {graph_token}"})
-        response.raise_for_status()
-        user_data = response.json()
-    employee_id = user_data.get("employeeId")
-    if employee_id:
-        return employee_id
-    upn = user_data.get("userPrincipalName")
-    if upn:
-        return upn.split("@")[0]
-    raise ValueError("Unable to determine employee ID from Microsoft Graph")
-
-
-async def extract_worker_id_from_token(token: str, payload: Dict[str, Any]) -> str:
-    LOGGER.info("extracting_worker_id", claims=list(payload.keys()))
-    username = payload.get("preferred_username") or payload.get("upn") or payload.get("unique_name")
-
-    if username:
-        try:
-            return await get_employee_id_from_graph(username)
-        except Exception as exc:  # noqa: BLE001
-            LOGGER.warning("graph_lookup_failed", identifier=username, error=str(exc))
-
-    if "oid" in payload and payload["oid"]:
-        try:
-            return await get_employee_id_from_graph(str(payload["oid"]))
-        except Exception as exc:  # noqa: BLE001
-            LOGGER.warning("graph_lookup_failed", identifier=payload["oid"], error=str(exc))
-
-    for key in ("EmployeeId", "employeeId", "employee_id", "extension_EmployeeId"):
-        if key in payload and payload[key]:
-            return str(payload[key])
-
-    if username:
-        return username.split("@")[0]
-
-    raise ValueError("Worker ID could not be determined from token")
+    Returns the first matching claim: preferred_username, upn, sub.
+    Returns None if token is not a JWT or has no useful claims.
+    """
+    try:
+        parts = token.split(".")
+        if len(parts) != 3:
+            return None
+        padding = 4 - len(parts[1]) % 4
+        padded = parts[1] + "=" * padding
+        payload_bytes = base64.urlsafe_b64decode(padded)
+        payload = json.loads(payload_bytes)
+        # Try common claim names for worker/employee identifier
+        for key in ("preferred_username", "upn", "unique_name"):
+            val = payload.get(key)
+            if val:
+                # Strip domain if present
+                return val.split("@")[0] if "@" in str(val) else str(val)
+        for key in ("EmployeeId", "employeeId", "employee_id", "extension_EmployeeId"):
+            if key in payload and payload[key]:
+                return str(payload[key])
+        sub = payload.get("sub")
+        if sub:
+            return str(sub)
+    except Exception as exc:
+        LOGGER.debug("jwt_parse_failed", error=str(exc))
+    return None
 
 
 async def search_worker_in_workday(
@@ -92,7 +55,7 @@ async def search_worker_in_workday(
     worker_id: str,
     endpoints: WorkdayApiEndpoints = DEFAULT_ENDPOINTS,
 ) -> Dict[str, Any]:
-    settings: WorkdayOAuthSettings = load_workday_oauth_settings()
+    settings: WorkdaySettings = load_workday_settings()
     base_url = (settings.workers_api_url or endpoints.full_url(endpoints.workers_path)).rstrip("/")
     search_url = f"{base_url}?search='{worker_id}'"
     async with create_async_client() as client:
@@ -115,31 +78,48 @@ class WorkerContext:
 
 
 async def build_worker_context_anonymous(employee_id: str) -> WorkerContext:
-    """Build worker context using a pre-configured employee ID without authentication."""
+    """Build worker context using a pre-configured employee ID.
+
+    Used for local testing. The WORKDAY_WORKERS_API_URL must point to a working
+    Workday instance and some token must be provided externally.
+
+    NOTE: In anonymous mode, API calls will fail unless WORKDAY_WORKERS_API_URL
+    is configured to a mock or test endpoint.
+    """
     LOGGER.info("building_anonymous_worker_context", employee_id=employee_id)
-    access_token = await get_workday_access_token()
-    worker_data = await search_worker_in_workday(access_token, employee_id)
-    workday_id = worker_data.get("id", employee_id)
+    # In anonymous mode, we can't make real API calls without a token
+    # Return a minimal context; tools should handle LookupError
     return WorkerContext(
-        payload={},  # No auth token payload in anonymous mode
+        payload={},
         worker_id=employee_id,
-        workday_id=workday_id,
-        workday_access_token=access_token,
-        worker_data=worker_data,
+        workday_id=employee_id,
+        workday_access_token="",
+        worker_data={"id": employee_id, "workerId": employee_id},
     )
 
 
-async def build_worker_context(token: str, validator: Optional[EntraTokenValidator] = None) -> WorkerContext:
-    validator = validator or EntraTokenValidator()
-    payload = await validator.validate(token)
-    worker_id = await extract_worker_id_from_token(token, payload)
-    access_token = await get_workday_access_token()
-    worker_data = await search_worker_in_workday(access_token, worker_id)
+async def build_worker_context_from_bearer(token: str) -> WorkerContext:
+    """Build worker context using the incoming OAuth 2.0 bearer token.
+
+    The token is used directly as the Workday API access token.
+    Worker ID is extracted from JWT claims (no validation) and then
+    resolved via the Workday workers API.
+    """
+    worker_id = _parse_worker_id_from_token(token)
+    if not worker_id:
+        raise ValueError(
+            "Cannot determine worker ID from token. "
+            "Set WORKDAY_ANONYMOUS_EMPLOYEE_ID for testing, or ensure your OAuth token "
+            "contains preferred_username, upn, or employeeId claims."
+        )
+    LOGGER.info("resolving_workday_worker", worker_id=worker_id)
+    worker_data = await search_worker_in_workday(token, worker_id)
     workday_id = worker_data.get("id", worker_id)
     return WorkerContext(
-        payload=payload,
+        payload={},
         worker_id=worker_id,
         workday_id=workday_id,
-        workday_access_token=access_token,
+        workday_access_token=token,
         worker_data=worker_data,
     )
+

@@ -6,51 +6,31 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from fastmcp import Context
 
-from ..auth import EntraTokenValidator
+from ..auth import get_bearer_token, TokenValidationError
 from ..http import create_async_client
 from ..logging import get_logger
-from ..settings import load_workday_oauth_settings
-from .helpers import build_worker_context, build_worker_context_anonymous, get_workday_access_token
+from ..settings import load_workday_settings
+from .helpers import build_worker_context_anonymous, build_worker_context_from_bearer
 
 LOGGER = get_logger(__name__)
 
 
 def _get_auth_token(ctx: Optional[Context] = None) -> str:
-    """Read the Entra access token exclusively from the Authorization header."""
-
-    if ctx is None:
-        raise ValueError("HTTP context not available; provide Authorization header")
-
-    try:
-        request = ctx.request_context.request
-    except ValueError as exc:  # pragma: no cover - defensive guard
-        raise ValueError("Authorization header unavailable for this request") from exc
-
-    auth_header = request.headers.get("authorization") if request else None
-    if not auth_header or not auth_header.lower().startswith("bearer "):
-        raise ValueError("Authorization bearer token is required in the request headers")
-
-    token = auth_header.split(" ", 1)[1].strip()
-    if not token:
-        raise ValueError("Authorization bearer token is required in the request headers")
-
-    LOGGER.debug("auth_token_resolved_from_header")
-    return token
+    """Extract the OAuth 2.0 Bearer token from the Authorization request header."""
+    return get_bearer_token(ctx)
 
 
 async def _build_worker_context_with_optional_auth(ctx: Optional[Context] = None):
-    """Build worker context using anonymous mode if configured, otherwise use token authentication."""
-    settings = load_workday_oauth_settings()
-    
-    # Check if anonymous mode is configured
+    """Build worker context using anonymous mode if configured, otherwise use bearer token."""
+    settings = load_workday_settings()
+
     if settings.anonymous_employee_id:
         LOGGER.info("using_anonymous_mode", employee_id=settings.anonymous_employee_id)
         return await build_worker_context_anonymous(settings.anonymous_employee_id)
-    
-    # Fall back to authenticated mode
-    LOGGER.info("using_authenticated_mode")
-    entra_token = _get_auth_token(ctx)
-    return await build_worker_context(entra_token)
+
+    LOGGER.info("using_bearer_token_mode")
+    bearer_token = _get_auth_token(ctx)
+    return await build_worker_context_from_bearer(bearer_token)
 
 
 def _transform_worker(worker_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -92,10 +72,7 @@ def _tool_response(summary: str, payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def tool_get_worker(ctx: Optional[Context] = None) -> Dict:
-    """Get the current Workday worker profile.
-    
-    Validates the Entra ID token and retrieves worker data using server's Workday credentials.
-    """
+    """Get the current Workday worker profile using the provided OAuth 2.0 bearer token."""
     worker_context = await _build_worker_context_with_optional_auth(ctx)
     worker = _transform_worker(worker_context.worker_data)
     worker["_widget_hint"] = "Worker profile is ready."
@@ -692,15 +669,12 @@ async def tool_search_learning_content(
     skills: Optional[List[str]] = None,
     topics: Optional[List[str]] = None,
 ) -> Dict:
-    settings = load_workday_oauth_settings()
-    
-    # Validate token if not in anonymous mode
-    if not settings.anonymous_employee_id:
-        token = _get_auth_token(ctx)
-        validator = EntraTokenValidator()
-        await validator.validate(token)
-    
-    access_token = await get_workday_access_token()
+    settings = load_workday_settings()
+
+    if settings.anonymous_employee_id:
+        access_token = ""
+    else:
+        access_token = _get_auth_token(ctx)
 
     def _normalize(value: Any) -> List[str]:
         if value is None:

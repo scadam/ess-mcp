@@ -1,75 +1,36 @@
 
 Provides task listing, approval management, and CRUD operations against
-the Salesforce REST API using OAuth client-credentials flow.
+the Salesforce REST API using OAuth bearer token passthrough.
 """
 
-import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
+from fastmcp import Context
+
+from ..auth import get_bearer_token, TokenValidationError
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_salesforce_settings
 
 LOGGER = get_logger(__name__)
 
-# ── Token cache ─────────────────────────────────────────────────────
-
-_token_cache: Dict[str, Any] = {
-    "access_token": None,
-    "instance_url": None,
-    "expires_at": 0.0,
-}
-
 _API_VERSION = "v59.0"
 
 
-async def _get_salesforce_token() -> tuple[str, str]:
-    """Obtain (or reuse) a Salesforce OAuth access token.
-
-    Returns ``(access_token, instance_url)``.
-    """
-    if _token_cache["access_token"] and time.time() < _token_cache["expires_at"] - 30:
-        return _token_cache["access_token"], _token_cache["instance_url"]
-
+def _get_instance_url() -> str:
+    """Derive the Salesforce instance URL from settings."""
     settings = load_salesforce_settings()
-
-    # Support full My Domain URLs and simple prefixes
     domain = settings.domain
     if ".my.salesforce.com" in domain or ".salesforce.com" in domain:
-        token_url = f"https://{domain}/services/oauth2/token"
-    else:
-        token_url = f"https://{domain}.salesforce.com/services/oauth2/token"
-
-    data = {
-        "grant_type": "client_credentials",
-        "client_id": settings.client_id,
-        "client_secret": settings.client_secret,
-    }
-
-    async with create_async_client() as client:
-        resp = await client.post(
-            token_url,
-            data=data,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-        )
-        resp.raise_for_status()
-        body = resp.json()
-
-    _token_cache["access_token"] = body["access_token"]
-    _token_cache["instance_url"] = body.get("instance_url", f"https://{domain}")
-    _token_cache["expires_at"] = time.time() + body.get("expires_in", 3600)
-
-    LOGGER.info("salesforce_token_acquired")
-    return _token_cache["access_token"], _token_cache["instance_url"]
+        return f"https://{domain}"
+    return f"https://{domain}.my.salesforce.com"
 
 
-async def _soql_query(query: str) -> List[Dict[str, Any]]:
-    """Execute a SOQL query and return all records.
-
-    Use SOQL defensively; objects differ by org config (impl notes §5).
-    """
-    token, instance_url = await _get_salesforce_token()
+async def _soql_query(query: str, ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
+    """Execute a SOQL query and return all records."""
+    token = get_bearer_token(ctx)
+    instance_url = _get_instance_url()
     url = f"{instance_url}/services/data/{_API_VERSION}/query"
 
     async with create_async_client() as client:
@@ -87,9 +48,10 @@ async def _soql_query(query: str) -> List[Dict[str, Any]]:
     return body.get("records", [])
 
 
-async def _salesforce_post(path: str, body: Dict[str, Any]) -> Dict[str, Any]:
+async def _salesforce_post(path: str, body: Dict[str, Any], ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Make an authenticated POST request to Salesforce REST API."""
-    token, instance_url = await _get_salesforce_token()
+    token = get_bearer_token(ctx)
+    instance_url = _get_instance_url()
     url = f"{instance_url}/services/data/{_API_VERSION}{path}"
 
     async with create_async_client() as client:
@@ -109,9 +71,10 @@ async def _salesforce_post(path: str, body: Dict[str, Any]) -> Dict[str, Any]:
         return {"success": True}
 
 
-async def _salesforce_patch(path: str, body: Dict[str, Any]) -> Dict[str, Any]:
+async def _salesforce_patch(path: str, body: Dict[str, Any], ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Make an authenticated PATCH request to Salesforce REST API."""
-    token, instance_url = await _get_salesforce_token()
+    token = get_bearer_token(ctx)
+    instance_url = _get_instance_url()
     url = f"{instance_url}/services/data/{_API_VERSION}{path}"
 
     async with create_async_client() as client:
@@ -168,7 +131,7 @@ async def tool_list_tasks(
     )
 
     LOGGER.info("salesforce_list_tasks", query=query)
-    records = await _soql_query(query)
+    records = await _soql_query(query, ctx)
 
     return {
         "total": len(records),
@@ -187,7 +150,7 @@ async def tool_get_task(task_id: str) -> Dict[str, Any]:
         f"SELECT Id, Subject, Status, Priority, Description, ActivityDate, "
         f"CreatedDate, OwnerId, WhoId, WhatId, CallType, TaskSubtype "
         f"FROM Task WHERE Id = '{task_id}'"
-    )
+    , ctx)
 
     if not records:
         raise ValueError(f"Salesforce Task {task_id} not found")
@@ -226,12 +189,12 @@ async def tool_update_task(
 
     LOGGER.info("salesforce_update_task", task_id=task_id, fields=list(payload.keys()))
     try:
-        await _salesforce_patch(f"/sobjects/Task/{task_id}", payload)
+        await _salesforce_patch(f"/sobjects/Task/{task_id}", payload, ctx)
 
         updated = await _soql_query(
             f"SELECT Id, Subject, Status, Priority, Description, ActivityDate, "
             f"CreatedDate, OwnerId FROM Task WHERE Id = '{task_id}'"
-        )
+        , ctx)
 
         return {
             "success": True,
@@ -273,7 +236,7 @@ async def tool_list_approvals(
     )
 
     LOGGER.info("salesforce_list_approvals", query=query)
-    records = await _soql_query(query)
+    records = await _soql_query(query, ctx)
 
     return {
         "total": len(records),
@@ -314,7 +277,7 @@ async def tool_approve_reject(
             ]
         }
 
-        result = await _salesforce_post("/process/approvals", body)
+        result = await _salesforce_post("/process/approvals", body, ctx)
         return {
             "success": True,
             "action": action,
@@ -548,7 +511,7 @@ async def tool_list_cases(
     )
 
     LOGGER.info("salesforce_list_cases", query=query)
-    records = await _soql_query(query)
+    records = await _soql_query(query, ctx)
 
     return {
         "total": len(records),
@@ -569,11 +532,11 @@ async def tool_get_case(case_id: str) -> Dict[str, Any]:
     if case_id.isdigit() or len(case_id) < 15:
         records = await _soql_query(
             f"SELECT {_CASE_FIELDS} FROM Case WHERE CaseNumber = '{case_id}'"
-        )
+        , ctx)
     else:
         records = await _soql_query(
             f"SELECT {_CASE_FIELDS} FROM Case WHERE Id = '{case_id}'"
-        )
+        , ctx)
 
     if not records:
         raise ValueError(f"Salesforce Case {case_id} not found")
@@ -586,7 +549,7 @@ async def tool_get_case(case_id: str) -> Dict[str, Any]:
             f"SELECT Id, CommentBody, CreatedDate, CreatedById "
             f"FROM CaseComment WHERE ParentId = '{sf_case['Id']}' "
             f"ORDER BY CreatedDate DESC LIMIT 20"
-        )
+        , ctx)
         for c in comment_records:
             comments.append({
                 "id": c.get("Id"),
@@ -650,7 +613,7 @@ async def tool_create_case(
     LOGGER.info("salesforce_create_case", fields=list(payload.keys()))
 
     try:
-        result = await _salesforce_post("/sobjects/Case", payload)
+        result = await _salesforce_post("/sobjects/Case", payload, ctx)
         case_id = result.get("id", "")
 
         # Fetch the created case to return full details including CaseNumber
@@ -659,7 +622,7 @@ async def tool_create_case(
             try:
                 created = await _soql_query(
                     f"SELECT {_CASE_FIELDS} FROM Case WHERE Id = '{case_id}'"
-                )
+                , ctx)
             except Exception:  # noqa: BLE001
                 pass
 
@@ -715,7 +678,7 @@ async def tool_update_case(
     try:
         if payload:
             LOGGER.info("salesforce_update_case", case_id=case_id, fields=list(payload.keys()))
-            await _salesforce_patch(f"/sobjects/Case/{case_id}", payload)
+            await _salesforce_patch(f"/sobjects/Case/{case_id}", payload, ctx)
 
         # Add a case comment if provided
         if comment:
@@ -723,12 +686,12 @@ async def tool_update_case(
             await _salesforce_post(
                 "/sobjects/CaseComment",
                 {"ParentId": case_id, "CommentBody": comment},
-            )
+            , ctx)
 
         # Fetch updated case
         updated = await _soql_query(
             f"SELECT {_CASE_FIELDS} FROM Case WHERE Id = '{case_id}'"
-        )
+        , ctx)
 
         return {
             "success": True,
@@ -755,7 +718,7 @@ async def provider_list_tasks() -> List[Dict[str, Any]]:
         "CreatedDate, OwnerId "
         "FROM Task WHERE IsClosed = false "
         "ORDER BY CreatedDate DESC LIMIT 50"
-    )
+    , ctx)
     # Add browser links for TaskServer widget
     _, instance_url = await _get_salesforce_token()
     for r in records:
@@ -776,7 +739,7 @@ async def provider_list_cases() -> List[Dict[str, Any]]:
         f"SELECT {_CASE_FIELDS} "
         f"FROM Case WHERE IsClosed = false "
         f"ORDER BY CreatedDate DESC LIMIT 50"
-    )
+    , ctx)
     # Add browser links for TaskServer widget
     _, instance_url = await _get_salesforce_token()
     for r in records:
@@ -800,7 +763,7 @@ async def provider_list_approvals() -> List[Dict[str, Any]]:
         "FROM ProcessInstanceWorkitem "
         "WHERE ProcessInstance.Status = 'Pending' "
         "ORDER BY CreatedDate DESC LIMIT 50"
-    )
+    , ctx)
     # Add browser links (to target object) for TaskServer widget
     _, instance_url = await _get_salesforce_token()
     for r in records:
@@ -818,7 +781,7 @@ async def provider_get_approval_detail(item_id: str) -> Dict[str, Any]:
         f"ProcessInstance.TargetObjectId, ProcessInstance.Status, "
         f"ProcessInstance.TargetObject.Name, ProcessInstance.TargetObject.Type "
         f"FROM ProcessInstanceWorkitem WHERE Id = '{item_id}'"
-    )
+    , ctx)
     if not records:
         raise ValueError(f"Salesforce approval work item {item_id} not found")
 
@@ -862,7 +825,7 @@ async def provider_execute_approval(
         ]
     }
 
-    result = await _salesforce_post("/process/approvals", body)
+    result = await _salesforce_post("/process/approvals", body, ctx)
     return {
         "success": True,
         "decision": decision,
@@ -936,7 +899,7 @@ async def tool_list_accounts(
         f"ORDER BY Name ASC "
         f"LIMIT {safe_limit}"
     )
-    records = await _soql_query(query)
+    records = await _soql_query(query, ctx)
     return {
         "total": len(records),
         "accounts": [_simplify_account(r) for r in records],
@@ -967,7 +930,7 @@ async def tool_list_contacts(
         f"ORDER BY LastName ASC, FirstName ASC "
         f"LIMIT {safe_limit}"
     )
-    records = await _soql_query(query)
+    records = await _soql_query(query, ctx)
     return {
         "total": len(records),
         "contacts": [_simplify_contact(r) for r in records],
@@ -1001,7 +964,7 @@ async def tool_list_opportunities(
         f"ORDER BY CloseDate ASC, Amount DESC "
         f"LIMIT {safe_limit}"
     )
-    records = await _soql_query(query)
+    records = await _soql_query(query, ctx)
     return {
         "total": len(records),
         "opportunities": [_simplify_opportunity(r) for r in records],
@@ -1028,7 +991,7 @@ async def tool_get_account_360(
             f"ORDER BY Name ASC LIMIT 1"
         )
 
-    account_records = await _soql_query(account_query)
+    account_records = await _soql_query(account_query, ctx)
     if not account_records:
         raise ValueError("Salesforce account not found")
 
@@ -1039,13 +1002,13 @@ async def tool_get_account_360(
         f"SELECT {_CONTACT_FIELDS} FROM Contact "
         f"WHERE AccountId = '{_sf(resolved_account_id)}' "
         f"ORDER BY LastName ASC, FirstName ASC LIMIT {safe_limit}"
-    )
+    , ctx)
 
     opportunities = await _soql_query(
         f"SELECT {_OPPORTUNITY_FIELDS} FROM Opportunity "
         f"WHERE AccountId = '{_sf(resolved_account_id)}' "
         f"ORDER BY CloseDate DESC, Amount DESC LIMIT {safe_limit}"
-    )
+    , ctx)
 
     opportunity_ids = [o.get("Id") for o in opportunities if o.get("Id")]
     what_ids = [resolved_account_id, *opportunity_ids]
@@ -1058,18 +1021,18 @@ async def tool_get_account_360(
             f"SELECT {_EVENT_FIELDS} FROM Event "
             f"WHERE WhatId IN ({in_clause}) "
             f"ORDER BY StartDateTime DESC LIMIT {safe_limit}"
-        )
+        , ctx)
         tasks = await _soql_query(
             f"SELECT {_TASK_FIELDS} FROM Task "
             f"WHERE WhatId IN ({in_clause}) "
             f"ORDER BY CreatedDate DESC LIMIT {safe_limit}"
-        )
+        , ctx)
 
     cases = await _soql_query(
         f"SELECT {_CASE_FIELDS} FROM Case "
         f"WHERE AccountId = '{_sf(resolved_account_id)}' "
         f"ORDER BY CreatedDate DESC LIMIT {safe_limit}"
-    )
+    , ctx)
 
     open_opps = [o for o in opportunities if not o.get("IsClosed")]
     open_pipeline_amount = sum(float(o.get("Amount") or 0) for o in open_opps)
@@ -1119,7 +1082,7 @@ async def tool_get_pipeline_dashboard(
         f"ORDER BY Amount DESC, CloseDate ASC "
         f"LIMIT {safe_limit}"
     )
-    records = await _soql_query(query)
+    records = await _soql_query(query, ctx)
 
     stage_rollup: Dict[str, Dict[str, Any]] = {}
     total_amount = 0.0
@@ -1223,11 +1186,11 @@ async def tool_create_opportunity(
         payload["Type"] = opportunity_type
 
     try:
-        result = await _salesforce_post("/sobjects/Opportunity", payload)
+        result = await _salesforce_post("/sobjects/Opportunity", payload, ctx)
         opp_id = result.get("id", "")
         created = await _soql_query(
             f"SELECT {_OPPORTUNITY_FIELDS} FROM Opportunity WHERE Id = '{_sf(opp_id)}'"
-        )
+        , ctx)
         _, instance_url = await _get_salesforce_token()
         return {
             "created": True,
@@ -1260,11 +1223,11 @@ async def tool_create_opportunity_task(
         payload["Description"] = description
 
     try:
-        result = await _salesforce_post("/sobjects/Task", payload)
+        result = await _salesforce_post("/sobjects/Task", payload, ctx)
         task_id = result.get("id", "")
         task_records = await _soql_query(
             f"SELECT {_TASK_FIELDS} FROM Task WHERE Id = '{_sf(task_id)}'"
-        )
+        , ctx)
         return {
             "created": True,
             "task": _simplify_task(task_records[0]) if task_records else {"id": task_id},
@@ -1338,11 +1301,11 @@ async def tool_create_event(
         payload["Description"] = description
 
     try:
-        result = await _salesforce_post("/sobjects/Event", payload)
+        result = await _salesforce_post("/sobjects/Event", payload, ctx)
         event_id = result.get("id", "")
         event_records = await _soql_query(
             f"SELECT {_EVENT_FIELDS} FROM Event WHERE Id = '{_sf(event_id)}'"
-        )
+        , ctx)
         return {
             "created": True,
             "event": _simplify_event(event_records[0]) if event_records else {"id": event_id},

@@ -1,6 +1,3 @@
 """Authentication helpers for MCP servers."""
-
-from .entra import EntraTokenValidator, TokenValidationError
-from .tokens import WorkdayTokenProvider
-
-__all__ = ["EntraTokenValidator", "TokenValidationError", "WorkdayTokenProvider"]
+from .entra import get_bearer_token, TokenValidationError
+__all__ = ["get_bearer_token", "TokenValidationError"]
