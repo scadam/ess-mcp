@@ -2275,6 +2275,662 @@ async def tool_search_reference_values(
     }
 
 
+# ── Change Request fields ────────────────────────────────────────────
+_CHANGE_REQUEST_FIELDS = ",".join(
+    [
+        "sys_id",
+        "number",
+        "short_description",
+        "type",
+        "state",
+        "risk",
+        "impact",
+        "category",
+        "assignment_group",
+        "assigned_to",
+        "planned_start_date",
+        "planned_end_date",
+    ]
+)
+
+# ── Knowledge article fields ────────────────────────────────────────
+_KB_FIELDS = ",".join(
+    [
+        "sys_id",
+        "number",
+        "short_description",
+        "text",
+        "category",
+        "published",
+        "author",
+    ]
+)
+
+# ── Problem record fields ───────────────────────────────────────────
+_PROBLEM_FIELDS = ",".join(
+    [
+        "sys_id",
+        "number",
+        "short_description",
+        "state",
+        "priority",
+        "category",
+        "assigned_to",
+    ]
+)
+
+# ── CMDB CI fields ──────────────────────────────────────────────────
+_CMDB_CI_FIELDS = ",".join(
+    [
+        "sys_id",
+        "name",
+        "asset_tag",
+        "sys_class_name",
+        "category",
+        "subcategory",
+        "operational_status",
+        "assigned_to",
+        "support_group",
+        "short_description",
+    ]
+)
+
+
+async def tool_list_change_requests(
+    search_text: Optional[str] = None,
+    state: Optional[str] = None,
+    risk: Optional[str] = None,
+    category: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    limit: int = 10,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Search and list ServiceNow change requests.
+
+    All filter parameters are optional; when none are provided the most recent
+    change requests are returned.
+
+    Args:
+        search_text: Free-text search across number, short_description.
+        state: Filter by state (e.g. New, Assess, Authorize, Scheduled,
+            Implement, Review, Closed, Canceled).
+        risk: Filter by risk level (e.g. high, moderate, low).
+        category: Filter by category.
+        assigned_to: Filter by display name of the assigned user.
+        limit: Maximum number of results to return (default 10, max 100).
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    clauses: List[str] = []
+    if search_text:
+        clauses.append(
+            f"short_descriptionLIKE{search_text}"
+            f"^ORnumberLIKE{search_text}"
+        )
+    if state:
+        clauses.append(f"state={state}")
+    if risk:
+        clauses.append(f"risk={risk}")
+    if category:
+        clauses.append(f"category={category}")
+    if assigned_to:
+        clauses.append(f"assigned_to.name={assigned_to}")
+
+    query = "^".join(clauses)
+    safe_limit = max(1, min(int(limit), 100))
+
+    params: Dict[str, Any] = {
+        "sysparm_limit": safe_limit,
+        "sysparm_fields": _CHANGE_REQUEST_FIELDS,
+        "sysparm_display_value": "all",
+        "sysparm_exclude_reference_link": "true",
+        "sysparm_orderby": "sys_updated_on",
+        "sysparm_orderbydesc": "sys_updated_on",
+    }
+    if query:
+        params["sysparm_query"] = query
+
+    url = f"{settings.instance_url}/api/now/table/change_request"
+
+    LOGGER.info("servicenow_list_change_requests", query=query, limit=safe_limit)
+
+    async with create_async_client() as client:
+        resp = await client.get(
+            url,
+            params=params,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        body = resp.json()
+
+    changes = []
+    for raw in body.get("result", []):
+        changes.append({k: _dv(raw.get(k)) for k in _CHANGE_REQUEST_FIELDS.split(",")})
+
+    return {
+        "total_returned": len(changes),
+        "change_requests": changes,
+    }
+
+
+async def tool_get_change_request(
+    sys_id: str,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Retrieve full details of a single ServiceNow change request.
+
+    Args:
+        sys_id: The sys_id of the change request.
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    url = f"{settings.instance_url}/api/now/table/change_request/{sys_id}"
+    params: Dict[str, Any] = {
+        "sysparm_display_value": "all",
+        "sysparm_exclude_reference_link": "true",
+    }
+
+    LOGGER.info("servicenow_get_change_request", sys_id=sys_id)
+
+    async with create_async_client() as client:
+        resp = await client.get(
+            url,
+            params=params,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        body = resp.json()
+
+    raw = body.get("result", {})
+    record = {k: _dv(raw.get(k)) for k in _CHANGE_REQUEST_FIELDS.split(",")}
+
+    return {
+        "change_request": record,
+        "link": f"{settings.instance_url}/nav_to.do?uri=change_request.do?sys_id={sys_id}",
+    }
+
+
+async def tool_create_change_request(
+    short_description: str,
+    type: Optional[str] = None,
+    category: Optional[str] = None,
+    risk: Optional[str] = None,
+    impact: Optional[str] = None,
+    assignment_group: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    description: Optional[str] = None,
+    planned_start_date: Optional[str] = None,
+    planned_end_date: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Create a new ServiceNow change request.
+
+    Args:
+        short_description: Brief summary of the change (required).
+        type: Change type – Normal, Standard, or Emergency.
+        category: Category for the change.
+        risk: Risk level (e.g. high, moderate, low).
+        impact: Impact level (1 = High, 2 = Medium, 3 = Low).
+        assignment_group: Name of the assignment group.
+        assigned_to: Display name of the assignee.
+        description: Detailed description of the change.
+        planned_start_date: Planned start date/time (ISO 8601 or ServiceNow format).
+        planned_end_date: Planned end date/time (ISO 8601 or ServiceNow format).
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    payload: Dict[str, Any] = {"short_description": short_description}
+    _optional: Dict[str, Optional[str]] = {
+        "type": type,
+        "category": category,
+        "risk": risk,
+        "impact": impact,
+        "assignment_group": assignment_group,
+        "assigned_to": assigned_to,
+        "description": description,
+        "start_date": planned_start_date,
+        "end_date": planned_end_date,
+    }
+    for field, value in _optional.items():
+        if value is not None and value != "":
+            payload[field] = value
+
+    url = f"{settings.instance_url}/api/now/table/change_request"
+
+    LOGGER.info("servicenow_create_change_request", fields=list(payload.keys()))
+
+    try:
+        async with create_async_client(timeout=60.0) as client:
+            resp = await client.post(
+                url,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+            if resp.is_error:
+                LOGGER.error(
+                    "servicenow_create_change_request_http_error",
+                    status=resp.status_code,
+                    body=resp.text[:1000],
+                )
+                resp.raise_for_status()
+            body = resp.json()
+    except Exception as exc:
+        LOGGER.error("servicenow_create_change_request_error", error=str(exc), exc_info=True)
+        return {"created": False, "error": f"Failed to create change request: {exc}"}
+
+    created = body.get("result", {})
+
+    return {
+        "created": True,
+        "number": created.get("number"),
+        "sys_id": created.get("sys_id"),
+        "short_description": created.get("short_description"),
+        "type": created.get("type"),
+        "state": created.get("state"),
+        "risk": created.get("risk"),
+        "link": f"{settings.instance_url}/nav_to.do?uri=change_request.do?sys_id={created.get('sys_id')}",
+    }
+
+
+async def tool_search_knowledge(
+    search_text: Optional[str] = None,
+    category: Optional[str] = None,
+    limit: int = 10,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Search the ServiceNow knowledge base for articles.
+
+    Args:
+        search_text: Free-text search across article title and body.
+        category: Filter by knowledge category.
+        limit: Maximum number of articles to return (default 10, max 100).
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    clauses: List[str] = []
+    if search_text:
+        clauses.append(
+            f"short_descriptionLIKE{search_text}"
+            f"^ORtextLIKE{search_text}"
+        )
+    if category:
+        clauses.append(f"category={category}")
+    # Only return published articles by default
+    clauses.append("workflow_state=published")
+
+    query = "^".join(clauses)
+    safe_limit = max(1, min(int(limit), 100))
+
+    params: Dict[str, Any] = {
+        "sysparm_limit": safe_limit,
+        "sysparm_fields": _KB_FIELDS,
+        "sysparm_display_value": "all",
+        "sysparm_exclude_reference_link": "true",
+        "sysparm_orderby": "sys_updated_on",
+        "sysparm_orderbydesc": "sys_updated_on",
+    }
+    if query:
+        params["sysparm_query"] = query
+
+    url = f"{settings.instance_url}/api/now/table/kb_knowledge"
+
+    LOGGER.info("servicenow_search_knowledge", query=query, limit=safe_limit)
+
+    async with create_async_client() as client:
+        resp = await client.get(
+            url,
+            params=params,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        body = resp.json()
+
+    articles = []
+    for raw in body.get("result", []):
+        articles.append({k: _dv(raw.get(k)) for k in _KB_FIELDS.split(",")})
+
+    return {
+        "total_returned": len(articles),
+        "articles": articles,
+    }
+
+
+async def tool_get_knowledge_article(
+    sys_id: str,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Retrieve a single knowledge article by its sys_id.
+
+    Args:
+        sys_id: The sys_id of the knowledge article.
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    url = f"{settings.instance_url}/api/now/table/kb_knowledge/{sys_id}"
+    params: Dict[str, Any] = {
+        "sysparm_display_value": "all",
+        "sysparm_exclude_reference_link": "true",
+    }
+
+    LOGGER.info("servicenow_get_knowledge_article", sys_id=sys_id)
+
+    async with create_async_client() as client:
+        resp = await client.get(
+            url,
+            params=params,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        body = resp.json()
+
+    raw = body.get("result", {})
+    article = {k: _dv(raw.get(k)) for k in _KB_FIELDS.split(",")}
+
+    return {
+        "article": article,
+        "link": f"{settings.instance_url}/nav_to.do?uri=kb_knowledge.do?sys_id={sys_id}",
+    }
+
+
+async def tool_list_problems(
+    search_text: Optional[str] = None,
+    state: Optional[str] = None,
+    priority: Optional[str] = None,
+    category: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    limit: int = 10,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Search and list ServiceNow problem records.
+
+    All filter parameters are optional; when none are provided the most recent
+    problems are returned.
+
+    Args:
+        search_text: Free-text search across number and short_description.
+        state: Filter by state.
+        priority: Filter by priority (1 = Critical … 5 = Planning).
+        category: Filter by category.
+        assigned_to: Filter by display name of the assigned user.
+        limit: Maximum number of results to return (default 10, max 100).
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    clauses: List[str] = []
+    if search_text:
+        clauses.append(
+            f"short_descriptionLIKE{search_text}"
+            f"^ORnumberLIKE{search_text}"
+        )
+    if state:
+        clauses.append(f"state={state}")
+    if priority:
+        clauses.append(f"priority={priority}")
+    if category:
+        clauses.append(f"category={category}")
+    if assigned_to:
+        clauses.append(f"assigned_to.name={assigned_to}")
+
+    query = "^".join(clauses)
+    safe_limit = max(1, min(int(limit), 100))
+
+    params: Dict[str, Any] = {
+        "sysparm_limit": safe_limit,
+        "sysparm_fields": _PROBLEM_FIELDS,
+        "sysparm_display_value": "all",
+        "sysparm_exclude_reference_link": "true",
+        "sysparm_orderby": "sys_updated_on",
+        "sysparm_orderbydesc": "sys_updated_on",
+    }
+    if query:
+        params["sysparm_query"] = query
+
+    url = f"{settings.instance_url}/api/now/table/problem"
+
+    LOGGER.info("servicenow_list_problems", query=query, limit=safe_limit)
+
+    async with create_async_client() as client:
+        resp = await client.get(
+            url,
+            params=params,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        body = resp.json()
+
+    problems = []
+    for raw in body.get("result", []):
+        problems.append({k: _dv(raw.get(k)) for k in _PROBLEM_FIELDS.split(",")})
+
+    return {
+        "total_returned": len(problems),
+        "problems": problems,
+    }
+
+
+async def tool_create_problem(
+    short_description: str,
+    category: Optional[str] = None,
+    priority: Optional[str] = None,
+    assignment_group: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    description: Optional[str] = None,
+    impact: Optional[str] = None,
+    urgency: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Create a new ServiceNow problem record.
+
+    Args:
+        short_description: Brief summary of the problem (required).
+        category: Category for the problem.
+        priority: Priority level (1 = Critical … 5 = Planning).
+        assignment_group: Name of the assignment group.
+        assigned_to: Display name of the assignee.
+        description: Detailed description of the problem.
+        impact: Impact level (1 = High, 2 = Medium, 3 = Low).
+        urgency: Urgency level (1 = High, 2 = Medium, 3 = Low).
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    payload: Dict[str, Any] = {"short_description": short_description}
+    _optional: Dict[str, Optional[str]] = {
+        "category": category,
+        "priority": priority,
+        "assignment_group": assignment_group,
+        "assigned_to": assigned_to,
+        "description": description,
+        "impact": impact,
+        "urgency": urgency,
+    }
+    for field, value in _optional.items():
+        if value is not None and value != "":
+            payload[field] = value
+
+    url = f"{settings.instance_url}/api/now/table/problem"
+
+    LOGGER.info("servicenow_create_problem", fields=list(payload.keys()))
+
+    try:
+        async with create_async_client(timeout=60.0) as client:
+            resp = await client.post(
+                url,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+            if resp.is_error:
+                LOGGER.error(
+                    "servicenow_create_problem_http_error",
+                    status=resp.status_code,
+                    body=resp.text[:1000],
+                )
+                resp.raise_for_status()
+            body = resp.json()
+    except Exception as exc:
+        LOGGER.error("servicenow_create_problem_error", error=str(exc), exc_info=True)
+        return {"created": False, "error": f"Failed to create problem: {exc}"}
+
+    created = body.get("result", {})
+
+    return {
+        "created": True,
+        "number": created.get("number"),
+        "sys_id": created.get("sys_id"),
+        "short_description": created.get("short_description"),
+        "state": created.get("state"),
+        "priority": created.get("priority"),
+        "link": f"{settings.instance_url}/nav_to.do?uri=problem.do?sys_id={created.get('sys_id')}",
+    }
+
+
+async def tool_get_cmdb_ci(
+    sys_id: str,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Retrieve a CMDB Configuration Item by its sys_id.
+
+    Args:
+        sys_id: The sys_id of the configuration item.
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    url = f"{settings.instance_url}/api/now/table/cmdb_ci/{sys_id}"
+    params: Dict[str, Any] = {
+        "sysparm_display_value": "all",
+        "sysparm_exclude_reference_link": "true",
+    }
+
+    LOGGER.info("servicenow_get_cmdb_ci", sys_id=sys_id)
+
+    async with create_async_client() as client:
+        resp = await client.get(
+            url,
+            params=params,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        body = resp.json()
+
+    raw = body.get("result", {})
+    ci = {k: _dv(raw.get(k)) for k in _CMDB_CI_FIELDS.split(",")}
+
+    return {
+        "ci": ci,
+        "link": f"{settings.instance_url}/nav_to.do?uri=cmdb_ci.do?sys_id={sys_id}",
+    }
+
+
+async def tool_list_cmdb_cis(
+    search_text: Optional[str] = None,
+    sys_class_name: Optional[str] = None,
+    category: Optional[str] = None,
+    operational_status: Optional[str] = None,
+    limit: int = 10,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Search CMDB configuration items.
+
+    All filter parameters are optional; when none are provided the most recent
+    CIs are returned.
+
+    Args:
+        search_text: Free-text search across name and short_description.
+        sys_class_name: Filter by CI class (e.g. cmdb_ci_server,
+            cmdb_ci_computer, cmdb_ci_vm_instance).
+        category: Filter by category.
+        operational_status: Filter by operational status (1 = Operational,
+            2 = Non-Operational, etc.).
+        limit: Maximum number of results to return (default 10, max 100).
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    clauses: List[str] = []
+    if search_text:
+        clauses.append(
+            f"nameLIKE{search_text}"
+            f"^ORshort_descriptionLIKE{search_text}"
+        )
+    if sys_class_name:
+        clauses.append(f"sys_class_name={sys_class_name}")
+    if category:
+        clauses.append(f"category={category}")
+    if operational_status:
+        clauses.append(f"operational_status={operational_status}")
+
+    query = "^".join(clauses)
+    safe_limit = max(1, min(int(limit), 100))
+
+    params: Dict[str, Any] = {
+        "sysparm_limit": safe_limit,
+        "sysparm_fields": _CMDB_CI_FIELDS,
+        "sysparm_display_value": "all",
+        "sysparm_exclude_reference_link": "true",
+        "sysparm_orderby": "name",
+    }
+    if query:
+        params["sysparm_query"] = query
+
+    url = f"{settings.instance_url}/api/now/table/cmdb_ci"
+
+    LOGGER.info("servicenow_list_cmdb_cis", query=query, limit=safe_limit)
+
+    async with create_async_client() as client:
+        resp = await client.get(
+            url,
+            params=params,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        body = resp.json()
+
+    cis = []
+    for raw in body.get("result", []):
+        cis.append({k: _dv(raw.get(k)) for k in _CMDB_CI_FIELDS.split(",")})
+
+    return {
+        "total_returned": len(cis),
+        "configuration_items": cis,
+    }
+
+
 # ── Service Catalog tool specs (appended after definitions) ──────────
 SERVICENOW_TOOL_SPECS.extend(
     [
@@ -2425,6 +3081,120 @@ SERVICENOW_TOOL_SPECS.extend(
                 "records with sys_id and display value."
             ),
             "func": tool_search_reference_values,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+        },
+    ]
+)
+
+
+# ── Change Request, Knowledge, Problem, CMDB tool specs ──────────────
+SERVICENOW_TOOL_SPECS.extend(
+    [
+        {
+            "name": "list_change_requests",
+            "summary": (
+                "Search and list ServiceNow change requests. Supports filtering "
+                "by free-text search, state, risk level, category, and assigned "
+                "user. Returns up to 100 change requests per call."
+            ),
+            "func": tool_list_change_requests,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+        },
+        {
+            "name": "get_change_request",
+            "summary": (
+                "Retrieve full details of a single ServiceNow change request "
+                "by its sys_id."
+            ),
+            "func": tool_get_change_request,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+        },
+        {
+            "name": "create_change_request",
+            "summary": (
+                "Create a new ServiceNow change request. Requires a short "
+                "description; optionally set type (Normal, Standard, Emergency), "
+                "category, risk, impact, assignment group, and planned dates."
+            ),
+            "func": tool_create_change_request,
+            "annotations": {
+                "readOnlyHint": False,
+            },
+        },
+        {
+            "name": "search_knowledge",
+            "summary": (
+                "Search the ServiceNow knowledge base for published articles. "
+                "Supports free-text search across article titles and body text, "
+                "and optional category filtering."
+            ),
+            "func": tool_search_knowledge,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+        },
+        {
+            "name": "get_knowledge_article",
+            "summary": (
+                "Retrieve a single ServiceNow knowledge article by its sys_id. "
+                "Returns the full article text, category, author, and publish "
+                "status."
+            ),
+            "func": tool_get_knowledge_article,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+        },
+        {
+            "name": "list_problems",
+            "summary": (
+                "Search and list ServiceNow problem records. Supports filtering "
+                "by free-text search, state, priority, category, and assigned "
+                "user. Returns up to 100 problems per call."
+            ),
+            "func": tool_list_problems,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+        },
+        {
+            "name": "create_problem",
+            "summary": (
+                "Create a new ServiceNow problem record. Requires a short "
+                "description; optionally set category, priority, assignment "
+                "group, description, impact, and urgency."
+            ),
+            "func": tool_create_problem,
+            "annotations": {
+                "readOnlyHint": False,
+            },
+        },
+        {
+            "name": "get_cmdb_ci",
+            "summary": (
+                "Retrieve a CMDB configuration item by its sys_id. Returns "
+                "name, class, category, operational status, and assignment "
+                "details."
+            ),
+            "func": tool_get_cmdb_ci,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+        },
+        {
+            "name": "list_cmdb_cis",
+            "summary": (
+                "Search CMDB configuration items. Supports free-text search "
+                "across name and description, and filtering by CI class, "
+                "category, and operational status."
+            ),
+            "func": tool_list_cmdb_cis,
             "annotations": {
                 "readOnlyHint": True,
             },
