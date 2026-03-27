@@ -308,7 +308,7 @@ async def tool_transition_issue(
 ) -> Dict[str, Any]:
     """Transition a Jira issue to a new status.
 
-    Issue transitions require transition ID lookup (impl notes §6).
+    Issue transitions require transition ID lookup (impl notes S6).
     Use ``get_issue`` first to see available transitions and their IDs.
 
     Args:
@@ -386,7 +386,7 @@ async def tool_create_project(
     LOGGER.info("jira_create_project", name=name, key=key)
 
     try:
-        # Resolve lead account ID — default to the authenticated user
+        # Resolve lead account ID -- default to the authenticated user
         if not lead_account_id:
             me = await _jira_get("/myself", ctx)
             lead_account_id = me.get("accountId")
@@ -452,9 +452,9 @@ async def tool_create_issue(
     Args:
         project_key: Project key (e.g. "PROJ").
         summary: Issue summary / title.
-        issue_type: Issue type name — "Task", "Bug", "Story", "Epic" (default "Task").
+        issue_type: Issue type name -- "Task", "Bug", "Story", "Epic" (default "Task").
         description: Plain text description (converted to ADF automatically).
-        priority: Priority name — "Highest", "High", "Medium", "Low", "Lowest".
+        priority: Priority name -- "Highest", "High", "Medium", "Low", "Lowest".
         assignee_account_id: Atlassian account ID to assign. Omit for unassigned.
         labels: Optional list of labels to apply.
     """
@@ -559,7 +559,7 @@ async def tool_list_boards(
 
     Args:
         project_key: Filter boards by project key (e.g. "PROJ").
-        board_type: Filter by board type — "scrum", "kanban", or "simple".
+        board_type: Filter by board type -- "scrum", "kanban", or "simple".
         limit: Maximum results (default 50, max 100).
     """
     LOGGER.info("jira_list_boards", project_key=project_key, board_type=board_type)
@@ -626,7 +626,7 @@ async def tool_list_sprints(
 
     Args:
         board_id: The numeric ID of the agile board.
-        state: Filter by sprint state — "active", "future", or "closed".
+        state: Filter by sprint state -- "active", "future", or "closed".
         limit: Maximum results (default 50, max 100).
     """
     LOGGER.info("jira_list_sprints", board_id=board_id, state=state)
@@ -783,7 +783,7 @@ async def tool_get_my_issues(
     limit: int = 20,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
-    """Get issues assigned to the current user — a quick 'my work' view.
+    """Get issues assigned to the current user -- a quick 'my work' view.
 
     Args:
         limit: Maximum results (default 20, max 100).
@@ -865,7 +865,7 @@ async def tool_show_create_issue_form(
     """Show the Jira issue creation form widget.
 
     Returns pre-fill data so the widget can populate the form.  The user
-    completes and submits the form inside the widget — this tool does not
+    completes and submits the form inside the widget -- this tool does not
     create the issue directly.
 
     Args:
@@ -902,7 +902,7 @@ async def tool_show_create_project_form(
     """Show the Jira project creation form widget.
 
     Returns pre-fill data so the widget can populate the form.  The user
-    completes and submits the form inside the widget — this tool does not
+    completes and submits the form inside the widget -- this tool does not
     create the project directly.
 
     Args:
@@ -1080,7 +1080,7 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "get_backlog",
         "func": tool_get_backlog,
         "summary": (
-            "Get backlog issues for an agile board — items not yet assigned to a sprint."
+            "Get backlog issues for an agile board -- items not yet assigned to a sprint."
         ),
         "annotations": {"readOnlyHint": True},
     },
@@ -1105,7 +1105,7 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "get_my_issues",
         "func": tool_get_my_issues,
         "summary": (
-            "Get unresolved issues assigned to the current user — "
+            "Get unresolved issues assigned to the current user -- "
             "a quick 'my work' view sorted by last updated."
         ),
         "annotations": {"readOnlyHint": True},

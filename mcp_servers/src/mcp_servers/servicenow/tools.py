@@ -160,7 +160,7 @@ async def tool_list_incidents(
         category: Filter by category (e.g. inquiry, software, hardware, network).
         state: Filter by state name: new, in_progress, on_hold, resolved, closed,
             or canceled.
-        priority: Filter by priority (1 = Critical … 5 = Planning).
+        priority: Filter by priority (1 = Critical ... 5 = Planning).
         assigned_to: Filter by the display name of the assigned user.
         active: Filter by active status (true or false).
         limit: Maximum number of incidents to return (default 10, max 100).
@@ -415,7 +415,7 @@ async def tool_update_incident(
 ) -> dict:
     """Update an existing ServiceNow incident.
 
-    Only the *number* is required — include only the fields you want to change.
+    Only the *number* is required -- include only the fields you want to change.
     To add a customer-visible comment use *comments*; for an internal note use
     *work_notes*.  The response returns the updated incident record and its
     full comment/work-note journal so the user can see the conversation history.
@@ -455,7 +455,7 @@ async def tool_update_incident(
     if isinstance(sys_id, dict):
         sys_id = sys_id.get("value", sys_id.get("display_value"))
 
-    # Build PATCH payload — only include fields that were explicitly provided
+    # Build PATCH payload -- only include fields that were explicitly provided
     payload: Dict[str, Any] = {}
 
     _field_map: Dict[str, Optional[str]] = {
@@ -480,13 +480,13 @@ async def tool_update_incident(
         if value is not None and value != "":
             payload[field] = value
 
-    # Handle state separately — accept friendly names
+    # Handle state separately -- accept friendly names
     if state:
         code = _STATE_MAP.get(state.lower().strip(), state)
         payload["state"] = code
 
     if not payload:
-        # Nothing to update — just return current state + journal
+        # Nothing to update -- just return current state + journal
         incident = _simplify_incident(raw)
         journal = await _fetch_journal(sys_id, token, settings.instance_url)
         return {
@@ -597,7 +597,7 @@ async def tool_create_incident(
     settings = load_servicenow_settings()
     token = get_bearer_token(ctx)
 
-    # Build the payload — caller_id resolved inside the try block below
+    # Build the payload -- caller_id resolved inside the try block below
     payload: Dict[str, Any] = {
         "short_description": short_description,
     }
@@ -944,7 +944,7 @@ async def tool_show_create_incident_form(
     """Show the create-incident form widget.
 
     Returns pre-fill data so the widget can populate the form.  The user
-    completes and submits the form inside the widget — this tool does not
+    completes and submits the form inside the widget -- this tool does not
     create the incident directly.
 
     Args:
@@ -983,7 +983,7 @@ async def tool_show_update_incident_form(
 
     Retrieves the current state of the incident and renders the update form
     pre-populated with existing values.  The user edits fields and clicks
-    Submit inside the widget — this tool does not modify the incident.
+    Submit inside the widget -- this tool does not modify the incident.
 
     Args:
         number: The incident number to load (e.g. INC0010006).
@@ -1177,7 +1177,7 @@ _APPROVAL_FIELDS = ",".join(
 async def provider_list_tasks(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """List ServiceNow 'My work' tasks from the task table.
 
-    Spans multiple tables extending ``task`` (impl notes §4).
+    Spans multiple tables extending ``task`` (impl notes S4).
     Returns raw ServiceNow data for TaskServer normalization.
     """
     try:
@@ -1234,7 +1234,7 @@ async def provider_list_approvals(ctx: Optional[Context] = None) -> List[Dict[st
     """List ServiceNow approvals from sysapproval_approver table.
 
     Approval updates may fail due to dictionary read-only flags or
-    field-level ACLs (impl notes §4).
+    field-level ACLs (impl notes S4).
     """
     try:
         settings = load_servicenow_settings()
@@ -1390,7 +1390,7 @@ async def tool_list_catalog_items(
     endpoint is used because it honours catalog/category path parameters.
 
     The sysparm_search / sysparm_text_search full-text parameters are
-    intentionally NOT used — they trigger a slow server-side catalog scan
+    intentionally NOT used -- they trigger a slow server-side catalog scan
     that reliably exceeds the 30-second request timeout on large instances.
 
     Each returned item includes a sys_id that can be passed directly to
@@ -2670,7 +2670,7 @@ async def tool_list_problems(
     Args:
         search_text: Free-text search across number and short_description.
         state: Filter by state.
-        priority: Filter by priority (1 = Critical … 5 = Planning).
+        priority: Filter by priority (1 = Critical ... 5 = Planning).
         category: Filter by category.
         assigned_to: Filter by display name of the assigned user.
         limit: Maximum number of results to return (default 10, max 100).
@@ -2749,7 +2749,7 @@ async def tool_create_problem(
     Args:
         short_description: Brief summary of the problem (required).
         category: Category for the problem.
-        priority: Priority level (1 = Critical … 5 = Planning).
+        priority: Priority level (1 = Critical ... 5 = Planning).
         assignment_group: Name of the assignment group.
         assigned_to: Display name of the assignee.
         description: Detailed description of the problem.
@@ -2939,7 +2939,7 @@ SERVICENOW_TOOL_SPECS.extend(
             "summary": (
                 "Search and list items from the ServiceNow Service Catalog. "
                 "When a search term is provided, uses the Table API with server-side LIKE "
-                "filtering on name and short_description — faster and more complete than "
+                "filtering on name and short_description -- faster and more complete than "
                 "a page-then-filter approach. "
                 "Supports filtering by category_sys_id or catalog_sys_id. "
                 "Each result includes a sys_id that can be passed directly to "

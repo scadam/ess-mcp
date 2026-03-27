@@ -201,7 +201,7 @@ async def tool_get_direct_reports(ctx: Optional[Context] = None) -> Dict:
     return _tool_response("List direct reports for the current worker.", payload)
 
 
-# Workday implementation tenant UI base — derived from the API host pattern.
+# Workday implementation tenant UI base -- derived from the API host pattern.
 # wd2-impl-services1.workday.com -> impl.workday.com/{tenant}
 _WORKDAY_TENANT = "microsoft_dpt6"
 _WORKDAY_UI_BASE = f"https://impl.workday.com/{_WORKDAY_TENANT}"
@@ -692,7 +692,7 @@ async def provider_list_tasks(ctx=None) -> List[Dict[str, Any]]:
     """List Workday inbox tasks that are NOT approvals.
 
     Returns raw inbox task data for TaskServer normalization.
-    Non-approval inbox tasks are regular tasks (impl notes §3).
+    Non-approval inbox tasks are regular tasks (impl notes S3).
     """
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
@@ -709,7 +709,7 @@ async def provider_list_approvals(ctx=None) -> List[Dict[str, Any]]:
     """List Workday inbox tasks where stepType is Approval.
 
     Only inbox tasks with stepType == "Approval" are approvable
-    (impl notes §3).
+    (impl notes S3).
     """
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
@@ -763,7 +763,7 @@ async def provider_execute_approval(
     """Approve or reject a Workday inbox task.
 
     Only works for tasks with stepType == Approval.  Approve/reject APIs
-    will fail if stepType is not Approval (impl notes §3).
+    will fail if stepType is not Approval (impl notes S3).
     """
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     action = "approve" if decision == "approve" else "deny"
@@ -1029,7 +1029,7 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "openai/toolInvocation/invoked": "Worker profile ready.",
         },
     },
-    {"name": "get_leave_balances", "func": tool_get_leave_balances, "summary": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id — use this ID as timeOffTypeId when calling prepare_request_leave."},
+    {"name": "get_leave_balances", "func": tool_get_leave_balances, "summary": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave."},
     {"name": "get_direct_reports", "func": tool_get_direct_reports, "summary": "List direct reports for the current worker."},
     {"name": "get_inbox_tasks", "func": tool_get_inbox_tasks, "summary": "List Workday inbox tasks for the current worker."},
     {

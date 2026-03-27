@@ -1,5 +1,4 @@
-
-Provides task listing, approval management, and CRUD operations against
+"""Provides task listing, approval management, and CRUD operations against
 the Salesforce REST API using OAuth bearer token passthrough.
 """
 
@@ -229,7 +228,7 @@ async def tool_list_approvals(
 ) -> Dict[str, Any]:
     """List Salesforce approval work items (pending approvals).
 
-    Approval work items are ``ProcessInstanceWorkitem`` (impl notes §5).
+    Approval work items are ``ProcessInstanceWorkitem``.
     Approval comments are not the same as Task comments.
 
     Args:
@@ -269,7 +268,7 @@ async def tool_approve_reject(
 ) -> Dict[str, Any]:
     """Approve or reject a Salesforce approval work item.
 
-    Uses the Process Approvals API (impl notes §5).
+    Uses the Process Approvals API.
 
     Args:
         work_item_id: The ProcessInstanceWorkitem ID.
@@ -704,7 +703,8 @@ async def tool_update_case(
             await _salesforce_post(
                 "/sobjects/CaseComment",
                 {"ParentId": case_id, "CommentBody": comment},
-            , ctx)
+                ctx,
+            )
 
         # Fetch updated case
         updated = await _soql_query(
@@ -863,7 +863,7 @@ async def tool_show_compliance_case_form(
     """Show the compliance case creation form widget.
 
     Returns pre-fill data so the widget can populate the form.  The user
-    completes and submits the form inside the widget — this tool does not
+    completes and submits the form inside the widget -- this tool does not
     create the case directly.
 
     Args:
@@ -994,7 +994,7 @@ async def tool_get_account_360(
     account_name: Optional[str] = None,
     section_limit: int = 12,
 ) -> Dict[str, Any]:
-    """Get a 360° account view with contacts, opportunities, activities, cases, and tasks."""
+    """Get a 360-degree account view with contacts, opportunities, activities, cases, and tasks."""
     if not account_id and not account_name:
         raise ValueError("Provide account_id or account_name")
 
@@ -2019,13 +2019,13 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "get_account_360",
         "func": tool_get_account_360,
         "summary": (
-            "Get a 360° account view including contacts, opportunities, events, tasks, and cases."
+            "Get a 360-degree account view including contacts, opportunities, events, tasks, and cases."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/crm-account-360.html",
-            "openai/toolInvocation/invoking": "Loading account 360° view\u2026",
-            "openai/toolInvocation/invoked": "Account 360° view ready.",
+            "openai/toolInvocation/invoking": "Loading account 360-degree view\u2026",
+            "openai/toolInvocation/invoked": "Account 360-degree view ready.",
         },
     },
     {
