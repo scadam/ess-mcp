@@ -14,12 +14,12 @@
         --border: #1f2630;
         --card-border: #2a3442;
         --card-shadow: rgba(0,0,0,.3);
-        --card-glow: rgba(76,194,255,.16);
+        --card-glow: rgba(246,141,40,.16);
         --btn-bg: #152235;
         --btn-border: #243145;
         --error-color: #ff6b6b;
-        --wd-accent: #f68620;
-        --wd-glow: rgba(246,134,32,.12);
+        --wd-accent: #f68d28;
+        --wd-glow: rgba(246,141,40,.14);
       }
       :root[data-theme="light"] {
           --bg: #f5f5f5;
@@ -30,12 +30,12 @@
           --border: #e0e0e0;
           --card-border: #d0d0d0;
           --card-shadow: rgba(0,0,0,.08);
-          --card-glow: rgba(0,120,212,.08);
+          --card-glow: rgba(212,116,24,.08);
           --btn-bg: #f0f0f0;
           --btn-border: #d0d0d0;
           --error-color: #d13438;
-          --wd-accent: #c2670d;
-          --wd-glow: rgba(194,103,13,.08);
+          --wd-accent: #d47418;
+          --wd-glow: rgba(212,116,24,.08);
       }
       html, body { height: 100%; background: var(--bg); }
       body {
@@ -68,7 +68,7 @@
       .identity { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
       .avatar {
         width: 52px; height: 52px; border-radius: 50%;
-        background: linear-gradient(135deg, var(--accent), #6366f1);
+        background: linear-gradient(135deg, var(--wd-accent), #e85d04);
         display: flex; align-items: center; justify-content: center;
         font-weight: 700; font-size: 18px; color: #fff;
         flex-shrink: 0;
@@ -106,7 +106,7 @@
         display: flex; align-items: center; justify-content: center;
         transition: color .15s, border-color .15s;
       }
-      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+      .maximize-btn:hover { color: var(--wd-accent); border-color: var(--wd-accent); }
     </style>
   </head>
   <body>

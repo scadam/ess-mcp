@@ -1,0 +1,126 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})();</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --btn-bg: #152235; --btn-border: #243145; --wd-accent: #f68d28; --wd-glow: rgba(246,141,40,.14); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --wd-accent: #d47418; --wd-glow: rgba(212,116,24,.08); }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .wd-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--wd-glow); border: 1px solid var(--wd-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+      .section-label { font-size: 11px; color: var(--wd-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .org-tree { display: flex; flex-direction: column; align-items: center; gap: 0; }
+      .org-node { display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; min-width: 200px; max-width: 320px; position: relative; }
+      .org-node.current { border-color: var(--wd-accent); background: var(--wd-glow); }
+      .org-node.manager { border-color: var(--accent); }
+      .org-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
+      .org-avatar.mgr { background: linear-gradient(135deg, var(--accent), #6366f1); }
+      .org-avatar.self { background: linear-gradient(135deg, var(--wd-accent), #e85d04); }
+      .org-avatar.report { background: linear-gradient(135deg, var(--pos), #059669); }
+      .org-name { font-size: 13px; font-weight: 600; }
+      .org-title { font-size: 11px; color: var(--muted); margin-top: 1px; }
+      .org-badge { font-size: 9px; color: var(--wd-accent); text-transform: uppercase; font-weight: 700; letter-spacing: .5px; margin-top: 2px; }
+      .connector { width: 2px; height: 16px; background: var(--border); }
+      .connector-h { display: flex; align-items: center; justify-content: center; position: relative; width: 100%; }
+      .reports-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+      .reports-section { width: 100%; display: flex; flex-direction: column; align-items: center; }
+      .fan-lines { display: flex; align-items: flex-start; justify-content: center; position: relative; height: 16px; width: 100%; }
+      .fan-lines::before { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 8px; background: var(--border); transform: translateX(-50%); }
+      .fan-lines::after { content: ''; position: absolute; top: 8px; height: 2px; background: var(--border); }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--wd-accent); border-color: var(--wd-accent); }
+      .loading { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      .report-connector { display: flex; flex-direction: column; align-items: center; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="wd-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--wd-accent)"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="8.5" y="16" width="7" height="5" rx="1"/><line x1="6.5" y1="8" x2="6.5" y2="12"/><line x1="17.5" y1="8" x2="17.5" y2="12"/><line x1="6.5" y1="12" x2="17.5" y2="12"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
+          </div>
+          <div><div class="title">Organization Chart</div><div class="subtitle">Workday &middot; HR</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="root"><div class="loading">Loading org chart&hellip;</div></div>
+      <div class="footer">Powered by <strong>workday / get_org_chart</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var _isFS = false, _maxBtn = document.getElementById("maximizeBtn");
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function initials(name) { return (name || "?").split(" ").map(function(p) { return p[0]; }).join("").slice(0, 2).toUpperCase(); }
+
+      function nodeHTML(person, cls, badge) {
+        var name = person.name || person.descriptor || person.fullName || "Unknown";
+        var title = person.title || person.businessTitle || person.jobTitle || person.position || "";
+        return '<div class="org-node ' + cls + '">' +
+          '<div class="org-avatar ' + (cls === "current" ? "self" : cls === "manager" ? "mgr" : "report") + '">' + initials(name) + '</div>' +
+          '<div><div class="org-name">' + esc(name) + '</div>' +
+          (title ? '<div class="org-title">' + esc(title) + '</div>' : '') +
+          (badge ? '<div class="org-badge">' + esc(badge) + '</div>' : '') +
+          '</div></div>';
+      }
+
+      function render(d) {
+        if (!d) { document.getElementById("root").innerHTML = '<div class="loading">No org chart data available.</div>'; reportHeight(); return; }
+        var manager = d.manager || d.supervisor || null;
+        var worker = d.worker || d.currentWorker || d.self || null;
+        var reports = d.directReports || d.direct_reports || d.reports || [];
+        var html = '<div class="card"><div class="section-label">Reporting Structure</div><div class="org-tree">';
+
+        if (manager) {
+          html += nodeHTML(manager, "manager", "Manager");
+          html += '<div class="connector"></div>';
+        }
+
+        if (worker) {
+          html += nodeHTML(worker, "current", "You");
+        }
+
+        if (reports.length) {
+          html += '<div class="connector"></div>';
+          html += '<div class="section-label" style="margin-top:4px">Direct Reports (' + reports.length + ')</div>';
+          var shown = _isFS ? reports.length : Math.min(5, reports.length);
+          html += '<div class="reports-row">';
+          for (var i = 0; i < shown; i++) {
+            html += '<div class="report-connector">' + nodeHTML(reports[i], "report", "") + '</div>';
+          }
+          html += '</div>';
+          if (!_isFS && reports.length > shown) html += '<div style="font-size:11px;color:var(--muted);margin-top:8px">+ ' + (reports.length - shown) + ' more reports</div>';
+        }
+
+        html += '</div></div>';
+
+        if (d.organization || d.org || d.supervisoryOrganization) {
+          var org = d.organization || d.org || d.supervisoryOrganization;
+          var orgName = typeof org === "string" ? org : (org.name || org.descriptor || "");
+          if (orgName) html += '<div class="card"><div class="section-label">Organization</div><div style="font-size:13px;font-weight:500">' + esc(orgName) + '</div></div>';
+        }
+
+        document.getElementById("root").innerHTML = html; reportHeight();
+      }
+
+      async function init() {
+        if (toolOutput && (toolOutput.worker || toolOutput.currentWorker || toolOutput.self || toolOutput.manager || toolOutput.directReports)) { render(toolOutput); return; }
+        if (window.openai && typeof window.openai.callTool === "function") { try { var out = await window.openai.callTool("get_org_chart", toolInput); render((out && out.structuredContent) || out); } catch (e) { document.getElementById("root").innerHTML = '<div class="loading">' + esc(e.message || "Error loading org chart") + '</div>'; reportHeight(); } }
+        else { document.getElementById("root").innerHTML = '<div class="loading">Skybridge unavailable.</div>'; reportHeight(); }
+      }
+
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; init(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+      init();
+    </script>
+  </body>
+</html>

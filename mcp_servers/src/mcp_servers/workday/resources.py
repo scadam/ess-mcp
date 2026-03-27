@@ -304,4 +304,37 @@ WORKDAY_RESOURCES = {
             }
         },
     },
+    "compensation-summary": {
+        "description": "Compensation summary widget showing base salary, bonuses, and total compensation.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("compensation-summary.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "org-chart": {
+        "description": "Organization chart widget showing manager, current worker, and direct reports hierarchy.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("org-chart.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "team-calendar": {
+        "description": "Team time-off calendar showing who is out and upcoming absences.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("team-calendar.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }
