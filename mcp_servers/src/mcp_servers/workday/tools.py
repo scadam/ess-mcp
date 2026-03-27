@@ -9,8 +9,7 @@ from fastmcp import Context
 from ..auth import get_bearer_token, TokenValidationError
 from ..http import create_async_client
 from ..logging import get_logger
-from ..settings import load_workday_settings
-from .helpers import build_worker_context_anonymous, build_worker_context_from_bearer
+from .helpers import build_worker_context_from_bearer
 
 LOGGER = get_logger(__name__)
 
@@ -19,18 +18,6 @@ def _get_auth_token(ctx: Optional[Context] = None) -> str:
     """Extract the OAuth 2.0 Bearer token from the Authorization request header."""
     return get_bearer_token(ctx)
 
-
-async def _build_worker_context_with_optional_auth(ctx: Optional[Context] = None):
-    """Build worker context using anonymous mode if configured, otherwise use bearer token."""
-    settings = load_workday_settings()
-
-    if settings.anonymous_employee_id:
-        LOGGER.info("using_anonymous_mode", employee_id=settings.anonymous_employee_id)
-        return await build_worker_context_anonymous(settings.anonymous_employee_id)
-
-    LOGGER.info("using_bearer_token_mode")
-    bearer_token = _get_auth_token(ctx)
-    return await build_worker_context_from_bearer(bearer_token)
 
 
 def _transform_worker(worker_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -73,7 +60,7 @@ def _tool_response(summary: str, payload: Dict[str, Any]) -> Dict[str, Any]:
 
 async def tool_get_worker(ctx: Optional[Context] = None) -> Dict:
     """Get the current Workday worker profile using the provided OAuth 2.0 bearer token."""
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     worker = _transform_worker(worker_context.worker_data)
     worker["_widget_hint"] = "Worker profile is ready."
     return worker
@@ -165,7 +152,7 @@ async def _get_time_off_details(access_token: str, workday_id: str) -> List[Dict
 
 
 async def tool_get_leave_balances(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     workday_id = worker_context.workday_id
     access_token = worker_context.workday_access_token
     leave_balances, eligible_absence_types, leaves_of_absence, booked_time_off = await asyncio.gather(
@@ -208,7 +195,7 @@ async def _fetch_direct_reports(access_token: str, workday_id: str) -> List[Dict
 
 
 async def tool_get_direct_reports(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     reports = await _fetch_direct_reports(worker_context.workday_access_token, worker_context.workday_id)
     payload = {"success": True, "directReports": reports}
     return _tool_response("List direct reports for the current worker.", payload)
@@ -260,7 +247,7 @@ async def _fetch_inbox_tasks(access_token: str, workday_id: str) -> List[Dict[st
 
 
 async def tool_get_inbox_tasks(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     tasks = await _fetch_inbox_tasks(worker_context.workday_access_token, worker_context.workday_id)
     payload = {"success": True, "tasks": tasks}
     return _tool_response("List Workday inbox tasks for the current worker.", payload)
@@ -312,7 +299,7 @@ async def _fetch_learning_assignments(access_token: str, workday_id: str) -> Lis
 
 
 async def tool_get_learning_assignments(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     assignments = await _fetch_learning_assignments(
         worker_context.workday_access_token, worker_context.workday_id
     )
@@ -341,7 +328,7 @@ async def _fetch_pay_slips(access_token: str, workday_id: str) -> List[Dict[str,
 
 
 async def tool_get_pay_slips(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     pay_slips = await _fetch_pay_slips(worker_context.workday_access_token, worker_context.workday_id)
     payload = {"success": True, "paySlips": pay_slips}
     return _tool_response("List recent Workday pay slips.", payload)
@@ -372,7 +359,7 @@ async def _fetch_time_off_entries(access_token: str, workday_id: str) -> List[Di
 
 
 async def tool_get_time_off_entries(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     entries = await _fetch_time_off_entries(
         worker_context.workday_access_token, worker_context.workday_id
     )
@@ -395,7 +382,7 @@ async def tool_prepare_request_leave(
     reason: Optional[str] = None,
     timeOffTypeId: Optional[str] = None,
 ) -> Dict:
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     default_dates = await _get_default_dates()
     request_params = {
         "startDate": startDate or default_dates["startDate"],
@@ -469,7 +456,7 @@ async def tool_book_leave(
     unit: str = "Hours",
     reason: str = "Time off request",
 ) -> Dict:
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     
     if not startDate or not endDate or not timeOffTypeId:
         raise ValueError("startDate, endDate, and timeOffTypeId are required")
@@ -537,7 +524,7 @@ async def tool_prepare_change_business_title(ctx: Optional[Context] = None) -> D
     widget so the user can enter a new title and submit. The widget handles
     submission via change_business_title.
     """
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     worker = _transform_worker(worker_context.worker_data)
     return {
         "success": True,
@@ -552,7 +539,7 @@ async def tool_change_business_title(
     if not proposedBusinessTitle:
         return {"success": False, "error": "proposedBusinessTitle is required"}
     try:
-        worker_context = await _build_worker_context_with_optional_auth(ctx)
+        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
         url = (
             "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
             f"workers/{worker_context.workday_id}/businessTitleChanges?type=me"
@@ -669,12 +656,7 @@ async def tool_search_learning_content(
     skills: Optional[List[str]] = None,
     topics: Optional[List[str]] = None,
 ) -> Dict:
-    settings = load_workday_settings()
-
-    if settings.anonymous_employee_id:
-        access_token = ""
-    else:
-        access_token = _get_auth_token(ctx)
+    access_token = _get_auth_token(ctx)
 
     def _normalize(value: Any) -> List[str]:
         if value is None:
@@ -713,7 +695,7 @@ async def provider_list_tasks(ctx=None) -> List[Dict[str, Any]]:
     Non-approval inbox tasks are regular tasks (impl notes §3).
     """
     try:
-        worker_context = await _build_worker_context_with_optional_auth(ctx)
+        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     except Exception:  # noqa: BLE001
         LOGGER.debug("workday_auth_not_available_for_tasks")
         return []
@@ -730,7 +712,7 @@ async def provider_list_approvals(ctx=None) -> List[Dict[str, Any]]:
     (impl notes §3).
     """
     try:
-        worker_context = await _build_worker_context_with_optional_auth(ctx)
+        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     except Exception:  # noqa: BLE001
         LOGGER.debug("workday_auth_not_available_for_approvals")
         return []
@@ -743,7 +725,7 @@ async def provider_list_approvals(ctx=None) -> List[Dict[str, Any]]:
 async def provider_list_learning(ctx=None) -> List[Dict[str, Any]]:
     """List Workday required learning assignments for TaskServer normalization."""
     try:
-        worker_context = await _build_worker_context_with_optional_auth(ctx)
+        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     except Exception:  # noqa: BLE001
         LOGGER.debug("workday_auth_not_available_for_learning")
         return []
@@ -756,7 +738,7 @@ async def provider_get_approval_detail(
     task_id: str, ctx=None
 ) -> Dict[str, Any]:
     """Get detail for a specific Workday inbox task."""
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     url = (
         "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
         f"workers/{worker_context.workday_id}/inboxTasks/{task_id}"
@@ -783,7 +765,7 @@ async def provider_execute_approval(
     Only works for tasks with stepType == Approval.  Approve/reject APIs
     will fail if stepType is not Approval (impl notes §3).
     """
-    worker_context = await _build_worker_context_with_optional_auth(ctx)
+    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     action = "approve" if decision == "approve" else "deny"
     url = (
         "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
