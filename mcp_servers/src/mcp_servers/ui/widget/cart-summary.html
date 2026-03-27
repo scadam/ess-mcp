@@ -1,0 +1,201 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14;
+        --card: #151a21;
+        --muted: #a9b1bd;
+        --text: #e6edf3;
+        --accent: #4cc2ff;
+        --border: #1f2630;
+        --btn-bg: #152235;
+        --btn-border: #243145;
+        --btn-hover: #1a2d44;
+        --btn-primary-bg: #0078d4;
+        --btn-primary-hover: #106ebe;
+        --danger: #ff6b6b;
+        --ok: #2bd48f;
+        --sn-accent: #3eb489;
+        --sn-glow: rgba(62,180,137,.12);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5;
+        --card: #ffffff;
+        --muted: #65707d;
+        --text: #1e1e1e;
+        --accent: #0078d4;
+        --border: #e0e0e0;
+        --btn-bg: #f0f0f0;
+        --btn-border: #d0d0d0;
+        --btn-hover: #e4e4e4;
+        --btn-primary-bg: #0078d4;
+        --btn-primary-hover: #106ebe;
+        --danger: #d13438;
+        --ok: #107c10;
+        --sn-accent: #2e9968;
+        --sn-glow: rgba(46,153,104,.08);
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; min-height: 100%; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sn-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sn-glow); border: 1px solid var(--sn-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { font-size: 12px; color: var(--muted); }
+      .summary { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .summary strong { font-size: 14px; }
+      .summary .meta { font-size: 12px; color: var(--muted); }
+      .list { display: grid; gap: 8px; }
+      .item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+      .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+      .name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+      .meta { font-size: 12px; color: var(--muted); }
+      .item-actions { display: flex; align-items: center; gap: 6px; }
+      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 7px 10px; font-size: 12px; cursor: pointer; }
+      .btn:hover { background: var(--btn-hover); }
+      .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-bg); color: #fff; font-weight: 600; }
+      .btn-primary:hover { background: var(--btn-primary-hover); }
+      .btn-danger { border-color: var(--danger); color: var(--danger); }
+      .toolbar { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+      .status { margin-top: 10px; font-size: 12px; color: var(--muted); }
+      .status.ok { color: var(--ok); }
+      .status.error { color: var(--danger); }
+      .loading, .empty, .error { text-align: center; padding: 24px 0; color: var(--muted); font-size: 13px; }
+      .error { color: var(--danger); }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sn-accent)">
+              <path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="1"/><circle cx="8" cy="12" r="1"/><circle cx="8" cy="18" r="1"/>
+            </svg>
+          </div>
+          <div>
+            <div class="title">Shopping Cart</div>
+            <div class="subtitle">ServiceNow &middot; Cart summary and actions</div>
+          </div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="summary" class="summary">
+        <div><strong id="itemCount">0 items</strong><div class="meta" id="subTotal">Subtotal: &mdash;</div></div>
+      </div>
+      <div id="content"><div class="loading">Loading cart&hellip;</div></div>
+      <div class="toolbar">
+        <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn btn-primary" id="checkoutBtn">Checkout</button>
+        <button class="btn" id="clearBtn">Clear Cart</button>
+      </div>
+      <div id="status" class="status"></div>
+    </div>
+    <script>
+      (function() {
+        "use strict";
+        var toolOutput = (window.openai && window.openai.toolOutput) || {};
+        var items = [];
+        var contentEl = document.getElementById("content");
+        var itemCountEl = document.getElementById("itemCount");
+        var subTotalEl = document.getElementById("subTotal");
+        var statusEl = document.getElementById("status");
+        function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+        function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+        function setStatus(text, mode) { statusEl.className = "status" + (mode ? " " + mode : ""); statusEl.textContent = text || ""; reportHeight(); }
+        function updateSummary(data) {
+          var totalItems = data && typeof data.total_items === "number" ? data.total_items : items.length;
+          itemCountEl.textContent = totalItems + " item" + (totalItems === 1 ? "" : "s");
+          subTotalEl.textContent = "Subtotal: " + (data && data.subtotal ? data.subtotal : "\u2014");
+        }
+        function renderList() {
+          if (!items.length) { contentEl.innerHTML = '<div class="empty">Your cart is empty.</div>'; reportHeight(); return; }
+          var html = '<div class="list">';
+          for (var i = 0; i < items.length; i++) {
+            var item = items[i];
+            html += '<div class="item"><div class="row"><div><div class="name">' + esc(item.name || "Catalog Item") + '</div><div class="meta">Qty: ' + esc(String(item.quantity || 1)) + (item.price ? " \u00b7 Price: " + esc(item.price) : "") + (item.subtotal ? " \u00b7 Subtotal: " + esc(item.subtotal) : "") + '</div></div><div class="item-actions"><button class="btn btn-danger" data-remove="' + esc(item.cart_item_id || "") + '">Remove</button></div></div></div>';
+          }
+          html += '</div>';
+          contentEl.innerHTML = html;
+          bindItemActions();
+          reportHeight();
+        }
+        function bindItemActions() {
+          var buttons = contentEl.querySelectorAll("[data-remove]");
+          for (var i = 0; i < buttons.length; i++) {
+            buttons[i].addEventListener("click", async function() {
+              var cartItemId = this.getAttribute("data-remove");
+              if (!cartItemId) return;
+              try {
+                if (!window.openai || typeof window.openai.callTool !== "function") throw new Error("Tool bridge unavailable");
+                var out = await window.openai.callTool("remove_cart_item", { cart_item_id: cartItemId });
+                var data = out && out.structuredContent ? out.structuredContent : out;
+                if (data && data.success) { setStatus("Cart item removed.", "ok"); await loadCart(); }
+                else setStatus((data && data.error) || "Unable to remove cart item.", "error");
+              } catch (e) { setStatus(e && e.message ? e.message : "Unable to remove cart item.", "error"); }
+            });
+          }
+        }
+        async function loadCart() {
+          contentEl.innerHTML = '<div class="loading">Loading cart\u2026</div>';
+          try {
+            if (!window.openai || typeof window.openai.callTool !== "function") throw new Error("Skybridge not available");
+            var out = await window.openai.callTool("get_cart", {});
+            var data = out && out.structuredContent ? out.structuredContent : out;
+            items = data && data.items ? data.items : [];
+            if (window.openai) window.openai.toolOutput = data || {};
+            updateSummary(data || {});
+            renderList();
+            if (!items.length) setStatus("", "");
+          } catch (e) {
+            contentEl.innerHTML = '<div class="error">' + esc(e && e.message ? e.message : "Failed to load cart") + '</div>';
+            setStatus("", ""); reportHeight();
+          }
+        }
+        async function checkoutCart() {
+          try {
+            if (!window.openai || typeof window.openai.callTool !== "function") throw new Error("Tool bridge unavailable");
+            var out = await window.openai.callTool("checkout_cart", {});
+            var data = out && out.structuredContent ? out.structuredContent : out;
+            if (data && data.success) { setStatus("Cart submitted successfully.", "ok"); await loadCart(); }
+            else setStatus((data && data.error) || "Checkout failed.", "error");
+          } catch (e) { setStatus(e && e.message ? e.message : "Checkout failed.", "error"); }
+        }
+        async function clearCart() {
+          try {
+            if (!window.openai || typeof window.openai.callTool !== "function") throw new Error("Tool bridge unavailable");
+            var out = await window.openai.callTool("delete_cart", {});
+            var data = out && out.structuredContent ? out.structuredContent : out;
+            if (data && data.success) { setStatus("Cart cleared.", "ok"); await loadCart(); }
+            else setStatus((data && data.error) || "Unable to clear cart.", "error");
+          } catch (e) { setStatus(e && e.message ? e.message : "Unable to clear cart.", "error"); }
+        }
+        document.getElementById("refreshBtn").addEventListener("click", loadCart);
+        document.getElementById("checkoutBtn").addEventListener("click", checkoutCart);
+        document.getElementById("clearBtn").addEventListener("click", clearCart);
+        var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+        var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+        var _isFullscreen = false;
+        var _maxBtn = document.getElementById("maximizeBtn");
+        async function toggleFullscreen() {
+          if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return;
+          var mode = _isFullscreen ? "inline" : "fullscreen";
+          try { await window.openai.requestDisplayMode({ mode: mode }); _isFullscreen = !_isFullscreen; _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg; _maxBtn.title = _isFullscreen ? "Restore" : "Maximize"; reportHeight(); } catch (e) {}
+        }
+        if (_maxBtn) {
+          if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFullscreen);
+          else _maxBtn.style.display = "none";
+        }
+        if (toolOutput && toolOutput.items) { items = toolOutput.items || []; updateSummary(toolOutput); renderList(); }
+        else { setTimeout(function() { var fresh = (window.openai && window.openai.toolOutput) || {}; if (fresh && fresh.items) { items = fresh.items || []; updateSummary(fresh); renderList(); } else loadCart(); }, 0); }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1551 @@
+
+Provides task listing, approval management, and CRUD operations against
+the Salesforce REST API using OAuth bearer token passthrough.
+"""
+
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+from fastmcp import Context
+
+from ..auth import get_bearer_token, TokenValidationError
+from ..http import create_async_client
+from ..logging import get_logger
+from ..settings import load_salesforce_settings
+
+LOGGER = get_logger(__name__)
+
+_API_VERSION = "v59.0"
+
+
+def _get_instance_url() -> str:
+    """Derive the Salesforce instance URL from settings."""
+    settings = load_salesforce_settings()
+    domain = settings.domain
+    if ".my.salesforce.com" in domain or ".salesforce.com" in domain:
+        return f"https://{domain}"
+    return f"https://{domain}.my.salesforce.com"
+
+
+async def _soql_query(query: str, ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
+    """Execute a SOQL query and return all records."""
+    token = get_bearer_token(ctx)
+    instance_url = _get_instance_url()
+    url = f"{instance_url}/services/data/{_API_VERSION}/query"
+
+    async with create_async_client() as client:
+        resp = await client.get(
+            url,
+            params={"q": query},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        body = resp.json()
+
+    return body.get("records", [])
+
+
+async def _salesforce_post(path: str, body: Dict[str, Any], ctx: Optional[Context] = None) -> Dict[str, Any]:
+    """Make an authenticated POST request to Salesforce REST API."""
+    token = get_bearer_token(ctx)
+    instance_url = _get_instance_url()
+    url = f"{instance_url}/services/data/{_API_VERSION}{path}"
+
+    async with create_async_client() as client:
+        resp = await client.post(
+            url,
+            json=body,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        content_type = resp.headers.get("content-type", "")
+        if "application/json" in content_type and resp.content:
+            return resp.json()
+        return {"success": True}
+
+
+async def _salesforce_patch(path: str, body: Dict[str, Any], ctx: Optional[Context] = None) -> Dict[str, Any]:
+    """Make an authenticated PATCH request to Salesforce REST API."""
+    token = get_bearer_token(ctx)
+    instance_url = _get_instance_url()
+    url = f"{instance_url}/services/data/{_API_VERSION}{path}"
+
+    async with create_async_client() as client:
+        resp = await client.patch(
+            url,
+            json=body,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        content_type = resp.headers.get("content-type", "")
+        if "application/json" in content_type and resp.content:
+            return resp.json()
+        return {"success": True}
+
+
+# ── MCP tool functions ──────────────────────────────────────────────
+
+
+async def tool_list_tasks(
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    owner_name: Optional[str] = None,
+    limit: int = 20,
+) -> Dict[str, Any]:
+    """List Salesforce tasks.
+
+    Args:
+        status: Filter by status (e.g. "Not Started", "In Progress", "Completed").
+        priority: Filter by priority (e.g. "High", "Normal", "Low").
+        owner_name: Filter by owner name.
+        limit: Maximum results (default 20, max 100).
+    """
+    clauses: List[str] = []
+    if status:
+        clauses.append(f"Status = '{status}'")
+    if priority:
+        clauses.append(f"Priority = '{priority}'")
+    if owner_name:
+        clauses.append(f"Owner.Name = '{owner_name}'")
+
+    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+    safe_limit = max(1, min(int(limit), 100))
+
+    query = (
+        f"SELECT Id, Subject, Status, Priority, Description, ActivityDate, "
+        f"CreatedDate, OwnerId, WhoId, WhatId "
+        f"FROM Task{where} "
+        f"ORDER BY CreatedDate DESC "
+        f"LIMIT {safe_limit}"
+    )
+
+    LOGGER.info("salesforce_list_tasks", query=query)
+    records = await _soql_query(query, ctx)
+
+    return {
+        "total": len(records),
+        "tasks": records,
+    }
+
+
+async def tool_get_task(task_id: str) -> Dict[str, Any]:
+    """Get details for a single Salesforce task.
+
+    Args:
+        task_id: The Salesforce Task record ID.
+    """
+    LOGGER.info("salesforce_get_task", task_id=task_id)
+    records = await _soql_query(
+        f"SELECT Id, Subject, Status, Priority, Description, ActivityDate, "
+        f"CreatedDate, OwnerId, WhoId, WhatId, CallType, TaskSubtype "
+        f"FROM Task WHERE Id = '{task_id}'"
+    , ctx)
+
+    if not records:
+        raise ValueError(f"Salesforce Task {task_id} not found")
+
+    return {"task": records[0]}
+
+
+async def tool_update_task(
+    task_id: str,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    description: Optional[str] = None,
+    subject: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Update a Salesforce task.
+
+    Args:
+        task_id: The Salesforce Task record ID.
+        status: New status.
+        priority: New priority.
+        description: Updated description.
+        subject: Updated subject.
+    """
+    payload: Dict[str, Any] = {}
+    if status is not None:
+        payload["Status"] = status
+    if priority is not None:
+        payload["Priority"] = priority
+    if description is not None:
+        payload["Description"] = description
+    if subject is not None:
+        payload["Subject"] = subject
+
+    if not payload:
+        raise ValueError("No fields provided to update")
+
+    LOGGER.info("salesforce_update_task", task_id=task_id, fields=list(payload.keys()))
+    try:
+        await _salesforce_patch(f"/sobjects/Task/{task_id}", payload, ctx)
+
+        updated = await _soql_query(
+            f"SELECT Id, Subject, Status, Priority, Description, ActivityDate, "
+            f"CreatedDate, OwnerId FROM Task WHERE Id = '{task_id}'"
+        , ctx)
+
+        return {
+            "success": True,
+            "task": updated[0] if updated else {},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_update_task_error", task_id=task_id, error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_list_approvals(
+    status: Optional[str] = None,
+    limit: int = 20,
+) -> Dict[str, Any]:
+    """List Salesforce approval work items (pending approvals).
+
+    Approval work items are ``ProcessInstanceWorkitem`` (impl notes §5).
+    Approval comments are not the same as Task comments.
+
+    Args:
+        status: Filter by process status (e.g. "Pending").
+        limit: Maximum results (default 20, max 100).
+    """
+    clauses = (
+        [f"ProcessInstance.Status = '{status}'"]
+        if status
+        else ["ProcessInstance.Status = 'Pending'"]
+    )
+    where = f" WHERE {' AND '.join(clauses)}"
+    safe_limit = max(1, min(int(limit), 100))
+
+    query = (
+        f"SELECT Id, ActorId, ProcessInstanceId, CreatedDate, "
+        f"ProcessInstance.TargetObjectId, ProcessInstance.Status, "
+        f"ProcessInstance.TargetObject.Name, ProcessInstance.TargetObject.Type "
+        f"FROM ProcessInstanceWorkitem{where} "
+        f"ORDER BY CreatedDate DESC "
+        f"LIMIT {safe_limit}"
+    )
+
+    LOGGER.info("salesforce_list_approvals", query=query)
+    records = await _soql_query(query, ctx)
+
+    return {
+        "total": len(records),
+        "approvals": records,
+    }
+
+
+async def tool_approve_reject(
+    work_item_id: str,
+    action: str,
+    comments: str = "",
+) -> Dict[str, Any]:
+    """Approve or reject a Salesforce approval work item.
+
+    Uses the Process Approvals API (impl notes §5).
+
+    Args:
+        work_item_id: The ProcessInstanceWorkitem ID.
+        action: "Approve" or "Reject".
+        comments: Optional comments for the decision.
+    """
+    if action not in ("Approve", "Reject"):
+        raise ValueError(
+            f"Invalid action: {action}. Must be 'Approve' or 'Reject'."
+        )
+
+    LOGGER.info("salesforce_approve_reject", work_item_id=work_item_id, action=action)
+
+    try:
+        body = {
+            "requests": [
+                {
+                    "actionType": action,
+                    "contextActorId": "",
+                    "contextId": work_item_id,
+                    "comments": comments,
+                }
+            ]
+        }
+
+        result = await _salesforce_post("/process/approvals", body, ctx)
+        return {
+            "success": True,
+            "action": action,
+            "workItemId": work_item_id,
+            "result": result,
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_approve_reject_error", work_item_id=work_item_id, error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+# ── Compliance Case tools ────────────────────────────────────────────
+
+# Compliance categories modelled on a banking compliance function.
+# These align with the Contoso Compliance SharePoint procedures.
+_COMPLIANCE_TYPES = [
+    "AML / KYC",
+    "Sanctions Screening",
+    "Fraud Investigation",
+    "Market Abuse / Insider Trading",
+    "Data Privacy (GDPR / CCPA)",
+    "Regulatory Reporting",
+    "Conflicts of Interest",
+    "Gifts & Entertainment",
+    "Whistleblower Report",
+    "Trade Surveillance",
+    "Customer Complaint",
+    "Policy Breach",
+    "Third-Party / Vendor Risk",
+    "Operational Risk Event",
+    "Other",
+]
+
+_CASE_FIELDS = (
+    "Id, CaseNumber, Subject, Description, Status, Priority, Origin, Type, "
+    "Reason, ContactId, AccountId, OwnerId, CreatedDate, ClosedDate, "
+    "IsClosed, IsEscalated"
+)
+
+_ACCOUNT_FIELDS = (
+    "Id, Name, Industry, Type, AccountNumber, OwnerId, Owner.Name, "
+    "Phone, Website, BillingCity, BillingState, BillingCountry, "
+    "Description, CreatedDate"
+)
+
+_CONTACT_FIELDS = (
+    "Id, FirstName, LastName, Name, Email, Phone, Title, Department, "
+    "AccountId, Account.Name, OwnerId, CreatedDate"
+)
+
+_OPPORTUNITY_FIELDS = (
+    "Id, Name, StageName, Amount, Probability, CloseDate, IsClosed, IsWon, "
+    "Type, LeadSource, Description, AccountId, Account.Name, OwnerId, Owner.Name, CreatedDate"
+)
+
+_EVENT_FIELDS = (
+    "Id, Subject, StartDateTime, EndDateTime, Location, Description, "
+    "WhatId, WhoId, OwnerId, CreatedDate"
+)
+
+_TASK_FIELDS = (
+    "Id, Subject, Status, Priority, Description, ActivityDate, "
+    "WhatId, WhoId, OwnerId, CreatedDate"
+)
+
+
+def _sf(value: Optional[str]) -> str:
+    """Escape a string for safe interpolation into SOQL literals."""
+    if value is None:
+        return ""
+    return str(value).replace("\\", "\\\\").replace("'", "\\'")
+
+
+def _soql_in(ids: List[str]) -> str:
+    return ", ".join(f"'{_sf(x)}'" for x in ids if x)
+
+
+def _simplify_account(raw: Dict[str, Any]) -> Dict[str, Any]:
+    owner = raw.get("Owner", {}) if isinstance(raw.get("Owner"), dict) else {}
+    return {
+        "id": raw.get("Id"),
+        "name": raw.get("Name"),
+        "industry": raw.get("Industry"),
+        "type": raw.get("Type"),
+        "account_number": raw.get("AccountNumber"),
+        "owner_id": raw.get("OwnerId"),
+        "owner_name": owner.get("Name"),
+        "phone": raw.get("Phone"),
+        "website": raw.get("Website"),
+        "billing_city": raw.get("BillingCity"),
+        "billing_state": raw.get("BillingState"),
+        "billing_country": raw.get("BillingCountry"),
+        "description": raw.get("Description"),
+        "created_date": raw.get("CreatedDate"),
+    }
+
+
+def _simplify_contact(raw: Dict[str, Any]) -> Dict[str, Any]:
+    account = raw.get("Account", {}) if isinstance(raw.get("Account"), dict) else {}
+    return {
+        "id": raw.get("Id"),
+        "first_name": raw.get("FirstName"),
+        "last_name": raw.get("LastName"),
+        "name": raw.get("Name"),
+        "email": raw.get("Email"),
+        "phone": raw.get("Phone"),
+        "title": raw.get("Title"),
+        "department": raw.get("Department"),
+        "account_id": raw.get("AccountId"),
+        "account_name": account.get("Name"),
+        "owner_id": raw.get("OwnerId"),
+        "created_date": raw.get("CreatedDate"),
+    }
+
+
+def _simplify_opportunity(raw: Dict[str, Any]) -> Dict[str, Any]:
+    account = raw.get("Account", {}) if isinstance(raw.get("Account"), dict) else {}
+    owner = raw.get("Owner", {}) if isinstance(raw.get("Owner"), dict) else {}
+    return {
+        "id": raw.get("Id"),
+        "name": raw.get("Name"),
+        "stage_name": raw.get("StageName"),
+        "amount": raw.get("Amount"),
+        "probability": raw.get("Probability"),
+        "close_date": raw.get("CloseDate"),
+        "is_closed": raw.get("IsClosed"),
+        "is_won": raw.get("IsWon"),
+        "type": raw.get("Type"),
+        "lead_source": raw.get("LeadSource"),
+        "description": raw.get("Description"),
+        "account_id": raw.get("AccountId"),
+        "account_name": account.get("Name"),
+        "owner_id": raw.get("OwnerId"),
+        "owner_name": owner.get("Name"),
+        "created_date": raw.get("CreatedDate"),
+    }
+
+
+def _simplify_event(raw: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": raw.get("Id"),
+        "subject": raw.get("Subject"),
+        "start_datetime": raw.get("StartDateTime"),
+        "end_datetime": raw.get("EndDateTime"),
+        "location": raw.get("Location"),
+        "description": raw.get("Description"),
+        "what_id": raw.get("WhatId"),
+        "who_id": raw.get("WhoId"),
+        "owner_id": raw.get("OwnerId"),
+        "created_date": raw.get("CreatedDate"),
+    }
+
+
+def _simplify_task(raw: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": raw.get("Id"),
+        "subject": raw.get("Subject"),
+        "status": raw.get("Status"),
+        "priority": raw.get("Priority"),
+        "description": raw.get("Description"),
+        "activity_date": raw.get("ActivityDate"),
+        "what_id": raw.get("WhatId"),
+        "who_id": raw.get("WhoId"),
+        "owner_id": raw.get("OwnerId"),
+        "created_date": raw.get("CreatedDate"),
+    }
+
+
+def _simplify_case(raw: Dict[str, Any]) -> Dict[str, Any]:
+    """Flatten a Salesforce Case record for clean output."""
+    return {
+        "id": raw.get("Id"),
+        "case_number": raw.get("CaseNumber"),
+        "subject": raw.get("Subject"),
+        "description": raw.get("Description"),
+        "status": raw.get("Status"),
+        "priority": raw.get("Priority"),
+        "origin": raw.get("Origin"),
+        "type": raw.get("Type"),
+        "reason": raw.get("Reason"),
+        "contact_id": raw.get("ContactId"),
+        "account_id": raw.get("AccountId"),
+        "owner_id": raw.get("OwnerId"),
+        "created_date": raw.get("CreatedDate"),
+        "closed_date": raw.get("ClosedDate"),
+        "is_closed": raw.get("IsClosed"),
+        "is_escalated": raw.get("IsEscalated"),
+    }
+
+
+async def tool_list_cases(
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    case_type: Optional[str] = None,
+    search_text: Optional[str] = None,
+    limit: int = 20,
+) -> Dict[str, Any]:
+    """List Salesforce compliance cases.
+
+    The Salesforce Case object is used by the Compliance function to track
+    regulatory investigations, policy breaches, AML/KYC reviews, fraud
+    cases, and other compliance matters.
+
+    Args:
+        status: Filter by case status (e.g. "New", "Working", "Escalated", "Closed").
+        priority: Filter by priority ("High", "Medium", "Low").
+        case_type: Filter by compliance type (e.g. "AML / KYC", "Fraud Investigation").
+        search_text: Free-text search across Subject and Description.
+        limit: Maximum results (default 20, max 100).
+    """
+    clauses: List[str] = []
+    if status:
+        clauses.append(f"Status = '{status}'")
+    if priority:
+        clauses.append(f"Priority = '{priority}'")
+    if case_type:
+        clauses.append(f"Type = '{case_type}'")
+    if search_text:
+        clauses.append(
+            f"(Subject LIKE '%{search_text}%' OR Description LIKE '%{search_text}%')"
+        )
+
+    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+    safe_limit = max(1, min(int(limit), 100))
+
+    query = (
+        f"SELECT {_CASE_FIELDS} "
+        f"FROM Case{where} "
+        f"ORDER BY CreatedDate DESC "
+        f"LIMIT {safe_limit}"
+    )
+
+    LOGGER.info("salesforce_list_cases", query=query)
+    records = await _soql_query(query, ctx)
+
+    return {
+        "total": len(records),
+        "cases": [_simplify_case(r) for r in records],
+        "compliance_types": _COMPLIANCE_TYPES,
+    }
+
+
+async def tool_get_case(case_id: str) -> Dict[str, Any]:
+    """Get full details for a single Salesforce compliance case.
+
+    Args:
+        case_id: The Salesforce Case record ID or CaseNumber.
+    """
+    LOGGER.info("salesforce_get_case", case_id=case_id)
+
+    # Support both Id and CaseNumber
+    if case_id.isdigit() or len(case_id) < 15:
+        records = await _soql_query(
+            f"SELECT {_CASE_FIELDS} FROM Case WHERE CaseNumber = '{case_id}'"
+        , ctx)
+    else:
+        records = await _soql_query(
+            f"SELECT {_CASE_FIELDS} FROM Case WHERE Id = '{case_id}'"
+        , ctx)
+
+    if not records:
+        raise ValueError(f"Salesforce Case {case_id} not found")
+
+    # Also fetch case comments
+    sf_case = records[0]
+    comments = []
+    try:
+        comment_records = await _soql_query(
+            f"SELECT Id, CommentBody, CreatedDate, CreatedById "
+            f"FROM CaseComment WHERE ParentId = '{sf_case['Id']}' "
+            f"ORDER BY CreatedDate DESC LIMIT 20"
+        , ctx)
+        for c in comment_records:
+            comments.append({
+                "id": c.get("Id"),
+                "body": c.get("CommentBody"),
+                "created_date": c.get("CreatedDate"),
+                "created_by": c.get("CreatedById"),
+            })
+    except Exception:  # noqa: BLE001
+        LOGGER.debug("case_comments_fetch_failed")
+
+    return {
+        "case": _simplify_case(sf_case),
+        "comments": comments,
+        "comment_count": len(comments),
+    }
+
+
+async def tool_create_case(
+    subject: str,
+    compliance_type: str,
+    description: Optional[str] = None,
+    priority: str = "Medium",
+    origin: str = "Copilot",
+    contact_name: Optional[str] = None,
+    reason: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create a new Salesforce compliance case.
+
+    Used by employees to raise compliance concerns such as AML/KYC reviews,
+    fraud investigations, policy breaches, sanctions screening, data privacy
+    issues, conflicts of interest, or whistleblower reports.  The case is
+    routed to the Compliance team.
+
+    Args:
+        subject: Brief summary of the compliance concern (required).
+        compliance_type: The type of compliance matter. Must be one of:
+            AML / KYC, Sanctions Screening, Fraud Investigation,
+            Market Abuse / Insider Trading, Data Privacy (GDPR / CCPA),
+            Regulatory Reporting, Conflicts of Interest,
+            Gifts & Entertainment, Whistleblower Report,
+            Trade Surveillance, Customer Complaint, Policy Breach,
+            Third-Party / Vendor Risk, Operational Risk Event, Other.
+        description: Detailed description of the compliance concern.
+        priority: High, Medium, or Low (default Medium).
+        origin: Channel of origin (default "Copilot").
+        contact_name: Name of the person raising the concern.
+        reason: Reason for the case.
+    """
+    payload: Dict[str, Any] = {
+        "Subject": subject,
+        "Type": compliance_type,
+        "Priority": priority,
+        "Origin": origin,
+        "Status": "New",
+    }
+    if description:
+        payload["Description"] = description
+    if reason:
+        payload["Reason"] = reason
+
+    LOGGER.info("salesforce_create_case", fields=list(payload.keys()))
+
+    try:
+        result = await _salesforce_post("/sobjects/Case", payload, ctx)
+        case_id = result.get("id", "")
+
+        # Fetch the created case to return full details including CaseNumber
+        created = []
+        if case_id:
+            try:
+                created = await _soql_query(
+                    f"SELECT {_CASE_FIELDS} FROM Case WHERE Id = '{case_id}'"
+                , ctx)
+            except Exception:  # noqa: BLE001
+                pass
+
+        return {
+            "created": True,
+            "case": _simplify_case(created[0]) if created else {"id": case_id},
+            "compliance_types": _COMPLIANCE_TYPES,
+        }
+
+    except Exception as exc:
+        LOGGER.error("salesforce_create_case_error", subject=subject, error=str(exc), exc_info=True)
+        return {"created": False, "error": f"Failed to create compliance case: {exc}"}
+
+
+async def tool_update_case(
+    case_id: str,
+    status: Optional[str] = None,
+    priority: Optional[str] = None,
+    description: Optional[str] = None,
+    subject: Optional[str] = None,
+    compliance_type: Optional[str] = None,
+    comment: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Update an existing Salesforce compliance case.
+
+    Provide only the fields you want to change. Use 'comment' to add a
+    case comment visible in the case history.
+
+    Args:
+        case_id: The Salesforce Case record ID.
+        status: New status (New, Working, Escalated, Closed).
+        priority: New priority (High, Medium, Low).
+        description: Updated description.
+        subject: Updated subject.
+        compliance_type: Updated compliance type.
+        comment: A new case comment to append.
+    """
+    payload: Dict[str, Any] = {}
+    if status is not None:
+        payload["Status"] = status
+    if priority is not None:
+        payload["Priority"] = priority
+    if description is not None:
+        payload["Description"] = description
+    if subject is not None:
+        payload["Subject"] = subject
+    if compliance_type is not None:
+        payload["Type"] = compliance_type
+
+    if not payload and not comment:
+        raise ValueError("No fields provided to update")
+
+    try:
+        if payload:
+            LOGGER.info("salesforce_update_case", case_id=case_id, fields=list(payload.keys()))
+            await _salesforce_patch(f"/sobjects/Case/{case_id}", payload, ctx)
+
+        # Add a case comment if provided
+        if comment:
+            LOGGER.info("salesforce_add_case_comment", case_id=case_id)
+            await _salesforce_post(
+                "/sobjects/CaseComment",
+                {"ParentId": case_id, "CommentBody": comment},
+            , ctx)
+
+        # Fetch updated case
+        updated = await _soql_query(
+            f"SELECT {_CASE_FIELDS} FROM Case WHERE Id = '{case_id}'"
+        , ctx)
+
+        return {
+            "success": True,
+            "case": _simplify_case(updated[0]) if updated else {},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_update_case_error", case_id=case_id, error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+# ── Provider functions for TaskServer integration ───────────────────
+
+
+async def provider_list_tasks() -> List[Dict[str, Any]]:
+    """List Salesforce tasks for TaskServer normalization."""
+    try:
+        load_salesforce_settings()
+    except Exception:  # noqa: BLE001
+        LOGGER.debug("salesforce_settings_not_configured")
+        return []
+
+    records = await _soql_query(
+        "SELECT Id, Subject, Status, Priority, Description, ActivityDate, "
+        "CreatedDate, OwnerId "
+        "FROM Task WHERE IsClosed = false "
+        "ORDER BY CreatedDate DESC LIMIT 50"
+    , ctx)
+    # Add browser links for TaskServer widget
+    _, instance_url = await _get_salesforce_token()
+    for r in records:
+        if r.get("Id"):
+            r["link"] = f"{instance_url}/{r['Id']}"
+    return records
+
+
+async def provider_list_cases() -> List[Dict[str, Any]]:
+    """List open Salesforce compliance cases for TaskServer normalization."""
+    try:
+        load_salesforce_settings()
+    except Exception:  # noqa: BLE001
+        LOGGER.debug("salesforce_settings_not_configured")
+        return []
+
+    records = await _soql_query(
+        f"SELECT {_CASE_FIELDS} "
+        f"FROM Case WHERE IsClosed = false "
+        f"ORDER BY CreatedDate DESC LIMIT 50"
+    , ctx)
+    # Add browser links for TaskServer widget
+    _, instance_url = await _get_salesforce_token()
+    for r in records:
+        if r.get("Id"):
+            r["link"] = f"{instance_url}/{r['Id']}"
+    return records
+
+
+async def provider_list_approvals() -> List[Dict[str, Any]]:
+    """List pending Salesforce approvals for TaskServer normalization."""
+    try:
+        load_salesforce_settings()
+    except Exception:  # noqa: BLE001
+        LOGGER.debug("salesforce_settings_not_configured")
+        return []
+
+    records = await _soql_query(
+        "SELECT Id, ActorId, ProcessInstanceId, CreatedDate, "
+        "ProcessInstance.TargetObjectId, ProcessInstance.Status, "
+        "ProcessInstance.TargetObject.Name, ProcessInstance.TargetObject.Type "
+        "FROM ProcessInstanceWorkitem "
+        "WHERE ProcessInstance.Status = 'Pending' "
+        "ORDER BY CreatedDate DESC LIMIT 50"
+    , ctx)
+    # Add browser links (to target object) for TaskServer widget
+    _, instance_url = await _get_salesforce_token()
+    for r in records:
+        pi = r.get("ProcessInstance", {}) or {}
+        target_id = pi.get("TargetObjectId", r.get("Id", ""))
+        if target_id:
+            r["link"] = f"{instance_url}/{target_id}"
+    return records
+
+
+async def provider_get_approval_detail(item_id: str) -> Dict[str, Any]:
+    """Fetch approval detail for a ProcessInstanceWorkitem."""
+    records = await _soql_query(
+        f"SELECT Id, ActorId, ProcessInstanceId, CreatedDate, "
+        f"ProcessInstance.TargetObjectId, ProcessInstance.Status, "
+        f"ProcessInstance.TargetObject.Name, ProcessInstance.TargetObject.Type "
+        f"FROM ProcessInstanceWorkitem WHERE Id = '{item_id}'"
+    , ctx)
+    if not records:
+        raise ValueError(f"Salesforce approval work item {item_id} not found")
+
+    record = records[0]
+    process = (
+        record.get("ProcessInstance", {})
+        if isinstance(record.get("ProcessInstance"), dict)
+        else {}
+    )
+    target = (
+        process.get("TargetObject", {})
+        if isinstance(process.get("TargetObject"), dict)
+        else {}
+    )
+
+    return {
+        "title": target.get("Name", f"Approval {item_id}"),
+        "summary": target.get("Type", ""),
+        "status": process.get("Status", ""),
+        "workItemId": item_id,
+        "processInstanceId": record.get("ProcessInstanceId"),
+        "targetObjectId": process.get("TargetObjectId"),
+        "createdDate": record.get("CreatedDate"),
+        "raw": record,
+    }
+
+
+async def provider_execute_approval(
+    item_id: str, decision: str, comment: str = ""
+) -> Dict[str, Any]:
+    """Execute an approval decision on a Salesforce work item."""
+    action = "Approve" if decision == "approve" else "Reject"
+    body = {
+        "requests": [
+            {
+                "actionType": action,
+                "contextActorId": "",
+                "contextId": item_id,
+                "comments": comment,
+            }
+        ]
+    }
+
+    result = await _salesforce_post("/process/approvals", body, ctx)
+    return {
+        "success": True,
+        "decision": decision,
+        "workItemId": item_id,
+        "result": result,
+    }
+
+
+# ── Form-show helper (GET-pattern, widget submits the POST) ─────────
+
+async def tool_show_compliance_case_form(
+    subject: Optional[str] = None,
+    compliance_type: Optional[str] = None,
+    description: Optional[str] = None,
+    priority: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Show the compliance case creation form widget.
+
+    Returns pre-fill data so the widget can populate the form.  The user
+    completes and submits the form inside the widget — this tool does not
+    create the case directly.
+
+    Args:
+        subject: Optional pre-fill for the case subject.
+        compliance_type: Optional pre-fill for compliance type (e.g. "AML / KYC",
+            "Fraud Investigation", "Data Privacy").
+        description: Optional detailed description to pre-fill.
+        priority: Optional priority pre-fill (High, Medium, Low).
+    """
+    prefill: Dict[str, Any] = {}
+    if subject:
+        prefill["subject"] = subject
+    if compliance_type:
+        prefill["compliance_type"] = compliance_type
+    if description:
+        prefill["description"] = description
+    if priority:
+        prefill["priority"] = priority
+
+    return {
+        "_widget_hint": "The form is ready. Acknowledge with one short sentence (e.g. 'Here is the compliance case form.').",
+        **prefill,
+    }
+
+
+# ── CRM (Accounts / Contacts / Opportunities / Events) ────────────
+
+
+async def tool_list_accounts(
+    search_text: Optional[str] = None,
+    industry: Optional[str] = None,
+    owner_name: Optional[str] = None,
+    limit: int = 25,
+) -> Dict[str, Any]:
+    """List Salesforce accounts for CRM workflows."""
+    clauses: List[str] = []
+    if search_text:
+        s = _sf(search_text)
+        clauses.append(f"(Name LIKE '%{s}%' OR AccountNumber LIKE '%{s}%')")
+    if industry:
+        clauses.append(f"Industry = '{_sf(industry)}'")
+    if owner_name:
+        clauses.append(f"Owner.Name = '{_sf(owner_name)}'")
+
+    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+    safe_limit = max(1, min(int(limit), 100))
+
+    query = (
+        f"SELECT {_ACCOUNT_FIELDS} "
+        f"FROM Account{where} "
+        f"ORDER BY Name ASC "
+        f"LIMIT {safe_limit}"
+    )
+    records = await _soql_query(query, ctx)
+    return {
+        "total": len(records),
+        "accounts": [_simplify_account(r) for r in records],
+    }
+
+
+async def tool_list_contacts(
+    account_id: Optional[str] = None,
+    search_text: Optional[str] = None,
+    limit: int = 25,
+) -> Dict[str, Any]:
+    """List Salesforce contacts, optionally scoped to an account."""
+    clauses: List[str] = []
+    if account_id:
+        clauses.append(f"AccountId = '{_sf(account_id)}'")
+    if search_text:
+        s = _sf(search_text)
+        clauses.append(
+            f"(Name LIKE '%{s}%' OR Email LIKE '%{s}%' OR Title LIKE '%{s}%')"
+        )
+
+    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+    safe_limit = max(1, min(int(limit), 100))
+
+    query = (
+        f"SELECT {_CONTACT_FIELDS} "
+        f"FROM Contact{where} "
+        f"ORDER BY LastName ASC, FirstName ASC "
+        f"LIMIT {safe_limit}"
+    )
+    records = await _soql_query(query, ctx)
+    return {
+        "total": len(records),
+        "contacts": [_simplify_contact(r) for r in records],
+    }
+
+
+async def tool_list_opportunities(
+    account_id: Optional[str] = None,
+    stage_name: Optional[str] = None,
+    owner_name: Optional[str] = None,
+    include_closed: bool = False,
+    limit: int = 40,
+) -> Dict[str, Any]:
+    """List Salesforce opportunities for pipeline workflows."""
+    clauses: List[str] = []
+    if account_id:
+        clauses.append(f"AccountId = '{_sf(account_id)}'")
+    if stage_name:
+        clauses.append(f"StageName = '{_sf(stage_name)}'")
+    if owner_name:
+        clauses.append(f"Owner.Name = '{_sf(owner_name)}'")
+    if not include_closed:
+        clauses.append("IsClosed = false")
+
+    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+    safe_limit = max(1, min(int(limit), 150))
+
+    query = (
+        f"SELECT {_OPPORTUNITY_FIELDS} "
+        f"FROM Opportunity{where} "
+        f"ORDER BY CloseDate ASC, Amount DESC "
+        f"LIMIT {safe_limit}"
+    )
+    records = await _soql_query(query, ctx)
+    return {
+        "total": len(records),
+        "opportunities": [_simplify_opportunity(r) for r in records],
+    }
+
+
+async def tool_get_account_360(
+    account_id: Optional[str] = None,
+    account_name: Optional[str] = None,
+    section_limit: int = 12,
+) -> Dict[str, Any]:
+    """Get a 360° account view with contacts, opportunities, activities, cases, and tasks."""
+    if not account_id and not account_name:
+        raise ValueError("Provide account_id or account_name")
+
+    safe_limit = max(1, min(int(section_limit), 50))
+
+    if account_id:
+        account_query = f"SELECT {_ACCOUNT_FIELDS} FROM Account WHERE Id = '{_sf(account_id)}' LIMIT 1"
+    else:
+        account_query = (
+            f"SELECT {_ACCOUNT_FIELDS} "
+            f"FROM Account WHERE Name LIKE '%{_sf(account_name or '')}%' "
+            f"ORDER BY Name ASC LIMIT 1"
+        )
+
+    account_records = await _soql_query(account_query, ctx)
+    if not account_records:
+        raise ValueError("Salesforce account not found")
+
+    account_raw = account_records[0]
+    resolved_account_id = account_raw.get("Id")
+
+    contacts = await _soql_query(
+        f"SELECT {_CONTACT_FIELDS} FROM Contact "
+        f"WHERE AccountId = '{_sf(resolved_account_id)}' "
+        f"ORDER BY LastName ASC, FirstName ASC LIMIT {safe_limit}"
+    , ctx)
+
+    opportunities = await _soql_query(
+        f"SELECT {_OPPORTUNITY_FIELDS} FROM Opportunity "
+        f"WHERE AccountId = '{_sf(resolved_account_id)}' "
+        f"ORDER BY CloseDate DESC, Amount DESC LIMIT {safe_limit}"
+    , ctx)
+
+    opportunity_ids = [o.get("Id") for o in opportunities if o.get("Id")]
+    what_ids = [resolved_account_id, *opportunity_ids]
+    in_clause = _soql_in([x for x in what_ids if x])
+
+    events: List[Dict[str, Any]] = []
+    tasks: List[Dict[str, Any]] = []
+    if in_clause:
+        events = await _soql_query(
+            f"SELECT {_EVENT_FIELDS} FROM Event "
+            f"WHERE WhatId IN ({in_clause}) "
+            f"ORDER BY StartDateTime DESC LIMIT {safe_limit}"
+        , ctx)
+        tasks = await _soql_query(
+            f"SELECT {_TASK_FIELDS} FROM Task "
+            f"WHERE WhatId IN ({in_clause}) "
+            f"ORDER BY CreatedDate DESC LIMIT {safe_limit}"
+        , ctx)
+
+    cases = await _soql_query(
+        f"SELECT {_CASE_FIELDS} FROM Case "
+        f"WHERE AccountId = '{_sf(resolved_account_id)}' "
+        f"ORDER BY CreatedDate DESC LIMIT {safe_limit}"
+    , ctx)
+
+    open_opps = [o for o in opportunities if not o.get("IsClosed")]
+    open_pipeline_amount = sum(float(o.get("Amount") or 0) for o in open_opps)
+
+    _, instance_url = await _get_salesforce_token()
+
+    return {
+        "account": _simplify_account(account_raw),
+        "contacts": [_simplify_contact(x) for x in contacts],
+        "opportunities": [_simplify_opportunity(x) for x in opportunities],
+        "events": [_simplify_event(x) for x in events],
+        "tasks": [_simplify_task(x) for x in tasks],
+        "cases": [_simplify_case(x) for x in cases],
+        "summary": {
+            "contacts": len(contacts),
+            "opportunities": len(opportunities),
+            "open_opportunities": len(open_opps),
+            "open_pipeline_amount": open_pipeline_amount,
+            "events": len(events),
+            "tasks": len(tasks),
+            "cases": len(cases),
+        },
+        "links": {
+            "account": f"{instance_url}/{resolved_account_id}",
+        },
+    }
+
+
+async def tool_get_pipeline_dashboard(
+    owner_name: Optional[str] = None,
+    include_closed: bool = False,
+    limit: int = 200,
+) -> Dict[str, Any]:
+    """Get a sales pipeline dashboard (funnel/tornado-friendly aggregated view)."""
+    clauses: List[str] = []
+    if owner_name:
+        clauses.append(f"Owner.Name = '{_sf(owner_name)}'")
+    if not include_closed:
+        clauses.append("IsClosed = false")
+
+    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+    safe_limit = max(20, min(int(limit), 500))
+
+    query = (
+        f"SELECT {_OPPORTUNITY_FIELDS} "
+        f"FROM Opportunity{where} "
+        f"ORDER BY Amount DESC, CloseDate ASC "
+        f"LIMIT {safe_limit}"
+    )
+    records = await _soql_query(query, ctx)
+
+    stage_rollup: Dict[str, Dict[str, Any]] = {}
+    total_amount = 0.0
+    total_weighted = 0.0
+
+    for raw in records:
+        stage = raw.get("StageName") or "Unknown"
+        amount = float(raw.get("Amount") or 0)
+        prob = float(raw.get("Probability") or 0)
+
+        total_amount += amount
+        total_weighted += amount * (prob / 100.0)
+
+        entry = stage_rollup.setdefault(
+            stage,
+            {"stage": stage, "count": 0, "amount": 0.0, "weighted_amount": 0.0},
+        )
+        entry["count"] += 1
+        entry["amount"] += amount
+        entry["weighted_amount"] += amount * (prob / 100.0)
+
+    stages = sorted(stage_rollup.values(), key=lambda x: x["amount"], reverse=True)
+
+    return {
+        "totals": {
+            "opportunities": len(records),
+            "pipeline_amount": total_amount,
+            "weighted_pipeline_amount": total_weighted,
+        },
+        "stages": stages,
+        "opportunities": [_simplify_opportunity(r) for r in records[:50]],
+    }
+
+
+async def tool_show_create_opportunity_form(
+    account_id: Optional[str] = None,
+    account_name: Optional[str] = None,
+    name: Optional[str] = None,
+    amount: Optional[float] = None,
+    stage_name: Optional[str] = None,
+    close_date: Optional[str] = None,
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Show a guided create-opportunity form widget with optional prefill."""
+    prefill: Dict[str, Any] = {}
+    if account_id:
+        prefill["account_id"] = account_id
+    if account_name:
+        prefill["account_name"] = account_name
+    if name:
+        prefill["name"] = name
+    if amount is not None:
+        prefill["amount"] = amount
+    if stage_name:
+        prefill["stage_name"] = stage_name
+    if close_date:
+        prefill["close_date"] = close_date
+    if description:
+        prefill["description"] = description
+
+    if account_name and not account_id:
+        candidates = await tool_list_accounts(search_text=account_name, limit=5)
+        prefill["account_candidates"] = candidates.get("accounts", [])
+
+    return {
+        "_widget_hint": "The opportunity form is ready. Acknowledge with one short sentence.",
+        **prefill,
+    }
+
+
+async def tool_create_opportunity(
+    name: str,
+    account_id: str,
+    amount: Optional[float] = None,
+    stage_name: str = "Prospecting",
+    close_date: Optional[str] = None,
+    probability: Optional[float] = None,
+    description: Optional[str] = None,
+    lead_source: Optional[str] = None,
+    opportunity_type: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create a Salesforce opportunity."""
+    if not close_date:
+        close_date = (datetime.now(timezone.utc).date() + timedelta(days=30)).isoformat()
+
+    payload: Dict[str, Any] = {
+        "Name": name,
+        "AccountId": account_id,
+        "StageName": stage_name,
+        "CloseDate": close_date,
+    }
+    if amount is not None:
+        payload["Amount"] = amount
+    if probability is not None:
+        payload["Probability"] = probability
+    if description:
+        payload["Description"] = description
+    if lead_source:
+        payload["LeadSource"] = lead_source
+    if opportunity_type:
+        payload["Type"] = opportunity_type
+
+    try:
+        result = await _salesforce_post("/sobjects/Opportunity", payload, ctx)
+        opp_id = result.get("id", "")
+        created = await _soql_query(
+            f"SELECT {_OPPORTUNITY_FIELDS} FROM Opportunity WHERE Id = '{_sf(opp_id)}'"
+        , ctx)
+        _, instance_url = await _get_salesforce_token()
+        return {
+            "created": True,
+            "opportunity": _simplify_opportunity(created[0]) if created else {"id": opp_id},
+            "link": f"{instance_url}/{opp_id}" if opp_id else "",
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_create_opportunity_error", error=str(exc))
+        return {"created": False, "error": str(exc)}
+
+
+async def tool_create_opportunity_task(
+    opportunity_id: str,
+    subject: str,
+    due_date: Optional[str] = None,
+    priority: str = "Normal",
+    status: str = "Not Started",
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create a Salesforce task linked to an opportunity."""
+    payload: Dict[str, Any] = {
+        "WhatId": opportunity_id,
+        "Subject": subject,
+        "Priority": priority,
+        "Status": status,
+    }
+    if due_date:
+        payload["ActivityDate"] = due_date
+    if description:
+        payload["Description"] = description
+
+    try:
+        result = await _salesforce_post("/sobjects/Task", payload, ctx)
+        task_id = result.get("id", "")
+        task_records = await _soql_query(
+            f"SELECT {_TASK_FIELDS} FROM Task WHERE Id = '{_sf(task_id)}'"
+        , ctx)
+        return {
+            "created": True,
+            "task": _simplify_task(task_records[0]) if task_records else {"id": task_id},
+            "opportunity_id": opportunity_id,
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_create_opportunity_task_error", error=str(exc))
+        return {"created": False, "error": str(exc)}
+
+
+async def tool_show_create_event_form(
+    subject: Optional[str] = None,
+    start_datetime: Optional[str] = None,
+    end_datetime: Optional[str] = None,
+    opportunity_id: Optional[str] = None,
+    account_id: Optional[str] = None,
+    contact_id: Optional[str] = None,
+    location: Optional[str] = None,
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Show a guided create-event form widget with optional prefill."""
+    prefill: Dict[str, Any] = {}
+    if subject:
+        prefill["subject"] = subject
+    if start_datetime:
+        prefill["start_datetime"] = start_datetime
+    if end_datetime:
+        prefill["end_datetime"] = end_datetime
+    if opportunity_id:
+        prefill["opportunity_id"] = opportunity_id
+    if account_id:
+        prefill["account_id"] = account_id
+    if contact_id:
+        prefill["contact_id"] = contact_id
+    if location:
+        prefill["location"] = location
+    if description:
+        prefill["description"] = description
+
+    return {
+        "_widget_hint": "The event form is ready. Acknowledge with one short sentence.",
+        **prefill,
+    }
+
+
+async def tool_create_event(
+    subject: str,
+    start_datetime: str,
+    end_datetime: str,
+    opportunity_id: Optional[str] = None,
+    account_id: Optional[str] = None,
+    contact_id: Optional[str] = None,
+    location: Optional[str] = None,
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create a Salesforce event, optionally linked to account/opportunity/contact."""
+    payload: Dict[str, Any] = {
+        "Subject": subject,
+        "StartDateTime": start_datetime,
+        "EndDateTime": end_datetime,
+    }
+    if opportunity_id:
+        payload["WhatId"] = opportunity_id
+    elif account_id:
+        payload["WhatId"] = account_id
+    if contact_id:
+        payload["WhoId"] = contact_id
+    if location:
+        payload["Location"] = location
+    if description:
+        payload["Description"] = description
+
+    try:
+        result = await _salesforce_post("/sobjects/Event", payload, ctx)
+        event_id = result.get("id", "")
+        event_records = await _soql_query(
+            f"SELECT {_EVENT_FIELDS} FROM Event WHERE Id = '{_sf(event_id)}'"
+        , ctx)
+        return {
+            "created": True,
+            "event": _simplify_event(event_records[0]) if event_records else {"id": event_id},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_create_event_error", error=str(exc))
+        return {"created": False, "error": str(exc)}
+
+
+# ── Tool registry ───────────────────────────────────────────────────
+
+SALESFORCE_TOOL_SPECS: list[dict] = [
+    {
+        "name": "list_tasks",
+        "func": tool_list_tasks,
+        "summary": (
+            "List Salesforce tasks. Optionally filter by status, priority, "
+            "or owner name."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_task",
+        "func": tool_get_task,
+        "summary": (
+            "Get full details for a single Salesforce task by ID. "
+            "Result is rendered as an interactive widget where the user can "
+            "edit and submit updates."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/update-task.html",
+            "openai/toolInvocation/invoking": "Loading task\u2026",
+            "openai/toolInvocation/invoked": "Task ready.",
+        },
+    },
+    {
+        "name": "update_task",
+        "func": tool_update_task,
+        "summary": (
+            "Update a Salesforce task. Called by the update-task widget when the user clicks Submit. "
+            "Use get_task first to load the task widget."
+        ),
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "list_approvals",
+        "func": tool_list_approvals,
+        "summary": (
+            "List Salesforce approval work items (ProcessInstanceWorkitem). "
+            "Defaults to pending approvals."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "approve_reject",
+        "func": tool_approve_reject,
+        "summary": (
+            "Approve or reject a Salesforce approval work item. Called by the task-list widget when the user makes an approval decision."
+        ),
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "list_cases",
+        "func": tool_list_cases,
+        "summary": (
+            "List Salesforce compliance cases. Used by the Compliance function "
+            "to track regulatory investigations, AML/KYC reviews, fraud cases, "
+            "policy breaches, sanctions screening, data privacy issues, and "
+            "other compliance matters. Supports filtering by status, priority, "
+            "compliance type, and free-text search."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_case",
+        "func": tool_get_case,
+        "summary": (
+            "Get full details for a single Salesforce compliance case by ID or "
+            "CaseNumber, including case comments / history. Result is rendered as "
+            "an interactive widget where the user can edit and submit updates."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/compliance-case.html",
+            "openai/toolInvocation/invoking": "Loading compliance case\u2026",
+            "openai/toolInvocation/invoked": "Compliance case ready.",
+        },
+    },
+    {
+        "name": "show_compliance_case_form",
+        "func": tool_show_compliance_case_form,
+        "summary": (
+            "Show the compliance case creation form. Pass any known details "
+            "(subject, compliance_type, description, priority) to pre-fill the form. "
+            "The widget handles submission."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/compliance-case.html",
+            "openai/toolInvocation/invoking": "Loading compliance case form\u2026",
+            "openai/toolInvocation/invoked": "Compliance case form ready.",
+        },
+    },
+    {
+        "name": "create_case",
+        "func": tool_create_case,
+        "summary": (
+            "Create a new Salesforce compliance case. Called by the compliance-case widget when the user clicks Submit. "
+            "Use show_compliance_case_form to display the form first."
+        ),
+        "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/compliance-case.html",
+            "openai/toolInvocation/invoking": "Raising compliance case\u2026",
+            "openai/toolInvocation/invoked": "Compliance case ready.",
+        },
+    },
+    {
+        "name": "update_case",
+        "func": tool_update_case,
+        "summary": (
+            "Update an existing Salesforce compliance case. Called by the compliance-case widget when the user clicks Submit. "
+            "Use get_case first to load the case widget."
+        ),
+        "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/compliance-case.html",
+            "openai/toolInvocation/invoking": "Updating compliance case\u2026",
+            "openai/toolInvocation/invoked": "Case updated.",
+        },
+    },
+    {
+        "name": "list_accounts",
+        "func": tool_list_accounts,
+        "summary": (
+            "List Salesforce accounts with optional search, industry, and owner filters."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "list_contacts",
+        "func": tool_list_contacts,
+        "summary": (
+            "List Salesforce contacts, optionally filtered by account or search text."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "list_opportunities",
+        "func": tool_list_opportunities,
+        "summary": (
+            "List Salesforce opportunities for CRM and sales pipeline workflows."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_account_360",
+        "func": tool_get_account_360,
+        "summary": (
+            "Get a 360° account view including contacts, opportunities, events, tasks, and cases."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-account-360.html",
+            "openai/toolInvocation/invoking": "Loading account 360° view\u2026",
+            "openai/toolInvocation/invoked": "Account 360° view ready.",
+        },
+    },
+    {
+        "name": "get_pipeline_dashboard",
+        "func": tool_get_pipeline_dashboard,
+        "summary": (
+            "Build a pipeline dashboard view with stage rollups and opportunity list for funnel/tornado analysis."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-pipeline.html",
+            "openai/toolInvocation/invoking": "Loading sales pipeline\u2026",
+            "openai/toolInvocation/invoked": "Pipeline ready.",
+        },
+    },
+    {
+        "name": "show_create_opportunity_form",
+        "func": tool_show_create_opportunity_form,
+        "summary": (
+            "Show an opportunity creation form with optional prefill. The widget handles submission."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-opportunity.html",
+            "openai/toolInvocation/invoking": "Opening opportunity form\u2026",
+            "openai/toolInvocation/invoked": "Opportunity form ready.",
+        },
+    },
+    {
+        "name": "create_opportunity",
+        "func": tool_create_opportunity,
+        "summary": (
+            "Create a Salesforce opportunity. Called by the CRM opportunity widget when the user submits."
+        ),
+        "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-opportunity.html",
+            "openai/toolInvocation/invoking": "Creating opportunity\u2026",
+            "openai/toolInvocation/invoked": "Opportunity created.",
+        },
+    },
+    {
+        "name": "create_opportunity_task",
+        "func": tool_create_opportunity_task,
+        "summary": (
+            "Create a Salesforce task linked to an opportunity."
+        ),
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "show_create_event_form",
+        "func": tool_show_create_event_form,
+        "summary": (
+            "Show an event creation form with optional meeting/context prefill. The widget handles submission."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-event.html",
+            "openai/toolInvocation/invoking": "Opening event form\u2026",
+            "openai/toolInvocation/invoked": "Event form ready.",
+        },
+    },
+    {
+        "name": "create_event",
+        "func": tool_create_event,
+        "summary": (
+            "Create a Salesforce event. Called by the CRM event widget when the user submits."
+        ),
+        "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-event.html",
+            "openai/toolInvocation/invoking": "Creating event\u2026",
+            "openai/toolInvocation/invoked": "Event created.",
+        },
+    },
+]

@@ -1,0 +1,918 @@
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14;
+        --card: #151a21;
+        --muted: #a9b1bd;
+        --text: #e6edf3;
+        --accent: #4cc2ff;
+        --border: #1f2630;
+        --pos: #2bd48f;
+        --warn: #f0b232;
+        --neg: #ff6b6b;
+        --input-bg: #0f131a;
+        --btn-bg: #152235;
+        --btn-border: #243145;
+        --btn-hover: #1a2d44;
+        --btn-primary-bg: #0078d4;
+        --btn-primary-hover: #106ebe;
+        --success-bg: rgba(43,212,143,.1);
+        --success-border: rgba(43,212,143,.3);
+        --error-bg: rgba(255,107,107,.08);
+        --error-border: rgba(255,107,107,.25);
+        --sn-accent: #3eb489;
+        --sn-glow: rgba(62,180,137,.12);
+        --card-hover-border: #2a3442;
+        --tag-bg: #0f131a;
+        --dropdown-bg: #1a2030;
+        --dropdown-hover: #243040;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5;
+        --card: #ffffff;
+        --muted: #65707d;
+        --text: #1e1e1e;
+        --accent: #0078d4;
+        --border: #e0e0e0;
+        --pos: #107c10;
+        --warn: #ca5010;
+        --neg: #d13438;
+        --input-bg: #ffffff;
+        --btn-bg: #f0f0f0;
+        --btn-border: #d0d0d0;
+        --btn-hover: #e4e4e4;
+        --btn-primary-bg: #0078d4;
+        --btn-primary-hover: #106ebe;
+        --success-bg: rgba(16,124,16,.06);
+        --success-border: rgba(16,124,16,.25);
+        --error-bg: rgba(209,52,56,.06);
+        --error-border: rgba(209,52,56,.25);
+        --sn-accent: #2e9968;
+        --sn-glow: rgba(46,153,104,.08);
+        --card-hover-border: #c8c8c8;
+        --tag-bg: #f5f5f5;
+        --dropdown-bg: #ffffff;
+        --dropdown-hover: #f0f0f0;
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+
+      /* Header */
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sn-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sn-glow); border: 1px solid var(--sn-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { color: var(--muted); font-size: 12px; }
+      .breadcrumb { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+      .breadcrumb a { color: var(--accent); text-decoration: none; }
+
+      /* Layout */
+      .item-layout { display: flex; gap: 16px; align-items: flex-start; }
+      .item-main { flex: 1; min-width: 0; }
+      .item-sidebar { flex-shrink: 0; width: 200px; }
+
+      /* Image and description */
+      .item-hero { display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start; }
+      .item-picture { width: 160px; height: 120px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
+      .item-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+      .item-desc p { margin: 0; }
+
+      /* Card */
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 12px; }
+
+      /* Form fields */
+      .field-wrap { margin-bottom: 14px; transition: opacity .2s, max-height .3s; overflow: hidden; }
+      .field-wrap.hidden { display: none; }
+      .field-wrap.disabled { opacity: .5; pointer-events: none; }
+      .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+      .field-label .mandatory-star { color: var(--neg); margin-left: 2px; }
+      .field-help { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+      .field-input, .field-select, .field-textarea {
+        width: 100%; box-sizing: border-box;
+        background: var(--input-bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 8px 10px; font-size: 13px; outline: none;
+        font-family: inherit;
+      }
+      .field-input:focus, .field-select:focus, .field-textarea:focus { border-color: var(--accent); }
+      .field-textarea { resize: vertical; min-height: 80px; }
+      .field-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
+      .field-checkbox-wrap { display: flex; align-items: center; gap: 8px; }
+      .field-checkbox { width: 16px; height: 16px; accent-color: var(--accent); }
+      .field-break { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+      .more-info { margin-top: 4px; }
+      .more-info summary { font-size: 12px; color: var(--accent); cursor: pointer; }
+      .more-info summary:hover { text-decoration: underline; }
+
+      /* Reference field with search */
+      .ref-wrap { position: relative; }
+      .ref-results { position: absolute; top: 100%; left: 0; right: 0; z-index: 10; max-height: 180px; overflow-y: auto; background: var(--dropdown-bg); border: 1px solid var(--border); border-radius: 8px; margin-top: 2px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+      .ref-results.open { display: block; }
+      .ref-option { padding: 8px 10px; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+      .ref-option:last-child { border-bottom: none; }
+      .ref-option:hover { background: var(--dropdown-hover); }
+      .ref-option.selected { background: var(--dropdown-hover); color: var(--accent); }
+      .ref-spinner { padding: 8px; text-align: center; font-size: 11px; color: var(--muted); }
+
+      /* Sidebar */
+      .order-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+      .order-box h4 { margin: 0 0 10px; font-size: 13px; font-weight: 600; }
+      .qty-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+      .qty-label { font-size: 12px; color: var(--muted); }
+      .qty-select { width: 60px; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; font-size: 13px; }
+      .delivery-row { font-size: 12px; color: var(--muted); margin-bottom: 10px; display: flex; justify-content: space-between; }
+      .price-row { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+
+      /* Buttons */
+      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; transition: background .15s; font-family: inherit; }
+      .btn:hover { background: var(--btn-hover); }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .btn-primary { background: var(--btn-primary-bg); color: #fff; border-color: var(--btn-primary-bg); font-weight: 600; }
+      .btn-primary:hover:not(:disabled) { background: var(--btn-primary-hover); }
+      .btn-order { width: 100%; margin-bottom: 8px; }
+      .btn-cart { width: 100%; }
+
+      /* Cart summary */
+      .cart-box { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+      .cart-box h5 { margin: 0 0 4px; font-size: 12px; font-weight: 600; }
+      .cart-empty { font-size: 11px; color: var(--muted); }
+
+      /* Result message */
+      .result-msg { margin-top: 12px; padding: 10px 14px; border-radius: 10px; font-size: 12px; }
+      .result-msg.success { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--pos); }
+      .result-msg.error { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--neg); }
+      .result-msg a { color: inherit; text-decoration: underline; }
+
+      .loading, .error-state { text-align: center; padding: 32px 0; font-size: 13px; color: var(--muted); }
+      .error-state { color: var(--neg); }
+
+      /* Validation */
+      .field-input.invalid, .field-select.invalid, .field-textarea.invalid { border-color: var(--neg); }
+      .field-error { font-size: 11px; color: var(--neg); margin-top: 2px; }
+
+      .maximize-btn {
+        background: transparent; color: var(--muted);
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 4px 8px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: color .15s, border-color .15s;
+      }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sn-accent)">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </div>
+          <div>
+            <div class="title" id="itemTitle">Service Catalog</div>
+            <div class="subtitle" id="itemSubtitle">Loading&hellip;</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+        </div>
+      </div>
+      <div id="content"><div class="loading">Loading catalog item&hellip;</div></div>
+      <div id="resultArea"></div>
+    </div>
+
+    <script>
+    (function() {
+      "use strict";
+
+      /* ── Globals ─────────────────────────────────────────────── */
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
+      var _itemData = null;
+      var _varValues = {};    // name → value
+      var _refValues = {};    // name → { sys_id, name }
+      var _uiPolicyState = {};  // field id → { visible, mandatory, disabled }
+
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function reportHeight() {
+        if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") {
+          window.openai.notifyIntrinsicHeight(document.body.scrollHeight);
+        }
+      }
+
+      /* ── Variable type mapping ───────────────────────────────── */
+      // ServiceNow variable types (from sn_sc API)
+      var TYPE = {
+        SINGLE_LINE: 6,
+        MULTI_LINE: 2,
+        SELECT_BOX: 5,
+        YES_NO: 1,
+        CHECKBOX: 7,
+        REFERENCE: 8,
+        DATE: 10,
+        DATE_TIME: 26,
+        EMAIL: 14,
+        URL: 15,
+        IP_ADDRESS: 25,
+        NUMERIC: 16,
+        BREAK: 12,
+        LABEL: 11,
+        CONTAINER_START: 19,
+        CONTAINER_END: 20,
+        MACRO: 14,
+        LOOKUP_SELECT: 21,
+        WIDE_SINGLE_LINE: 6,
+        HTML: 17,
+      };
+
+      /* ── Build form field HTML ───────────────────────────────── */
+      function buildField(v) {
+        if (!v.active) return '';
+        var ftype = v.friendly_type || '';
+        var type = v.type;
+        var name = v.name || v.id;
+        var id = v.id || v.name;
+        var label = v.label || v.name || '';
+        var mandatory = v.mandatory;
+        var readOnly = v.read_only;
+        var helpText = v.help_text || '';
+        var value = v.value || '';
+        var maxLen = v.max_length || 0;
+
+        // Break / separator
+        if (type === TYPE.BREAK || ftype === 'break') {
+          return '<div class="field-wrap" data-var-id="' + esc(id) + '"><hr class="field-break"></div>';
+        }
+
+        // Label only
+        if (type === TYPE.LABEL || ftype === 'label') {
+          return '<div class="field-wrap" data-var-id="' + esc(id) + '">' +
+            (v.render_label ? '<span class="field-label">' + esc(label) + '</span>' : '') +
+            '</div>';
+        }
+
+        // Container start/end (layout markers)
+        if (type === TYPE.CONTAINER_START || type === TYPE.CONTAINER_END) return '';
+
+        var html = '<div class="field-wrap" data-var-id="' + esc(id) + '" data-var-name="' + esc(name) + '">';
+
+        // Label
+        if (v.render_label && label) {
+          html += '<label class="field-label" for="var_' + esc(name) + '">' + esc(label);
+          if (mandatory) html += '<span class="mandatory-star">*</span>';
+          html += '</label>';
+        }
+
+        // Help text
+        if (helpText) {
+          html += '<details class="more-info"><summary>More information</summary><div class="field-help">' + esc(helpText) + '</div></details>';
+        }
+
+        var roAttr = readOnly ? ' disabled' : '';
+        var maxAttr = maxLen > 0 ? ' maxlength="' + maxLen + '"' : '';
+
+        // Select box
+        if (type === TYPE.SELECT_BOX || ftype === 'select_box') {
+          html += '<select class="field-select" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + roAttr + '>';
+          html += '<option value="">-- Select --</option>';
+          var choices = v.choices || [];
+          for (var i = 0; i < choices.length; i++) {
+            var sel = (choices[i].value === value) ? ' selected' : '';
+            html += '<option value="' + esc(choices[i].value) + '"' + sel + '>' + esc(choices[i].label) + '</option>';
+          }
+          html += '</select>';
+        }
+        // Yes/No
+        else if (type === TYPE.YES_NO || ftype === 'yes_no') {
+          html += '<select class="field-select" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + roAttr + '>';
+          html += '<option value="">-- Select --</option>';
+          var ynChoices = v.choices || [{ label: "Yes", value: "Yes" }, { label: "No", value: "No" }];
+          for (var j = 0; j < ynChoices.length; j++) {
+            var ynSel = (ynChoices[j].value === value) ? ' selected' : '';
+            html += '<option value="' + esc(ynChoices[j].value) + '"' + ynSel + '>' + esc(ynChoices[j].label) + '</option>';
+          }
+          html += '</select>';
+        }
+        // Checkbox
+        else if (type === TYPE.CHECKBOX || ftype === 'checkbox') {
+          var chk = (value === 'true' || value === '1' || value === true) ? ' checked' : '';
+          html += '<div class="field-checkbox-wrap"><input type="checkbox" class="field-checkbox" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + chk + roAttr + '>';
+          html += '<label for="var_' + esc(name) + '" style="font-size:12px;">' + esc(label) + '</label></div>';
+        }
+        // Multi-line text
+        else if (type === TYPE.MULTI_LINE || ftype === 'multi_line_text') {
+          html += '<textarea class="field-textarea" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + maxAttr + roAttr + '>' + esc(value) + '</textarea>';
+        }
+        // Reference (table lookup with search)
+        else if (type === TYPE.REFERENCE || ftype === 'reference') {
+          var refTable = v.reference || '';
+          html += '<div class="ref-wrap" data-ref-table="' + esc(refTable) + '">';
+          html += '<input class="field-input ref-search" id="var_' + esc(name) + '" data-name="' + esc(name) + '" placeholder="Search\u2026" autocomplete="off" value="' + esc(v.displayvalue || value) + '"' + roAttr + '>';
+          html += '<input type="hidden" id="var_' + esc(name) + '_value" data-name="' + esc(name) + '_ref" value="' + esc(value) + '">';
+          html += '<div class="ref-results" id="ref_results_' + esc(name) + '"></div>';
+          html += '</div>';
+        }
+        // Date
+        else if (type === TYPE.DATE || ftype === 'date') {
+          html += '<input type="date" class="field-input" id="var_' + esc(name) + '" data-name="' + esc(name) + '" value="' + esc(value) + '"' + roAttr + '>';
+        }
+        // Date/Time
+        else if (type === TYPE.DATE_TIME || ftype === 'date_time') {
+          html += '<input type="datetime-local" class="field-input" id="var_' + esc(name) + '" data-name="' + esc(name) + '" value="' + esc(value) + '"' + roAttr + '>';
+        }
+        // Numeric
+        else if (type === TYPE.NUMERIC || ftype === 'numeric_scale' || ftype === 'numeric') {
+          html += '<input type="number" class="field-input" id="var_' + esc(name) + '" data-name="' + esc(name) + '" value="' + esc(value) + '"' + maxAttr + roAttr + '>';
+        }
+        // Lookup select (similar to reference but with pre-loaded choices)
+        else if (type === TYPE.LOOKUP_SELECT || ftype === 'lookup_select_box') {
+          html += '<select class="field-select" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + roAttr + '>';
+          html += '<option value="">-- Select --</option>';
+          var lkChoices = v.choices || [];
+          for (var lk = 0; lk < lkChoices.length; lk++) {
+            var lkSel = (lkChoices[lk].value === value) ? ' selected' : '';
+            html += '<option value="' + esc(lkChoices[lk].value) + '"' + lkSel + '>' + esc(lkChoices[lk].label) + '</option>';
+          }
+          html += '</select>';
+        }
+        // HTML content (read-only display)
+        else if (type === TYPE.HTML || ftype === 'html') {
+          html += '<div style="font-size:12px;color:var(--muted);">' + (value || '') + '</div>';
+        }
+        // Default: single-line text
+        else {
+          var inputType = 'text';
+          if (ftype === 'email') inputType = 'email';
+          else if (ftype === 'url') inputType = 'url';
+          html += '<input type="' + inputType + '" class="field-input" id="var_' + esc(name) + '" data-name="' + esc(name) + '" value="' + esc(value) + '"' + maxAttr + roAttr + '>';
+        }
+
+        // Error placeholder
+        html += '<div class="field-error" id="err_' + esc(name) + '" style="display:none;"></div>';
+        html += '</div>';
+        return html;
+      }
+
+      /* ── UI Policy Engine ────────────────────────────────────── */
+      var _varById = {}; // id → variable object
+      var _varByName = {}; // name → variable object
+
+      function buildVarMaps(variables) {
+        for (var i = 0; i < variables.length; i++) {
+          var v = variables[i];
+          if (v.id) _varById[v.id] = v;
+          if (v.name) _varByName[v.name] = v;
+        }
+      }
+
+      function getVarIdFromPolicyRef(ref) {
+        // Policy refs use "IO:<variable_id>" format
+        if (ref && ref.indexOf('IO:') === 0) return ref.substring(3);
+        return ref;
+      }
+
+      function getFieldValue(varId) {
+        var v = _varById[varId];
+        if (!v) return '';
+        var el = document.getElementById('var_' + v.name);
+        if (!el) return '';
+        if (el.type === 'checkbox') return el.checked ? 'true' : 'false';
+        return el.value || '';
+      }
+
+      function evaluateCondition(cond) {
+        var varId = getVarIdFromPolicyRef(cond.field);
+        var fieldVal = getFieldValue(varId);
+        var testVal = cond.value || '';
+        var oper = cond.oper || '=';
+
+        switch (oper) {
+          case '=': return fieldVal === testVal;
+          case '!=': return fieldVal !== testVal;
+          case 'IN': return testVal.split(',').indexOf(fieldVal) >= 0;
+          case 'NOT IN': return testVal.split(',').indexOf(fieldVal) < 0;
+          case 'LIKE': return fieldVal.toLowerCase().indexOf(testVal.toLowerCase()) >= 0;
+          case 'NOT LIKE': return fieldVal.toLowerCase().indexOf(testVal.toLowerCase()) < 0;
+          case 'STARTSWITH': return fieldVal.toLowerCase().indexOf(testVal.toLowerCase()) === 0;
+          case 'ENDSWITH': return fieldVal.toLowerCase().lastIndexOf(testVal.toLowerCase()) === fieldVal.length - testVal.length;
+          case 'ISEMPTY': return !fieldVal;
+          case 'ISNOTEMPTY': return !!fieldVal;
+          case '>': return parseFloat(fieldVal) > parseFloat(testVal);
+          case '<': return parseFloat(fieldVal) < parseFloat(testVal);
+          case '>=': return parseFloat(fieldVal) >= parseFloat(testVal);
+          case '<=': return parseFloat(fieldVal) <= parseFloat(testVal);
+          default: return fieldVal === testVal;
+        }
+      }
+
+      function evaluateConditions(conditions) {
+        if (!conditions || conditions.length === 0) return true;
+        // Conditions are ANDed (unless "or" flag is set)
+        var result = true;
+        var orGroup = false;
+        for (var i = 0; i < conditions.length; i++) {
+          var condResult = evaluateCondition(conditions[i]);
+          if (conditions[i].or && i > 0) {
+            // OR with previous
+            result = result || condResult;
+          } else if (conditions[i].newquery) {
+            // Start fresh AND group
+            result = result && condResult;
+          } else {
+            if (i === 0) result = condResult;
+            else result = result && condResult;
+          }
+        }
+        return result;
+      }
+
+      function applyPolicyAction(action, conditionsMet, reverse) {
+        var varId = getVarIdFromPolicyRef(action.name);
+        var v = _varById[varId];
+        if (!v) return;
+        var wrap = document.querySelector('[data-var-id="' + varId + '"]');
+        if (!wrap) return;
+        var input = document.getElementById('var_' + v.name);
+        var label = wrap.querySelector('.field-label');
+
+        if (conditionsMet) {
+          // Apply actions when conditions are TRUE
+          if (action.visible === 'true') {
+            wrap.classList.remove('hidden');
+          } else if (action.visible === 'false') {
+            wrap.classList.add('hidden');
+          }
+          if (action.mandatory === 'true') {
+            v._policyMandatory = true;
+            if (label && !label.querySelector('.mandatory-star')) {
+              label.insertAdjacentHTML('beforeend', '<span class="mandatory-star">*</span>');
+            }
+          } else if (action.mandatory === 'false') {
+            v._policyMandatory = false;
+            if (label) { var star = label.querySelector('.mandatory-star'); if (star) star.remove(); }
+          }
+          if (action.disabled === 'true') {
+            wrap.classList.add('disabled');
+            if (input) input.disabled = true;
+          } else if (action.disabled === 'false') {
+            wrap.classList.remove('disabled');
+            if (input) input.disabled = false;
+          }
+          if (action.cleared === 'true' && input) {
+            if (input.type === 'checkbox') input.checked = false;
+            else input.value = '';
+          }
+        } else if (reverse) {
+          // REVERSE: undo actions when conditions are FALSE
+          if (action.visible === 'true') {
+            wrap.classList.add('hidden');
+          } else if (action.visible === 'false') {
+            wrap.classList.remove('hidden');
+          }
+          if (action.mandatory === 'true') {
+            v._policyMandatory = false;
+            if (label) { var star2 = label.querySelector('.mandatory-star'); if (star2) star2.remove(); }
+          } else if (action.mandatory === 'false') {
+            v._policyMandatory = true;
+            if (label && !label.querySelector('.mandatory-star')) {
+              label.insertAdjacentHTML('beforeend', '<span class="mandatory-star">*</span>');
+            }
+          }
+          if (action.disabled === 'true') {
+            wrap.classList.remove('disabled');
+            if (input) input.disabled = false;
+          } else if (action.disabled === 'false') {
+            wrap.classList.add('disabled');
+            if (input) input.disabled = true;
+          }
+        }
+      }
+
+      function evaluateAllPolicies() {
+        if (!_itemData || !_itemData.ui_policy) return;
+        var policies = _itemData.ui_policy;
+        for (var p = 0; p < policies.length; p++) {
+          var policy = policies[p];
+          var met = evaluateConditions(policy.conditions);
+          var actions = policy.actions || [];
+          for (var a = 0; a < actions.length; a++) {
+            applyPolicyAction(actions[a], met, !!policy.reverse);
+          }
+        }
+        reportHeight();
+      }
+
+      /* ── Collect form values ─────────────────────────────────── */
+      function collectVariables() {
+        var vars = {};
+        if (!_itemData || !_itemData.variables) return vars;
+        for (var i = 0; i < _itemData.variables.length; i++) {
+          var v = _itemData.variables[i];
+          if (!v.active || !v.name) continue;
+          var wrap = document.querySelector('[data-var-name="' + v.name + '"]');
+          if (!wrap || wrap.classList.contains('hidden')) continue;
+          var el = document.getElementById('var_' + v.name);
+          if (!el) continue;
+          var val;
+          if (el.type === 'checkbox') val = el.checked ? 'true' : 'false';
+          else val = el.value || '';
+          // For reference fields, use the hidden sys_id value
+          var refHidden = document.getElementById('var_' + v.name + '_value');
+          if (refHidden) val = refHidden.value || '';
+          if (val !== '') vars[v.name] = val;
+        }
+        return vars;
+      }
+
+      /* ── Validate mandatory fields ───────────────────────────── */
+      function validateForm() {
+        var valid = true;
+        if (!_itemData || !_itemData.variables) return true;
+        for (var i = 0; i < _itemData.variables.length; i++) {
+          var v = _itemData.variables[i];
+          if (!v.active || !v.name) continue;
+          var wrap = document.querySelector('[data-var-name="' + v.name + '"]');
+          if (!wrap || wrap.classList.contains('hidden')) continue;
+          var isMandatory = v.mandatory || v._policyMandatory;
+          if (!isMandatory) continue;
+          var el = document.getElementById('var_' + v.name);
+          var errEl = document.getElementById('err_' + v.name);
+          if (!el) continue;
+          var val = el.type === 'checkbox' ? (el.checked ? 'true' : '') : (el.value || '');
+          // Check ref hidden value
+          var refHidden = document.getElementById('var_' + v.name + '_value');
+          if (refHidden) val = refHidden.value || '';
+          if (!val) {
+            valid = false;
+            el.classList.add('invalid');
+            if (errEl) { errEl.textContent = 'This field is required.'; errEl.style.display = 'block'; }
+          } else {
+            el.classList.remove('invalid');
+            if (errEl) errEl.style.display = 'none';
+          }
+        }
+        reportHeight();
+        return valid;
+      }
+
+      /* ── Reference field search ──────────────────────────────── */
+      var _refTimers = {};
+      function setupReferenceSearch(name, refTable) {
+        var input = document.getElementById('var_' + name);
+        var hiddenInput = document.getElementById('var_' + name + '_value');
+        var resultsDiv = document.getElementById('ref_results_' + name);
+        if (!input || !resultsDiv) return;
+
+        input.addEventListener('input', function() {
+          var q = input.value.trim();
+          hiddenInput.value = ''; // Clear selection when typing
+          clearTimeout(_refTimers[name]);
+          if (q.length < 2) { resultsDiv.classList.remove('open'); return; }
+          _refTimers[name] = setTimeout(function() { doRefSearch(name, refTable, q); }, 300);
+        });
+
+        input.addEventListener('focus', function() {
+          if (input.value.trim().length >= 2 && resultsDiv.children.length > 0) {
+            resultsDiv.classList.add('open');
+          }
+        });
+
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.ref-wrap')) resultsDiv.classList.remove('open');
+        });
+      }
+
+      async function doRefSearch(name, table, query) {
+        var resultsDiv = document.getElementById('ref_results_' + name);
+        if (!resultsDiv) return;
+        resultsDiv.innerHTML = '<div class="ref-spinner">Searching&hellip;</div>';
+        resultsDiv.classList.add('open');
+
+        try {
+          if (!window.openai || typeof window.openai.callTool !== 'function') {
+            resultsDiv.innerHTML = '<div class="ref-spinner">Search unavailable</div>';
+            return;
+          }
+          var output = await window.openai.callTool('search_reference_values', { table: table, search: query, limit: 15 });
+          var data = (output && output.structuredContent) || output || {};
+          var results = data.results || [];
+          if (results.length === 0) {
+            resultsDiv.innerHTML = '<div class="ref-spinner">No results</div>';
+          } else {
+            var h = '';
+            for (var i = 0; i < results.length; i++) {
+              h += '<div class="ref-option" data-sysid="' + esc(results[i].sys_id) + '" data-name="' + esc(results[i].name) + '">' + esc(results[i].name) + '</div>';
+            }
+            resultsDiv.innerHTML = h;
+            // Click handlers
+            var opts = resultsDiv.querySelectorAll('.ref-option');
+            for (var j = 0; j < opts.length; j++) {
+              opts[j].addEventListener('click', (function(opt) {
+                return function() {
+                  var input = document.getElementById('var_' + name);
+                  var hiddenInput = document.getElementById('var_' + name + '_value');
+                  input.value = opt.dataset.name;
+                  hiddenInput.value = opt.dataset.sysid;
+                  resultsDiv.classList.remove('open');
+                };
+              })(opts[j]));
+            }
+          }
+        } catch (err) {
+          resultsDiv.innerHTML = '<div class="ref-spinner">' + esc(err.message || 'Search failed') + '</div>';
+        }
+        reportHeight();
+      }
+
+      /* ── Render the catalog item ─────────────────────────────── */
+      function render(data) {
+        _itemData = data;
+        if (!data || !data.sys_id) {
+          document.getElementById('content').innerHTML = '<div class="error-state">No catalog item data.</div>';
+          reportHeight();
+          return;
+        }
+
+        buildVarMaps(data.variables || []);
+
+        var contentEl = document.getElementById('content');
+        document.getElementById('itemTitle').textContent = data.name || 'Catalog Item';
+        document.getElementById('itemSubtitle').textContent = 'ServiceNow · Service Catalog';
+
+        var html = '';
+
+        // Breadcrumb
+        if (data.category) {
+          html += '<div class="breadcrumb">Service Catalog &rsaquo; ' + esc(data.category) + ' &rsaquo; <strong>' + esc(data.name) + '</strong></div>';
+        }
+
+        html += '<div class="item-layout">';
+
+        // Main column
+        html += '<div class="item-main">';
+
+        // Short description
+        if (data.short_description) {
+          html += '<div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">' + esc(data.short_description) + '</div>';
+        }
+
+        // Hero: picture + description
+        html += '<div class="item-hero">';
+        if (data.picture) {
+          html += '<img class="item-picture" src="' + esc(data.picture) + '" alt="' + esc(data.name) + '" onerror="this.style.display=\'none\'">';
+        }
+        if (data.description) {
+          html += '<div class="item-desc">' + data.description + '</div>';
+        }
+        html += '</div>';
+
+        // Variable form
+        var variables = data.variables || [];
+        if (variables.length > 0) {
+          html += '<div class="card" id="formCard">';
+          for (var i = 0; i < variables.length; i++) {
+            html += buildField(variables[i]);
+            // Initialize default values
+            if (variables[i].value && variables[i].name) {
+              _varValues[variables[i].name] = variables[i].value;
+            }
+          }
+          html += '</div>';
+        }
+
+        html += '</div>'; // item-main
+
+        // Sidebar
+        html += '<div class="item-sidebar">';
+        html += '<div class="order-box">';
+        html += '<h4>Order this Item</h4>';
+
+        // Quantity
+        if (data.show_quantity !== false) {
+          html += '<div class="qty-row"><span class="qty-label">Quantity</span>';
+          html += '<select class="qty-select" id="qtySelect">';
+          for (var q = 1; q <= 10; q++) {
+            html += '<option value="' + q + '">' + q + '</option>';
+          }
+          html += '</select></div>';
+        }
+
+        // Delivery time
+        if (data.show_delivery_time && data.delivery_time) {
+          html += '<div class="delivery-row"><span>Delivery time</span><span>' + esc(data.delivery_time) + '</span></div>';
+        }
+
+        // Price
+        if (data.show_price && data.price) {
+          html += '<div class="price-row">' + esc(data.price) + '</div>';
+        }
+
+        // Buttons
+        html += '<button class="btn btn-primary btn-order" id="btnOrderNow">Order Now</button>';
+        html += '<button class="btn btn-cart" id="btnAddToCart">Add to Cart</button>';
+
+        // Cart summary
+        html += '<div class="cart-box"><h5>Shopping Cart</h5><div class="cart-empty" id="cartSummary">Empty</div></div>';
+
+        html += '</div>'; // order-box
+
+        // Open in ServiceNow link
+        if (data.link) {
+          html += '<div style="margin-top:8px;text-align:center;"><a href="' + esc(data.link) + '" target="_blank" rel="noopener" style="font-size:11px;color:var(--accent);text-decoration:none;">Open in ServiceNow &rsaquo;</a></div>';
+        }
+
+        html += '</div>'; // item-sidebar
+        html += '</div>'; // item-layout
+
+        contentEl.innerHTML = html;
+
+        // Wire up event listeners
+        wireFormEvents();
+        wireButtons();
+        wireReferenceFields();
+
+        // Evaluate UI policies on load
+        evaluateAllPolicies();
+
+        // Load cart
+        loadCart();
+
+        reportHeight();
+      }
+
+      /* ── Wire form change events for UI policy ───────────────── */
+      function wireFormEvents() {
+        var form = document.getElementById('formCard');
+        if (!form) return;
+        form.addEventListener('change', function(e) {
+          evaluateAllPolicies();
+        });
+        form.addEventListener('input', function(e) {
+          // Clear validation errors on input
+          if (e.target.classList.contains('invalid')) {
+            e.target.classList.remove('invalid');
+            var errEl = document.getElementById('err_' + e.target.dataset.name);
+            if (errEl) errEl.style.display = 'none';
+          }
+        });
+      }
+
+      /* ── Wire reference field search ─────────────────────────── */
+      function wireReferenceFields() {
+        if (!_itemData || !_itemData.variables) return;
+        for (var i = 0; i < _itemData.variables.length; i++) {
+          var v = _itemData.variables[i];
+          if ((v.type === TYPE.REFERENCE || v.friendly_type === 'reference') && v.reference) {
+            setupReferenceSearch(v.name, v.reference);
+          }
+        }
+      }
+
+      /* ── Wire Order/Cart buttons ─────────────────────────────── */
+      function wireButtons() {
+        var orderBtn = document.getElementById('btnOrderNow');
+        var cartBtn = document.getElementById('btnAddToCart');
+
+        if (orderBtn) orderBtn.addEventListener('click', function() { doOrder(); });
+        if (cartBtn) cartBtn.addEventListener('click', function() { doAddToCart(); });
+      }
+
+      function getQuantity() {
+        var sel = document.getElementById('qtySelect');
+        return sel ? parseInt(sel.value, 10) : 1;
+      }
+
+      async function doOrder() {
+        if (!validateForm()) return;
+        var btn = document.getElementById('btnOrderNow');
+        if (btn) btn.disabled = true;
+        var vars = collectVariables();
+        var qty = getQuantity();
+        var resultArea = document.getElementById('resultArea');
+
+        try {
+          if (!window.openai || typeof window.openai.callTool !== 'function') {
+            resultArea.innerHTML = '<div class="result-msg error">Skybridge not available</div>';
+            return;
+          }
+          var output = await window.openai.callTool('order_catalog_item', {
+            sys_id: _itemData.sys_id,
+            variables: vars,
+            quantity: qty,
+          });
+          var result = (output && output.structuredContent) || output || {};
+          if (result.success) {
+            var linkHtml = result.link ? ' <a href="' + esc(result.link) + '" target="_blank">View request ' + esc(result.request_number || '') + '</a>' : '';
+            resultArea.innerHTML = '<div class="result-msg success">Order submitted successfully!' + linkHtml + '</div>';
+          } else {
+            var errMsg = result.error || 'Order failed.';
+            resultArea.innerHTML = '<div class="result-msg error">' + esc(errMsg) + '</div>';
+          }
+        } catch (err) {
+          resultArea.innerHTML = '<div class="result-msg error">' + esc(err.message || 'Failed to submit order') + '</div>';
+          if (btn) btn.disabled = false;
+        }
+        reportHeight();
+      }
+
+      async function doAddToCart() {
+        if (!validateForm()) return;
+        var btn = document.getElementById('btnAddToCart');
+        if (btn) btn.disabled = true;
+        var vars = collectVariables();
+        var qty = getQuantity();
+        var resultArea = document.getElementById('resultArea');
+
+        try {
+          if (!window.openai || typeof window.openai.callTool !== 'function') {
+            resultArea.innerHTML = '<div class="result-msg error">Skybridge not available</div>';
+            return;
+          }
+          var output = await window.openai.callTool('add_to_cart', {
+            sys_id: _itemData.sys_id,
+            variables: vars,
+            quantity: qty,
+          });
+          var result = (output && output.structuredContent) || output || {};
+          if (result.success) {
+            resultArea.innerHTML = '<div class="result-msg success">Added to cart.</div>';
+            loadCart();
+          } else {
+            var errMsg = result.error || 'Failed to add to cart.';
+            resultArea.innerHTML = '<div class="result-msg error">' + esc(errMsg) + '</div>';
+          }
+        } catch (err) {
+          resultArea.innerHTML = '<div class="result-msg error">' + esc(err.message || 'Failed to add to cart') + '</div>';
+        }
+        if (btn) btn.disabled = false;
+        reportHeight();
+      }
+
+      /* ── Cart ────────────────────────────────────────────────── */
+      async function loadCart() {
+        var summary = document.getElementById('cartSummary');
+        if (!summary) return;
+        try {
+          if (!window.openai || typeof window.openai.callTool !== 'function') return;
+          var output = await window.openai.callTool('get_cart', {});
+          var data = (output && output.structuredContent) || output || {};
+          var items = data.items || [];
+          if (items.length === 0) {
+            summary.textContent = 'Empty';
+          } else {
+            var h = '';
+            for (var i = 0; i < items.length; i++) {
+              h += '<div style="font-size:11px;margin-bottom:4px;">' + esc(items[i].name) + ' &times;' + (items[i].quantity || 1) + '</div>';
+            }
+            if (data.subtotal) h += '<div style="font-size:12px;font-weight:600;margin-top:6px;">Subtotal: ' + esc(data.subtotal) + '</div>';
+            summary.innerHTML = h;
+          }
+        } catch (e) {
+          summary.textContent = 'Unable to load cart';
+        }
+        reportHeight();
+      }
+
+      /* ── Display Mode ────────────────────────────────────────── */
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      var _isFullscreen = false;
+      var _maxBtn = document.getElementById("maximizeBtn");
+
+      async function toggleFullscreen() {
+        if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return;
+        var mode = _isFullscreen ? "inline" : "fullscreen";
+        try {
+          await window.openai.requestDisplayMode({ mode: mode });
+          _isFullscreen = !_isFullscreen;
+          _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg;
+          _maxBtn.title = _isFullscreen ? "Restore" : "Maximize";
+          reportHeight();
+        } catch (e) { /* host denied */ }
+      }
+
+      if (_maxBtn) {
+        if (window.openai && typeof window.openai.requestDisplayMode === "function") {
+          _maxBtn.addEventListener("click", toggleFullscreen);
+        } else {
+          _maxBtn.style.display = "none";
+        }
+      }
+
+      /* ── Boot ─────────────────────────────────────────────────── */
+      if (toolOutput && toolOutput.sys_id) {
+        render(toolOutput);
+      } else {
+        document.getElementById('content').innerHTML = '<div class="error-state">No catalog item data provided.</div>';
+        reportHeight();
+      }
+    })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1109 @@
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14;
+        --card: #151a21;
+        --muted: #a9b1bd;
+        --text: #e6edf3;
+        --accent: #4cc2ff;
+        --border: #1f2630;
+        --input-bg: #0f131a;
+        --btn-bg: #152235;
+        --btn-border: #243145;
+        --btn-hover: #1a2d44;
+        --btn-primary-bg: #0078d4;
+        --btn-primary-hover: #106ebe;
+        --sn-accent: #3eb489;
+        --sn-glow: rgba(62,180,137,.12);
+        --success: #2bd48f;
+        --danger: #ff6b6b;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5;
+        --card: #ffffff;
+        --muted: #65707d;
+        --text: #1e1e1e;
+        --accent: #0078d4;
+        --border: #e0e0e0;
+        --input-bg: #ffffff;
+        --btn-bg: #f0f0f0;
+        --btn-border: #d0d0d0;
+        --btn-hover: #e4e4e4;
+        --btn-primary-bg: #0078d4;
+        --btn-primary-hover: #106ebe;
+        --sn-accent: #2e9968;
+        --sn-glow: rgba(46,153,104,.08);
+        --success: #107c10;
+        --danger: #d13438;
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; min-height: 100%; }
+
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sn-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        background: var(--sn-glow); border: 1px solid var(--sn-accent);
+        display: flex; align-items: center; justify-content: center;
+      }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { font-size: 12px; color: var(--muted); }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1.3fr .9fr .9fr auto;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .input, .select {
+        width: 100%; box-sizing: border-box;
+        background: var(--input-bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 8px 10px; font-size: 12px;
+      }
+      .btn {
+        background: var(--btn-bg); color: var(--text);
+        border: 1px solid var(--btn-border); border-radius: 8px;
+        padding: 8px 10px; font-size: 12px; cursor: pointer;
+      }
+      .btn:hover { background: var(--btn-hover); }
+      .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-bg); color: #fff; font-weight: 600; }
+      .btn-primary:hover { background: var(--btn-primary-hover); }
+
+      .bar {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 10px; gap: 8px;
+      }
+      .summary { font-size: 12px; color: var(--muted); }
+      .status { font-size: 12px; color: var(--muted); }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 10px;
+      }
+      .card {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 12px; overflow: hidden;
+        display: flex; flex-direction: column;
+      }
+      .image {
+        width: 100%; height: 140px; object-fit: cover; border-bottom: 1px solid var(--border);
+        background: linear-gradient(135deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      }
+      .body { padding: 10px; }
+      .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+      .desc { font-size: 12px; color: var(--muted); min-height: 34px; margin-bottom: 8px; }
+      .meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+      .chip { font-size: 11px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; color: var(--muted); }
+      .price { font-size: 12px; font-weight: 600; }
+      .actions { display: flex; gap: 6px; }
+
+      .msg { margin-top: 10px; font-size: 12px; color: var(--muted); }
+      .msg.success { color: var(--success); }
+      .msg.error { color: var(--danger); }
+      .loading, .empty, .error { text-align: center; padding: 24px 0; color: var(--muted); font-size: 13px; }
+      .error { color: var(--danger); }
+      .image-placeholder {
+        display:flex; align-items:center; justify-content:center;
+        color:var(--muted); font-size:12px;
+      }
+
+      .maximize-btn {
+        background: transparent; color: var(--muted);
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 4px 8px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+      /* ── Detail overlay ─────────────────────────────────────── */
+      .overlay-backdrop {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,.55); z-index: 100;
+      }
+      .overlay-backdrop.open { display: block; }
+      .overlay-panel {
+        position: fixed; top: 0; right: 0; bottom: 0;
+        width: min(520px, 100vw);
+        background: var(--bg); border-left: 1px solid var(--border);
+        overflow-y: auto; z-index: 101;
+        transform: translateX(100%); transition: transform .25s ease;
+        display: flex; flex-direction: column;
+      }
+      .overlay-panel.open { transform: translateX(0); }
+      .overlay-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 16px; border-bottom: 1px solid var(--border);
+        position: sticky; top: 0; background: var(--bg); z-index: 10;
+        flex-shrink: 0;
+      }
+      .overlay-title { font-size: 14px; font-weight: 600; }
+      .overlay-close {
+        background: transparent; border: none; color: var(--muted);
+        cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 6px;
+      }
+      .overlay-close:hover { color: var(--text); }
+      /* ── Catalog-item styles scoped to overlay panel ──────── */
+      .overlay-panel .item-layout { display: flex; gap: 16px; align-items: flex-start; }
+      .overlay-panel .item-main { flex: 1; min-width: 0; }
+      .overlay-panel .item-sidebar { flex-shrink: 0; width: 190px; }
+      .overlay-panel .item-hero { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+      .overlay-panel .item-picture { width: 130px; height: 100px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
+      .overlay-panel .item-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+      .overlay-panel .item-desc p { margin: 0; }
+      .overlay-panel .breadcrumb { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+      .overlay-panel .item-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+      .overlay-panel .field-wrap { margin-bottom: 12px; overflow: hidden; }
+      .overlay-panel .field-wrap.hidden { display: none; }
+      .overlay-panel .field-wrap.disabled { opacity: .5; pointer-events: none; }
+      .overlay-panel .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+      .overlay-panel .field-label .mandatory-star { color: #ff6b6b; margin-left: 2px; }
+      .overlay-panel .field-help { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+      .overlay-panel .more-info { margin-top: 4px; }
+      .overlay-panel .more-info summary { font-size: 12px; color: var(--accent); cursor: pointer; }
+      .overlay-panel .field-input,
+      .overlay-panel .field-select,
+      .overlay-panel .field-textarea {
+        width: 100%; box-sizing: border-box;
+        background: var(--input-bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 8px 10px; font-size: 13px; outline: none; font-family: inherit;
+      }
+      .overlay-panel .field-input:focus,
+      .overlay-panel .field-select:focus,
+      .overlay-panel .field-textarea:focus { border-color: var(--accent); }
+      .overlay-panel .field-textarea { resize: vertical; min-height: 72px; }
+      .overlay-panel .field-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
+      .overlay-panel .field-checkbox-wrap { display: flex; align-items: center; gap: 8px; }
+      .overlay-panel .field-checkbox { width: 16px; height: 16px; accent-color: var(--accent); }
+      .overlay-panel .field-break { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+      .overlay-panel .field-input.invalid,
+      .overlay-panel .field-select.invalid,
+      .overlay-panel .field-textarea.invalid { border-color: #ff6b6b; }
+      .overlay-panel .field-error { font-size: 11px; color: #ff6b6b; margin-top: 2px; }
+      .overlay-panel .ref-wrap { position: relative; }
+      .overlay-panel .ref-results { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; max-height: 180px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-top: 2px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+      .overlay-panel .ref-results.open { display: block; }
+      .overlay-panel .ref-option { padding: 8px 10px; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+      .overlay-panel .ref-option:last-child { border-bottom: none; }
+      .overlay-panel .ref-option:hover { background: var(--hover, rgba(255,255,255,.06)); }
+      .overlay-panel .ref-spinner { padding: 8px; text-align: center; font-size: 11px; color: var(--muted); }
+      .overlay-panel .order-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+      .overlay-panel .order-box h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+      .overlay-panel .qty-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .overlay-panel .qty-label { font-size: 12px; color: var(--muted); }
+      .overlay-panel .qty-select { width: 60px; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; font-size: 13px; }
+      .overlay-panel .delivery-row { font-size: 12px; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+      .overlay-panel .price-row { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+      .overlay-panel .btn-order { width: 100%; margin-bottom: 6px; }
+      .overlay-panel .btn-cart { width: 100%; }
+      .overlay-panel .cart-box { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+      .overlay-panel .cart-box h5 { margin: 0 0 4px; font-size: 12px; font-weight: 600; }
+      .overlay-panel .cart-empty { font-size: 11px; color: var(--muted); }
+      .overlay-panel .result-msg { margin-top: 10px; padding: 8px 12px; border-radius: 8px; font-size: 12px; }
+      .overlay-panel .result-msg.success { background: rgba(43,212,143,.1); border: 1px solid rgba(43,212,143,.3); color: #2bd48f; }
+      .overlay-panel .result-msg.error { background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.25); color: #ff6b6b; }
+      .overlay-panel .result-msg a { color: inherit; text-decoration: underline; }
+      .overlay-panel .error-state { text-align: center; padding: 32px 0; font-size: 13px; color: #ff6b6b; }
+
+      @media (max-width: 860px) {
+        .controls { grid-template-columns: 1fr 1fr; }
+        .overlay-panel .item-layout { flex-direction: column; }
+        .overlay-panel .item-sidebar { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sn-accent)">
+              <path d="M3 6h18M3 12h18M3 18h18"/><path d="M7 3v3M12 9v3M17 15v3"/>
+            </svg>
+          </div>
+          <div>
+            <div class="title">Catalog Items</div>
+            <div class="subtitle">ServiceNow · Visual list with filtering and sorting</div>
+          </div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+
+      <div class="controls">
+        <input id="search" class="input" placeholder="Search catalog items" />
+        <select id="category" class="select"><option value="">All categories</option></select>
+        <select id="sort" class="select">
+          <option value="name_asc">Sort: Name A→Z</option>
+          <option value="name_desc">Sort: Name Z→A</option>
+          <option value="price_asc">Sort: Price Low→High</option>
+          <option value="price_desc">Sort: Price High→Low</option>
+        </select>
+        <button id="refresh" class="btn">Refresh</button>
+      </div>
+
+      <div class="bar">
+        <div class="summary" id="summary">Loading items…</div>
+        <div class="status" id="status"></div>
+      </div>
+
+      <div id="content"><div class="loading">Loading catalog items…</div></div>
+      <div id="msg" class="msg"></div>
+    </div>
+
+    <!-- Detail / order overlay -->
+    <div class="overlay-backdrop" id="overlayBackdrop"></div>
+    <div class="overlay-panel" id="overlayPanel">
+      <div class="overlay-header">
+        <div class="overlay-title" id="overlayTitle">Service Catalog</div>
+        <button class="overlay-close" id="overlayClose" title="Close">&times;</button>
+      </div>
+      <div id="overlayContent" style="padding:16px;flex:1;"></div>
+      <div id="overlayResultArea" style="padding:0 16px 16px;"></div>
+    </div>
+
+    <script>
+      (function() {
+        "use strict";
+
+        var toolInput  = (window.openai && window.openai.toolInput)  || {};
+        var toolOutput = (window.openai && window.openai.toolOutput) || {};
+
+        var allItems = [];
+        var viewItems = [];
+        var renderedItems = [];
+        var currentSearch = toolInput.search || "";
+        var _isFullscreen = false;
+        var pictureCache = {};
+        var pictureLoading = {};
+
+        var searchEl = document.getElementById("search");
+        var categoryEl = document.getElementById("category");
+        var sortEl = document.getElementById("sort");
+        var refreshEl = document.getElementById("refresh");
+        var summaryEl = document.getElementById("summary");
+        var statusEl = document.getElementById("status");
+        var contentEl = document.getElementById("content");
+        var msgEl = document.getElementById("msg");
+
+        function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+        function reportHeight() {
+          if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") {
+            window.openai.notifyIntrinsicHeight(document.body.scrollHeight);
+          }
+        }
+        function setMsg(text, type) {
+          msgEl.className = "msg" + (type ? " " + type : "");
+          msgEl.textContent = text || "";
+        }
+
+        function priceNum(v) {
+          if (v === null || v === undefined || v === "") return null;
+          var n = parseFloat(String(v).replace(/[^0-9.-]/g, ""));
+          return isNaN(n) ? null : n;
+        }
+
+        function populateCategoryFilter(items) {
+          var categories = {};
+          for (var i = 0; i < items.length; i++) {
+            var c = (items[i].category || "").trim();
+            if (c) categories[c] = true;
+          }
+          var list = Object.keys(categories).sort(function(a, b) { return a.localeCompare(b); });
+          var current = categoryEl.value;
+          categoryEl.innerHTML = '<option value="">All categories</option>';
+          for (var j = 0; j < list.length; j++) {
+            var opt = document.createElement("option");
+            opt.value = list[j];
+            opt.textContent = list[j];
+            categoryEl.appendChild(opt);
+          }
+          if (current && categories[current]) categoryEl.value = current;
+        }
+
+        function applyFilters() {
+          var q = (searchEl.value || "").toLowerCase().trim();
+          var cat = categoryEl.value || "";
+          var sort = sortEl.value || "name_asc";
+
+          viewItems = allItems.filter(function(item) {
+            var title = (item.name || "").toLowerCase();
+            var desc = (item.short_description || "").toLowerCase();
+            var okSearch = !q || title.indexOf(q) >= 0 || desc.indexOf(q) >= 0;
+            var okCategory = !cat || (item.category || "") === cat;
+            return okSearch && okCategory;
+          });
+
+          viewItems.sort(function(a, b) {
+            if (sort === "name_desc") return (b.name || "").localeCompare(a.name || "");
+            if (sort === "price_asc") {
+              var ap = priceNum(a.price), bp = priceNum(b.price);
+              if (ap === null && bp === null) return 0;
+              if (ap === null) return 1;
+              if (bp === null) return -1;
+              return ap - bp;
+            }
+            if (sort === "price_desc") {
+              var ap2 = priceNum(a.price), bp2 = priceNum(b.price);
+              if (ap2 === null && bp2 === null) return 0;
+              if (ap2 === null) return 1;
+              if (bp2 === null) return -1;
+              return bp2 - ap2;
+            }
+            return (a.name || "").localeCompare(b.name || "");
+          });
+
+          renderItems();
+        }
+
+        function itemCard(item, idx) {
+          var picture = item.picture
+            ? '<img class="image" src="' + esc(item.picture) + '" alt="' + esc(item.name || 'Catalog item') + '" />'
+            : '<div class="image image-placeholder">No image</div>';
+
+          return '' +
+            '<div class="card">' +
+              picture +
+              '<div class="body">' +
+                '<div class="name">' + esc(item.name || "Untitled") + '</div>' +
+                '<div class="desc">' + esc(item.short_description || "No description") + '</div>' +
+                '<div class="meta">' +
+                  '<span class="chip">' + esc(item.category || "Uncategorized") + '</span>' +
+                  '<span class="price">' + esc(item.price || "") + '</span>' +
+                '</div>' +
+                '<div class="actions">' +
+                  '<button class="btn btn-primary" data-order="' + idx + '">Order</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+        }
+
+        function visibleItems() {
+          if (_isFullscreen) return viewItems;
+          return viewItems.slice(0, 4);
+        }
+
+        function normalizePictureUrl(picture) {
+          if (!picture) return "";
+          if (typeof picture === "string") return picture;
+          if (typeof picture === "object") {
+            return picture.display_value || picture.value || picture.link || "";
+          }
+          return "";
+        }
+
+        async function hydrateMissingPictures() {
+          if (!window.openai || typeof window.openai.callTool !== "function") return;
+          var toHydrate = renderedItems.slice(0, _isFullscreen ? 12 : 4);
+          for (var i = 0; i < toHydrate.length; i++) {
+            var item = toHydrate[i];
+            if (!item || !item.sys_id) continue;
+
+            if (!item.picture && pictureCache[item.sys_id]) {
+              item.picture = pictureCache[item.sys_id];
+              continue;
+            }
+            if (item.picture || pictureLoading[item.sys_id]) continue;
+
+            pictureLoading[item.sys_id] = true;
+            try {
+              var out = await window.openai.callTool("get_catalog_item", { sys_id: item.sys_id });
+              var data = out && out.structuredContent ? out.structuredContent : out;
+              var pic = normalizePictureUrl(data && data.picture);
+              if (pic) {
+                pictureCache[item.sys_id] = pic;
+                item.picture = pic;
+              }
+            } catch (e) {
+              /* no-op */
+            } finally {
+              delete pictureLoading[item.sys_id];
+            }
+          }
+
+          var needsRerender = false;
+          for (var j = 0; j < renderedItems.length; j++) {
+            if (!renderedItems[j].picture && pictureCache[renderedItems[j].sys_id]) {
+              renderedItems[j].picture = pictureCache[renderedItems[j].sys_id];
+              needsRerender = true;
+            }
+          }
+          if (needsRerender) renderItems();
+        }
+
+        function renderItems() {
+          renderedItems = visibleItems();
+          if (_isFullscreen || viewItems.length <= renderedItems.length) {
+            summaryEl.textContent = renderedItems.length + " item" + (renderedItems.length === 1 ? "" : "s") + " shown";
+          } else {
+            summaryEl.textContent = renderedItems.length + " of " + viewItems.length + " items shown (maximize to view all)";
+          }
+
+          if (!renderedItems.length) {
+            contentEl.innerHTML = '<div class="empty">No catalog items match your current filters.</div>';
+            reportHeight();
+            return;
+          }
+
+          var html = '<div class="grid">';
+          for (var i = 0; i < renderedItems.length; i++) html += itemCard(renderedItems[i], i);
+          html += '</div>';
+          contentEl.innerHTML = html;
+          bindItemActions();
+          reportHeight();
+          hydrateMissingPictures();
+        }
+
+        /* ── Detail overlay – exact catalog-item.html implementation ── */
+        var backdropEl       = document.getElementById("overlayBackdrop");
+        var panelEl          = document.getElementById("overlayPanel");
+        var overlayTitleEl   = document.getElementById("overlayTitle");
+        var overlayContentEl = document.getElementById("overlayContent");
+        var overlayResultEl  = document.getElementById("overlayResultArea");
+        var _activeItemData  = null;
+        var _varById         = {};
+        var _varByName       = {};
+
+        function openOverlay() {
+          backdropEl.classList.add("open");
+          panelEl.classList.add("open");
+          reportHeight();
+        }
+        function closeOverlay() {
+          backdropEl.classList.remove("open");
+          panelEl.classList.remove("open");
+          _activeItemData = null;
+          _varById = {};
+          _varByName = {};
+          reportHeight();
+        }
+        backdropEl.addEventListener("click", closeOverlay);
+        document.getElementById("overlayClose").addEventListener("click", closeOverlay);
+
+        /* ── Variable type constants (exact from catalog-item.html) ── */
+        var TYPE = {
+          SINGLE_LINE: 6, MULTI_LINE: 2, SELECT_BOX: 5, YES_NO: 1, CHECKBOX: 7,
+          REFERENCE: 8, DATE: 10, DATE_TIME: 26, EMAIL: 14, URL: 15, IP_ADDRESS: 25,
+          NUMERIC: 16, BREAK: 12, LABEL: 11, CONTAINER_START: 19, CONTAINER_END: 20,
+          MACRO: 14, LOOKUP_SELECT: 21, WIDE_SINGLE_LINE: 6, HTML: 17,
+        };
+
+        /* ── Build form field HTML (exact from catalog-item.html) ─── */
+        function buildField(v) {
+          if (!v.active) return '';
+          var ftype  = v.friendly_type || '';
+          var type   = v.type;
+          var name   = v.name || v.id;
+          var id     = v.id   || v.name;
+          var label  = v.label || v.name || '';
+          var mandatory = v.mandatory;
+          var readOnly  = v.read_only;
+          var helpText  = v.help_text || '';
+          var value     = v.value || '';
+          var maxLen    = v.max_length || 0;
+
+          if (type === TYPE.BREAK || ftype === 'break') {
+            return '<div class="field-wrap" data-var-id="' + esc(id) + '"><hr class="field-break"></div>';
+          }
+          if (type === TYPE.LABEL || ftype === 'label') {
+            return '<div class="field-wrap" data-var-id="' + esc(id) + '">' +
+              (v.render_label ? '<span class="field-label">' + esc(label) + '</span>' : '') + '</div>';
+          }
+          if (type === TYPE.CONTAINER_START || type === TYPE.CONTAINER_END) return '';
+
+          var html = '<div class="field-wrap" data-var-id="' + esc(id) + '" data-var-name="' + esc(name) + '">';
+          if (v.render_label && label) {
+            html += '<label class="field-label" for="var_' + esc(name) + '">' + esc(label);
+            if (mandatory) html += '<span class="mandatory-star">*</span>';
+            html += '</label>';
+          }
+          if (helpText) {
+            html += '<details class="more-info"><summary>More information</summary>' +
+              '<div class="field-help">' + esc(helpText) + '</div></details>';
+          }
+          var roAttr  = readOnly ? ' disabled' : '';
+          var maxAttr = maxLen > 0 ? ' maxlength="' + maxLen + '"' : '';
+
+          if (type === TYPE.SELECT_BOX || ftype === 'select_box') {
+            html += '<select class="field-select" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + roAttr + '>';
+            html += '<option value="">\u2014 Select \u2014</option>';
+            var choices = v.choices || [];
+            for (var ci = 0; ci < choices.length; ci++) {
+              html += '<option value="' + esc(choices[ci].value) + '"' + (choices[ci].value === value ? ' selected' : '') + '>' + esc(choices[ci].label) + '</option>';
+            }
+            html += '</select>';
+          } else if (type === TYPE.YES_NO || ftype === 'yes_no') {
+            html += '<select class="field-select" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + roAttr + '>';
+            html += '<option value="">\u2014 Select \u2014</option>';
+            var ynChoices = v.choices || [{label:'Yes',value:'Yes'},{label:'No',value:'No'}];
+            for (var yni = 0; yni < ynChoices.length; yni++) {
+              html += '<option value="' + esc(ynChoices[yni].value) + '"' + (ynChoices[yni].value === value ? ' selected' : '') + '>' + esc(ynChoices[yni].label) + '</option>';
+            }
+            html += '</select>';
+          } else if (type === TYPE.CHECKBOX || ftype === 'checkbox') {
+            var chk = (value === 'true' || value === '1' || value === true) ? ' checked' : '';
+            html += '<div class="field-checkbox-wrap"><input type="checkbox" class="field-checkbox" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + chk + roAttr + '>';
+            html += '<label for="var_' + esc(name) + '" style="font-size:12px;">' + esc(label) + '</label></div>';
+          } else if (type === TYPE.MULTI_LINE || ftype === 'multi_line_text') {
+            html += '<textarea class="field-textarea" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + maxAttr + roAttr + '>' + esc(value) + '</textarea>';
+          } else if (type === TYPE.REFERENCE || ftype === 'reference') {
+            var refTable = v.reference || '';
+            html += '<div class="ref-wrap" data-ref-table="' + esc(refTable) + '">';
+            html += '<input class="field-input ref-search" id="var_' + esc(name) + '" data-name="' + esc(name) + '" placeholder="Search\u2026" autocomplete="off" value="' + esc(v.displayvalue || value) + '"' + roAttr + '>';
+            html += '<input type="hidden" id="var_' + esc(name) + '_value" data-name="' + esc(name) + '_ref" value="' + esc(value) + '">';
+            html += '<div class="ref-results" id="ref_results_' + esc(name) + '"></div>';
+            html += '</div>';
+          } else if (type === TYPE.DATE || ftype === 'date') {
+            html += '<input type="date" class="field-input" id="var_' + esc(name) + '" data-name="' + esc(name) + '" value="' + esc(value) + '"' + roAttr + '>';
+          } else if (type === TYPE.DATE_TIME || ftype === 'date_time') {
+            html += '<input type="datetime-local" class="field-input" id="var_' + esc(name) + '" data-name="' + esc(name) + '" value="' + esc(value) + '"' + roAttr + '>';
+          } else if (type === TYPE.NUMERIC || ftype === 'numeric_scale' || ftype === 'numeric') {
+            html += '<input type="number" class="field-input" id="var_' + esc(name) + '" data-name="' + esc(name) + '" value="' + esc(value) + '"' + maxAttr + roAttr + '>';
+          } else if (type === TYPE.LOOKUP_SELECT || ftype === 'lookup_select_box') {
+            html += '<select class="field-select" id="var_' + esc(name) + '" data-name="' + esc(name) + '"' + roAttr + '>';
+            html += '<option value="">\u2014 Select \u2014</option>';
+            var lkChoices = v.choices || [];
+            for (var lk = 0; lk < lkChoices.length; lk++) {
+              html += '<option value="' + esc(lkChoices[lk].value) + '"' + (lkChoices[lk].value === value ? ' selected' : '') + '>' + esc(lkChoices[lk].label) + '</option>';
+            }
+            html += '</select>';
+          } else if (type === TYPE.HTML || ftype === 'html') {
+            html += '<div style="font-size:12px;color:var(--muted);">' + (value || '') + '</div>';
+          } else {
+            var inputType = 'text';
+            if (ftype === 'email') inputType = 'email';
+            else if (ftype === 'url') inputType = 'url';
+            html += '<input type="' + inputType + '" class="field-input" id="var_' + esc(name) + '" data-name="' + esc(name) + '" value="' + esc(value) + '"' + maxAttr + roAttr + '>';
+          }
+          html += '<div class="field-error" id="err_' + esc(name) + '" style="display:none;"></div>';
+          html += '</div>';
+          return html;
+        }
+
+        /* ── UI Policy Engine (exact from catalog-item.html) ──────── */
+        function buildVarMaps(variables) {
+          _varById = {}; _varByName = {};
+          for (var i = 0; i < variables.length; i++) {
+            var v = variables[i];
+            if (v.id)   _varById[v.id]     = v;
+            if (v.name) _varByName[v.name] = v;
+          }
+        }
+        function getVarIdFromPolicyRef(ref) {
+          if (ref && ref.indexOf('IO:') === 0) return ref.substring(3);
+          return ref;
+        }
+        function getFieldValue(varId) {
+          var v  = _varById[varId];
+          if (!v) return '';
+          var el = document.getElementById('var_' + v.name);
+          if (!el) return '';
+          if (el.type === 'checkbox') return el.checked ? 'true' : 'false';
+          return el.value || '';
+        }
+        function evaluateCondition(cond) {
+          var varId    = getVarIdFromPolicyRef(cond.field);
+          var fieldVal = getFieldValue(varId);
+          var testVal  = cond.value || '';
+          var oper     = cond.oper  || '=';
+          switch (oper) {
+            case '=':          return fieldVal === testVal;
+            case '!=':         return fieldVal !== testVal;
+            case 'IN':         return testVal.split(',').indexOf(fieldVal) >= 0;
+            case 'NOT IN':     return testVal.split(',').indexOf(fieldVal) < 0;
+            case 'LIKE':       return fieldVal.toLowerCase().indexOf(testVal.toLowerCase()) >= 0;
+            case 'NOT LIKE':   return fieldVal.toLowerCase().indexOf(testVal.toLowerCase()) < 0;
+            case 'STARTSWITH': return fieldVal.toLowerCase().indexOf(testVal.toLowerCase()) === 0;
+            case 'ENDSWITH':   return fieldVal.toLowerCase().lastIndexOf(testVal.toLowerCase()) === fieldVal.length - testVal.length;
+            case 'ISEMPTY':    return !fieldVal;
+            case 'ISNOTEMPTY': return !!fieldVal;
+            case '>':  return parseFloat(fieldVal) > parseFloat(testVal);
+            case '<':  return parseFloat(fieldVal) < parseFloat(testVal);
+            case '>=': return parseFloat(fieldVal) >= parseFloat(testVal);
+            case '<=': return parseFloat(fieldVal) <= parseFloat(testVal);
+            default:   return fieldVal === testVal;
+          }
+        }
+        function evaluateConditions(conditions) {
+          if (!conditions || conditions.length === 0) return true;
+          var result = true;
+          for (var i = 0; i < conditions.length; i++) {
+            var condResult = evaluateCondition(conditions[i]);
+            if (i === 0) { result = condResult; }
+            else if (conditions[i].or)       { result = result || condResult; }
+            else if (conditions[i].newquery) { result = result && condResult; }
+            else                             { result = result && condResult; }
+          }
+          return result;
+        }
+        function applyPolicyAction(action, conditionsMet, reverse) {
+          var varId = getVarIdFromPolicyRef(action.name);
+          var v     = _varById[varId];
+          if (!v) return;
+          var wrap  = overlayContentEl.querySelector('[data-var-id="' + varId + '"]');
+          if (!wrap) return;
+          var input = document.getElementById('var_' + v.name);
+          var lbl   = wrap.querySelector('.field-label');
+          if (conditionsMet) {
+            if (action.visible === 'true')  wrap.classList.remove('hidden');
+            if (action.visible === 'false') wrap.classList.add('hidden');
+            if (action.mandatory === 'true') {
+              v._policyMandatory = true;
+              if (lbl && !lbl.querySelector('.mandatory-star')) lbl.insertAdjacentHTML('beforeend', '<span class="mandatory-star">*</span>');
+            } else if (action.mandatory === 'false') {
+              v._policyMandatory = false;
+              if (lbl) { var s = lbl.querySelector('.mandatory-star'); if (s) s.remove(); }
+            }
+            if (action.disabled === 'true')  { wrap.classList.add('disabled');    if (input) input.disabled = true;  }
+            if (action.disabled === 'false') { wrap.classList.remove('disabled'); if (input) input.disabled = false; }
+            if (action.cleared === 'true' && input) { if (input.type === 'checkbox') input.checked = false; else input.value = ''; }
+          } else if (reverse) {
+            if (action.visible === 'true')  wrap.classList.add('hidden');
+            if (action.visible === 'false') wrap.classList.remove('hidden');
+            if (action.mandatory === 'true') {
+              v._policyMandatory = false;
+              if (lbl) { var s2 = lbl.querySelector('.mandatory-star'); if (s2) s2.remove(); }
+            } else if (action.mandatory === 'false') {
+              v._policyMandatory = true;
+              if (lbl && !lbl.querySelector('.mandatory-star')) lbl.insertAdjacentHTML('beforeend', '<span class="mandatory-star">*</span>');
+            }
+            if (action.disabled === 'true')  { wrap.classList.remove('disabled'); if (input) input.disabled = false; }
+            if (action.disabled === 'false') { wrap.classList.add('disabled');    if (input) input.disabled = true;  }
+          }
+        }
+        function evaluateAllPolicies() {
+          if (!_activeItemData || !_activeItemData.ui_policy) return;
+          var policies = _activeItemData.ui_policy;
+          for (var p = 0; p < policies.length; p++) {
+            var policy  = policies[p];
+            var met     = evaluateConditions(policy.conditions);
+            var actions = policy.actions || [];
+            for (var a = 0; a < actions.length; a++) applyPolicyAction(actions[a], met, !!policy.reverse);
+          }
+          reportHeight();
+        }
+
+        /* ── Collect / validate (exact from catalog-item.html) ───── */
+        function collectVariables() {
+          var vars = {};
+          if (!_activeItemData || !_activeItemData.variables) return vars;
+          for (var i = 0; i < _activeItemData.variables.length; i++) {
+            var v = _activeItemData.variables[i];
+            if (!v.active || !v.name) continue;
+            var wrap = overlayContentEl.querySelector('[data-var-name="' + v.name + '"]');
+            if (!wrap || wrap.classList.contains('hidden')) continue;
+            var el  = document.getElementById('var_' + v.name);
+            if (!el) continue;
+            var val = el.type === 'checkbox' ? (el.checked ? 'true' : 'false') : (el.value || '');
+            var refH = document.getElementById('var_' + v.name + '_value');
+            if (refH) val = refH.value || '';
+            if (val !== '') vars[v.name] = val;
+          }
+          return vars;
+        }
+        function validateForm() {
+          var valid = true;
+          if (!_activeItemData || !_activeItemData.variables) return true;
+          for (var i = 0; i < _activeItemData.variables.length; i++) {
+            var v = _activeItemData.variables[i];
+            if (!v.active || !v.name) continue;
+            var wrap = overlayContentEl.querySelector('[data-var-name="' + v.name + '"]');
+            if (!wrap || wrap.classList.contains('hidden')) continue;
+            var isMandatory = v.mandatory || v._policyMandatory;
+            if (!isMandatory) continue;
+            var el    = document.getElementById('var_' + v.name);
+            var errEl = document.getElementById('err_' + v.name);
+            if (!el) continue;
+            var val = el.type === 'checkbox' ? (el.checked ? 'true' : '') : (el.value || '');
+            var refH = document.getElementById('var_' + v.name + '_value');
+            if (refH) val = refH.value || '';
+            if (!val) {
+              valid = false;
+              el.classList.add('invalid');
+              if (errEl) { errEl.textContent = 'This field is required.'; errEl.style.display = 'block'; }
+            } else {
+              el.classList.remove('invalid');
+              if (errEl) errEl.style.display = 'none';
+            }
+          }
+          reportHeight();
+          return valid;
+        }
+
+        /* ── Reference field live search (exact from catalog-item.html) */
+        var _refTimers = {};
+        function setupReferenceSearch(name, refTable) {
+          var input     = document.getElementById('var_' + name);
+          var hiddenInp = document.getElementById('var_' + name + '_value');
+          var resultsDiv = document.getElementById('ref_results_' + name);
+          if (!input || !resultsDiv) return;
+          input.addEventListener('input', function() {
+            var q = input.value.trim();
+            hiddenInp.value = '';
+            clearTimeout(_refTimers[name]);
+            if (q.length < 2) { resultsDiv.classList.remove('open'); return; }
+            _refTimers[name] = setTimeout(function() { doRefSearch(name, refTable, q); }, 300);
+          });
+          input.addEventListener('focus', function() {
+            if (input.value.trim().length >= 2 && resultsDiv.children.length > 0)
+              resultsDiv.classList.add('open');
+          });
+          document.addEventListener('click', function(e) {
+            if (!e.target.closest || !e.target.closest('.ref-wrap')) resultsDiv.classList.remove('open');
+          });
+        }
+        async function doRefSearch(name, table, query) {
+          var resultsDiv = document.getElementById('ref_results_' + name);
+          if (!resultsDiv) return;
+          resultsDiv.innerHTML = '<div class="ref-spinner">Searching\u2026</div>';
+          resultsDiv.classList.add('open');
+          try {
+            if (!window.openai || typeof window.openai.callTool !== 'function') {
+              resultsDiv.innerHTML = '<div class="ref-spinner">Search unavailable</div>'; return;
+            }
+            var output  = await window.openai.callTool('search_reference_values', { table: table, search: query, limit: 15 });
+            var data    = (output && output.structuredContent) || output || {};
+            var results = data.results || [];
+            if (results.length === 0) {
+              resultsDiv.innerHTML = '<div class="ref-spinner">No results</div>';
+            } else {
+              var h = '';
+              for (var i = 0; i < results.length; i++) {
+                h += '<div class="ref-option" data-sysid="' + esc(results[i].sys_id) + '" data-label="' + esc(results[i].name) + '">' + esc(results[i].name) + '</div>';
+              }
+              resultsDiv.innerHTML = h;
+              var opts = resultsDiv.querySelectorAll('.ref-option');
+              for (var j = 0; j < opts.length; j++) {
+                opts[j].addEventListener('click', (function(opt) {
+                  return function() {
+                    var inp = document.getElementById('var_' + name);
+                    var hid = document.getElementById('var_' + name + '_value');
+                    if (inp) inp.value = opt.dataset.label;
+                    if (hid) hid.value = opt.dataset.sysid;
+                    resultsDiv.classList.remove('open');
+                  };
+                })(opts[j]));
+              }
+            }
+          } catch (err) {
+            resultsDiv.innerHTML = '<div class="ref-spinner">' + esc(err.message || 'Search failed') + '</div>';
+          }
+          reportHeight();
+        }
+
+        /* ── Render item into overlay (adapted from catalog-item.html) */
+        function renderItem(data) {
+          _activeItemData = data;
+          if (!data || !data.sys_id) {
+            overlayContentEl.innerHTML = '<div class="error-state">No catalog item data.</div>';
+            overlayResultEl.innerHTML  = '';
+            reportHeight();
+            return;
+          }
+          buildVarMaps(data.variables || []);
+          overlayTitleEl.textContent = data.name || 'Catalog Item';
+          overlayResultEl.innerHTML  = '';
+
+          var html = '';
+          if (data.category) {
+            html += '<div class="breadcrumb">Service Catalog &rsaquo; ' + esc(data.category) + ' &rsaquo; <strong>' + esc(data.name) + '</strong></div>';
+          }
+          html += '<div class="item-layout">';
+          /* left column */
+          html += '<div class="item-main">';
+          if (data.short_description) {
+            html += '<div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">' + esc(data.short_description) + '</div>';
+          }
+          html += '<div class="item-hero">';
+          if (data.picture) html += '<img class="item-picture" src="' + esc(data.picture) + '" alt="' + esc(data.name) + '" onerror="this.style.display=\'none\'">';
+          if (data.description) html += '<div class="item-desc">' + data.description + '</div>';
+          html += '</div>'; /* item-hero */
+          var variables = data.variables || [];
+          if (variables.length > 0) {
+            html += '<div class="item-card" id="formCard">';
+            for (var i = 0; i < variables.length; i++) html += buildField(variables[i]);
+            html += '</div>';
+          }
+          html += '</div>'; /* item-main */
+          /* right column / sidebar */
+          html += '<div class="item-sidebar">';
+          html += '<div class="order-box"><h4>Order this Item</h4>';
+          if (data.show_quantity !== false) {
+            html += '<div class="qty-row"><span class="qty-label">Quantity</span>';
+            html += '<select class="qty-select" id="qtySelect">';
+            for (var q = 1; q <= 10; q++) html += '<option value="' + q + '">' + q + '</option>';
+            html += '</select></div>';
+          }
+          if (data.show_delivery_time && data.delivery_time) {
+            html += '<div class="delivery-row"><span>Delivery</span><span>' + esc(data.delivery_time) + '</span></div>';
+          }
+          if (data.show_price && data.price) {
+            html += '<div class="price-row">' + esc(data.price) + '</div>';
+          }
+          html += '<button class="btn btn-primary btn-order" id="btnOrderNow">Order Now</button>';
+          html += '<button class="btn btn-cart" id="btnAddToCart">Add to Cart</button>';
+          html += '<div class="cart-box"><h5>Shopping Cart</h5><div id="cartSummary" class="cart-empty">Empty</div></div>';
+          html += '</div>'; /* order-box */
+          if (data.link) {
+            html += '<div style="margin-top:8px;text-align:center;"><a href="' + esc(data.link) + '" target="_blank" rel="noopener" style="font-size:11px;color:var(--accent);text-decoration:none;">Open in ServiceNow &rsaquo;</a></div>';
+          }
+          html += '</div>'; /* item-sidebar */
+          html += '</div>'; /* item-layout */
+
+          overlayContentEl.innerHTML = html;
+          wireFormEvents();
+          wireButtons();
+          wireReferenceFields();
+          evaluateAllPolicies();
+          loadCart();
+          reportHeight();
+        }
+
+        /* ── Wire events (exact from catalog-item.html) ─────────── */
+        function wireFormEvents() {
+          var form = document.getElementById('formCard');
+          if (!form) return;
+          form.addEventListener('change', function() { evaluateAllPolicies(); });
+          form.addEventListener('input', function(e) {
+            if (e.target.classList.contains('invalid')) {
+              e.target.classList.remove('invalid');
+              var errEl = document.getElementById('err_' + e.target.dataset.name);
+              if (errEl) errEl.style.display = 'none';
+            }
+          });
+        }
+        function wireReferenceFields() {
+          if (!_activeItemData || !_activeItemData.variables) return;
+          for (var i = 0; i < _activeItemData.variables.length; i++) {
+            var v = _activeItemData.variables[i];
+            if ((v.type === TYPE.REFERENCE || v.friendly_type === 'reference') && v.reference) {
+              setupReferenceSearch(v.name, v.reference);
+            }
+          }
+        }
+        function wireButtons() {
+          var orderBtn = document.getElementById('btnOrderNow');
+          var cartBtn  = document.getElementById('btnAddToCart');
+          if (orderBtn) orderBtn.addEventListener('click', function() { doOrder(); });
+          if (cartBtn)  cartBtn.addEventListener('click',  function() { doAddToCart(); });
+        }
+        function getQuantity() {
+          var sel = document.getElementById('qtySelect');
+          return sel ? parseInt(sel.value, 10) : 1;
+        }
+
+        /* ── Order / cart actions (exact from catalog-item.html) ── */
+        async function doOrder() {
+          if (!validateForm()) return;
+          var btn = document.getElementById('btnOrderNow');
+          if (btn) btn.disabled = true;
+          var vars = collectVariables();
+          var qty  = getQuantity();
+          try {
+            if (!window.openai || typeof window.openai.callTool !== 'function')
+              throw new Error('callTool not available');
+            var output = await window.openai.callTool('order_catalog_item', {
+              sys_id: _activeItemData.sys_id, variables: vars, quantity: qty
+            });
+            var result = (output && output.structuredContent) || output || {};
+            if (result.success) {
+              var linkHtml = result.link
+                ? ' <a href="' + esc(result.link) + '" target="_blank" rel="noopener">View request ' + esc(result.request_number || '') + '</a>'
+                : '';
+              overlayResultEl.innerHTML = '<div class="result-msg success">Order submitted successfully!' + linkHtml + '</div>';
+            } else {
+              overlayResultEl.innerHTML = '<div class="result-msg error">' + esc(result.error || 'Order failed.') + '</div>';
+              if (btn) btn.disabled = false;
+            }
+          } catch (err) {
+            overlayResultEl.innerHTML = '<div class="result-msg error">' + esc(err.message || 'Failed to submit order') + '</div>';
+            if (btn) btn.disabled = false;
+          }
+          reportHeight();
+        }
+        async function doAddToCart() {
+          if (!validateForm()) return;
+          var btn = document.getElementById('btnAddToCart');
+          if (btn) btn.disabled = true;
+          var vars = collectVariables();
+          var qty  = getQuantity();
+          try {
+            if (!window.openai || typeof window.openai.callTool !== 'function')
+              throw new Error('callTool not available');
+            var output = await window.openai.callTool('add_to_cart', {
+              sys_id: _activeItemData.sys_id, variables: vars, quantity: qty
+            });
+            var result = (output && output.structuredContent) || output || {};
+            if (result.success) {
+              overlayResultEl.innerHTML = '<div class="result-msg success">Added to cart.</div>';
+              loadCart();
+            } else {
+              overlayResultEl.innerHTML = '<div class="result-msg error">' + esc(result.error || 'Failed to add to cart.') + '</div>';
+            }
+          } catch (err) {
+            overlayResultEl.innerHTML = '<div class="result-msg error">' + esc(err.message || 'Failed to add to cart') + '</div>';
+          }
+          if (btn) btn.disabled = false;
+          reportHeight();
+        }
+        async function loadCart() {
+          var summary = document.getElementById('cartSummary');
+          if (!summary) return;
+          try {
+            if (!window.openai || typeof window.openai.callTool !== 'function') return;
+            var output = await window.openai.callTool('get_cart', {});
+            var data   = (output && output.structuredContent) || output || {};
+            var items  = data.items || [];
+            if (items.length === 0) {
+              summary.textContent = 'Empty';
+            } else {
+              var h = '';
+              for (var i = 0; i < items.length; i++) {
+                h += '<div style="font-size:11px;margin-bottom:4px;">' + esc(items[i].name) + ' \u00d7' + (items[i].quantity || 1) + '</div>';
+              }
+              if (data.subtotal) h += '<div style="font-size:12px;font-weight:600;margin-top:6px;">Subtotal: ' + esc(data.subtotal) + '</div>';
+              summary.innerHTML = h;
+            }
+          } catch (e) { summary.textContent = 'Unable to load cart'; }
+          reportHeight();
+        }
+
+        /* ── Open detail: fetch via callTool then renderItem() ─── */
+        async function openItemDetail(item) {
+          overlayTitleEl.textContent = item.name || 'Loading\u2026';
+          overlayContentEl.innerHTML = '<div style="text-align:center;padding:32px 0;font-size:13px;color:var(--muted);">Loading item details\u2026</div>';
+          overlayResultEl.innerHTML  = '';
+          openOverlay();
+          try {
+            if (!window.openai || typeof window.openai.callTool !== 'function')
+              throw new Error('callTool not available');
+            /* sys_id is taken directly from the JS object — never transcribed by the LLM */
+            var out  = await window.openai.callTool('get_catalog_item', { sys_id: item.sys_id });
+            var data = (out && out.structuredContent) || out || {};
+            if (data.error) throw new Error(data.error);
+            renderItem(data);
+          } catch (e) {
+            overlayContentEl.innerHTML = '<div class="error-state">' + esc(e.message || 'Failed to load item') + '</div>';
+            reportHeight();
+          }
+        }
+
+        function bindItemActions() {
+          var orderBtns = contentEl.querySelectorAll("[data-order]");
+          for (var i = 0; i < orderBtns.length; i++) {
+            orderBtns[i].addEventListener("click", (function(idx) {
+              return function() {
+                var item = renderedItems[idx];
+                if (!item) return;
+                openItemDetail(item);
+                setMsg('');
+              };
+            })(parseInt(orderBtns[i].getAttribute("data-order"), 10)));
+          }
+        }
+
+        async function loadFromTool(searchText) {
+          statusEl.textContent = "Loading…";
+          contentEl.innerHTML = '<div class="loading">Loading catalog items…</div>';
+          try {
+            if (!window.openai || typeof window.openai.callTool !== "function") {
+              throw new Error("Skybridge not available");
+            }
+            var args = { limit: 60 };
+            if (searchText) args.search = searchText;
+            var out = await window.openai.callTool("list_catalog_items", args);
+            var data = out && out.structuredContent ? out.structuredContent : out;
+            allItems = (data && data.items) ? data.items : [];
+            for (var i = 0; i < allItems.length; i++) {
+              allItems[i].picture = normalizePictureUrl(allItems[i].picture);
+              if (allItems[i].picture && allItems[i].sys_id) {
+                pictureCache[allItems[i].sys_id] = allItems[i].picture;
+              }
+            }
+            window.openai.toolOutput = data || {};
+            populateCategoryFilter(allItems);
+            applyFilters();
+            statusEl.textContent = "";
+          } catch (e) {
+            contentEl.innerHTML = '<div class="error">' + esc(e && e.message ? e.message : "Failed to load catalog items") + '</div>';
+            statusEl.textContent = "";
+            reportHeight();
+          }
+        }
+
+        refreshEl.addEventListener("click", function() {
+          currentSearch = (searchEl.value || "").trim();
+          loadFromTool(currentSearch);
+        });
+        searchEl.addEventListener("keydown", function(e) {
+          if (e.key === "Enter") {
+            currentSearch = (searchEl.value || "").trim();
+            loadFromTool(currentSearch);
+          }
+        });
+        categoryEl.addEventListener("change", applyFilters);
+        sortEl.addEventListener("change", applyFilters);
+
+        var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+        var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+        var _maxBtn = document.getElementById("maximizeBtn");
+
+        async function toggleFullscreen() {
+          if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return;
+          var mode = _isFullscreen ? "inline" : "fullscreen";
+          try {
+            await window.openai.requestDisplayMode({ mode: mode });
+            _isFullscreen = !_isFullscreen;
+            _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg;
+            _maxBtn.title = _isFullscreen ? "Restore" : "Maximize";
+            reportHeight();
+          } catch (e) {}
+        }
+
+        if (_maxBtn) {
+          if (window.openai && typeof window.openai.requestDisplayMode === "function") {
+            _maxBtn.addEventListener("click", toggleFullscreen);
+          } else {
+            _maxBtn.style.display = "none";
+          }
+        }
+
+        searchEl.value = currentSearch;
+        if (toolOutput && toolOutput.items) {
+          allItems = toolOutput.items || [];
+          for (var i = 0; i < allItems.length; i++) {
+            allItems[i].picture = normalizePictureUrl(allItems[i].picture);
+            if (allItems[i].picture && allItems[i].sys_id) {
+              pictureCache[allItems[i].sys_id] = allItems[i].picture;
+            }
+          }
+          populateCategoryFilter(allItems);
+          applyFilters();
+        } else {
+          setTimeout(function() {
+            var fresh = (window.openai && window.openai.toolOutput) || {};
+            if (fresh && fresh.items) {
+              allItems = fresh.items || [];
+              for (var i = 0; i < allItems.length; i++) {
+                allItems[i].picture = normalizePictureUrl(allItems[i].picture);
+                if (allItems[i].picture && allItems[i].sys_id) {
+                  pictureCache[allItems[i].sys_id] = allItems[i].picture;
+                }
+              }
+              populateCategoryFilter(allItems);
+              applyFilters();
+            } else {
+              loadFromTool(currentSearch);
+            }
+          }, 0);
+        }
+      })();
+    </script>
+  </body>
+</html>

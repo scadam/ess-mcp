@@ -1,0 +1,169 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14;
+        --card: #151a21;
+        --muted: #a9b1bd;
+        --text: #e6edf3;
+        --accent: #4cc2ff;
+        --border: #1f2630;
+        --pos: #2bd48f;
+        --warn: #f0b232;
+        --neg: #ff6b6b;
+        --tag-bg: #0f131a;
+        --btn-secondary-bg: #152235;
+        --btn-secondary-border: #243145;
+        --btn-secondary-hover: #1a2d44;
+        --card-border: #2a3442;
+        --card-glow: rgba(240,178,50,.12);
+        --card-shadow: rgba(0,0,0,.3);
+        --ts-accent: #4cc2ff;
+        --ts-glow: rgba(76,194,255,.12);
+      }
+      :root[data-theme="light"] {
+          --bg: #f5f5f5;
+          --card: #ffffff;
+          --muted: #65707d;
+          --text: #1e1e1e;
+          --accent: #0078d4;
+          --border: #e0e0e0;
+          --pos: #107c10;
+          --warn: #ca5010;
+          --neg: #d13438;
+          --tag-bg: #f5f5f5;
+          --btn-secondary-bg: #f0f0f0;
+          --btn-secondary-border: #d0d0d0;
+          --btn-secondary-hover: #e4e4e4;
+          --card-border: #d0d0d0;
+          --card-glow: rgba(240,178,50,.06);
+          --card-shadow: rgba(0,0,0,.08);
+          --ts-accent: #0078d4;
+          --ts-glow: rgba(0,120,212,.08);
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .ts-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--ts-glow); border: 1px solid var(--ts-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: radial-gradient(900px 260px at 10% -10%, var(--card-glow), transparent 55%), var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px; box-shadow: 0 8px 20px var(--card-shadow); }
+      .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin: 0 0 8px; }
+      .field { margin-bottom: 10px; }
+      .label { margin: 0; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+      .value { margin: 4px 0 0; font-size: 13px; font-weight: 500; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+      .tag { display: inline-block; padding: 2px 6px; border-radius: 6px; background: var(--tag-bg); border: 1px solid var(--border); font-size: 10px; }
+      .tag.system-workday { color: #f68620; border-color: #f68620; }
+      .tag.system-servicenow { color: #3eb489; border-color: #3eb489; }
+      .tag.system-salesforce { color: #00a1e0; border-color: #00a1e0; }
+      .tag.system-jira { color: #4e8ff5; border-color: #4e8ff5; }
+      .identity { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+      .avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--warn), #f97316); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: #fff; flex-shrink: 0; }
+      .identity h2 { margin: 0; font-size: 16px; font-weight: 700; }
+      .identity p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+      .actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+      .btn { flex: 1; padding: 10px 16px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; transition: background .15s, opacity .15s; }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .btn-approve { background: rgba(43,212,143,.15); color: var(--pos); border: 1px solid rgba(43,212,143,.3); }
+      .btn-approve:hover:not(:disabled) { background: rgba(43,212,143,.25); }
+      .btn-reject { background: rgba(255,107,107,.12); color: var(--neg); border: 1px solid rgba(255,107,107,.3); }
+      .btn-reject:hover:not(:disabled) { background: rgba(255,107,107,.2); }
+      .btn-secondary { background: var(--btn-secondary-bg); color: var(--text); border: 1px solid var(--btn-secondary-border); }
+      .btn-secondary:hover:not(:disabled) { background: var(--btn-secondary-hover); }
+      .nonce-info { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: center; }
+      .result-msg { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13px; text-align: center; }
+      .result-msg.success { background: rgba(43,212,143,.12); color: var(--pos); }
+      .result-msg.error { background: rgba(255,107,107,.12); color: var(--neg); }
+      .loading, .error, .empty { text-align: center; padding: 32px 0; font-size: 13px; color: var(--muted); }
+      .error { color: var(--neg); }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color .15s, border-color .15s; }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="ts-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ts-accent)">
+              <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </div>
+          <div>
+            <div class="title">Approval Review</div>
+            <div class="subtitle">TaskServer &middot; Approval Detail</div>
+          </div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="content"><div class="loading">Loading approval details&hellip;</div></div>
+      <div id="resultMsg"></div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function field(label, value) { return '<div class="field"><p class="label">' + label + '</p><p class="value">' + (value || "\u2014") + '</p></div>'; }
+      function renderReview(review) {
+        var item = review.item || {}, detail = review.detail || {};
+        var systemTag = '<span class="tag system-' + esc(item.system || review.provider) + '">' + esc(item.system || review.provider) + '</span>';
+        var html = '<div class="card"><div class="identity"><div class="avatar">\u2714</div><div><h2>' + esc(item.title || "Approval") + '</h2><p>' + systemTag + ' ' + esc(item.status || "") + '</p></div></div><div class="grid">' +
+          field("System", item.system || review.provider) + field("Status", item.status || detail.status) +
+          field("Initiator", item.assignee || detail.initiator || detail.approver) + field("Due", item.dueDate || detail.due) +
+          field("Created", item.createdDate || detail.assigned || detail.createdDate) + field("ID", review.approvalId) + '</div>';
+        if (item.summary || detail.summary) html += '<p class="section-title">Summary</p><p class="value" style="margin-bottom:12px;">' + esc(item.summary || detail.summary) + '</p>';
+        html += '<div class="actions"><button class="btn btn-approve" id="btnApprove" onclick="executeDecision(\'approve\')">Approve</button><button class="btn btn-reject" id="btnReject" onclick="executeDecision(\'reject\')">Reject</button><button class="btn btn-secondary" onclick="askCopilot()">Ask Copilot to summarise</button></div>';
+        var expiry = review.expiresAt ? new Date(review.expiresAt).toLocaleTimeString() : "";
+        html += '<div class="nonce-info">Nonce expires at ' + esc(expiry) + '</div></div>';
+        return html;
+      }
+      var contentDiv = document.getElementById("content"), resultDiv = document.getElementById("resultMsg"), _reviewData = null;
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function render(data) {
+        _reviewData = data && data.review ? data.review : data;
+        if (!_reviewData || !_reviewData.nonce) { contentDiv.innerHTML = '<div class="empty">No approval review data.</div>'; reportHeight(); return; }
+        contentDiv.innerHTML = renderReview(_reviewData); reportHeight();
+      }
+      window.executeDecision = async function(decision) {
+        if (!_reviewData || !_reviewData.nonce) return;
+        var approveBtn = document.getElementById("btnApprove"), rejectBtn = document.getElementById("btnReject");
+        if (approveBtn) approveBtn.disabled = true; if (rejectBtn) rejectBtn.disabled = true;
+        try {
+          if (!window.openai || typeof window.openai.callTool !== "function") { resultDiv.innerHTML = '<div class="result-msg error">Skybridge not available</div>'; return; }
+          var output = await window.openai.callTool("execute_approval_decision", { nonce: _reviewData.nonce, decision: decision });
+          var result = (output && output.structuredContent) || output || {};
+          if (result.success) { resultDiv.innerHTML = '<div class="result-msg success">' + esc(decision === "approve" ? "Approved" : "Rejected") + ' successfully via ' + esc(_reviewData.provider || "") + '</div>'; }
+          else { resultDiv.innerHTML = '<div class="result-msg error">Action failed</div>'; }
+        } catch (err) {
+          resultDiv.innerHTML = '<div class="result-msg error">' + esc(err.message || "Failed to execute decision") + '</div>';
+          if (approveBtn) approveBtn.disabled = false; if (rejectBtn) rejectBtn.disabled = false;
+        }
+        reportHeight();
+      };
+      window.askCopilot = function() {
+        if (!_reviewData) return;
+        var item = _reviewData.item || {};
+        var msg = "Please summarise this approval in " + (item.system || _reviewData.provider || "the system") + ":\n\nApproval: " + (item.title || _reviewData.approvalId || "") + "\n";
+        if (item.summary) msg += "Description: " + item.summary + "\n";
+        if (item.status) msg += "Status: " + item.status + "\n";
+        if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg });
+      };
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      var _isFullscreen = false, _maxBtn = document.getElementById("maximizeBtn");
+      async function toggleFullscreen() {
+        if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return;
+        try { await window.openai.requestDisplayMode({ mode: _isFullscreen ? "inline" : "fullscreen" }); _isFullscreen = !_isFullscreen; _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg; _maxBtn.title = _isFullscreen ? "Restore" : "Maximize"; reportHeight(); } catch (e) {}
+      }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFullscreen); else _maxBtn.style.display = "none"; }
+      if (toolOutput && (toolOutput.review || toolOutput.nonce)) render(toolOutput);
+      else { contentDiv.innerHTML = '<div class="empty">No approval review data available.</div>'; reportHeight(); }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,103 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --input-bg: #0f131a; --btn-bg: #152235; --btn-border: #243145; --btn-primary-bg: linear-gradient(135deg,#1a6dff,#4cc2ff); --btn-primary-border: #2a80ff; --success-border: #1a5a3a; --success-glow: rgba(43,212,143,.16); --error-bg: rgba(255,107,107,.08); --error-border: rgba(255,107,107,.25); --sf-accent: #1589ee; --sf-glow: rgba(21,137,238,.14); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --input-bg: #ffffff; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-primary-bg: linear-gradient(135deg,#0078d4,#4cc2ff); --btn-primary-border: #0078d4; --success-border: #107c10; --success-glow: rgba(16,124,16,.08); --error-bg: rgba(209,52,56,.06); --error-border: rgba(209,52,56,.25); --sf-accent: #0070d2; --sf-glow: rgba(0,112,210,.08); }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sf-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sf-glow); border: 1px solid var(--sf-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+      .section-label { font-size: 11px; color: var(--sf-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .full-width { grid-column: 1 / -1; }
+      .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+      .field input, .field select, .field textarea { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; font-family: inherit; color-scheme: dark; }
+      :root[data-theme="light"] .field input, :root[data-theme="light"] .field select, :root[data-theme="light"] .field textarea { color-scheme: light; }
+      .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--sf-accent); }
+      .field textarea { resize: vertical; }
+      .actions { margin-top: 14px; display: flex; gap: 8px; }
+      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; font-family: inherit; }
+      .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-border); font-weight: 600; }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .success-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--success-glow); border: 1px solid var(--success-border); font-size: 12px; color: var(--pos); }
+      .error-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--error-bg); border: 1px solid var(--error-border); font-size: 12px; color: var(--neg); }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--sf-accent); border-color: var(--sf-accent); }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sf-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sf-accent)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div><div class="title" id="pageTitle">Schedule Event</div><div class="subtitle">Salesforce &middot; CRM</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div class="card">
+        <div class="section-label">Event Details</div>
+        <div class="form-grid">
+          <div class="field full-width"><label for="subject">Subject *</label><input id="subject" type="text" placeholder="e.g. Discovery Call with Contoso" /></div>
+          <div class="field"><label for="start_datetime">Start Date &amp; Time *</label><input id="start_datetime" type="datetime-local" /></div>
+          <div class="field"><label for="end_datetime">End Date &amp; Time *</label><input id="end_datetime" type="datetime-local" /></div>
+          <div class="field"><label for="opportunity_id">Opportunity ID</label><input id="opportunity_id" type="text" placeholder="Salesforce Opportunity ID" /></div>
+          <div class="field"><label for="account_id">Account ID</label><input id="account_id" type="text" placeholder="Salesforce Account ID" /></div>
+          <div class="field"><label for="contact_id">Contact ID</label><input id="contact_id" type="text" placeholder="Salesforce Contact ID" /></div>
+          <div class="field"><label for="location">Location</label><input id="location" type="text" placeholder="e.g. Teams / Conference Room A" /></div>
+          <div class="field full-width"><label for="description">Description</label><textarea id="description" rows="3" placeholder="Agenda, notes, or any relevant context for this event"></textarea></div>
+        </div>
+        <div id="msgArea"></div>
+        <div class="actions">
+          <button class="btn btn-primary" id="submitBtn" disabled>Schedule Event</button>
+          <button class="btn" id="resetBtn">Reset</button>
+        </div>
+      </div>
+      <div class="footer">Powered by <strong>salesforce / create_event</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var subjectEl = document.getElementById("subject"), startEl = document.getElementById("start_datetime"), endEl = document.getElementById("end_datetime"), oppEl = document.getElementById("opportunity_id"), acctEl = document.getElementById("account_id"), ctcEl = document.getElementById("contact_id"), locEl = document.getElementById("location"), descEl = document.getElementById("description"), submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), msgArea = document.getElementById("msgArea"), _maxBtn = document.getElementById("maximizeBtn");
+      var _isFS = false;
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function validate() { submitBtn.disabled = !(subjectEl.value.trim() && startEl.value && endEl.value); }
+      [subjectEl, startEl, endEl].forEach(function(el) { el.addEventListener("input", validate); el.addEventListener("change", validate); });
+      function setVal(el, v) { if (!el || v === undefined || v === null || v === "") return; if (el.type === "datetime-local" && typeof v === "string") v = v.substring(0,16).replace(" ","T"); el.value = v; }
+      var src = Object.assign({}, toolOutput, toolInput);
+      setVal(subjectEl, src.subject); setVal(startEl, src.start_datetime); setVal(endEl, src.end_datetime); setVal(oppEl, src.opportunity_id); setVal(acctEl, src.account_id); setVal(ctcEl, src.contact_id); setVal(locEl, src.location); setVal(descEl, src.description);
+      validate();
+      resetBtn.addEventListener("click", function() { [subjectEl, startEl, endEl, oppEl, acctEl, ctcEl, locEl, descEl].forEach(function(el) { el.value = ""; }); msgArea.innerHTML = ""; validate(); reportHeight(); });
+      submitBtn.addEventListener("click", async function() {
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        submitBtn.disabled = true; submitBtn.textContent = "Scheduling\u2026"; msgArea.innerHTML = "";
+        try {
+          var args = { subject: subjectEl.value.trim(), start_datetime: startEl.value.replace("T"," ")+":00", end_datetime: endEl.value.replace("T"," ")+":00" };
+          if (oppEl.value.trim()) args.opportunity_id = oppEl.value.trim();
+          if (acctEl.value.trim()) args.account_id = acctEl.value.trim();
+          if (ctcEl.value.trim()) args.contact_id = ctcEl.value.trim();
+          if (locEl.value.trim()) args.location = locEl.value.trim();
+          if (descEl.value.trim()) args.description = descEl.value.trim();
+          var out = await window.openai.callTool("create_event", args);
+          var d = (out && out.structuredContent) || out;
+          if (d && d.created) { msgArea.innerHTML = '<div class="success-msg">&#10003; Event <strong>'+esc(subjectEl.value)+'</strong> scheduled successfully.</div>'; document.getElementById("pageTitle").textContent = "Event Scheduled"; }
+          else throw new Error((d && d.error) || "Event creation failed");
+        } catch (err) { msgArea.innerHTML = '<div class="error-msg">'+esc(err.message||"Operation failed")+'</div>'; }
+        finally { submitBtn.textContent = "Schedule Event"; validate(); reportHeight(); }
+      });
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; reportHeight(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+      reportHeight();
+    </script>
+  </body>
+</html>

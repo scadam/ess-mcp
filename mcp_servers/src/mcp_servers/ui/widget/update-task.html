@@ -1,0 +1,254 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14;
+        --card: #151a21;
+        --muted: #a9b1bd;
+        --text: #e6edf3;
+        --border: #1f2630;
+        --input-bg: #0f131a;
+        --neg: #ff6b6b;
+        --pos: #2bd48f;
+        --success-bg: rgba(43,212,143,.06);
+        --success-border: #1a5a3a;
+        --sf-accent: #00a1e0;
+        --sf-glow: rgba(0,161,224,.08);
+        --badge-bg: #1e2a38;
+        --badge-text: #a9b1bd;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5;
+        --card: #ffffff;
+        --muted: #65707d;
+        --text: #1e1e1e;
+        --border: #e0e0e0;
+        --input-bg: #f9f9f9;
+        --neg: #d13438;
+        --pos: #107c10;
+        --success-bg: rgba(16,124,16,.04);
+        --success-border: #107c10;
+        --sf-accent: #0070d2;
+        --sf-glow: rgba(0,112,210,.08);
+        --badge-bg: #e8f4fb;
+        --badge-text: #0070d2;
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .sf-icon {
+        width: 34px; height: 34px; border-radius: 8px;
+        background: var(--sf-glow); border: 1px solid var(--sf-accent);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      }
+      .sf-icon svg { width: 18px; height: 18px; }
+      .header-text .title { font-size: 15px; font-weight: 600; }
+      .header-text .subtitle { font-size: 11px; color: var(--muted); margin-top: 1px; }
+      .card {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 12px; padding: 16px; margin-bottom: 12px;
+      }
+      .section-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+      .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 3px; }
+      .meta-value { font-size: 12px; font-weight: 500; }
+      .badge {
+        display: inline-block; font-size: 11px; padding: 2px 8px;
+        border-radius: 12px; background: var(--badge-bg); color: var(--sf-accent);
+        font-weight: 600; border: 1px solid var(--sf-accent);
+      }
+      .field { margin-bottom: 14px; }
+      .field:last-child { margin-bottom: 0; }
+      .field-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+      input[type="text"], textarea, select {
+        width: 100%; box-sizing: border-box;
+        background: var(--input-bg); border: 1px solid var(--border);
+        border-radius: 8px; padding: 9px 12px;
+        color: var(--text); font-size: 13px; font-family: inherit; outline: none;
+        transition: border-color .15s; resize: vertical;
+      }
+      input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--sf-accent); }
+      textarea { min-height: 80px; }
+      .btn-primary {
+        width: 100%; padding: 10px; border-radius: 8px; border: none; cursor: pointer;
+        background: var(--sf-accent); color: #fff; font-size: 14px; font-weight: 600;
+        font-family: inherit; transition: opacity .15s; margin-top: 4px;
+      }
+      .btn-primary:hover:not(:disabled) { opacity: .88; }
+      .btn-primary:disabled { opacity: .45; cursor: default; }
+      .status-banner {
+        display: none; border-radius: 10px; padding: 12px 14px;
+        font-size: 13px; margin-bottom: 12px;
+      }
+      .status-banner.success {
+        display: flex; gap: 8px; align-items: flex-start;
+        background: var(--success-bg); border: 1px solid var(--success-border);
+        color: var(--pos);
+      }
+      .status-banner.error {
+        display: flex; gap: 8px; align-items: flex-start;
+        background: rgba(255,107,107,.06); border: 1px solid rgba(255,107,107,.3);
+        color: var(--neg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="sf-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--sf-accent)">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <div class="title">Update Task</div>
+          <div class="subtitle">Salesforce &bull; Edit &amp; Submit</div>
+        </div>
+      </div>
+
+      <div id="statusBanner" class="status-banner"></div>
+
+      <div class="card" id="summaryCard">
+        <div class="section-label">Current Task</div>
+        <div style="font-size:14px; font-weight:600; margin-bottom:10px;" id="taskSubjectEl">Loading&hellip;</div>
+        <div class="meta-grid">
+          <div class="meta-item">
+            <div class="meta-label">Status</div>
+            <div class="meta-value"><span class="badge" id="metaStatus">&mdash;</span></div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Priority</div>
+            <div class="meta-value" id="metaPriority">&mdash;</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Edit Task</div>
+
+        <div class="field">
+          <div class="field-label">Subject</div>
+          <input type="text" id="subjectInput" maxlength="255" placeholder="Task subject" />
+        </div>
+
+        <div class="field">
+          <div class="field-label">Status</div>
+          <select id="statusSelect">
+            <option value="">&mdash; Unchanged &mdash;</option>
+            <option value="Not Started">Not Started</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Waiting on someone else">Waiting on Someone Else</option>
+            <option value="Deferred">Deferred</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Priority</div>
+          <select id="prioritySelect">
+            <option value="">&mdash; Unchanged &mdash;</option>
+            <option value="High">High</option>
+            <option value="Normal">Normal</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Description</div>
+          <textarea id="descriptionInput" placeholder="Updated task description"></textarea>
+        </div>
+
+        <button id="submitBtn" class="btn-primary">Save Changes</button>
+      </div>
+    </div>
+
+    <script>
+    (async function () {
+      var toolOutput = {};
+      try { toolOutput = JSON.parse(window.openai.toolOutput || "{}"); } catch (_) {}
+
+      var task   = toolOutput.task || {};
+      var taskId = task.Id || "";
+
+      document.getElementById("taskSubjectEl").textContent = task.Subject || "\u2014";
+      document.getElementById("metaStatus").textContent    = task.Status   || "\u2014";
+      document.getElementById("metaPriority").textContent  = task.Priority || "\u2014";
+
+      document.getElementById("subjectInput").value      = task.Subject     || "";
+      document.getElementById("descriptionInput").value  = task.Description || "";
+
+      setSelectValue("statusSelect",   task.Status);
+      setSelectValue("prioritySelect", task.Priority);
+
+      var submitBtn = document.getElementById("submitBtn");
+      var banner    = document.getElementById("statusBanner");
+
+      submitBtn.addEventListener("click", async function () {
+        if (!taskId) { showError("Task ID not found in widget data."); return; }
+
+        var payload = { task_id: taskId };
+        var subject  = document.getElementById("subjectInput").value.trim();
+        var status   = document.getElementById("statusSelect").value;
+        var priority = document.getElementById("prioritySelect").value;
+        var desc     = document.getElementById("descriptionInput").value.trim();
+
+        if (subject  && subject  !== (task.Subject     || "")) payload.subject  = subject;
+        if (status   && status   !== (task.Status      || "")) payload.status   = status;
+        if (priority && priority !== (task.Priority    || "")) payload.priority = priority;
+        if (desc     && desc     !== (task.Description || "")) payload.description = desc;
+
+        if (Object.keys(payload).length === 1) { showError("No changes to save."); return; }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Saving\u2026";
+        banner.style.display = "none";
+
+        try {
+          var result = await window.openai.callTool("update_task", payload);
+
+          banner.className = "status-banner success";
+          banner.innerHTML = "<span>&#10003;</span><div><strong>Task updated successfully.</strong></div>";
+          banner.style.display = "flex";
+
+          if (result && result.task) {
+            document.getElementById("taskSubjectEl").textContent = result.task.Subject || task.Subject || "\u2014";
+            document.getElementById("metaStatus").textContent    = result.task.Status   || "\u2014";
+            document.getElementById("metaPriority").textContent  = result.task.Priority || "\u2014";
+          }
+
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Save Changes";
+
+        } catch (err) {
+          showError(String(err));
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Save Changes";
+        }
+      });
+
+      function setSelectValue(id, val) {
+        if (!val) return;
+        var sel = document.getElementById(id);
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === val) { sel.selectedIndex = i; return; }
+        }
+      }
+
+      function showError(msg) {
+        banner.className = "status-banner error";
+        banner.innerHTML = "<span>&#9888;</span><div><strong>Error:</strong> " + escHtml(msg) + "</div>";
+        banner.style.display = "flex";
+      }
+
+      function escHtml(s) {
+        return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+      }
+    })();
+    </script>
+  </body>
+</html>

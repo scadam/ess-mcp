@@ -1,0 +1,302 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14;
+        --card: #151a21;
+        --muted: #a9b1bd;
+        --text: #e6edf3;
+        --border: #1f2630;
+        --input-bg: #0f131a;
+        --neg: #ff6b6b;
+        --pos: #2bd48f;
+        --success-bg: rgba(43,212,143,.06);
+        --success-border: #1a5a3a;
+        --sn-accent: #3eb489;
+        --sn-glow: rgba(62,180,137,.12);
+        --sn-light: #2e9968;
+        --badge-bg: #1e2a38;
+        --badge-text: #a9b1bd;
+        --select-bg: #0f131a;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5;
+        --card: #ffffff;
+        --muted: #65707d;
+        --text: #1e1e1e;
+        --border: #e0e0e0;
+        --input-bg: #f9f9f9;
+        --neg: #d13438;
+        --pos: #107c10;
+        --success-bg: rgba(16,124,16,.04);
+        --success-border: #107c10;
+        --sn-accent: #2e9968;
+        --sn-glow: rgba(46,153,104,.1);
+        --sn-light: #1f7a50;
+        --badge-bg: #e8f4f0;
+        --badge-text: #2e9968;
+        --select-bg: #f9f9f9;
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .sn-icon {
+        width: 34px; height: 34px; border-radius: 8px;
+        background: var(--sn-glow); border: 1px solid var(--sn-accent);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      }
+      .sn-icon svg { width: 18px; height: 18px; }
+      .header-text .title { font-size: 15px; font-weight: 600; }
+      .header-text .subtitle { font-size: 11px; color: var(--muted); margin-top: 1px; }
+      .inc-number {
+        display: inline-block; font-family: monospace; font-size: 11px;
+        background: var(--badge-bg); color: var(--badge-text);
+        border-radius: 6px; padding: 2px 8px; margin-left: 8px;
+      }
+      .card {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 12px; padding: 16px; margin-bottom: 12px;
+      }
+      .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .meta-item { }
+      .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 3px; }
+      .meta-value { font-size: 12px; font-weight: 500; }
+      .section-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+      .field { margin-bottom: 14px; }
+      .field:last-child { margin-bottom: 0; }
+      .field-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+      input[type="text"], textarea, select {
+        width: 100%; box-sizing: border-box;
+        background: var(--input-bg); border: 1px solid var(--border);
+        border-radius: 8px; padding: 9px 12px;
+        color: var(--text); font-size: 13px; font-family: inherit; outline: none;
+        transition: border-color .15s; resize: vertical;
+      }
+      select { background: var(--select-bg); }
+      input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--sn-accent); }
+      textarea { min-height: 80px; }
+      .btn-primary {
+        width: 100%; padding: 10px; border-radius: 8px; border: none; cursor: pointer;
+        background: var(--sn-accent); color: #fff; font-size: 14px; font-weight: 600;
+        font-family: inherit; transition: opacity .15s; margin-top: 4px;
+      }
+      .btn-primary:hover:not(:disabled) { opacity: .88; }
+      .btn-primary:disabled { opacity: .45; cursor: default; }
+      .status-banner {
+        display: none; border-radius: 10px; padding: 12px 14px;
+        font-size: 13px; margin-bottom: 12px;
+      }
+      .status-banner.success {
+        display: flex; gap: 8px; align-items: flex-start;
+        background: var(--success-bg); border: 1px solid var(--success-border);
+        color: var(--pos);
+      }
+      .status-banner.error {
+        display: flex; gap: 8px; align-items: flex-start;
+        background: rgba(255,107,107,.06); border: 1px solid rgba(255,107,107,.3);
+        color: var(--neg);
+      }
+      .open-link { margin-top: 8px; text-align: center; }
+      .open-link a {
+        font-size: 12px; color: var(--sn-accent); text-decoration: none;
+        border-bottom: 1px solid transparent; transition: border-color .15s;
+      }
+      .open-link a:hover { border-color: var(--sn-accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="sn-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--sn-accent)">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <div class="title">Update Incident <span class="inc-number" id="incNumberEl"></span></div>
+          <div class="subtitle">ServiceNow &bull; Edit &amp; Submit</div>
+        </div>
+      </div>
+
+      <div id="statusBanner" class="status-banner"></div>
+
+      <div class="card" id="metaCard">
+        <div class="section-label">Current State</div>
+        <div class="meta-grid">
+          <div class="meta-item"><div class="meta-label">Status</div><div class="meta-value" id="metaState">&mdash;</div></div>
+          <div class="meta-item"><div class="meta-label">Priority</div><div class="meta-value" id="metaPriority">&mdash;</div></div>
+          <div class="meta-item"><div class="meta-label">Category</div><div class="meta-value" id="metaCategory">&mdash;</div></div>
+          <div class="meta-item"><div class="meta-label">Assigned To</div><div class="meta-value" id="metaAssigned">&mdash;</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Edit Incident</div>
+
+        <div class="field">
+          <div class="field-label">Short Description</div>
+          <input type="text" id="shortDescInput" maxlength="160" placeholder="Brief summary of the issue" />
+        </div>
+
+        <div class="field">
+          <div class="field-label">Description</div>
+          <textarea id="descriptionInput" placeholder="Detailed explanation of the issue"></textarea>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Category</div>
+          <select id="categorySelect">
+            <option value="">&mdash; Unchanged &mdash;</option>
+            <option value="inquiry">Inquiry</option>
+            <option value="software">Software</option>
+            <option value="hardware">Hardware</option>
+            <option value="network">Network</option>
+            <option value="database">Database</option>
+            <option value="security">Security</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Urgency</div>
+          <select id="urgencySelect">
+            <option value="">&mdash; Unchanged &mdash;</option>
+            <option value="1">1 &ndash; High</option>
+            <option value="2">2 &ndash; Medium</option>
+            <option value="3">3 &ndash; Low</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">State</div>
+          <select id="stateSelect">
+            <option value="">&mdash; Unchanged &mdash;</option>
+            <option value="new">New</option>
+            <option value="in_progress">In Progress</option>
+            <option value="on_hold">On Hold</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Add Comment (visible to caller)</div>
+          <textarea id="commentInput" style="min-height:60px" placeholder="Optional customer-visible comment"></textarea>
+        </div>
+
+        <button id="submitBtn" class="btn-primary">Save Changes</button>
+      </div>
+
+      <div class="open-link" id="openLinkRow" style="display:none">
+        <a id="openLinkEl" href="#" target="_blank">Open in ServiceNow &#8599;</a>
+      </div>
+    </div>
+
+    <script>
+    (async function () {
+      var toolOutput = {};
+      try { toolOutput = JSON.parse(window.openai.toolOutput || "{}"); } catch (_) {}
+
+      var incident = toolOutput.incident || {};
+      var number   = incident.number || "";
+      var link     = toolOutput.link  || "";
+
+      document.getElementById("incNumberEl").textContent = number || "";
+
+      document.getElementById("metaState").textContent    = incident.state    || "\u2014";
+      document.getElementById("metaPriority").textContent = incident.priority || "\u2014";
+      document.getElementById("metaCategory").textContent = incident.category || "\u2014";
+      document.getElementById("metaAssigned").textContent = incident.assigned_to || "Unassigned";
+
+      document.getElementById("shortDescInput").value = incident.short_description || "";
+      document.getElementById("descriptionInput").value = incident.description || "";
+
+      var catSel = document.getElementById("categorySelect");
+      for (var i=0; i<catSel.options.length; i++) {
+        if (catSel.options[i].value.toLowerCase() === (incident.category||"").toLowerCase()) {
+          catSel.selectedIndex = i; break;
+        }
+      }
+
+      if (link) {
+        var linkEl = document.getElementById("openLinkEl");
+        linkEl.href = link;
+        document.getElementById("openLinkRow").style.display = "block";
+      }
+
+      var submitBtn = document.getElementById("submitBtn");
+      var banner    = document.getElementById("statusBanner");
+
+      submitBtn.addEventListener("click", async function () {
+        if (!number) {
+          showError("Incident number not found in widget data.");
+          return;
+        }
+
+        var payload = { number: number };
+        var shortDesc = document.getElementById("shortDescInput").value.trim();
+        var desc      = document.getElementById("descriptionInput").value.trim();
+        var cat       = document.getElementById("categorySelect").value;
+        var urgency   = document.getElementById("urgencySelect").value;
+        var state     = document.getElementById("stateSelect").value;
+        var comment   = document.getElementById("commentInput").value.trim();
+
+        if (shortDesc && shortDesc !== (incident.short_description || "")) payload.short_description = shortDesc;
+        if (desc && desc !== (incident.description || "")) payload.description = desc;
+        if (cat)    payload.category = cat;
+        if (urgency) payload.urgency = urgency;
+        if (state)  payload.state = state;
+        if (comment) payload.comments = comment;
+
+        if (Object.keys(payload).length === 1) {
+          showError("No changes to save.");
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Saving\u2026";
+        banner.style.display = "none";
+
+        try {
+          var result = await window.openai.callTool("update_incident", payload);
+
+          banner.className = "status-banner success";
+          banner.innerHTML = "<span>&#10003;</span><div><strong>Incident updated.</strong> Changes to " + escHtml(number) + " have been saved.</div>";
+          banner.style.display = "flex";
+
+          if (result && result.incident) {
+            var inc = result.incident;
+            document.getElementById("metaState").textContent    = inc.state    || "\u2014";
+            document.getElementById("metaPriority").textContent = inc.priority || "\u2014";
+            document.getElementById("metaCategory").textContent = inc.category || "\u2014";
+            document.getElementById("metaAssigned").textContent = inc.assigned_to || "Unassigned";
+          }
+
+          document.getElementById("commentInput").value = "";
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Save Changes";
+
+        } catch (err) {
+          showError(String(err));
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Save Changes";
+        }
+      });
+
+      function showError(msg) {
+        banner.className = "status-banner error";
+        banner.innerHTML = "<span>&#9888;</span><div><strong>Error:</strong> " + escHtml(msg) + "</div>";
+        banner.style.display = "flex";
+      }
+
+      function escHtml(s) {
+        return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+      }
+    })();
+    </script>
+  </body>
+</html>
