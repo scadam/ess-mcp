@@ -94,6 +94,24 @@ async def _salesforce_patch(path: str, body: Dict[str, Any], ctx: Optional[Conte
         return {"success": True}
 
 
+async def _salesforce_get(path: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
+    """Make an authenticated GET request to Salesforce REST API."""
+    token = get_bearer_token(ctx)
+    instance_url = _get_instance_url()
+    url = f"{instance_url}/services/data/{_API_VERSION}{path}"
+
+    async with create_async_client() as client:
+        resp = await client.get(
+            url,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
 # ── MCP tool functions ──────────────────────────────────────────────
 
 
@@ -1315,6 +1333,541 @@ async def tool_create_event(
         return {"created": False, "error": str(exc)}
 
 
+# ── Leads ───────────────────────────────────────────────────────────
+
+_LEAD_FIELDS = (
+    "Id, FirstName, LastName, Name, Email, Phone, Company, Status, "
+    "LeadSource, Rating, OwnerId, Title, Industry, CreatedDate"
+)
+
+
+def _simplify_lead(raw: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": raw.get("Id"),
+        "first_name": raw.get("FirstName"),
+        "last_name": raw.get("LastName"),
+        "name": raw.get("Name"),
+        "email": raw.get("Email"),
+        "phone": raw.get("Phone"),
+        "company": raw.get("Company"),
+        "status": raw.get("Status"),
+        "lead_source": raw.get("LeadSource"),
+        "rating": raw.get("Rating"),
+        "owner_id": raw.get("OwnerId"),
+        "title": raw.get("Title"),
+        "industry": raw.get("Industry"),
+        "created_date": raw.get("CreatedDate"),
+    }
+
+
+async def tool_list_leads(
+    status: Optional[str] = None,
+    lead_source: Optional[str] = None,
+    search_text: Optional[str] = None,
+    limit: int = 20,
+) -> Dict[str, Any]:
+    """List or search Salesforce leads.
+
+    Args:
+        status: Filter by lead status (e.g. "Open - Not Contacted", "Working - Contacted").
+        lead_source: Filter by lead source (e.g. "Web", "Phone Inquiry", "Partner Referral").
+        search_text: Free-text search across Name, Email, and Company.
+        limit: Maximum results (default 20, max 100).
+    """
+    clauses: List[str] = ["Status != 'Converted'"]
+    if status:
+        clauses.append(f"Status = '{_sf(status)}'")
+    if lead_source:
+        clauses.append(f"LeadSource = '{_sf(lead_source)}'")
+    if search_text:
+        s = _sf(search_text)
+        clauses.append(
+            f"(Name LIKE '%{s}%' OR Email LIKE '%{s}%' OR Company LIKE '%{s}%')"
+        )
+
+    where = f" WHERE {' AND '.join(clauses)}"
+    safe_limit = max(1, min(int(limit), 100))
+
+    query = (
+        f"SELECT {_LEAD_FIELDS} "
+        f"FROM Lead{where} "
+        f"ORDER BY CreatedDate DESC "
+        f"LIMIT {safe_limit}"
+    )
+
+    LOGGER.info("salesforce_list_leads", query=query)
+    records = await _soql_query(query, ctx)
+
+    return {
+        "total": len(records),
+        "leads": [_simplify_lead(r) for r in records],
+    }
+
+
+async def tool_get_lead(lead_id: str) -> Dict[str, Any]:
+    """Get details for a single Salesforce lead.
+
+    Args:
+        lead_id: The Salesforce Lead record ID.
+    """
+    LOGGER.info("salesforce_get_lead", lead_id=lead_id)
+    records = await _soql_query(
+        f"SELECT {_LEAD_FIELDS}, Description, NumberOfEmployees, "
+        f"AnnualRevenue, Street, City, State, PostalCode, Country "
+        f"FROM Lead WHERE Id = '{_sf(lead_id)}'"
+    , ctx)
+
+    if not records:
+        raise ValueError(f"Salesforce Lead {lead_id} not found")
+
+    return {"lead": _simplify_lead(records[0])}
+
+
+async def tool_create_lead(
+    first_name: str,
+    last_name: str,
+    company: str,
+    email: Optional[str] = None,
+    phone: Optional[str] = None,
+    title: Optional[str] = None,
+    lead_source: Optional[str] = None,
+    status: str = "Open - Not Contacted",
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create a new Salesforce lead.
+
+    Args:
+        first_name: Lead's first name (required).
+        last_name: Lead's last name (required).
+        company: Lead's company name (required).
+        email: Lead's email address.
+        phone: Lead's phone number.
+        title: Lead's job title.
+        lead_source: Source of the lead (e.g. "Web", "Phone Inquiry", "Partner Referral").
+        status: Lead status (default "Open - Not Contacted").
+        description: Additional notes about the lead.
+    """
+    payload: Dict[str, Any] = {
+        "FirstName": first_name,
+        "LastName": last_name,
+        "Company": company,
+        "Status": status,
+    }
+    if email:
+        payload["Email"] = email
+    if phone:
+        payload["Phone"] = phone
+    if title:
+        payload["Title"] = title
+    if lead_source:
+        payload["LeadSource"] = lead_source
+    if description:
+        payload["Description"] = description
+
+    LOGGER.info("salesforce_create_lead", fields=list(payload.keys()))
+
+    try:
+        result = await _salesforce_post("/sobjects/Lead", payload, ctx)
+        lead_id = result.get("id", "")
+        created: List[Dict[str, Any]] = []
+        if lead_id:
+            try:
+                created = await _soql_query(
+                    f"SELECT {_LEAD_FIELDS} FROM Lead WHERE Id = '{_sf(lead_id)}'"
+                , ctx)
+            except Exception:  # noqa: BLE001
+                pass
+        return {
+            "created": True,
+            "lead": _simplify_lead(created[0]) if created else {"id": lead_id},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_create_lead_error", error=str(exc))
+        return {"created": False, "error": str(exc)}
+
+
+async def tool_convert_lead(
+    lead_id: str,
+    account_id: Optional[str] = None,
+    contact_id: Optional[str] = None,
+    opportunity_name: Optional[str] = None,
+    do_not_create_opportunity: bool = False,
+) -> Dict[str, Any]:
+    """Convert a Salesforce lead to an account, contact, and optionally an opportunity.
+
+    Args:
+        lead_id: The Lead record ID to convert (required).
+        account_id: Existing Account ID to merge into (creates new if omitted).
+        contact_id: Existing Contact ID to merge into (creates new if omitted).
+        opportunity_name: Name for the new opportunity (uses lead name if omitted).
+        do_not_create_opportunity: If True, skip opportunity creation.
+    """
+    LOGGER.info("salesforce_convert_lead", lead_id=lead_id)
+
+    lead_action: Dict[str, Any] = {
+        "leadId": lead_id,
+        "convertedStatus": "Closed - Converted",
+        "doNotCreateOpportunity": do_not_create_opportunity,
+    }
+    if account_id:
+        lead_action["accountId"] = account_id
+    if contact_id:
+        lead_action["contactId"] = contact_id
+    if opportunity_name:
+        lead_action["opportunityName"] = opportunity_name
+
+    try:
+        body = {"inputs": [lead_action]}
+        result = await _salesforce_post("/actions/standard/convertLead", body, ctx)
+        return {
+            "success": True,
+            "lead_id": lead_id,
+            "result": result,
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_convert_lead_error", lead_id=lead_id, error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+# ── Campaigns ───────────────────────────────────────────────────────
+
+_CAMPAIGN_FIELDS = (
+    "Id, Name, Type, Status, StartDate, EndDate, NumberOfLeads, "
+    "NumberOfContacts, NumberOfOpportunities, ActualCost, BudgetedCost, "
+    "ExpectedRevenue, Description, IsActive, CreatedDate"
+)
+
+
+def _simplify_campaign(raw: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": raw.get("Id"),
+        "name": raw.get("Name"),
+        "type": raw.get("Type"),
+        "status": raw.get("Status"),
+        "start_date": raw.get("StartDate"),
+        "end_date": raw.get("EndDate"),
+        "number_of_leads": raw.get("NumberOfLeads"),
+        "number_of_contacts": raw.get("NumberOfContacts"),
+        "number_of_opportunities": raw.get("NumberOfOpportunities"),
+        "actual_cost": raw.get("ActualCost"),
+        "budgeted_cost": raw.get("BudgetedCost"),
+        "expected_revenue": raw.get("ExpectedRevenue"),
+        "description": raw.get("Description"),
+        "is_active": raw.get("IsActive"),
+        "created_date": raw.get("CreatedDate"),
+    }
+
+
+async def tool_list_campaigns(
+    status: Optional[str] = None,
+    campaign_type: Optional[str] = None,
+    limit: int = 20,
+) -> Dict[str, Any]:
+    """List Salesforce marketing campaigns.
+
+    Args:
+        status: Filter by campaign status (e.g. "Planned", "In Progress", "Completed", "Aborted").
+        campaign_type: Filter by campaign type (e.g. "Email", "Webinar", "Conference").
+        limit: Maximum results (default 20, max 100).
+    """
+    clauses: List[str] = []
+    if status:
+        clauses.append(f"Status = '{_sf(status)}'")
+    if campaign_type:
+        clauses.append(f"Type = '{_sf(campaign_type)}'")
+
+    where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+    safe_limit = max(1, min(int(limit), 100))
+
+    query = (
+        f"SELECT {_CAMPAIGN_FIELDS} "
+        f"FROM Campaign{where} "
+        f"ORDER BY StartDate DESC "
+        f"LIMIT {safe_limit}"
+    )
+
+    LOGGER.info("salesforce_list_campaigns", query=query)
+    records = await _soql_query(query, ctx)
+
+    return {
+        "total": len(records),
+        "campaigns": [_simplify_campaign(r) for r in records],
+    }
+
+
+async def tool_get_campaign(campaign_id: str) -> Dict[str, Any]:
+    """Get details for a Salesforce campaign including member summary.
+
+    Args:
+        campaign_id: The Salesforce Campaign record ID.
+    """
+    LOGGER.info("salesforce_get_campaign", campaign_id=campaign_id)
+
+    records = await _soql_query(
+        f"SELECT {_CAMPAIGN_FIELDS} "
+        f"FROM Campaign WHERE Id = '{_sf(campaign_id)}'"
+    , ctx)
+
+    if not records:
+        raise ValueError(f"Salesforce Campaign {campaign_id} not found")
+
+    members: List[Dict[str, Any]] = []
+    try:
+        member_records = await _soql_query(
+            f"SELECT Id, ContactId, LeadId, Status, FirstRespondedDate, "
+            f"CampaignId, Name "
+            f"FROM CampaignMember WHERE CampaignId = '{_sf(campaign_id)}' "
+            f"ORDER BY CreatedDate DESC LIMIT 50"
+        , ctx)
+        for m in member_records:
+            members.append({
+                "id": m.get("Id"),
+                "contact_id": m.get("ContactId"),
+                "lead_id": m.get("LeadId"),
+                "status": m.get("Status"),
+                "name": m.get("Name"),
+                "first_responded_date": m.get("FirstRespondedDate"),
+            })
+    except Exception:  # noqa: BLE001
+        LOGGER.debug("campaign_members_fetch_failed")
+
+    return {
+        "campaign": _simplify_campaign(records[0]),
+        "members": members,
+        "member_count": len(members),
+    }
+
+
+# ── Quotes ──────────────────────────────────────────────────────────
+
+
+async def tool_create_quote(
+    name: str,
+    opportunity_id: str,
+    expiration_date: Optional[str] = None,
+    description: Optional[str] = None,
+    status: str = "Draft",
+) -> Dict[str, Any]:
+    """Create a Salesforce quote linked to an opportunity.
+
+    Args:
+        name: Quote name (required).
+        opportunity_id: The Opportunity ID to link this quote to (required).
+        expiration_date: Quote expiration date (ISO 8601, e.g. "2025-12-31").
+        description: Additional description for the quote.
+        status: Quote status (default "Draft").
+    """
+    payload: Dict[str, Any] = {
+        "Name": name,
+        "OpportunityId": opportunity_id,
+        "Status": status,
+    }
+    if expiration_date:
+        payload["ExpirationDate"] = expiration_date
+    if description:
+        payload["Description"] = description
+
+    LOGGER.info("salesforce_create_quote", fields=list(payload.keys()))
+
+    try:
+        result = await _salesforce_post("/sobjects/Quote", payload, ctx)
+        quote_id = result.get("id", "")
+        created: List[Dict[str, Any]] = []
+        if quote_id:
+            try:
+                created = await _soql_query(
+                    f"SELECT Id, Name, OpportunityId, Status, ExpirationDate, "
+                    f"Description, CreatedDate "
+                    f"FROM Quote WHERE Id = '{_sf(quote_id)}'"
+                , ctx)
+            except Exception:  # noqa: BLE001
+                pass
+        return {
+            "created": True,
+            "quote": created[0] if created else {"id": quote_id},
+            "opportunity_id": opportunity_id,
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_create_quote_error", error=str(exc))
+        return {"created": False, "error": str(exc)}
+
+
+# ── Products ────────────────────────────────────────────────────────
+
+
+async def tool_list_products(
+    family: Optional[str] = None,
+    search_text: Optional[str] = None,
+    limit: int = 25,
+) -> Dict[str, Any]:
+    """List products from the Salesforce product catalog.
+
+    Args:
+        family: Filter by product family.
+        search_text: Free-text search across Name, ProductCode, and Description.
+        limit: Maximum results (default 25, max 100).
+    """
+    clauses: List[str] = ["IsActive = true"]
+    if family:
+        clauses.append(f"Family = '{_sf(family)}'")
+    if search_text:
+        s = _sf(search_text)
+        clauses.append(
+            f"(Name LIKE '%{s}%' OR ProductCode LIKE '%{s}%' OR Description LIKE '%{s}%')"
+        )
+
+    where = f" WHERE {' AND '.join(clauses)}"
+    safe_limit = max(1, min(int(limit), 100))
+
+    query = (
+        f"SELECT Id, Name, ProductCode, Description, IsActive, Family "
+        f"FROM Product2{where} "
+        f"ORDER BY Name ASC "
+        f"LIMIT {safe_limit}"
+    )
+
+    LOGGER.info("salesforce_list_products", query=query)
+    records = await _soql_query(query, ctx)
+
+    return {
+        "total": len(records),
+        "products": [
+            {
+                "id": r.get("Id"),
+                "name": r.get("Name"),
+                "product_code": r.get("ProductCode"),
+                "description": r.get("Description"),
+                "is_active": r.get("IsActive"),
+                "family": r.get("Family"),
+            }
+            for r in records
+        ],
+    }
+
+
+# ── Forecasting ─────────────────────────────────────────────────────
+
+
+async def tool_get_forecast(
+    owner_name: Optional[str] = None,
+    fiscal_year: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Get a sales forecast / pipeline summary aggregated by stage.
+
+    Uses SOQL aggregate queries on Opportunity grouped by StageName.
+
+    Args:
+        owner_name: Filter by opportunity owner name.
+        fiscal_year: Filter by fiscal year (e.g. 2025).
+    """
+    clauses: List[str] = ["IsClosed = false"]
+    if owner_name:
+        clauses.append(f"Owner.Name = '{_sf(owner_name)}'")
+    if fiscal_year:
+        clauses.append(f"CALENDAR_YEAR(CloseDate) = {int(fiscal_year)}")
+
+    where = f" WHERE {' AND '.join(clauses)}"
+
+    query = (
+        f"SELECT StageName, COUNT(Id) cnt, SUM(Amount) total_amount, "
+        f"AVG(Probability) avg_probability "
+        f"FROM Opportunity{where} "
+        f"GROUP BY StageName "
+        f"ORDER BY StageName ASC"
+    )
+
+    LOGGER.info("salesforce_get_forecast", query=query)
+    records = await _soql_query(query, ctx)
+
+    grand_total = 0.0
+    grand_weighted = 0.0
+    grand_count = 0
+    stages: List[Dict[str, Any]] = []
+
+    for r in records:
+        amount = float(r.get("total_amount") or 0)
+        prob = float(r.get("avg_probability") or 0)
+        count = int(r.get("cnt") or 0)
+        grand_total += amount
+        grand_weighted += amount * (prob / 100.0)
+        grand_count += count
+        stages.append({
+            "stage": r.get("StageName"),
+            "count": count,
+            "total_amount": amount,
+            "avg_probability": prob,
+            "weighted_amount": amount * (prob / 100.0),
+        })
+
+    return {
+        "totals": {
+            "opportunities": grand_count,
+            "pipeline_amount": grand_total,
+            "weighted_pipeline_amount": grand_weighted,
+        },
+        "stages": stages,
+    }
+
+
+# ── Reports ─────────────────────────────────────────────────────────
+
+
+async def tool_list_reports(limit: int = 20) -> Dict[str, Any]:
+    """List available Salesforce reports.
+
+    Args:
+        limit: Maximum results (default 20, max 200).
+    """
+    LOGGER.info("salesforce_list_reports")
+    safe_limit = max(1, min(int(limit), 200))
+
+    result = await _salesforce_get("/analytics/reports", ctx)
+
+    reports: List[Dict[str, Any]] = []
+    for r in (result if isinstance(result, list) else []):
+        reports.append({
+            "id": r.get("id"),
+            "name": r.get("name"),
+            "description": r.get("description"),
+            "report_format": r.get("reportFormat"),
+            "folder_name": r.get("folderName"),
+        })
+        if len(reports) >= safe_limit:
+            break
+
+    return {
+        "total": len(reports),
+        "reports": reports,
+    }
+
+
+async def tool_run_report(report_id: str) -> Dict[str, Any]:
+    """Run a Salesforce report and return results.
+
+    Args:
+        report_id: The Salesforce Report record ID.
+    """
+    LOGGER.info("salesforce_run_report", report_id=report_id)
+
+    try:
+        result = await _salesforce_get(f"/analytics/reports/{report_id}", ctx)
+        report_metadata = result.get("reportMetadata", {})
+        fact_map = result.get("factMap", {})
+        report_extended = result.get("reportExtendedMetadata", {})
+
+        return {
+            "report_id": report_id,
+            "name": report_metadata.get("name"),
+            "report_format": report_metadata.get("reportFormat"),
+            "detail_columns": report_metadata.get("detailColumns", []),
+            "fact_map": fact_map,
+            "extended_metadata": report_extended,
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_run_report_error", report_id=report_id, error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 # ── Tool registry ───────────────────────────────────────────────────
 
 SALESFORCE_TOOL_SPECS: list[dict] = [
@@ -1547,5 +2100,99 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "openai/toolInvocation/invoking": "Creating event\u2026",
             "openai/toolInvocation/invoked": "Event created.",
         },
+    },
+    {
+        "name": "list_leads",
+        "func": tool_list_leads,
+        "summary": (
+            "List or search Salesforce leads. Supports filtering by status, "
+            "lead source, and free-text search."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_lead",
+        "func": tool_get_lead,
+        "summary": (
+            "Get full details for a single Salesforce lead by ID."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "create_lead",
+        "func": tool_create_lead,
+        "summary": (
+            "Create a new Salesforce lead with first name, last name, company, "
+            "and optional contact details."
+        ),
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "convert_lead",
+        "func": tool_convert_lead,
+        "summary": (
+            "Convert a Salesforce lead to an account, contact, and optionally "
+            "an opportunity."
+        ),
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "list_campaigns",
+        "func": tool_list_campaigns,
+        "summary": (
+            "List Salesforce marketing campaigns with optional status and "
+            "type filters."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_campaign",
+        "func": tool_get_campaign,
+        "summary": (
+            "Get details for a Salesforce campaign including campaign members."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "create_quote",
+        "func": tool_create_quote,
+        "summary": (
+            "Create a Salesforce quote linked to an opportunity."
+        ),
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "list_products",
+        "func": tool_list_products,
+        "summary": (
+            "List active products from the Salesforce product catalog with "
+            "optional family and search filters."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_forecast",
+        "func": tool_get_forecast,
+        "summary": (
+            "Get a sales forecast / pipeline summary aggregated by opportunity "
+            "stage. Supports owner and fiscal year filters."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "list_reports",
+        "func": tool_list_reports,
+        "summary": (
+            "List available Salesforce reports."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "run_report",
+        "func": tool_run_report,
+        "summary": (
+            "Run a Salesforce report by ID and return results."
+        ),
+        "annotations": {"readOnlyHint": True},
     },
 ]
