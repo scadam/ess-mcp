@@ -1,5 +1,4 @@
-
-Provides issue search, detail, comments, and transitions against
+"""Provides issue search, detail, comments, and transitions against
 the Jira REST API v3 using Bearer token auth.
 """
 
@@ -78,6 +77,22 @@ async def _jira_search(
     if fields:
         body["fields"] = [f.strip() for f in fields.split(",")]
     return await _jira_post("/search/jql", body, ctx)
+
+
+async def _jira_agile_get(
+    path: str, ctx: Optional[Context] = None, params: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """Make an authenticated GET request to the Jira Agile REST API (v1.0)."""
+    settings = load_jira_settings()
+    url = f"{settings.base_url.rstrip('/')}/rest/agile/1.0{path}"
+    headers = {
+        "Authorization": f"Bearer {get_bearer_token(ctx)}",
+        "Accept": "application/json",
+    }
+    async with create_async_client() as client:
+        resp = await client.get(url, params=params, headers=headers)
+        resp.raise_for_status()
+        return resp.json()
 
 # ── Data helpers ─────────────────────────────────────────────────────
 
@@ -531,6 +546,291 @@ async def tool_update_issue(
         return {"success": False, "error": str(exc)}
 
 
+# ── Agile & additional tool functions ───────────────────────────────
+
+
+async def tool_list_boards(
+    project_key: Optional[str] = None,
+    board_type: Optional[str] = None,
+    limit: int = 50,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """List agile boards visible to the current user.
+
+    Args:
+        project_key: Filter boards by project key (e.g. "PROJ").
+        board_type: Filter by board type — "scrum", "kanban", or "simple".
+        limit: Maximum results (default 50, max 100).
+    """
+    LOGGER.info("jira_list_boards", project_key=project_key, board_type=board_type)
+
+    params: Dict[str, Any] = {"maxResults": max(1, min(int(limit), 100))}
+    if project_key:
+        params["projectKeyOrId"] = project_key
+    if board_type:
+        params["type"] = board_type
+
+    data = await _jira_agile_get("/board", ctx, params=params)
+    boards = [
+        {
+            "id": b.get("id"),
+            "name": b.get("name"),
+            "type": b.get("type"),
+            "projectKey": (b.get("location", {}) or {}).get("projectKey"),
+            "projectName": (b.get("location", {}) or {}).get("projectName"),
+        }
+        for b in data.get("values", [])
+    ]
+    return {"total": data.get("total", len(boards)), "boards": boards}
+
+
+async def tool_get_board(
+    board_id: int,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Get board details including column configuration.
+
+    Args:
+        board_id: The numeric ID of the agile board.
+    """
+    LOGGER.info("jira_get_board", board_id=board_id)
+
+    config = await _jira_agile_get(f"/board/{board_id}/configuration", ctx)
+    columns = [
+        {
+            "name": col.get("name"),
+            # Status self-links end with the status ID (e.g. ".../status/10001")
+            "statuses": [s.get("id", s.get("self", "").split("/")[-1]) for s in col.get("status", [])],
+        }
+        for col in config.get("columnConfig", {}).get("columns", [])
+    ]
+    return {
+        "id": config.get("id"),
+        "name": config.get("name"),
+        "type": config.get("type"),
+        "columns": columns,
+        "filter": {
+            "id": config.get("filter", {}).get("id"),
+            "name": config.get("filter", {}).get("name"),
+        },
+    }
+
+
+async def tool_list_sprints(
+    board_id: int,
+    state: Optional[str] = None,
+    limit: int = 50,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """List sprints for an agile board.
+
+    Args:
+        board_id: The numeric ID of the agile board.
+        state: Filter by sprint state — "active", "future", or "closed".
+        limit: Maximum results (default 50, max 100).
+    """
+    LOGGER.info("jira_list_sprints", board_id=board_id, state=state)
+
+    params: Dict[str, Any] = {"maxResults": max(1, min(int(limit), 100))}
+    if state:
+        params["state"] = state
+
+    data = await _jira_agile_get(f"/board/{board_id}/sprint", ctx, params=params)
+    sprints = [
+        {
+            "id": s.get("id"),
+            "name": s.get("name"),
+            "state": s.get("state"),
+            "startDate": s.get("startDate"),
+            "endDate": s.get("endDate"),
+            "completeDate": s.get("completeDate"),
+            "goal": s.get("goal"),
+        }
+        for s in data.get("values", [])
+    ]
+    return {"total": data.get("total", len(sprints)), "sprints": sprints}
+
+
+async def tool_get_sprint(
+    sprint_id: int,
+    include_issues: bool = True,
+    limit: int = 50,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Get sprint details and optionally its issues.
+
+    Args:
+        sprint_id: The numeric ID of the sprint.
+        include_issues: Whether to include the sprint's issues (default True).
+        limit: Maximum issues to return (default 50, max 100).
+    """
+    LOGGER.info("jira_get_sprint", sprint_id=sprint_id)
+
+    sprint = await _jira_agile_get(f"/sprint/{sprint_id}", ctx)
+    result: Dict[str, Any] = {
+        "id": sprint.get("id"),
+        "name": sprint.get("name"),
+        "state": sprint.get("state"),
+        "startDate": sprint.get("startDate"),
+        "endDate": sprint.get("endDate"),
+        "completeDate": sprint.get("completeDate"),
+        "goal": sprint.get("goal"),
+    }
+
+    if include_issues:
+        params: Dict[str, Any] = {"maxResults": max(1, min(int(limit), 100))}
+        issues_data = await _jira_agile_get(
+            f"/sprint/{sprint_id}/issue", ctx, params=params
+        )
+        result["issues"] = [_simplify_issue(i) for i in issues_data.get("issues", [])]
+        result["issueCount"] = issues_data.get("total", len(result["issues"]))
+
+    return result
+
+
+async def tool_get_backlog(
+    board_id: int,
+    limit: int = 50,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Get backlog issues for an agile board.
+
+    Args:
+        board_id: The numeric ID of the agile board.
+        limit: Maximum issues to return (default 50, max 100).
+    """
+    LOGGER.info("jira_get_backlog", board_id=board_id)
+
+    params: Dict[str, Any] = {"maxResults": max(1, min(int(limit), 100))}
+    data = await _jira_agile_get(f"/board/{board_id}/backlog", ctx, params=params)
+
+    issues = [_simplify_issue(i) for i in data.get("issues", [])]
+    return {
+        "total": data.get("total", len(issues)),
+        "returned": len(issues),
+        "issues": issues,
+    }
+
+
+async def tool_list_epics(
+    board_id: int,
+    limit: int = 50,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """List epics for an agile board.
+
+    Args:
+        board_id: The numeric ID of the agile board.
+        limit: Maximum results (default 50, max 100).
+    """
+    LOGGER.info("jira_list_epics", board_id=board_id)
+
+    params: Dict[str, Any] = {"maxResults": max(1, min(int(limit), 100))}
+    data = await _jira_agile_get(f"/board/{board_id}/epic", ctx, params=params)
+
+    epics = [
+        {
+            "id": e.get("id"),
+            "key": e.get("key"),
+            "name": e.get("name"),
+            "summary": e.get("summary"),
+            "done": e.get("done", False),
+        }
+        for e in data.get("values", [])
+    ]
+    return {"total": data.get("total", len(epics)), "epics": epics}
+
+
+async def tool_log_work(
+    key: str,
+    time_spent: str,
+    comment: Optional[str] = None,
+    started: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Log work (time tracking) on a Jira issue.
+
+    Args:
+        key: The issue key (e.g. PROJ-123).
+        time_spent: Time spent in Jira duration format (e.g. "2h 30m", "1d").
+        comment: Optional work description.
+        started: Optional ISO-8601 datetime when work started.
+                 Defaults to now if omitted.
+    """
+    LOGGER.info("jira_log_work", key=key, time_spent=time_spent)
+
+    try:
+        payload: Dict[str, Any] = {"timeSpent": time_spent}
+        if comment:
+            payload["comment"] = _build_adf(comment)
+        if started:
+            payload["started"] = started
+
+        result = await _jira_post(f"/issue/{key}/worklog", payload, ctx)
+        return {
+            "success": True,
+            "issueKey": key,
+            "worklogId": result.get("id"),
+            "timeSpent": result.get("timeSpent", time_spent),
+            "author": (result.get("author", {}) or {}).get("displayName"),
+        }
+    except Exception as exc:
+        LOGGER.error("jira_log_work_error", key=key, error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_my_issues(
+    limit: int = 20,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Get issues assigned to the current user — a quick 'my work' view.
+
+    Args:
+        limit: Maximum results (default 20, max 100).
+    """
+    LOGGER.info("jira_get_my_issues")
+
+    safe_limit = max(1, min(int(limit), 100))
+    jql = "assignee = currentUser() AND resolution = Unresolved ORDER BY updated DESC"
+    data = await _jira_search(jql, max_results=safe_limit, fields=_SEARCH_FIELDS, ctx=ctx)
+
+    issues = [_simplify_issue(i) for i in data.get("issues", [])]
+    return {
+        "total": data.get("total", 0),
+        "returned": len(issues),
+        "issues": issues,
+    }
+
+
+async def tool_list_projects(
+    limit: int = 50,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """List all Jira projects accessible to the current user.
+
+    Args:
+        limit: Maximum results (default 50, max 100).
+    """
+    LOGGER.info("jira_list_projects")
+
+    safe_limit = max(1, min(int(limit), 100))
+    data = await _jira_get(
+        "/project/search", ctx, params={"maxResults": safe_limit}
+    )
+    projects = [
+        {
+            "id": p.get("id"),
+            "key": p.get("key"),
+            "name": p.get("name"),
+            "style": p.get("style"),
+            "isPrivate": p.get("isPrivate", False),
+            "lead": (p.get("lead", {}) or {}).get("displayName"),
+        }
+        for p in data.get("values", [])
+    ]
+    return {"total": data.get("total", len(projects)), "projects": projects}
+
+
 # ── Provider functions for TaskServer integration ───────────────────
 
 
@@ -741,5 +1041,81 @@ JIRA_TOOL_SPECS: list[dict] = [
             "openai/toolInvocation/invoking": "Updating Jira issue\u2026",
             "openai/toolInvocation/invoked": "Issue updated.",
         },
+    },
+    {
+        "name": "list_boards",
+        "func": tool_list_boards,
+        "summary": (
+            "List agile boards (Scrum or Kanban) visible to the current user. "
+            "Optionally filter by project key or board type."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_board",
+        "func": tool_get_board,
+        "summary": (
+            "Get board details including column configuration for an agile board."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "list_sprints",
+        "func": tool_list_sprints,
+        "summary": (
+            "List sprints for an agile board. Filter by state: active, future, or closed."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_sprint",
+        "func": tool_get_sprint,
+        "summary": (
+            "Get sprint details and its issues. Use to view sprint progress "
+            "and what work is planned, in progress, or done."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_backlog",
+        "func": tool_get_backlog,
+        "summary": (
+            "Get backlog issues for an agile board — items not yet assigned to a sprint."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "list_epics",
+        "func": tool_list_epics,
+        "summary": (
+            "List epics for an agile board. Shows epic name, key, summary, and completion status."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "log_work",
+        "func": tool_log_work,
+        "summary": (
+            "Log work (time tracking) on a Jira issue. "
+            "Specify time spent in Jira format (e.g. '2h 30m', '1d')."
+        ),
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "get_my_issues",
+        "func": tool_get_my_issues,
+        "summary": (
+            "Get unresolved issues assigned to the current user — "
+            "a quick 'my work' view sorted by last updated."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "list_projects",
+        "func": tool_list_projects,
+        "summary": (
+            "List all Jira projects accessible to the current user."
+        ),
+        "annotations": {"readOnlyHint": True},
     },
 ]
