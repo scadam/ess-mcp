@@ -2497,8 +2497,8 @@ async def tool_create_change_request(
         "assignment_group": assignment_group,
         "assigned_to": assigned_to,
         "description": description,
-        "start_date": planned_start_date,
-        "end_date": planned_end_date,
+        "planned_start_date": planned_start_date,
+        "planned_end_date": planned_end_date,
     }
     for field, value in _optional.items():
         if value is not None and value != "":
