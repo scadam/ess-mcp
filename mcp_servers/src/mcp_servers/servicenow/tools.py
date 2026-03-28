@@ -1,6 +1,7 @@
 
 import json
 import re
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastmcp import Context
@@ -3195,6 +3196,228 @@ SERVICENOW_TOOL_SPECS.extend(
                 "category, and operational status."
             ),
             "func": tool_list_cmdb_cis,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+        },
+    ]
+)
+
+
+# ── Manager-focused tool functions ───────────────────────────────────
+
+
+async def tool_get_team_incidents(
+    assigned_to_group: str = "",
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Get a team incident workload dashboard for managers.
+
+    Queries active incidents assigned to the manager's team members,
+    summarising totals by priority, state, and assignee.
+
+    Args:
+        assigned_to_group: Optional assignment group name to filter by.
+            When empty, returns active incidents across all groups.
+    """
+    try:
+        settings = load_servicenow_settings()
+        token = get_bearer_token(ctx)
+
+        query_parts = ["active=true"]
+        if assigned_to_group:
+            query_parts.append(f"assignment_group.name={assigned_to_group}")
+        query_parts.append("ORDERBYDESCsys_updated_on")
+        query = "^".join(query_parts)
+
+        url = f"{settings.instance_url}/api/now/table/incident"
+        params: Dict[str, Any] = {
+            "sysparm_query": query,
+            "sysparm_limit": 200,
+            "sysparm_fields": _INCIDENT_FIELDS,
+            "sysparm_display_value": "all",
+            "sysparm_exclude_reference_link": "true",
+        }
+
+        LOGGER.info(
+            "servicenow_get_team_incidents",
+            assigned_to_group=assigned_to_group,
+        )
+
+        async with create_async_client() as client:
+            resp = await client.get(
+                url,
+                params=params,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+            )
+            resp.raise_for_status()
+            body = resp.json()
+
+        raw_results = body.get("result", [])
+        incidents = [_simplify_incident(r) for r in raw_results]
+
+        # --- build summary breakdowns ---
+        by_priority: Dict[str, int] = {}
+        by_state: Dict[str, int] = {}
+        by_assignee: Dict[str, int] = {}
+
+        for inc in incidents:
+            p = inc.get("priority") or "Unknown"
+            by_priority[p] = by_priority.get(p, 0) + 1
+
+            s = inc.get("state") or "Unknown"
+            by_state[s] = by_state.get(s, 0) + 1
+
+            a = inc.get("assigned_to") or "Unassigned"
+            by_assignee[a] = by_assignee.get(a, 0) + 1
+
+        recent_incidents = incidents[:10]
+
+        return {
+            "success": True,
+            "total_open": len(incidents),
+            "by_priority": by_priority,
+            "by_state": by_state,
+            "by_assignee": by_assignee,
+            "recent_incidents": recent_incidents,
+            "_instance_url": settings.instance_url,
+        }
+    except Exception as exc:
+        LOGGER.error("servicenow_get_team_incidents_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_team_approvals(
+    limit: int = 100,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Get pending approvals grouped for bulk decision-making.
+
+    Lists all pending approvals (state=requested), groups them by source
+    table, and includes approval age for each item.
+
+    Args:
+        limit: Maximum number of approvals to return (default 100, max 200).
+    """
+    try:
+        settings = load_servicenow_settings()
+        token = get_bearer_token(ctx)
+
+        safe_limit = max(1, min(int(limit), 200))
+        url = f"{settings.instance_url}/api/now/table/sysapproval_approver"
+        params: Dict[str, Any] = {
+            "sysparm_query": "state=requested^ORDERBYDESCsys_created_on",
+            "sysparm_limit": safe_limit,
+            "sysparm_fields": _APPROVAL_FIELDS,
+            "sysparm_display_value": "all",
+            "sysparm_exclude_reference_link": "true",
+        }
+
+        LOGGER.info("servicenow_get_team_approvals", limit=safe_limit)
+
+        async with create_async_client() as client:
+            resp = await client.get(
+                url,
+                params=params,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+            )
+            resp.raise_for_status()
+            body = resp.json()
+
+        now = datetime.now(tz=timezone.utc)
+
+        approvals: List[Dict[str, Any]] = []
+        by_source_table: Dict[str, List[Dict[str, Any]]] = {}
+
+        for raw in body.get("result", []):
+            sys_id = _dv(raw.get("sys_id"))
+            source_table = _dv(raw.get("source_table")) or "unknown"
+            created_on_str = _dv(raw.get("sys_created_on")) or ""
+
+            age_hours: Optional[float] = None
+            if created_on_str:
+                try:
+                    created_dt = datetime.strptime(
+                        created_on_str, "%Y-%m-%d %H:%M:%S"
+                    ).replace(tzinfo=timezone.utc)
+                    age_hours = round(
+                        (now - created_dt).total_seconds() / 3600, 1
+                    )
+                except ValueError:
+                    pass
+
+            approval = {
+                "sys_id": sys_id,
+                "state": _dv(raw.get("state")),
+                "approver": _dv(raw.get("approver")),
+                "source_table": source_table,
+                "document_id": _dv(raw.get("document_id")),
+                "sys_created_on": created_on_str,
+                "age_hours": age_hours,
+                "comments": _dv(raw.get("comments")),
+                "link": (
+                    f"{settings.instance_url}/nav_to.do"
+                    f"?uri=sysapproval_approver.do"
+                    f"?sys_id={sys_id}"
+                ),
+            }
+
+            approvals.append(approval)
+            by_source_table.setdefault(source_table, []).append(approval)
+
+        return {
+            "success": True,
+            "total_pending": len(approvals),
+            "by_source_table": {
+                table: {
+                    "count": len(items),
+                    "approvals": items,
+                }
+                for table, items in by_source_table.items()
+            },
+            "approvals": approvals,
+        }
+    except Exception as exc:
+        LOGGER.error("servicenow_get_team_approvals_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+# ── Manager-focused tool specs ───────────────────────────────────────
+SERVICENOW_TOOL_SPECS.extend(
+    [
+        {
+            "name": "get_team_incidents",
+            "summary": (
+                "Team incident workload dashboard for managers. Queries active "
+                "incidents assigned to team members, with breakdowns by priority, "
+                "state, and assignee. Optionally filter by assignment group name. "
+                "Returns the top 10 most recent incidents."
+            ),
+            "func": tool_get_team_incidents,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+            "meta": {
+                "openai/outputTemplate": "ui://widget/team-incidents.html",
+                "openai/toolInvocation/invoking": "Loading team incidents\u2026",
+                "openai/toolInvocation/invoked": "Team incidents ready.",
+            },
+        },
+        {
+            "name": "get_team_approvals",
+            "summary": (
+                "Bulk team approvals view for managers. Lists all pending "
+                "approvals (state=requested), grouped by source table type, "
+                "with approval age in hours. Returns structured data suitable "
+                "for batch approve or reject decisions."
+            ),
+            "func": tool_get_team_approvals,
             "annotations": {
                 "readOnlyHint": True,
             },
