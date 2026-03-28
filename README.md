@@ -79,7 +79,8 @@ ESS-MCP includes 23 interactive HTML+Skybridge widgets that render directly in A
 │  │  Workday  │ │  ServiceNow  │ │ Salesforce  │ │   Jira   │ │
 │  │  Server   │ │   Server     │ │   Server    │ │  Server  │ │
 │  └─────┬─────┘ └──────┬───────┘ └──────┬─────┘ └────┬─────┘ │
-│        │ Bearer Token  │ OAuth CC       │ OAuth CC   │ API Key│
+│        │               │                │            │        │
+│        │         Bearer Token Passthrough             │        │
 └────────┼───────────────┼────────────────┼────────────┼───────┘
          ▼               ▼                ▼            ▼
    Workday API    ServiceNow API   Salesforce API  Jira Cloud API
@@ -116,7 +117,7 @@ cp env/workday.example.env env/workday.env
 cp env/servicenow.example.env env/servicenow.env
 cp env/salesforce.example.env env/salesforce.env
 cp env/jira.example.env env/jira.env
-# Edit each .env file with your credentials
+# Edit each .env file with your service URLs
 
 # Run a single server (stdio – for direct MCP client connection)
 python -m mcp_servers.cli workday --transport stdio
@@ -142,7 +143,6 @@ docker run -p 8080:8080 ess-mcp
 # Run specific servers with env vars
 docker run -p 8080:8080 \
   -e JIRA_BASE_URL=https://yourorg.atlassian.net \
-  -e JIRA_API_TOKEN=your_token \
   ess-mcp python -m mcp_servers.cli jira --transport both --host 0.0.0.0 --port 8080
 ```
 
@@ -207,22 +207,22 @@ Deploy to **Azure Container Apps** with a single command. The script provisions 
 | `--memory` | `1Gi` | Memory per container |
 | `--min-replicas` | `0` | Minimum replica count (0 = scale to zero) |
 | `--max-replicas` | `3` | Maximum replica count |
-| `-e, --env-file` | — | Path to `.env` file with service credentials |
+| `-e, --env-file` | — | Path to `.env` file with service configuration |
 | `--resource-group` | `{name}-rg` | Use an existing resource group |
 | `--subscription` | — | Azure subscription ID or name |
 | `--dry-run` | — | Preview what would be deployed |
 
-### Configure Credentials
+### Configure Environment
 
 ```bash
 # Copy the example environment file
 cp deploy/.env.example deploy/.env
 
-# Edit with your service credentials
+# Edit with your service URLs
 # Only fill in variables for the servers you're deploying
 nano deploy/.env
 
-# Deploy with credentials
+# Deploy with configuration
 ./deploy/deploy.sh --servers workday,jira --env-file deploy/.env
 ```
 
@@ -285,13 +285,7 @@ az group delete --name essmcp-rg --yes --no-wait
 
 **Configuration** (`env/workday.env`):
 ```env
-AAD_APP_CLIENT_ID=your_client_id
-AAD_APP_TENANT_ID=your_tenant_id
-WORKDAY_TOKEN_URL=https://your-workday.com/oauth/token
 WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
-WORKDAY_CLIENT_CREDENTIALS=your_credentials
-WORKDAY_CLIENT_SECRET=your_secret
-WORKDAY_REFRESH_TOKEN=your_refresh_token
 ```
 
 ---
@@ -321,8 +315,6 @@ WORKDAY_REFRESH_TOKEN=your_refresh_token
 **Configuration** (`env/servicenow.env`):
 ```env
 SERVICENOW_INSTANCE_URL=https://yourinstance.service-now.com
-SERVICENOW_CLIENT_ID=your_client_id
-SERVICENOW_CLIENT_SECRET=your_client_secret
 ```
 
 ---
@@ -352,8 +344,6 @@ SERVICENOW_CLIENT_SECRET=your_client_secret
 **Configuration** (`env/salesforce.env`):
 ```env
 SALESFORCE_DOMAIN=yourorg.my.salesforce.com
-SALESFORCE_CLIENT_ID=your_connected_app_client_id
-SALESFORCE_CLIENT_SECRET=your_connected_app_client_secret
 ```
 
 ---
@@ -380,8 +370,6 @@ SALESFORCE_CLIENT_SECRET=your_connected_app_client_secret
 **Configuration** (`env/jira.env`):
 ```env
 JIRA_BASE_URL=https://yourorg.atlassian.net
-JIRA_EMAIL=you@example.com
-JIRA_API_TOKEN=your_api_token
 JIRA_PROJECT_KEY=PROJ  # Optional
 ```
 
@@ -414,14 +402,7 @@ ESS-MCP uses **OAuth 2.0 bearer token passthrough** — the MCP server extracts 
 Client → Authorization: Bearer <token> → MCP Server → Bearer <token> → SaaS API
 ```
 
-Each backend has its own auth flow:
-
-| Server | Auth Method |
-|--------|-------------|
-| Workday | OAuth 2.0 refresh token + Microsoft Entra |
-| ServiceNow | OAuth 2.0 Client Credentials |
-| Salesforce | OAuth 2.0 Client Credentials (Connected App) |
-| Jira | API Token (Bearer) |
+The MCP client is responsible for obtaining a valid bearer token for the target SaaS API (e.g. via OAuth 2.0 authorization code flow, client credentials grant, or any other mechanism). The MCP server simply passes the token through — it does not perform any token exchange, refresh, or validation.
 
 ---
 
@@ -433,7 +414,7 @@ ess-mcp/
 ├── deploy/                         # Azure deployment
 │   ├── deploy.sh                   # Single-click deploy script
 │   ├── main.bicep                  # Azure Bicep IaC template
-│   └── .env.example                # Credential template
+│   └── .env.example                # Configuration template
 ├── docs/
 │   └── images/                     # Widget screenshots
 └── mcp_servers/
