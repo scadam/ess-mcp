@@ -3214,7 +3214,7 @@ async def tool_get_team_incidents(
     """Get a team incident workload dashboard for managers.
 
     Queries active incidents assigned to the manager's team members,
-    summarising totals by priority, state, and assignee.
+    summarizing totals by priority, state, and assignee.
 
     Args:
         assigned_to_group: Optional assignment group name to filter by.
