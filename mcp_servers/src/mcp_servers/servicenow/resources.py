@@ -592,7 +592,7 @@ CREATE_INCIDENT_HTML = """\
           if (!data || !data.created) {
             throw new Error((data && data.error) || "Incident creation failed");
           }
-          /* Switch to update mode — keep form visible */
+          /* Switch to update mode -- keep form visible */
           isUpdate = true;
           document.getElementById("pageTitle").textContent = "Update Incident";
           document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 " + (data.number || "Existing Ticket");

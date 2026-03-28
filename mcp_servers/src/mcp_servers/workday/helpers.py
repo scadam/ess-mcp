@@ -77,27 +77,6 @@ class WorkerContext:
     worker_data: Dict[str, Any]
 
 
-async def build_worker_context_anonymous(employee_id: str) -> WorkerContext:
-    """Build worker context using a pre-configured employee ID.
-
-    Used for local testing. The WORKDAY_WORKERS_API_URL must point to a working
-    Workday instance and some token must be provided externally.
-
-    NOTE: In anonymous mode, API calls will fail unless WORKDAY_WORKERS_API_URL
-    is configured to a mock or test endpoint.
-    """
-    LOGGER.info("building_anonymous_worker_context", employee_id=employee_id)
-    # In anonymous mode, we can't make real API calls without a token
-    # Return a minimal context; tools should handle LookupError
-    return WorkerContext(
-        payload={},
-        worker_id=employee_id,
-        workday_id=employee_id,
-        workday_access_token="",
-        worker_data={"id": employee_id, "workerId": employee_id},
-    )
-
-
 async def build_worker_context_from_bearer(token: str) -> WorkerContext:
     """Build worker context using the incoming OAuth 2.0 bearer token.
 
@@ -109,8 +88,7 @@ async def build_worker_context_from_bearer(token: str) -> WorkerContext:
     if not worker_id:
         raise ValueError(
             "Cannot determine worker ID from token. "
-            "Set WORKDAY_ANONYMOUS_EMPLOYEE_ID for testing, or ensure your OAuth token "
-            "contains preferred_username, upn, or employeeId claims."
+            "Ensure your OAuth token contains preferred_username, upn, or employeeId claims."
         )
     LOGGER.info("resolving_workday_worker", worker_id=worker_id)
     worker_data = await search_worker_in_workday(token, worker_id)

@@ -1,0 +1,182 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})();</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --btn-bg: #152235; --btn-border: #243145; --wd-accent: #f68d28; --wd-glow: rgba(246,141,40,.14); --pto: #2bd48f; --sick: #ff6b6b; --personal: #a78bfa; --holiday: #f0b232; --other: #64748b; }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --wd-accent: #d47418; --wd-glow: rgba(212,116,24,.08); --pto: #107c10; --sick: #d13438; --personal: #7c3aed; --holiday: #ca5010; --other: #475569; }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .wd-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--wd-glow); border: 1px solid var(--wd-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+      .section-label { font-size: 11px; color: var(--wd-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 8px; }
+      .cal-hdr { font-size: 10px; color: var(--muted); text-align: center; padding: 4px 0; font-weight: 600; text-transform: uppercase; }
+      .cal-day { text-align: center; padding: 6px 2px; border-radius: 6px; font-size: 11px; min-height: 28px; position: relative; }
+      .cal-day.empty { opacity: 0; }
+      .cal-day.today { border: 1px solid var(--wd-accent); font-weight: 700; }
+      .cal-day .dots { display: flex; gap: 2px; justify-content: center; margin-top: 2px; }
+      .cal-day .dot { width: 4px; height: 4px; border-radius: 50%; }
+      .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+      .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); }
+      .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+      .event-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+      .event-row:last-child { border-bottom: none; }
+      .event-indicator { width: 4px; height: 28px; border-radius: 2px; flex-shrink: 0; }
+      .event-info { flex: 1; min-width: 0; }
+      .event-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .event-detail { font-size: 11px; color: var(--muted); margin-top: 1px; }
+      .event-dates { font-size: 11px; color: var(--wd-accent); font-weight: 600; flex-shrink: 0; }
+      .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+      .summary-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px; text-align: center; }
+      .summary-value { font-size: 20px; font-weight: 700; color: var(--wd-accent); }
+      .summary-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--wd-accent); border-color: var(--wd-accent); }
+      .loading { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="wd-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--wd-accent)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div><div class="title">Team Calendar</div><div class="subtitle">Workday &middot; Time Off</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="root"><div class="loading">Loading team calendar&hellip;</div></div>
+      <div class="footer">Powered by <strong>workday / get_team_calendar</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var _isFS = false, _maxBtn = document.getElementById("maximizeBtn");
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+
+      var typeColors = { vacation: '--pto', pto: '--pto', 'paid time off': '--pto', sick: '--sick', 'sick leave': '--sick', personal: '--personal', 'personal leave': '--personal', holiday: '--holiday', 'public holiday': '--holiday' };
+      function getTypeColor(type) { var t = (type || "").toLowerCase(); for (var k in typeColors) { if (t.indexOf(k) !== -1) return 'var(' + typeColors[k] + ')'; } return 'var(--other)'; }
+
+      function formatDate(ds) { if (!ds) return ""; try { var d = new Date(ds); return d.toLocaleDateString("en-US", {month: "short", day: "numeric"}); } catch(e) { return ds; } }
+
+      function renderCalendar(events) {
+        var now = new Date(), year = now.getFullYear(), month = now.getMonth();
+        var first = new Date(year, month, 1), last = new Date(year, month + 1, 0);
+        var startDay = first.getDay(), daysInMonth = last.getDate();
+        var monthName = first.toLocaleDateString("en-US", {month: "long", year: "numeric"});
+
+        var eventsByDay = {};
+        for (var i = 0; i < events.length; i++) {
+          var ev = events[i];
+          var start = new Date(ev.startDate || ev.start_date || ev.date || ev.start);
+          var end = new Date(ev.endDate || ev.end_date || ev.date || ev.end || start);
+          for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            if (d.getMonth() === month && d.getFullYear() === year) {
+              var day = d.getDate();
+              if (!eventsByDay[day]) eventsByDay[day] = [];
+              eventsByDay[day].push(ev);
+            }
+          }
+        }
+
+        var html = '<div style="text-align:center;font-size:13px;font-weight:600;margin-bottom:8px">' + esc(monthName) + '</div>';
+        html += '<div class="cal-grid">';
+        var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        for (var h = 0; h < 7; h++) html += '<div class="cal-hdr">' + days[h] + '</div>';
+        for (var s = 0; s < startDay; s++) html += '<div class="cal-day empty"></div>';
+        for (var dd = 1; dd <= daysInMonth; dd++) {
+          var isToday = (dd === now.getDate() && month === now.getMonth() && year === now.getFullYear());
+          html += '<div class="cal-day' + (isToday ? ' today' : '') + '">' + dd;
+          if (eventsByDay[dd]) {
+            html += '<div class="dots">';
+            var shown = Math.min(3, eventsByDay[dd].length);
+            for (var di = 0; di < shown; di++) {
+              var type = eventsByDay[dd][di].type || eventsByDay[dd][di].timeOffType || eventsByDay[dd][di].leaveType || "";
+              html += '<div class="dot" style="background:' + getTypeColor(type) + '"></div>';
+            }
+            html += '</div>';
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+        return html;
+      }
+
+      function render(d) {
+        if (!d) { document.getElementById("root").innerHTML = '<div class="loading">No calendar data available.</div>'; reportHeight(); return; }
+        var entries = d.entries || d.events || d.timeOff || d.time_off || d.absences || [];
+        if (Array.isArray(d) && !entries.length) entries = d;
+        var outToday = 0, outWeek = 0, totalEntries = entries.length;
+
+        var now = new Date(); var weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
+        for (var i = 0; i < entries.length; i++) {
+          var e = entries[i];
+          var s = new Date(e.startDate || e.start_date || e.date || e.start);
+          var en = new Date(e.endDate || e.end_date || e.date || e.end || s);
+          if (s <= now && en >= now) outToday++;
+          if (s <= weekEnd && en >= now) outWeek++;
+        }
+
+        var html = '<div class="card"><div class="section-label">Summary</div>';
+        html += '<div class="summary-grid">';
+        html += '<div class="summary-cell"><div class="summary-value">' + outToday + '</div><div class="summary-label">Out Today</div></div>';
+        html += '<div class="summary-cell"><div class="summary-value">' + outWeek + '</div><div class="summary-label">Out This Week</div></div>';
+        html += '<div class="summary-cell"><div class="summary-value">' + totalEntries + '</div><div class="summary-label">Scheduled</div></div>';
+        html += '</div></div>';
+
+        if (_isFS && entries.length) {
+          html += '<div class="card"><div class="section-label">Calendar View</div>';
+          html += renderCalendar(entries);
+          var types = {};
+          for (var j = 0; j < entries.length; j++) { var t = entries[j].type || entries[j].timeOffType || entries[j].leaveType || "Other"; types[t] = true; }
+          html += '<div class="legend">';
+          for (var tk in types) html += '<div class="legend-item"><div class="legend-dot" style="background:' + getTypeColor(tk) + '"></div>' + esc(tk) + '</div>';
+          html += '</div></div>';
+        }
+
+        if (entries.length) {
+          var sorted = entries.slice().sort(function(a, b) { return new Date(a.startDate || a.start_date || a.date || a.start) - new Date(b.startDate || b.start_date || b.date || b.start); });
+          var shown = _isFS ? sorted.length : Math.min(6, sorted.length);
+          html += '<div class="card"><div class="section-label">Upcoming Time Off</div>';
+          for (var k = 0; k < shown; k++) {
+            var ev = sorted[k];
+            var name = ev.workerName || ev.worker_name || ev.name || ev.employee || "Team Member";
+            var type = ev.type || ev.timeOffType || ev.leaveType || "Time Off";
+            var start = ev.startDate || ev.start_date || ev.date || ev.start || "";
+            var end = ev.endDate || ev.end_date || ev.end || "";
+            var dateStr = formatDate(start);
+            if (end && end !== start) dateStr += " \u2013 " + formatDate(end);
+            html += '<div class="event-row">';
+            html += '<div class="event-indicator" style="background:' + getTypeColor(type) + '"></div>';
+            html += '<div class="event-info"><div class="event-name">' + esc(name) + '</div><div class="event-detail">' + esc(type) + '</div></div>';
+            html += '<div class="event-dates">' + esc(dateStr) + '</div>';
+            html += '</div>';
+          }
+          if (!_isFS && sorted.length > shown) html += '<div style="font-size:11px;color:var(--muted);margin-top:6px">+ ' + (sorted.length - shown) + ' more</div>';
+          html += '</div>';
+        }
+
+        document.getElementById("root").innerHTML = html; reportHeight();
+      }
+
+      async function init() {
+        if (toolOutput && (toolOutput.entries || toolOutput.events || toolOutput.timeOff || toolOutput.time_off || toolOutput.absences || Array.isArray(toolOutput))) { render(toolOutput); return; }
+        if (window.openai && typeof window.openai.callTool === "function") { try { var out = await window.openai.callTool("get_team_calendar", toolInput); render((out && out.structuredContent) || out); } catch (e) { document.getElementById("root").innerHTML = '<div class="loading">' + esc(e.message || "Error loading calendar") + '</div>'; reportHeight(); } }
+        else { document.getElementById("root").innerHTML = '<div class="loading">Skybridge unavailable.</div>'; reportHeight(); }
+      }
+
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; init(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+      init();
+    </script>
+  </body>
+</html>
