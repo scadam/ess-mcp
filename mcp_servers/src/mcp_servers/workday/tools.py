@@ -1112,7 +1112,7 @@ async def tool_get_team_compensation_summary(ctx: Optional[Context] = None) -> D
             "totalReports": len(worker_ids),
             "compensationRange": comp_stats,
             "byCurrency": currency_counts,
-            "byCompensationBand": band_counts,
+            "byFrequency": band_counts,
         }
         return _tool_response("Team compensation summary.", payload)
     except Exception as exc:  # noqa: BLE001
