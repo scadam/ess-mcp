@@ -79,7 +79,8 @@ ESS-MCP includes 23 interactive HTML+Skybridge widgets that render directly in A
 │  │  Workday  │ │  ServiceNow  │ │ Salesforce  │ │   Jira   │ │
 │  │  Server   │ │   Server     │ │   Server    │ │  Server  │ │
 │  └─────┬─────┘ └──────┬───────┘ └──────┬─────┘ └────┬─────┘ │
-│        │ Bearer Token  │ Bearer Token   │Bearer Token│Bearer Token│
+│        │               │                │            │        │
+│        │         Bearer Token Passthrough             │        │
 └────────┼───────────────┼────────────────┼────────────┼───────┘
          ▼               ▼                ▼            ▼
    Workday API    ServiceNow API   Salesforce API  Jira Cloud API
