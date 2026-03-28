@@ -19,10 +19,10 @@
 
 | Server | Platform | Tools | Widgets | Use Cases |
 |--------|----------|-------|---------|-----------|
-| **Workday** | HR / HCM | 17 | 7 | Employee profiles, leave booking, compensation, org charts |
-| **ServiceNow** | ITSM | 28 | 10 | Incidents, change requests, service catalog, approvals |
-| **Salesforce** | CRM | 28 | 5 | Accounts, opportunities, pipeline, leads, campaigns |
-| **Jira** | Project Management | 20 | 4 | Issues, sprints, boards, epics, project tracking |
+| **Workday** | HR / HCM | 21 | 8 | Employee profiles, leave booking, compensation, org charts, **team dashboard** |
+| **ServiceNow** | ITSM | 32 | 11 | Incidents, change requests, service catalog, approvals, **team incidents** |
+| **Salesforce** | CRM | 33 | 6 | Accounts, opportunities, pipeline, leads, campaigns, **team pipeline** |
+| **Jira** | Project Management | 22 | 5 | Issues, sprints, boards, epics, project tracking, **team workload** |
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -30,7 +30,7 @@ Servers can be deployed **individually**, in **any combination**, or **all toget
 
 ## 🖼️ Widget Screenshots
 
-ESS-MCP includes 23 interactive HTML+Skybridge widgets that render directly in AI assistant UIs.
+ESS-MCP includes 27 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 4 manager-specific team dashboards.
 
 <table>
   <tr>
@@ -56,6 +56,52 @@ ESS-MCP includes 23 interactive HTML+Skybridge widgets that render directly in A
     <td colspan="2" align="center"><img src="docs/images/widget-jira-issue.png" width="400" alt="Jira Issue Widget"/></td>
   </tr>
 </table>
+
+---
+
+## 👔 Manager Tools & Widgets
+
+ESS-MCP includes dedicated **manager-focused tools** across all four MCP servers, designed for leaders managing teams of 10–20 direct reports and organizations of hundreds or thousands. These tools aggregate data across team members, enabling managers to run team reviews, spot workload imbalances, and take action — all from an AI assistant.
+
+### Workday – Manager HR Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_team_overview` | 📊 Team headcount dashboard with role/org breakdown and full team roster. Rendered as interactive **team-dashboard** widget. |
+| `get_team_compensation_summary` | 💰 Aggregate team compensation stats — min, max, median, average base pay with currency and frequency breakdowns. |
+| `get_team_performance_summary` | 📋 Pending inbox items (reviews, approvals), team absence overview, and open action item counts. |
+
+### ServiceNow – Manager ITSM Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_team_incidents` | 🔥 Team incident workload — total open incidents, breakdowns by priority/state/assignee, top 10 recent incidents. Rendered as interactive **team-incidents** widget. |
+| `get_team_approvals` | ✅ Bulk approval view — pending approvals grouped by type with age tracking for batch approve/reject workflows. |
+
+### Salesforce – Manager CRM Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_team_pipeline_summary` | 📈 Team pipeline dashboard — per-rep pipeline value, weighted amount, deal count, avg deal size, and stage breakdown. Rendered as interactive **team-pipeline** widget. |
+| `get_team_performance_metrics` | 🏆 Sales leaderboard — revenue by rep, win rate, activity counts (tasks, events) for configurable periods. |
+
+### Jira – Manager Engineering Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_team_workload` | ⚖️ Team workload distribution — issues by assignee with priority/status breakdowns, overload detection (>15 issues), unassigned work. Rendered as interactive **team-sprint-health** widget. |
+| `get_team_sprint_health` | 🏃 Sprint health across boards — completion %, blocked items, days remaining, per-person contribution. |
+
+### Manager Widgets
+
+Four new interactive widgets render team-level data directly in the AI assistant UI:
+
+| Widget | Server | Tool | Description |
+|--------|--------|------|-------------|
+| `team-dashboard` | Workday | `get_team_overview` | Headcount stats, role breakdown bar chart, scrollable team roster with manager badges |
+| `team-incidents` | ServiceNow | `get_team_incidents` | Priority-colored pills, assignee workload bars, recent incidents table |
+| `team-pipeline` | Salesforce | `get_team_pipeline_summary` | Pipeline stat cards, stacked stage bars per rep, team leaderboard |
+| `team-sprint-health` | Jira | `get_team_workload` | Unresolved/unassigned stats, stacked status bars per person, priority heat dots, overload alerts |
 
 ---
 
@@ -280,8 +326,11 @@ az group delete --name essmcp-rg --yes --no-wait
 | `get_org_chart` | Organization hierarchy |
 | `get_worker_documents` | HR documents |
 | `get_team_calendar` | Team availability calendar |
+| `get_team_overview` | 👔 **Manager:** Team headcount dashboard with role/org breakdown |
+| `get_team_compensation_summary` | 👔 **Manager:** Aggregate team salary statistics |
+| `get_team_performance_summary` | 👔 **Manager:** Pending reviews, team absences, action items |
 
-**Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `learning-assignments`, `change-business-title`
+**Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `learning-assignments`, `change-business-title`, `team-dashboard`
 
 **Configuration** (`env/workday.env`):
 ```env
@@ -309,8 +358,10 @@ WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
 | `list_problems` / `create_problem` | Problem management |
 | `get_cmdb_ci` / `list_cmdb_cis` | CMDB queries |
 | `show_create_incident_form` | Interactive incident form |
+| `get_team_incidents` | 👔 **Manager:** Team incident workload dashboard |
+| `get_team_approvals` | 👔 **Manager:** Bulk team approvals view |
 
-**Widgets:** `incident-list`, `create-incident`, `update-incident`, `approval-review`, `catalog-list`, `catalog-item`, `cart-summary`, `create-project`, `task-list`, `update-task`
+**Widgets:** `incident-list`, `create-incident`, `update-incident`, `approval-review`, `catalog-list`, `catalog-item`, `cart-summary`, `create-project`, `task-list`, `update-task`, `team-incidents`
 
 **Configuration** (`env/servicenow.env`):
 ```env
@@ -338,8 +389,10 @@ SERVICENOW_INSTANCE_URL=https://yourinstance.service-now.com
 | `list_approvals` / `approve_reject` | Approval workflows |
 | `create_quote` | Quote generation |
 | `get_forecast` / `list_reports` | Reporting |
+| `get_team_pipeline_summary` | 👔 **Manager:** Team pipeline by rep |
+| `get_team_performance_metrics` | 👔 **Manager:** Sales leaderboard by rep |
 
-**Widgets:** `crm-account-360`, `crm-opportunity`, `crm-event`, `crm-pipeline`, `compliance-case`
+**Widgets:** `crm-account-360`, `crm-opportunity`, `crm-event`, `crm-pipeline`, `compliance-case`, `team-pipeline`
 
 **Configuration** (`env/salesforce.env`):
 ```env
@@ -364,8 +417,10 @@ SALESFORCE_DOMAIN=yourorg.my.salesforce.com
 | `list_boards` / `get_board` | Board management |
 | `list_sprints` / `get_sprint` | Sprint tracking |
 | `get_backlog` | Backlog views |
+| `get_team_workload` | 👔 **Manager:** Team workload distribution |
+| `get_team_sprint_health` | 👔 **Manager:** Sprint health across boards |
 
-**Widgets:** `jira-issue`, `create-issue`, `create-project`
+**Widgets:** `jira-issue`, `create-issue`, `create-project`, `team-sprint-health`
 
 **Configuration** (`env/jira.env`):
 ```env
@@ -435,7 +490,7 @@ ess-mcp/
         ├── servicenow/             # ServiceNow MCP server
         ├── salesforce/             # Salesforce MCP server
         ├── jira/                   # Jira MCP server
-        └── ui/widget/              # 23 HTML+Skybridge widgets
+        └── ui/widget/              # 27 HTML+Skybridge widgets
 ```
 
 ---
