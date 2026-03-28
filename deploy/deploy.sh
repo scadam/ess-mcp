@@ -76,7 +76,7 @@ ${YELLOW}Options:${NC}
       --memory MEM        Memory per container (default: ${DEFAULT_MEMORY})
       --min-replicas N    Minimum replicas (default: ${DEFAULT_MIN_REPLICAS})
       --max-replicas N    Maximum replicas (default: ${DEFAULT_MAX_REPLICAS})
-  -e, --env-file FILE     Path to .env file with service credentials
+  -e, --env-file FILE     Path to .env file with service configuration
       --resource-group RG Existing resource group name (skip creation)
       --subscription SUB  Azure subscription ID or name
       --dry-run           Show what would be deployed without executing
@@ -86,7 +86,7 @@ ${YELLOW}Examples:${NC}
   $(basename "$0")                                    # Deploy all servers
   $(basename "$0") --servers workday                  # Deploy Workday only
   $(basename "$0") --servers workday,jira --name myapp  # Deploy two servers
-  $(basename "$0") --env-file ./my-config.env         # Use env file for secrets
+  $(basename "$0") --env-file ./my-config.env         # Use env file for config
   $(basename "$0") --location westeurope              # Deploy to West Europe
 
 EOF
