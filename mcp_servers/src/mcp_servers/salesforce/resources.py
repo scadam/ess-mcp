@@ -51,4 +51,10 @@ SALESFORCE_RESOURCES = {
         "content": _read_widget("lead-pipeline.html"),
         "meta": {"openai/widgetCSP": {"connect_domains": [], "resource_domains": []}},
     },
+    "team-pipeline": {
+        "description": "Team pipeline dashboard showing manager view with rep breakdowns and leaderboard.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("team-pipeline.html"),
+        "meta": {"openai/widgetCSP": {"connect_domains": [], "resource_domains": []}},
+    },
 }
