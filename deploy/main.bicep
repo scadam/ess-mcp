@@ -7,7 +7,7 @@
 @description('Azure region for all resources.')
 param location string = resourceGroup().location
 
-@description('Base name used to derive resource names (lowercase, no hyphens > 24 chars).')
+@description('Base name used to derive resource names (lowercase, 3–16 characters).')
 @minLength(3)
 @maxLength(16)
 param baseName string = 'essmcp'
@@ -94,6 +94,9 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [
     properties: {
       managedEnvironmentId: appEnv.id
       configuration: {
+        // Ingress is external so MCP clients can reach the endpoints.
+        // Authentication is enforced at the application layer via OAuth 2.0
+        // bearer token passthrough to each backend SaaS API.
         ingress: {
           external: true
           targetPort: 8080
