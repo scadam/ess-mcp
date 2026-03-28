@@ -64,9 +64,9 @@
 
       function render(d) {
         if (!d || !d.success) { document.getElementById("root").innerHTML = '<div class="loading">No team data available.</div>'; reportHeight(); return; }
-        var hc = d.headcount || 0;
-        var titles = d.titleBreakdown || {};
-        var orgs = d.organizationBreakdown || {};
+        var hc = d.totalHeadcount || d.headcount || 0;
+        var titles = d.byTitle || d.titleBreakdown || {};
+        var orgs = d.byOrganization || d.organizationBreakdown || {};
         var members = d.teamMembers || [];
         var roleCount = Object.keys(titles).length;
         var orgCount = Object.keys(orgs).length;
@@ -97,7 +97,8 @@
             html += '<div class="m-avatar' + (isMgr ? ' mgr' : '') + '">' + initials(m.name) + '</div>';
             html += '<div style="flex:1;min-width:0"><div class="m-name">' + esc(m.name) + (isMgr ? '<span class="m-badge">Mgr</span>' : '') + '</div>';
             html += '<div class="m-title">' + esc(m.businessTitle || "") + '</div>';
-            if (m.primaryWorkEmail) html += '<a class="m-email" href="mailto:' + esc(m.primaryWorkEmail) + '">' + esc(m.primaryWorkEmail) + '</a>';
+            var email = m.primaryWorkEmail || m.email || "";
+            if (email) html += '<a class="m-email" href="mailto:' + esc(email) + '">' + esc(email) + '</a>';
             html += '</div></div>';
           }
           html += '</div></div>';
@@ -107,7 +108,7 @@
       }
 
       async function init() {
-        if (toolOutput && (toolOutput.success || toolOutput.teamMembers)) { render(toolOutput); return; }
+        if (toolOutput && (toolOutput.success || toolOutput.teamMembers || toolOutput.totalHeadcount)) { render(toolOutput); return; }
         if (window.openai && typeof window.openai.callTool === "function") { try { var out = await window.openai.callTool("get_team_overview", toolInput); render((out && out.structuredContent) || out); } catch (e) { document.getElementById("root").innerHTML = '<div class="loading">' + esc(e.message || "Error loading team data") + '</div>'; reportHeight(); } }
         else { document.getElementById("root").innerHTML = '<div class="loading">Skybridge unavailable.</div>'; reportHeight(); }
       }
