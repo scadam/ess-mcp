@@ -62,4 +62,15 @@ JIRA_RESOURCES = {
             }
         },
     },
+    "team-sprint-health": {
+        "description": "Team sprint health widget – displays team workload and sprint health dashboard for engineering managers.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("team-sprint-health.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }

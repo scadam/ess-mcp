@@ -1,0 +1,112 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})();</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --btn-bg: #152235; --btn-border: #243145; --jira-accent: #0052cc; --jira-mid: #4e8ff5; --jira-glow: rgba(0,82,204,.12); --badge-bg: #1a2540; --badge-text: #4e8ff5; --bar-todo: #555d6e; --bar-ip: #4e8ff5; --bar-done: #2bd48f; }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --jira-accent: #0052cc; --jira-mid: #2563eb; --jira-glow: rgba(0,82,204,.08); --badge-bg: #e8f0fe; --badge-text: #0052cc; --bar-todo: #b0b5be; --bar-ip: #2563eb; --bar-done: #107c10; }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .jira-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--jira-glow); border: 1px solid var(--jira-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--jira-mid); border-color: var(--jira-mid); }
+      .loading { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      .stats-row { display: flex; gap: 10px; margin-bottom: 10px; }
+      .stat-card { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; text-align: center; }
+      .stat-value { font-size: 28px; font-weight: 700; color: var(--jira-mid); }
+      .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+      .section-label { font-size: 11px; color: var(--jira-mid); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .member-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .member-row:last-child { margin-bottom: 0; }
+      .m-name { font-size: 12px; min-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+      .overload { color: var(--neg); font-weight: 600; }
+      .bar-track { flex: 1; height: 16px; background: var(--bg); border-radius: 8px; overflow: hidden; display: flex; }
+      .bar-seg { height: 100%; }
+      .m-total { font-size: 11px; color: var(--muted); min-width: 24px; text-align: right; font-weight: 600; }
+      .dots { display: flex; gap: 3px; align-items: center; min-width: 48px; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; }
+      .legend { display: flex; gap: 12px; justify-content: center; margin-top: 8px; font-size: 10px; color: var(--muted); }
+      .legend-item { display: flex; align-items: center; gap: 4px; }
+      .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="jira-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--jira-mid)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div><div class="title">Team Sprint Health</div><div class="subtitle">Jira &middot; Workload Overview</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="root"><div class="loading">Loading team workload&hellip;</div></div>
+      <div class="footer">Powered by <strong>jira / get_team_workload</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var _isFS = false, _maxBtn = document.getElementById("maximizeBtn");
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      var prioColors = { "Highest": "#d32f2f", "High": "#e67700", "Medium": "#f0b232", "Low": "#2bd48f" };
+
+      function render(d) {
+        if (!d || !d.success) { document.getElementById("root").innerHTML = '<div class="loading">No workload data available.</div>'; reportHeight(); return; }
+        var members = d.byAssignee || [];
+        var html = '<div class="stats-row">';
+        html += '<div class="stat-card"><div class="stat-value">' + (d.totalUnresolved || 0) + '</div><div class="stat-label">Unresolved</div></div>';
+        html += '<div class="stat-card"><div class="stat-value">' + members.length + '</div><div class="stat-label">Members</div></div>';
+        html += '<div class="stat-card"><div class="stat-value">' + (d.unassignedCount || 0) + '</div><div class="stat-label">Unassigned</div></div>';
+        html += '</div>';
+
+        if (members.length) {
+          html += '<div class="card"><div class="section-label">Workload by Assignee</div>';
+          var sorted = members.slice().sort(function(a, b) { return (b.total || 0) - (a.total || 0); });
+          for (var i = 0; i < sorted.length; i++) {
+            var m = sorted[i], s = m.byStatusCategory || {}, total = m.total || 1;
+            var todo = s["To Do"] || 0, ip = s["In Progress"] || 0, done = s["Done"] || 0;
+            var pTodo = Math.round(todo / total * 100), pIp = Math.round(ip / total * 100), pDone = Math.round(done / total * 100);
+            var bp = m.byPriority || {};
+            html += '<div class="member-row">';
+            html += '<div class="m-name' + (m.overloaded ? ' overload' : '') + '">' + (m.overloaded ? '🔴 ' : '') + esc(m.assignee) + '</div>';
+            html += '<div class="bar-track">';
+            if (pTodo) html += '<div class="bar-seg" style="width:' + pTodo + '%;background:var(--bar-todo)"></div>';
+            if (pIp) html += '<div class="bar-seg" style="width:' + pIp + '%;background:var(--bar-ip)"></div>';
+            if (pDone) html += '<div class="bar-seg" style="width:' + pDone + '%;background:var(--bar-done)"></div>';
+            html += '</div>';
+            html += '<div class="dots">';
+            for (var p in prioColors) { if (bp[p]) html += '<div class="dot" style="background:' + prioColors[p] + '" title="' + p + ': ' + bp[p] + '"></div>'; }
+            html += '</div>';
+            html += '<div class="m-total">' + (m.total || 0) + '</div>';
+            html += '</div>';
+          }
+          html += '<div class="legend">';
+          html += '<div class="legend-item"><div class="legend-swatch" style="background:var(--bar-todo)"></div>To Do</div>';
+          html += '<div class="legend-item"><div class="legend-swatch" style="background:var(--bar-ip)"></div>In Progress</div>';
+          html += '<div class="legend-item"><div class="legend-swatch" style="background:var(--bar-done)"></div>Done</div>';
+          html += '</div></div>';
+        }
+        document.getElementById("root").innerHTML = html; reportHeight();
+      }
+
+      async function init() {
+        if (toolOutput && (toolOutput.success || toolOutput.byAssignee || toolOutput.totalUnresolved !== undefined)) { render(toolOutput); return; }
+        if (window.openai && typeof window.openai.callTool === "function") { try { var out = await window.openai.callTool("get_team_workload", toolInput); render((out && out.structuredContent) || out); } catch (e) { document.getElementById("root").innerHTML = '<div class="loading">' + esc(e.message || "Error loading workload") + '</div>'; reportHeight(); } }
+        else { document.getElementById("root").innerHTML = '<div class="loading">Skybridge unavailable.</div>'; reportHeight(); }
+      }
+
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; init(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+      init();
+    </script>
+  </body>
+</html>
