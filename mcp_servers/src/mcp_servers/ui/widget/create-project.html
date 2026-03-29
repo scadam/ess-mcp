@@ -91,44 +91,97 @@
     (async function() {
       var toolInput = {};
       try { toolInput = JSON.parse(window.openai.toolInput || "{}"); } catch(_) {}
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
       var nameInput = document.getElementById("nameInput"), keyInput = document.getElementById("keyInput"), descInput = document.getElementById("descInput"), keyPreview = document.getElementById("keyPreview"), submitBtn = document.getElementById("submitBtn"), banner = document.getElementById("statusBanner");
-      if (toolInput.name) nameInput.value = toolInput.name;
-      if (toolInput.key) keyInput.value = toolInput.key.toUpperCase();
-      if (toolInput.description) descInput.value = toolInput.description;
-      var selectedType = toolInput.project_type === "business" ? "business" : "software";
-      setType(selectedType);
+      var isUpdate = false, currentKey = null;
+
+      function switchToUpdateMode(projectKey) {
+        isUpdate = true;
+        currentKey = projectKey;
+        document.querySelector(".header-text .title").textContent = "Update Project";
+        document.querySelector(".header-text .subtitle").textContent = "Jira \u2022 Update Project";
+        submitBtn.textContent = "Update Project";
+        // Hide key field row — key is immutable; show read-only preview instead
+        var keyField = keyInput.closest(".field");
+        keyField.style.display = "none";
+        keyPreview.textContent = projectKey;
+        // Hide project type selector — type can't be changed
+        var typeField = document.querySelector(".type-grid").closest(".field");
+        typeField.style.display = "none";
+        keyInput.value = projectKey;
+        validateForm();
+      }
+
+      // Detect existing project from toolOutput
+      var existingProject = toolOutput.project || toolOutput;
+      isUpdate = !!(existingProject && (existingProject.key || existingProject.id));
+      if (isUpdate) {
+        var inp = Object.assign({}, existingProject, toolInput);
+        if (inp.name) nameInput.value = inp.name;
+        if (inp.key) keyInput.value = inp.key.toUpperCase();
+        if (inp.description) descInput.value = inp.description;
+        var selectedType = inp.project_type === "business" ? "business" : "software";
+        setType(selectedType);
+        switchToUpdateMode(inp.key || existingProject.key);
+      } else {
+        if (toolInput.name) nameInput.value = toolInput.name;
+        if (toolInput.key) keyInput.value = toolInput.key.toUpperCase();
+        if (toolInput.description) descInput.value = toolInput.description;
+        var selectedType = toolInput.project_type === "business" ? "business" : "software";
+        setType(selectedType);
+      }
       updateKeyPreview(); validateForm();
-      var keyModified = !!toolInput.key;
+
+      var keyModified = !!(toolInput.key || isUpdate);
       nameInput.addEventListener("input", function() { if (!keyModified) { keyInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10); } updateKeyPreview(); validateForm(); });
       keyInput.addEventListener("input", function() { keyInput.value = keyInput.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); keyModified = true; updateKeyPreview(); validateForm(); });
       descInput.addEventListener("input", validateForm);
-      document.getElementById("typeSoftware").addEventListener("click", function() { setType("software"); });
-      document.getElementById("typeBusiness").addEventListener("click", function() { setType("business"); });
+      document.getElementById("typeSoftware").addEventListener("click", function() { if (!isUpdate) setType("software"); });
+      document.getElementById("typeBusiness").addEventListener("click", function() { if (!isUpdate) setType("business"); });
       submitBtn.addEventListener("click", async function() {
         var name = nameInput.value.trim(), key = keyInput.value.trim().toUpperCase(), desc = descInput.value.trim();
-        if (!name || !key || key.length < 2) { validateForm(); return; }
-        submitBtn.disabled = true; submitBtn.textContent = "Creating\u2026"; banner.style.display = "none";
-        var payload = { name: name, key: key, project_type: selectedType };
-        if (desc) payload.description = desc;
+        if (!name || (!isUpdate && (!key || key.length < 2))) { validateForm(); return; }
+        submitBtn.disabled = true; banner.style.display = "none";
         try {
-          var result = await window.openai.callTool("create_project", payload);
-          var proj = (result && result.project) ? result.project : {};
-          document.getElementById("resultName").textContent = proj.name || name;
-          document.getElementById("resultKey").textContent = proj.key || key;
-          document.getElementById("resultCard").classList.add("show");
-          document.getElementById("formCard").style.display = "none";
-          banner.className = "status-banner success";
-          banner.innerHTML = "<span>&#10003;</span><div><strong>Project created.</strong> Key: <strong>" + escHtml(proj.key || key) + "</strong></div>";
-          banner.style.display = "flex";
+          var result;
+          if (isUpdate && currentKey) {
+            submitBtn.textContent = "Updating\u2026";
+            var updatePayload = { key: currentKey, name: name };
+            if (desc) updatePayload.description = desc;
+            result = await window.openai.callTool("update_project", updatePayload);
+            var proj = (result && result.project) ? result.project : {};
+            banner.className = "status-banner success";
+            banner.innerHTML = "<span>&#10003;</span><div><strong>Project updated.</strong> Key: <strong>" + escHtml(currentKey) + "</strong></div>";
+            banner.style.display = "flex";
+          } else {
+            submitBtn.textContent = "Creating\u2026";
+            var payload = { name: name, key: key, project_type: selectedType };
+            if (desc) payload.description = desc;
+            result = await window.openai.callTool("create_project", payload);
+            var proj = (result && result.project) ? result.project : {};
+            var createdKey = proj.key || key;
+            // After successful create, switch to update mode instead of hiding the form
+            nameInput.value = proj.name || name;
+            if (proj.description) descInput.value = proj.description;
+            switchToUpdateMode(createdKey);
+            document.getElementById("resultCard").classList.remove("show");
+            banner.className = "status-banner success";
+            banner.innerHTML = "<span>&#10003;</span><div><strong>Project created.</strong> Key: <strong>" + escHtml(createdKey) + "</strong></div>";
+            banner.style.display = "flex";
+          }
         } catch (err) {
           banner.className = "status-banner error";
-          banner.innerHTML = "<span>&#9888;</span><div><strong>Failed to create project:</strong> " + escHtml(String(err)) + "</div>";
-          banner.style.display = "flex"; submitBtn.disabled = false; submitBtn.textContent = "Create Project";
+          var action = isUpdate ? "update" : "create";
+          banner.innerHTML = "<span>&#9888;</span><div><strong>Failed to " + action + " project:</strong> " + escHtml(String(err)) + "</div>";
+          banner.style.display = "flex";
+        } finally {
+          submitBtn.textContent = isUpdate ? "Update Project" : "Create Project";
+          validateForm();
         }
       });
       function setType(type) { selectedType = type; document.getElementById("typeSoftware").classList.toggle("selected", type === "software"); document.getElementById("typeBusiness").classList.toggle("selected", type === "business"); }
       function updateKeyPreview() { keyPreview.textContent = keyInput.value || "\u2014"; }
-      function validateForm() { submitBtn.disabled = !(nameInput.value.trim().length > 0 && keyInput.value.trim().length >= 2); }
+      function validateForm() { submitBtn.disabled = !(nameInput.value.trim().length > 0 && (isUpdate || keyInput.value.trim().length >= 2)); }
       function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
     })();
     </script>
