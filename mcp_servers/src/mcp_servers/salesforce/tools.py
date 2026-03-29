@@ -1256,6 +1256,70 @@ async def tool_create_opportunity_task(
         return {"created": False, "error": str(exc)}
 
 
+async def tool_update_opportunity(
+    opportunity_id: str,
+    name: Optional[str] = None,
+    stage_name: Optional[str] = None,
+    amount: Optional[float] = None,
+    close_date: Optional[str] = None,
+    probability: Optional[float] = None,
+    description: Optional[str] = None,
+    lead_source: Optional[str] = None,
+    opportunity_type: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Update an existing Salesforce opportunity.
+
+    Provide only the fields you want to change.
+
+    Args:
+        opportunity_id: The Salesforce Opportunity record ID.
+        name: Updated opportunity name.
+        stage_name: Updated stage (e.g. "Prospecting", "Closed Won").
+        amount: Updated deal amount.
+        close_date: Updated close date (ISO 8601, e.g. "2025-12-31").
+        probability: Updated win probability (0-100).
+        description: Updated description.
+        lead_source: Updated lead source.
+        opportunity_type: Updated opportunity type.
+    """
+    payload: Dict[str, Any] = {}
+    if name is not None:
+        payload["Name"] = name
+    if stage_name is not None:
+        payload["StageName"] = stage_name
+    if amount is not None:
+        payload["Amount"] = amount
+    if close_date is not None:
+        payload["CloseDate"] = close_date
+    if probability is not None:
+        payload["Probability"] = probability
+    if description is not None:
+        payload["Description"] = description
+    if lead_source is not None:
+        payload["LeadSource"] = lead_source
+    if opportunity_type is not None:
+        payload["Type"] = opportunity_type
+
+    if not payload:
+        raise ValueError("No fields provided to update")
+
+    try:
+        LOGGER.info("salesforce_update_opportunity", opportunity_id=opportunity_id, fields=list(payload.keys()))
+        await _salesforce_patch(f"/sobjects/Opportunity/{opportunity_id}", payload, ctx)
+
+        updated = await _soql_query(
+            f"SELECT {_OPPORTUNITY_FIELDS} FROM Opportunity WHERE Id = '{_sf(opportunity_id)}'"
+        , ctx)
+
+        return {
+            "success": True,
+            "opportunity": _simplify_opportunity(updated[0]) if updated else {},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_update_opportunity_error", opportunity_id=opportunity_id, error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 async def tool_show_create_event_form(
     subject: Optional[str] = None,
     start_datetime: Optional[str] = None,
@@ -1331,6 +1395,70 @@ async def tool_create_event(
     except Exception as exc:
         LOGGER.error("salesforce_create_event_error", error=str(exc))
         return {"created": False, "error": str(exc)}
+
+
+async def tool_update_event(
+    event_id: str,
+    subject: Optional[str] = None,
+    start_datetime: Optional[str] = None,
+    end_datetime: Optional[str] = None,
+    opportunity_id: Optional[str] = None,
+    account_id: Optional[str] = None,
+    contact_id: Optional[str] = None,
+    location: Optional[str] = None,
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Update an existing Salesforce event.
+
+    Provide only the fields you want to change.
+
+    Args:
+        event_id: The Salesforce Event record ID.
+        subject: Updated event subject.
+        start_datetime: Updated start date/time (ISO 8601).
+        end_datetime: Updated end date/time (ISO 8601).
+        opportunity_id: Link event to this opportunity (sets WhatId).
+        account_id: Link event to this account (sets WhatId, ignored if opportunity_id is provided).
+        contact_id: Link event to this contact (sets WhoId).
+        location: Updated location.
+        description: Updated description.
+    """
+    payload: Dict[str, Any] = {}
+    if subject is not None:
+        payload["Subject"] = subject
+    if start_datetime is not None:
+        payload["StartDateTime"] = start_datetime
+    if end_datetime is not None:
+        payload["EndDateTime"] = end_datetime
+    if opportunity_id is not None:
+        payload["WhatId"] = opportunity_id
+    elif account_id is not None:
+        payload["WhatId"] = account_id
+    if contact_id is not None:
+        payload["WhoId"] = contact_id
+    if location is not None:
+        payload["Location"] = location
+    if description is not None:
+        payload["Description"] = description
+
+    if not payload:
+        raise ValueError("No fields provided to update")
+
+    try:
+        LOGGER.info("salesforce_update_event", event_id=event_id, fields=list(payload.keys()))
+        await _salesforce_patch(f"/sobjects/Event/{event_id}", payload, ctx)
+
+        updated = await _soql_query(
+            f"SELECT {_EVENT_FIELDS} FROM Event WHERE Id = '{_sf(event_id)}'"
+        , ctx)
+
+        return {
+            "success": True,
+            "event": _simplify_event(updated[0]) if updated else {},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_update_event_error", event_id=event_id, error=str(exc))
+        return {"success": False, "error": str(exc)}
 
 
 # ── Leads ───────────────────────────────────────────────────────────
@@ -1423,6 +1551,60 @@ async def tool_get_lead(lead_id: str) -> Dict[str, Any]:
     return {"lead": _simplify_lead(records[0])}
 
 
+async def tool_show_create_lead_form(
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    company: Optional[str] = None,
+    email: Optional[str] = None,
+    phone: Optional[str] = None,
+    title: Optional[str] = None,
+    lead_source: Optional[str] = None,
+    status: Optional[str] = None,
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Show the lead creation form widget.
+
+    Returns pre-fill data so the widget can populate the form.  The user
+    completes and submits the form inside the widget -- this tool does not
+    create the lead directly.
+
+    Args:
+        first_name: Optional pre-fill for lead first name.
+        last_name: Optional pre-fill for lead last name.
+        company: Optional pre-fill for company name.
+        email: Optional pre-fill for email address.
+        phone: Optional pre-fill for phone number.
+        title: Optional pre-fill for job title.
+        lead_source: Optional pre-fill for lead source.
+        status: Optional pre-fill for lead status.
+        description: Optional pre-fill for description.
+    """
+    prefill: Dict[str, Any] = {}
+    if first_name:
+        prefill["first_name"] = first_name
+    if last_name:
+        prefill["last_name"] = last_name
+    if company:
+        prefill["company"] = company
+    if email:
+        prefill["email"] = email
+    if phone:
+        prefill["phone"] = phone
+    if title:
+        prefill["title"] = title
+    if lead_source:
+        prefill["lead_source"] = lead_source
+    if status:
+        prefill["status"] = status
+    if description:
+        prefill["description"] = description
+
+    return {
+        "_widget_hint": "The lead form is ready. Acknowledge with one short sentence.",
+        **prefill,
+    }
+
+
 async def tool_create_lead(
     first_name: str,
     last_name: str,
@@ -1484,6 +1666,74 @@ async def tool_create_lead(
     except Exception as exc:
         LOGGER.error("salesforce_create_lead_error", error=str(exc))
         return {"created": False, "error": str(exc)}
+
+
+async def tool_update_lead(
+    lead_id: str,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    company: Optional[str] = None,
+    email: Optional[str] = None,
+    phone: Optional[str] = None,
+    title: Optional[str] = None,
+    lead_source: Optional[str] = None,
+    status: Optional[str] = None,
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Update an existing Salesforce lead.
+
+    Provide only the fields you want to change.
+
+    Args:
+        lead_id: The Salesforce Lead record ID.
+        first_name: Updated first name.
+        last_name: Updated last name.
+        company: Updated company name.
+        email: Updated email address.
+        phone: Updated phone number.
+        title: Updated job title.
+        lead_source: Updated lead source.
+        status: Updated lead status.
+        description: Updated description.
+    """
+    payload: Dict[str, Any] = {}
+    if first_name is not None:
+        payload["FirstName"] = first_name
+    if last_name is not None:
+        payload["LastName"] = last_name
+    if company is not None:
+        payload["Company"] = company
+    if email is not None:
+        payload["Email"] = email
+    if phone is not None:
+        payload["Phone"] = phone
+    if title is not None:
+        payload["Title"] = title
+    if lead_source is not None:
+        payload["LeadSource"] = lead_source
+    if status is not None:
+        payload["Status"] = status
+    if description is not None:
+        payload["Description"] = description
+
+    if not payload:
+        raise ValueError("No fields provided to update")
+
+    try:
+        LOGGER.info("salesforce_update_lead", lead_id=lead_id, fields=list(payload.keys()))
+        await _salesforce_patch(f"/sobjects/Lead/{lead_id}", payload, ctx)
+
+        updated = await _soql_query(
+            f"SELECT {_LEAD_FIELDS} FROM Lead WHERE Id = '{_sf(lead_id)}'"
+        , ctx)
+
+        return {
+            "success": True,
+            "lead": _simplify_lead(updated[0]) if updated else {},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_update_lead_error", lead_id=lead_id, error=str(exc))
+        return {"success": False, "error": str(exc)}
 
 
 async def tool_convert_lead(
@@ -1641,6 +1891,52 @@ async def tool_get_campaign(campaign_id: str) -> Dict[str, Any]:
 # ── Quotes ──────────────────────────────────────────────────────────
 
 
+async def tool_show_create_quote_form(
+    name: Optional[str] = None,
+    opportunity_id: Optional[str] = None,
+    opportunity_name: Optional[str] = None,
+    expiration_date: Optional[str] = None,
+    description: Optional[str] = None,
+    status: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Show the quote creation form widget.
+
+    Returns pre-fill data so the widget can populate the form.  The user
+    completes and submits the form inside the widget -- this tool does not
+    create the quote directly.
+
+    If *opportunity_name* is provided without *opportunity_id*, the name is
+    included in the prefill so the widget can prompt the user to select the
+    correct opportunity.
+
+    Args:
+        name: Optional pre-fill for the quote name.
+        opportunity_id: Optional opportunity ID to link the quote to.
+        opportunity_name: Optional opportunity name for display/lookup.
+        expiration_date: Optional pre-fill for expiration date.
+        description: Optional pre-fill for description.
+        status: Optional pre-fill for quote status.
+    """
+    prefill: Dict[str, Any] = {}
+    if name:
+        prefill["name"] = name
+    if opportunity_id:
+        prefill["opportunity_id"] = opportunity_id
+    if opportunity_name:
+        prefill["opportunity_name"] = opportunity_name
+    if expiration_date:
+        prefill["expiration_date"] = expiration_date
+    if description:
+        prefill["description"] = description
+    if status:
+        prefill["status"] = status
+
+    return {
+        "_widget_hint": "The quote form is ready. Acknowledge with one short sentence.",
+        **prefill,
+    }
+
+
 async def tool_create_quote(
     name: str,
     opportunity_id: str,
@@ -1690,6 +1986,56 @@ async def tool_create_quote(
     except Exception as exc:
         LOGGER.error("salesforce_create_quote_error", error=str(exc))
         return {"created": False, "error": str(exc)}
+
+
+async def tool_update_quote(
+    quote_id: str,
+    name: Optional[str] = None,
+    expiration_date: Optional[str] = None,
+    description: Optional[str] = None,
+    status: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Update an existing Salesforce quote.
+
+    Provide only the fields you want to change.
+
+    Args:
+        quote_id: The Salesforce Quote record ID.
+        name: Updated quote name.
+        expiration_date: Updated expiration date (ISO 8601, e.g. "2025-12-31").
+        description: Updated description.
+        status: Updated quote status.
+    """
+    payload: Dict[str, Any] = {}
+    if name is not None:
+        payload["Name"] = name
+    if expiration_date is not None:
+        payload["ExpirationDate"] = expiration_date
+    if description is not None:
+        payload["Description"] = description
+    if status is not None:
+        payload["Status"] = status
+
+    if not payload:
+        raise ValueError("No fields provided to update")
+
+    try:
+        LOGGER.info("salesforce_update_quote", quote_id=quote_id, fields=list(payload.keys()))
+        await _salesforce_patch(f"/sobjects/Quote/{quote_id}", payload, ctx)
+
+        updated = await _soql_query(
+            f"SELECT Id, Name, OpportunityId, Status, ExpirationDate, "
+            f"Description, CreatedDate "
+            f"FROM Quote WHERE Id = '{_sf(quote_id)}'"
+        , ctx)
+
+        return {
+            "success": True,
+            "quote": updated[0] if updated else {},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_update_quote_error", quote_id=quote_id, error=str(exc))
+        return {"success": False, "error": str(exc)}
 
 
 # ── Products ────────────────────────────────────────────────────────
@@ -2290,6 +2636,19 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "annotations": {"readOnlyHint": False},
     },
     {
+        "name": "update_opportunity",
+        "func": tool_update_opportunity,
+        "summary": (
+            "Update an existing Salesforce opportunity. Called by the CRM opportunity widget when the user submits changes."
+        ),
+        "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-opportunity.html",
+            "openai/toolInvocation/invoking": "Updating opportunity\u2026",
+            "openai/toolInvocation/invoked": "Opportunity updated.",
+        },
+    },
+    {
         "name": "show_create_event_form",
         "func": tool_show_create_event_form,
         "summary": (
@@ -2316,6 +2675,19 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         },
     },
     {
+        "name": "update_event",
+        "func": tool_update_event,
+        "summary": (
+            "Update an existing Salesforce event. Called by the CRM event widget when the user submits changes."
+        ),
+        "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-event.html",
+            "openai/toolInvocation/invoking": "Updating event\u2026",
+            "openai/toolInvocation/invoked": "Event updated.",
+        },
+    },
+    {
         "name": "list_leads",
         "func": tool_list_leads,
         "summary": (
@@ -2333,13 +2705,45 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "annotations": {"readOnlyHint": True},
     },
     {
+        "name": "show_create_lead_form",
+        "func": tool_show_create_lead_form,
+        "summary": (
+            "Show the lead creation form. Pass any known details to pre-fill the form. "
+            "The widget handles submission."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-lead.html",
+            "openai/toolInvocation/invoking": "Opening lead form\u2026",
+            "openai/toolInvocation/invoked": "Lead form ready.",
+        },
+    },
+    {
         "name": "create_lead",
         "func": tool_create_lead,
         "summary": (
             "Create a new Salesforce lead with first name, last name, company, "
-            "and optional contact details."
+            "and optional contact details. Called by the CRM lead widget when the user submits."
         ),
         "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-lead.html",
+            "openai/toolInvocation/invoking": "Creating lead\u2026",
+            "openai/toolInvocation/invoked": "Lead created.",
+        },
+    },
+    {
+        "name": "update_lead",
+        "func": tool_update_lead,
+        "summary": (
+            "Update an existing Salesforce lead. Called by the CRM lead widget when the user submits changes."
+        ),
+        "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-lead.html",
+            "openai/toolInvocation/invoking": "Updating lead\u2026",
+            "openai/toolInvocation/invoked": "Lead updated.",
+        },
     },
     {
         "name": "convert_lead",
@@ -2368,12 +2772,44 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "annotations": {"readOnlyHint": True},
     },
     {
+        "name": "show_create_quote_form",
+        "func": tool_show_create_quote_form,
+        "summary": (
+            "Show the quote creation form. Pass any known details to pre-fill the form. "
+            "The widget handles submission."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-quote.html",
+            "openai/toolInvocation/invoking": "Opening quote form\u2026",
+            "openai/toolInvocation/invoked": "Quote form ready.",
+        },
+    },
+    {
         "name": "create_quote",
         "func": tool_create_quote,
         "summary": (
-            "Create a Salesforce quote linked to an opportunity."
+            "Create a Salesforce quote linked to an opportunity. Called by the CRM quote widget when the user submits."
         ),
         "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-quote.html",
+            "openai/toolInvocation/invoking": "Creating quote\u2026",
+            "openai/toolInvocation/invoked": "Quote created.",
+        },
+    },
+    {
+        "name": "update_quote",
+        "func": tool_update_quote,
+        "summary": (
+            "Update an existing Salesforce quote. Called by the CRM quote widget when the user submits changes."
+        ),
+        "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/crm-quote.html",
+            "openai/toolInvocation/invoking": "Updating quote\u2026",
+            "openai/toolInvocation/invoked": "Quote updated.",
+        },
     },
     {
         "name": "list_products",
