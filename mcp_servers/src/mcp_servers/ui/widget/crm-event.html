@@ -17,9 +17,10 @@
       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
       .full-width { grid-column: 1 / -1; }
       .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
-      .field input, .field select, .field textarea { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; font-family: inherit; color-scheme: dark; }
-      :root[data-theme="light"] .field input, :root[data-theme="light"] .field select, :root[data-theme="light"] .field textarea { color-scheme: light; }
+      .field input, .field select, .field textarea { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; font-family: inherit; }
       .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--sf-accent); }
+      .field input:disabled { opacity: .5; cursor: not-allowed; }
+      .field select option { background: var(--card); color: var(--text); }
       .field textarea { resize: vertical; }
       .actions { margin-top: 14px; display: flex; gap: 8px; }
       .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; font-family: inherit; }
@@ -30,6 +31,22 @@
       .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
       .maximize-btn:hover { color: var(--sf-accent); border-color: var(--sf-accent); }
       .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      /* Typeahead styles */
+      .typeahead-wrap { position: relative; }
+      .typeahead-wrap input { padding-right: 28px; }
+      .ta-spinner { position: absolute; right: 10px; top: 50%; margin-top: -6px; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--sf-accent); border-radius: 50%; animation: ta-spin .6s linear infinite; display: none; }
+      .ta-spinner.visible { display: block; }
+      @keyframes ta-spin { to { transform: rotate(360deg); } }
+      .ta-dropdown { position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; max-height: 180px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+      .ta-dropdown.open { display: block; }
+      .ta-item { padding: 8px 10px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); }
+      .ta-item:last-child { border-bottom: none; }
+      .ta-item:hover, .ta-item.active { background: var(--sf-glow); color: var(--sf-accent); }
+      .ta-item .ta-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+      .ta-empty { padding: 8px 10px; font-size: 12px; color: var(--muted); }
+      .ta-selected-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--sf-glow); border: 1px solid var(--sf-accent); border-radius: 6px; padding: 3px 8px; font-size: 12px; color: var(--sf-accent); margin-top: 4px; }
+      .ta-selected-tag .ta-clear { cursor: pointer; font-size: 14px; line-height: 1; opacity: .7; }
+      .ta-selected-tag .ta-clear:hover { opacity: 1; }
     </style>
   </head>
   <body>
@@ -39,7 +56,7 @@
           <div class="sf-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sf-accent)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </div>
-          <div><div class="title" id="pageTitle">Schedule Event</div><div class="subtitle">Salesforce &middot; CRM</div></div>
+          <div><div class="title" id="pageTitle">Schedule Event</div><div class="subtitle" id="pageSubtitle">Salesforce &middot; CRM</div></div>
         </div>
         <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
       </div>
@@ -49,9 +66,36 @@
           <div class="field full-width"><label for="subject">Subject *</label><input id="subject" type="text" placeholder="e.g. Discovery Call with Contoso" /></div>
           <div class="field"><label for="start_datetime">Start Date &amp; Time *</label><input id="start_datetime" type="datetime-local" /></div>
           <div class="field"><label for="end_datetime">End Date &amp; Time *</label><input id="end_datetime" type="datetime-local" /></div>
-          <div class="field"><label for="opportunity_id">Opportunity ID</label><input id="opportunity_id" type="text" placeholder="Salesforce Opportunity ID" /></div>
-          <div class="field"><label for="account_id">Account ID</label><input id="account_id" type="text" placeholder="Salesforce Account ID" /></div>
-          <div class="field"><label for="contact_id">Contact ID</label><input id="contact_id" type="text" placeholder="Salesforce Contact ID" /></div>
+          <div class="field">
+            <label for="account_search">Account</label>
+            <div class="typeahead-wrap">
+              <input id="account_search" type="text" placeholder="Search accounts&hellip;" autocomplete="off" />
+              <div class="ta-spinner" id="acctSpinner"></div>
+              <div class="ta-dropdown" id="acctDropdown"></div>
+            </div>
+            <input type="hidden" id="account_id" />
+            <div id="acctTag"></div>
+          </div>
+          <div class="field">
+            <label for="contact_search">Contact</label>
+            <div class="typeahead-wrap">
+              <input id="contact_search" type="text" placeholder="Select an account first" autocomplete="off" disabled />
+              <div class="ta-spinner" id="contactSpinner"></div>
+              <div class="ta-dropdown" id="contactDropdown"></div>
+            </div>
+            <input type="hidden" id="contact_id" />
+            <div id="contactTag"></div>
+          </div>
+          <div class="field">
+            <label for="opp_search">Opportunity</label>
+            <div class="typeahead-wrap">
+              <input id="opp_search" type="text" placeholder="Search opportunities&hellip;" autocomplete="off" />
+              <div class="ta-spinner" id="oppSpinner"></div>
+              <div class="ta-dropdown" id="oppDropdown"></div>
+            </div>
+            <input type="hidden" id="opportunity_id" />
+            <div id="oppTag"></div>
+          </div>
           <div class="field"><label for="location">Location</label><input id="location" type="text" placeholder="e.g. Teams / Conference Room A" /></div>
           <div class="field full-width"><label for="description">Description</label><textarea id="description" rows="3" placeholder="Agenda, notes, or any relevant context for this event"></textarea></div>
         </div>
@@ -61,43 +105,305 @@
           <button class="btn" id="resetBtn">Reset</button>
         </div>
       </div>
-      <div class="footer">Powered by <strong>salesforce / create_event</strong> via MCP</div>
+      <div class="footer" id="footerText">Powered by <strong>salesforce / create_event</strong> via MCP</div>
     </div>
     <script>
       var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
-      var subjectEl = document.getElementById("subject"), startEl = document.getElementById("start_datetime"), endEl = document.getElementById("end_datetime"), oppEl = document.getElementById("opportunity_id"), acctEl = document.getElementById("account_id"), ctcEl = document.getElementById("contact_id"), locEl = document.getElementById("location"), descEl = document.getElementById("description"), submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), msgArea = document.getElementById("msgArea"), _maxBtn = document.getElementById("maximizeBtn");
-      var _isFS = false;
+      var subjectEl = document.getElementById("subject"), startEl = document.getElementById("start_datetime"), endEl = document.getElementById("end_datetime"), locEl = document.getElementById("location"), descEl = document.getElementById("description"), submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), msgArea = document.getElementById("msgArea"), _maxBtn = document.getElementById("maximizeBtn");
+      var acctSearchEl = document.getElementById("account_search"), acctIdEl = document.getElementById("account_id"), acctDropdown = document.getElementById("acctDropdown"), acctSpinner = document.getElementById("acctSpinner"), acctTagEl = document.getElementById("acctTag");
+      var contactSearchEl = document.getElementById("contact_search"), contactIdEl = document.getElementById("contact_id"), contactDropdown = document.getElementById("contactDropdown"), contactSpinner = document.getElementById("contactSpinner"), contactTagEl = document.getElementById("contactTag");
+      var oppSearchEl = document.getElementById("opp_search"), oppIdEl = document.getElementById("opportunity_id"), oppDropdown = document.getElementById("oppDropdown"), oppSpinner = document.getElementById("oppSpinner"), oppTagEl = document.getElementById("oppTag");
+      var _isFS = false, isUpdate = false, currentEventId = null;
       var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
       var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       function validate() { submitBtn.disabled = !(subjectEl.value.trim() && startEl.value && endEl.value); }
       [subjectEl, startEl, endEl].forEach(function(el) { el.addEventListener("input", validate); el.addEventListener("change", validate); });
-      function setVal(el, v) { if (!el || v === undefined || v === null || v === "") return; if (el.type === "datetime-local" && typeof v === "string") v = v.substring(0,16).replace(" ","T"); el.value = v; }
-      var src = Object.assign({}, toolOutput, toolInput);
-      setVal(subjectEl, src.subject); setVal(startEl, src.start_datetime); setVal(endEl, src.end_datetime); setVal(oppEl, src.opportunity_id); setVal(acctEl, src.account_id); setVal(ctcEl, src.contact_id); setVal(locEl, src.location); setVal(descEl, src.description);
-      validate();
-      resetBtn.addEventListener("click", function() { [subjectEl, startEl, endEl, oppEl, acctEl, ctcEl, locEl, descEl].forEach(function(el) { el.value = ""; }); msgArea.innerHTML = ""; validate(); reportHeight(); });
+
+      /* ── Typeahead engine ── */
+      function debounce(fn, ms) { var t; return function() { var a = arguments, c = this; clearTimeout(t); t = setTimeout(function() { fn.apply(c, a); }, ms); }; }
+
+      var acctActiveIdx = -1, contactActiveIdx = -1, oppActiveIdx = -1;
+
+      function closeAllDropdowns() { acctDropdown.classList.remove("open"); contactDropdown.classList.remove("open"); oppDropdown.classList.remove("open"); acctActiveIdx = -1; contactActiveIdx = -1; oppActiveIdx = -1; reportHeight(); }
+      document.addEventListener("click", function(e) {
+        if (!acctSearchEl.contains(e.target) && !acctDropdown.contains(e.target)) { acctDropdown.classList.remove("open"); acctActiveIdx = -1; }
+        if (!contactSearchEl.contains(e.target) && !contactDropdown.contains(e.target)) { contactDropdown.classList.remove("open"); contactActiveIdx = -1; }
+        if (!oppSearchEl.contains(e.target) && !oppDropdown.contains(e.target)) { oppDropdown.classList.remove("open"); oppActiveIdx = -1; }
+        reportHeight();
+      });
+
+      function renderDropdown(dropdown, items, emptyMsg, onSelect, activeIdxRef) {
+        if (!items || items.length === 0) { dropdown.innerHTML = '<div class="ta-empty">' + esc(emptyMsg) + '</div>'; dropdown.classList.add("open"); reportHeight(); return; }
+        dropdown.innerHTML = items.map(function(item, i) {
+          var cls = i === activeIdxRef.val ? ' active' : '';
+          var sub = item.sub ? '<div class="ta-sub">' + esc(item.sub) + '</div>' : '';
+          return '<div class="ta-item' + cls + '" data-idx="' + i + '">' + esc(item.label) + sub + '</div>';
+        }).join("");
+        dropdown.classList.add("open");
+        var els = dropdown.querySelectorAll(".ta-item");
+        els.forEach(function(el) { el.addEventListener("click", function() { onSelect(items[Number(el.dataset.idx)]); }); });
+        reportHeight();
+      }
+
+      function handleKeys(e, dropdown, items, activeIdxRef, onSelect) {
+        if (!dropdown.classList.contains("open") || !items || items.length === 0) return;
+        if (e.key === "ArrowDown") { e.preventDefault(); activeIdxRef.val = Math.min(activeIdxRef.val + 1, items.length - 1); highlightItem(dropdown, activeIdxRef.val); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); activeIdxRef.val = Math.max(activeIdxRef.val - 1, 0); highlightItem(dropdown, activeIdxRef.val); }
+        else if (e.key === "Enter" && activeIdxRef.val >= 0) { e.preventDefault(); onSelect(items[activeIdxRef.val]); }
+        else if (e.key === "Escape") { dropdown.classList.remove("open"); activeIdxRef.val = -1; reportHeight(); }
+      }
+
+      function highlightItem(dropdown, idx) {
+        dropdown.querySelectorAll(".ta-item").forEach(function(el, i) { el.classList.toggle("active", i === idx); });
+        var active = dropdown.querySelector(".ta-item.active");
+        if (active) active.scrollIntoView({ block: "nearest" });
+      }
+
+      function showTag(tagEl, label, onClear) {
+        tagEl.innerHTML = '<span class="ta-selected-tag">' + esc(label) + ' <span class="ta-clear">&times;</span></span>';
+        tagEl.querySelector(".ta-clear").addEventListener("click", onClear);
+        reportHeight();
+      }
+
+      /* ── Account typeahead ── */
+      var acctResults = [], acctIdxRef = { val: -1 };
+
+      function selectAccount(item) {
+        acctIdEl.value = item.id;
+        acctSearchEl.value = item.label;
+        acctDropdown.classList.remove("open");
+        acctIdxRef.val = -1;
+        showTag(acctTagEl, item.label, clearAccount);
+        acctSearchEl.style.display = "none";
+        enableContact();
+        reportHeight();
+      }
+
+      function clearAccount() {
+        acctIdEl.value = ""; acctSearchEl.value = ""; acctSearchEl.style.display = ""; acctTagEl.innerHTML = "";
+        clearContact(); disableContact();
+        reportHeight();
+      }
+
+      var doAccountSearch = debounce(async function(query) {
+        if (!query || query.length < 1) { acctDropdown.classList.remove("open"); acctSpinner.classList.remove("visible"); reportHeight(); return; }
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        acctSpinner.classList.add("visible");
+        try {
+          var out = await window.openai.callTool("list_accounts", { search_text: query, limit: 5 });
+          var data = (out && out.structuredContent) || out;
+          var accounts = (data && data.accounts) || (Array.isArray(data) ? data : []);
+          acctResults = accounts.map(function(a) { return { id: a.id || a.account_id || "", label: a.name || a.account_name || a.Name || "", sub: a.id || a.account_id || "" }; });
+          acctIdxRef.val = -1;
+          renderDropdown(acctDropdown, acctResults, "No accounts found", selectAccount, acctIdxRef);
+        } catch (err) { acctDropdown.innerHTML = '<div class="ta-empty">' + esc(err.message || "Search failed") + '</div>'; acctDropdown.classList.add("open"); }
+        finally { acctSpinner.classList.remove("visible"); reportHeight(); }
+      }, 300);
+
+      acctSearchEl.addEventListener("input", function() { doAccountSearch(acctSearchEl.value.trim()); });
+      acctSearchEl.addEventListener("keydown", function(e) { handleKeys(e, acctDropdown, acctResults, acctIdxRef, selectAccount); });
+      acctSearchEl.addEventListener("focus", function() {
+        if (acctResults.length > 0 && !acctIdEl.value) { renderDropdown(acctDropdown, acctResults, "", selectAccount, acctIdxRef); }
+      });
+
+      /* ── Contact typeahead ── */
+      var contactResults = [], contactIdxRef = { val: -1 };
+
+      function enableContact() { contactSearchEl.disabled = false; contactSearchEl.placeholder = "Search contacts\u2026"; }
+      function disableContact() { contactSearchEl.disabled = true; contactSearchEl.placeholder = "Select an account first"; }
+
+      function selectContact(item) {
+        contactIdEl.value = item.id;
+        contactSearchEl.value = item.label;
+        contactDropdown.classList.remove("open");
+        contactIdxRef.val = -1;
+        showTag(contactTagEl, item.label, clearContact);
+        contactSearchEl.style.display = "none";
+        reportHeight();
+      }
+
+      function clearContact() { contactIdEl.value = ""; contactSearchEl.value = ""; contactSearchEl.style.display = ""; contactTagEl.innerHTML = ""; reportHeight(); }
+
+      var doContactSearch = debounce(async function(query) {
+        if (!query || query.length < 1 || !acctIdEl.value) { contactDropdown.classList.remove("open"); contactSpinner.classList.remove("visible"); reportHeight(); return; }
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        contactSpinner.classList.add("visible");
+        try {
+          var out = await window.openai.callTool("list_contacts", { account_id: acctIdEl.value, search_text: query, limit: 5 });
+          var data = (out && out.structuredContent) || out;
+          var contacts = (data && data.contacts) || (Array.isArray(data) ? data : []);
+          contactResults = contacts.map(function(c) { return { id: c.id || c.contact_id || "", label: (c.name || ((c.first_name || "") + " " + (c.last_name || "")).trim() || c.Name || ""), sub: c.email || c.Email || c.id || "" }; });
+          contactIdxRef.val = -1;
+          renderDropdown(contactDropdown, contactResults, "No contacts found", selectContact, contactIdxRef);
+        } catch (err) { contactDropdown.innerHTML = '<div class="ta-empty">' + esc(err.message || "Search failed") + '</div>'; contactDropdown.classList.add("open"); }
+        finally { contactSpinner.classList.remove("visible"); reportHeight(); }
+      }, 300);
+
+      contactSearchEl.addEventListener("input", function() { doContactSearch(contactSearchEl.value.trim()); });
+      contactSearchEl.addEventListener("keydown", function(e) { handleKeys(e, contactDropdown, contactResults, contactIdxRef, selectContact); });
+
+      /* ── Opportunity typeahead ── */
+      var oppResults = [], oppIdxRef = { val: -1 };
+
+      function selectOpportunity(item) {
+        oppIdEl.value = item.id;
+        oppSearchEl.value = item.label;
+        oppDropdown.classList.remove("open");
+        oppIdxRef.val = -1;
+        showTag(oppTagEl, item.label, clearOpportunity);
+        oppSearchEl.style.display = "none";
+        reportHeight();
+      }
+
+      function clearOpportunity() { oppIdEl.value = ""; oppSearchEl.value = ""; oppSearchEl.style.display = ""; oppTagEl.innerHTML = ""; reportHeight(); }
+
+      var doOppSearch = debounce(async function(query) {
+        if (!query || query.length < 1) { oppDropdown.classList.remove("open"); oppSpinner.classList.remove("visible"); reportHeight(); return; }
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        oppSpinner.classList.add("visible");
+        try {
+          var searchArgs = { limit: 5 };
+          if (acctIdEl.value) searchArgs.account_id = acctIdEl.value;
+          var out = await window.openai.callTool("list_opportunities", searchArgs);
+          var data = (out && out.structuredContent) || out;
+          var opps = (data && data.opportunities) || (Array.isArray(data) ? data : []);
+          var q = query.toLowerCase();
+          opps = opps.filter(function(o) { var n = (o.name || o.opportunity_name || o.Name || "").toLowerCase(); return n.indexOf(q) >= 0; });
+          oppResults = opps.map(function(o) { return { id: o.id || o.opportunity_id || "", label: o.name || o.opportunity_name || o.Name || "", sub: (o.stage_name || o.stage || "") + (o.amount ? " \u00b7 $" + o.amount : "") }; });
+          oppIdxRef.val = -1;
+          renderDropdown(oppDropdown, oppResults, "No opportunities found", selectOpportunity, oppIdxRef);
+        } catch (err) { oppDropdown.innerHTML = '<div class="ta-empty">' + esc(err.message || "Search failed") + '</div>'; oppDropdown.classList.add("open"); }
+        finally { oppSpinner.classList.remove("visible"); reportHeight(); }
+      }, 300);
+
+      oppSearchEl.addEventListener("input", function() { doOppSearch(oppSearchEl.value.trim()); });
+      oppSearchEl.addEventListener("keydown", function(e) { handleKeys(e, oppDropdown, oppResults, oppIdxRef, selectOpportunity); });
+      oppSearchEl.addEventListener("focus", function() {
+        if (oppResults.length > 0 && !oppIdEl.value) { renderDropdown(oppDropdown, oppResults, "", selectOpportunity, oppIdxRef); }
+      });
+
+      /* ── Create / Update mode ── */
+      function enterUpdateMode(eventId, subtitle) {
+        isUpdate = true; currentEventId = eventId;
+        submitBtn.textContent = "Update Event";
+        document.getElementById("pageTitle").textContent = "Update Event";
+        if (subtitle) document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + subtitle;
+        document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / update_event</strong> via MCP';
+      }
+
+      function enterCreateMode() {
+        isUpdate = false; currentEventId = null;
+        submitBtn.textContent = "Schedule Event";
+        document.getElementById("pageTitle").textContent = "Schedule Event";
+        document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 CRM";
+        document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / create_event</strong> via MCP';
+      }
+
+      /* ── Submit handler ── */
       submitBtn.addEventListener("click", async function() {
         if (!window.openai || typeof window.openai.callTool !== "function") return;
-        submitBtn.disabled = true; submitBtn.textContent = "Scheduling\u2026"; msgArea.innerHTML = "";
+        submitBtn.disabled = true; submitBtn.textContent = isUpdate ? "Updating\u2026" : "Scheduling\u2026"; msgArea.innerHTML = "";
         try {
-          var args = { subject: subjectEl.value.trim(), start_datetime: startEl.value.replace("T"," ")+":00", end_datetime: endEl.value.replace("T"," ")+":00" };
-          if (oppEl.value.trim()) args.opportunity_id = oppEl.value.trim();
-          if (acctEl.value.trim()) args.account_id = acctEl.value.trim();
-          if (ctcEl.value.trim()) args.contact_id = ctcEl.value.trim();
-          if (locEl.value.trim()) args.location = locEl.value.trim();
-          if (descEl.value.trim()) args.description = descEl.value.trim();
-          var out = await window.openai.callTool("create_event", args);
-          var d = (out && out.structuredContent) || out;
-          if (d && d.created) { msgArea.innerHTML = '<div class="success-msg">&#10003; Event <strong>'+esc(subjectEl.value)+'</strong> scheduled successfully.</div>'; document.getElementById("pageTitle").textContent = "Event Scheduled"; }
-          else throw new Error((d && d.error) || "Event creation failed");
-        } catch (err) { msgArea.innerHTML = '<div class="error-msg">'+esc(err.message||"Operation failed")+'</div>'; }
-        finally { submitBtn.textContent = "Schedule Event"; validate(); reportHeight(); }
+          var output;
+          if (isUpdate && currentEventId) {
+            var updateArgs = { event_id: currentEventId };
+            if (subjectEl.value.trim()) updateArgs.subject = subjectEl.value.trim();
+            if (startEl.value) updateArgs.start_datetime = startEl.value.replace("T"," ")+":00";
+            if (endEl.value) updateArgs.end_datetime = endEl.value.replace("T"," ")+":00";
+            if (oppIdEl.value) updateArgs.opportunity_id = oppIdEl.value;
+            if (acctIdEl.value) updateArgs.account_id = acctIdEl.value;
+            if (contactIdEl.value) updateArgs.contact_id = contactIdEl.value;
+            if (locEl.value.trim()) updateArgs.location = locEl.value.trim();
+            if (descEl.value.trim()) updateArgs.description = descEl.value.trim();
+            output = await window.openai.callTool("update_event", updateArgs);
+            var data = (output && output.structuredContent) || output;
+            if (!data || !data.success) throw new Error((data && data.error) || "Update failed");
+            msgArea.innerHTML = '<div class="success-msg">&#10003; Event updated successfully.</div>';
+          } else {
+            var args = { subject: subjectEl.value.trim(), start_datetime: startEl.value.replace("T"," ")+":00", end_datetime: endEl.value.replace("T"," ")+":00" };
+            if (oppIdEl.value) args.opportunity_id = oppIdEl.value;
+            if (acctIdEl.value) args.account_id = acctIdEl.value;
+            if (contactIdEl.value) args.contact_id = contactIdEl.value;
+            if (locEl.value.trim()) args.location = locEl.value.trim();
+            if (descEl.value.trim()) args.description = descEl.value.trim();
+            output = await window.openai.callTool("create_event", args);
+            var data = (output && output.structuredContent) || output;
+            if (!data || !data.created) throw new Error((data && data.error) || "Event creation failed");
+            var ev = data.event || {};
+            enterUpdateMode(ev.id, ev.subject || subjectEl.value.trim());
+            msgArea.innerHTML = '<div class="success-msg">&#10003; Event <strong>' + esc(ev.subject || subjectEl.value) + '</strong> scheduled successfully.</div>';
+          }
+        } catch (err) { msgArea.innerHTML = '<div class="error-msg">' + esc(err.message || "Operation failed") + '</div>'; }
+        finally { submitBtn.textContent = isUpdate ? "Update Event" : "Schedule Event"; validate(); reportHeight(); }
       });
+
+      /* ── Reset ── */
+      resetBtn.addEventListener("click", function() {
+        subjectEl.value = ""; startEl.value = ""; endEl.value = ""; locEl.value = ""; descEl.value = "";
+        clearAccount(); clearContact(); disableContact(); clearOpportunity();
+        msgArea.innerHTML = ""; enterCreateMode(); validate(); reportHeight();
+      });
+
+      /* ── Fullscreen toggle ── */
       async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; reportHeight(); } catch(e){} }
       if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
-      reportHeight();
+
+      /* ── Pre-fill / init ── */
+      function setVal(el, v) { if (!el || v === undefined || v === null || v === "") return; if (el.type === "datetime-local" && typeof v === "string") v = v.substring(0,16).replace(" ","T"); el.value = v; }
+
+      // Detect update mode from toolOutput
+      var existingEvent = toolOutput.event || toolOutput;
+      var hasExisting = !!(existingEvent && (existingEvent.id || existingEvent.event_id));
+      if (hasExisting) {
+        var evId = existingEvent.id || existingEvent.event_id;
+        enterUpdateMode(evId, existingEvent.subject || "Event");
+      }
+
+      // Merge sources: existing event data + toolInput overrides
+      var src = hasExisting ? Object.assign({}, existingEvent, toolInput) : Object.assign({}, toolOutput, toolInput);
+      setVal(subjectEl, src.subject);
+      setVal(startEl, src.start_datetime);
+      setVal(endEl, src.end_datetime);
+      setVal(locEl, src.location);
+      setVal(descEl, src.description);
+
+      // Pre-fill account
+      if (src.account_id) {
+        acctIdEl.value = src.account_id;
+        var acctName = src.account_name || src.account_id;
+        acctSearchEl.value = acctName;
+        acctSearchEl.style.display = "none";
+        showTag(acctTagEl, acctName, clearAccount);
+        enableContact();
+      }
+
+      // Pre-fill contact
+      if (src.contact_id) {
+        contactIdEl.value = src.contact_id;
+        var ctName = src.contact_name || src.contact_id;
+        contactSearchEl.value = ctName;
+        contactSearchEl.style.display = "none";
+        showTag(contactTagEl, ctName, clearContact);
+      }
+
+      // Pre-fill opportunity
+      if (src.opportunity_id) {
+        oppIdEl.value = src.opportunity_id;
+        var oppName = src.opportunity_name || src.opportunity_id;
+        oppSearchEl.value = oppName;
+        oppSearchEl.style.display = "none";
+        showTag(oppTagEl, oppName, clearOpportunity);
+      }
+
+      // Show account_candidates as initial dropdown suggestions
+      if (toolOutput.account_candidates && Array.isArray(toolOutput.account_candidates) && toolOutput.account_candidates.length > 0) {
+        acctResults = toolOutput.account_candidates.map(function(a) { return { id: a.id || a.account_id || "", label: a.name || a.account_name || a.Name || "", sub: a.id || a.account_id || "" }; });
+        acctSearchEl.addEventListener("focus", function() { if (!acctIdEl.value) { renderDropdown(acctDropdown, acctResults, "", selectAccount, acctIdxRef); } }, { once: true });
+      }
+
+      validate(); reportHeight();
     </script>
   </body>
 </html>
