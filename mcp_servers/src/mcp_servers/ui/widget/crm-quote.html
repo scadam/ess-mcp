@@ -1,0 +1,287 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --input-bg: #0f131a; --btn-bg: #152235; --btn-border: #243145; --btn-primary-bg: linear-gradient(135deg,#1a6dff,#4cc2ff); --btn-primary-border: #2a80ff; --success-border: #1a5a3a; --success-glow: rgba(43,212,143,.16); --error-bg: rgba(255,107,107,.08); --error-border: rgba(255,107,107,.25); --sf-accent: #1589ee; --sf-glow: rgba(21,137,238,.14); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --input-bg: #ffffff; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-primary-bg: linear-gradient(135deg,#0078d4,#4cc2ff); --btn-primary-border: #0078d4; --success-border: #107c10; --success-glow: rgba(16,124,16,.08); --error-bg: rgba(209,52,56,.06); --error-border: rgba(209,52,56,.25); --sf-accent: #0070d2; --sf-glow: rgba(0,112,210,.08); }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sf-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sf-glow); border: 1px solid var(--sf-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+      .section-label { font-size: 11px; color: var(--sf-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .full-width { grid-column: 1 / -1; }
+      .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+      .field input, .field select, .field textarea { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; font-family: inherit; }
+      .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--sf-accent); }
+      .field select option { background: var(--card); color: var(--text); }
+      .field textarea { resize: vertical; }
+      .actions { margin-top: 14px; display: flex; gap: 8px; }
+      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; font-family: inherit; }
+      .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-border); font-weight: 600; }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .success-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--success-glow); border: 1px solid var(--success-border); font-size: 12px; color: var(--pos); }
+      .error-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--error-bg); border: 1px solid var(--error-border); font-size: 12px; color: var(--neg); }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--sf-accent); border-color: var(--sf-accent); }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      /* Typeahead styles */
+      .typeahead-wrap { position: relative; }
+      .typeahead-wrap input { padding-right: 28px; }
+      .ta-spinner { position: absolute; right: 10px; top: 50%; margin-top: -6px; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--sf-accent); border-radius: 50%; animation: ta-spin .6s linear infinite; display: none; }
+      .ta-spinner.visible { display: block; }
+      @keyframes ta-spin { to { transform: rotate(360deg); } }
+      .ta-dropdown { position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; max-height: 180px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+      .ta-dropdown.open { display: block; }
+      .ta-item { padding: 8px 10px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); }
+      .ta-item:last-child { border-bottom: none; }
+      .ta-item:hover, .ta-item.active { background: var(--sf-glow); color: var(--sf-accent); }
+      .ta-item .ta-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+      .ta-empty { padding: 8px 10px; font-size: 12px; color: var(--muted); }
+      .ta-selected-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--sf-glow); border: 1px solid var(--sf-accent); border-radius: 6px; padding: 3px 8px; font-size: 12px; color: var(--sf-accent); margin-top: 4px; }
+      .ta-selected-tag .ta-clear { cursor: pointer; font-size: 14px; line-height: 1; opacity: .7; }
+      .ta-selected-tag .ta-clear:hover { opacity: 1; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sf-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sf-accent)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+          </div>
+          <div><div class="title" id="pageTitle">Create Quote</div><div class="subtitle" id="pageSubtitle">Salesforce &middot; CRM</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div class="card">
+        <div class="section-label">Quote Details</div>
+        <div class="form-grid">
+          <div class="field full-width"><label for="quote_name">Quote Name *</label><input id="quote_name" type="text" placeholder="e.g. Q2 Enterprise License Renewal" /></div>
+          <div class="field full-width">
+            <label for="opp_search">Opportunity *</label>
+            <div class="typeahead-wrap">
+              <input id="opp_search" type="text" placeholder="Search opportunities&hellip;" autocomplete="off" />
+              <div class="ta-spinner" id="oppSpinner"></div>
+              <div class="ta-dropdown" id="oppDropdown"></div>
+            </div>
+            <input type="hidden" id="opportunity_id" />
+            <div id="oppTag"></div>
+          </div>
+          <div class="field"><label for="expiration_date">Expiration Date</label><input id="expiration_date" type="date" /></div>
+          <div class="field"><label for="status">Status</label><select id="status"><option value="Draft">Draft</option><option value="Needs Review">Needs Review</option><option value="In Review">In Review</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option><option value="Presented">Presented</option><option value="Accepted">Accepted</option><option value="Denied">Denied</option></select></div>
+          <div class="field full-width"><label for="description">Description</label><textarea id="description" rows="3" placeholder="Additional details about this quote"></textarea></div>
+        </div>
+        <div id="msgArea"></div>
+        <div class="actions">
+          <button class="btn btn-primary" id="submitBtn" disabled>Create Quote</button>
+          <button class="btn" id="resetBtn">Reset</button>
+        </div>
+      </div>
+      <div class="footer" id="footerText">Powered by <strong>salesforce / create_quote</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var nameEl = document.getElementById("quote_name"), oppSearchEl = document.getElementById("opp_search"), oppIdEl = document.getElementById("opportunity_id"), oppDropdown = document.getElementById("oppDropdown"), oppSpinner = document.getElementById("oppSpinner"), oppTagEl = document.getElementById("oppTag");
+      var statusEl = document.getElementById("status"), dateEl = document.getElementById("expiration_date"), descEl = document.getElementById("description"), submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), msgArea = document.getElementById("msgArea"), _maxBtn = document.getElementById("maximizeBtn");
+      var _isFS = false, isUpdate = false, currentQuoteId = null;
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function validate() { submitBtn.disabled = !(nameEl.value.trim() && oppIdEl.value); }
+      nameEl.addEventListener("input", validate);
+
+      /* ── Typeahead engine ── */
+      function debounce(fn, ms) { var t; return function() { var a = arguments, c = this; clearTimeout(t); t = setTimeout(function() { fn.apply(c, a); }, ms); }; }
+
+      var oppActiveIdx = -1;
+
+      function closeAllDropdowns() { oppDropdown.classList.remove("open"); oppActiveIdx = -1; reportHeight(); }
+      document.addEventListener("click", function(e) {
+        if (!oppSearchEl.contains(e.target) && !oppDropdown.contains(e.target)) { oppDropdown.classList.remove("open"); oppActiveIdx = -1; }
+        reportHeight();
+      });
+
+      function renderDropdown(dropdown, items, emptyMsg, onSelect, activeIdxRef) {
+        if (!items || items.length === 0) { dropdown.innerHTML = '<div class="ta-empty">' + esc(emptyMsg) + '</div>'; dropdown.classList.add("open"); reportHeight(); return; }
+        dropdown.innerHTML = items.map(function(item, i) {
+          var cls = i === activeIdxRef.val ? ' active' : '';
+          var sub = item.sub ? '<div class="ta-sub">' + esc(item.sub) + '</div>' : '';
+          return '<div class="ta-item' + cls + '" data-idx="' + i + '">' + esc(item.label) + sub + '</div>';
+        }).join("");
+        dropdown.classList.add("open");
+        var els = dropdown.querySelectorAll(".ta-item");
+        els.forEach(function(el) { el.addEventListener("click", function() { onSelect(items[Number(el.dataset.idx)]); }); });
+        reportHeight();
+      }
+
+      function handleKeys(e, dropdown, items, activeIdxRef, onSelect) {
+        if (!dropdown.classList.contains("open") || !items || items.length === 0) return;
+        if (e.key === "ArrowDown") { e.preventDefault(); activeIdxRef.val = Math.min(activeIdxRef.val + 1, items.length - 1); highlightItem(dropdown, activeIdxRef.val); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); activeIdxRef.val = Math.max(activeIdxRef.val - 1, 0); highlightItem(dropdown, activeIdxRef.val); }
+        else if (e.key === "Enter" && activeIdxRef.val >= 0) { e.preventDefault(); onSelect(items[activeIdxRef.val]); }
+        else if (e.key === "Escape") { dropdown.classList.remove("open"); activeIdxRef.val = -1; reportHeight(); }
+      }
+
+      function highlightItem(dropdown, idx) {
+        dropdown.querySelectorAll(".ta-item").forEach(function(el, i) { el.classList.toggle("active", i === idx); });
+        var active = dropdown.querySelector(".ta-item.active");
+        if (active) active.scrollIntoView({ block: "nearest" });
+      }
+
+      function showTag(tagEl, label, onClear) {
+        tagEl.innerHTML = '<span class="ta-selected-tag">' + esc(label) + ' <span class="ta-clear">&times;</span></span>';
+        tagEl.querySelector(".ta-clear").addEventListener("click", onClear);
+        reportHeight();
+      }
+
+      /* ── Opportunity typeahead ── */
+      var oppResults = [], oppIdxRef = { val: -1 };
+
+      function selectOpportunity(item) {
+        oppIdEl.value = item.id;
+        oppSearchEl.value = item.label;
+        oppDropdown.classList.remove("open");
+        oppIdxRef.val = -1;
+        showTag(oppTagEl, item.label, clearOpportunity);
+        oppSearchEl.style.display = "none";
+        validate();
+        reportHeight();
+      }
+
+      function clearOpportunity() {
+        oppIdEl.value = ""; oppSearchEl.value = ""; oppSearchEl.style.display = ""; oppTagEl.innerHTML = "";
+        validate();
+        reportHeight();
+      }
+
+      var doOppSearch = debounce(async function(query) {
+        if (!query || query.length < 1) { oppDropdown.classList.remove("open"); oppSpinner.classList.remove("visible"); reportHeight(); return; }
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        oppSpinner.classList.add("visible");
+        try {
+          var out = await window.openai.callTool("list_opportunities", { limit: 10 });
+          var data = (out && out.structuredContent) || out;
+          var opportunities = (data && data.opportunities) || (Array.isArray(data) ? data : []);
+          var lowerQuery = query.toLowerCase();
+          var filtered = opportunities.filter(function(o) {
+            var name = (o.name || o.opportunity_name || o.Name || "").toLowerCase();
+            return name.indexOf(lowerQuery) !== -1;
+          });
+          oppResults = filtered.map(function(o) {
+            var name = o.name || o.opportunity_name || o.Name || "";
+            var stage = o.stage_name || o.stage || o.StageName || "";
+            var amount = o.amount || o.Amount;
+            var subParts = [];
+            if (stage) subParts.push(stage);
+            if (amount !== undefined && amount !== null) subParts.push("$" + Number(amount).toLocaleString());
+            return { id: o.id || o.opportunity_id || "", label: name, sub: subParts.join(" · ") };
+          });
+          oppIdxRef.val = -1;
+          renderDropdown(oppDropdown, oppResults, "No opportunities found", selectOpportunity, oppIdxRef);
+        } catch (err) { oppDropdown.innerHTML = '<div class="ta-empty">' + esc(err.message || "Search failed") + '</div>'; oppDropdown.classList.add("open"); }
+        finally { oppSpinner.classList.remove("visible"); reportHeight(); }
+      }, 300);
+
+      oppSearchEl.addEventListener("input", function() { doOppSearch(oppSearchEl.value.trim()); });
+      oppSearchEl.addEventListener("keydown", function(e) { handleKeys(e, oppDropdown, oppResults, oppIdxRef, selectOpportunity); });
+      oppSearchEl.addEventListener("focus", function() {
+        if (oppResults.length > 0 && !oppIdEl.value) { renderDropdown(oppDropdown, oppResults, "", selectOpportunity, oppIdxRef); }
+      });
+
+      /* ── Create / Update mode ── */
+      function enterUpdateMode(quoteId, subtitle) {
+        isUpdate = true; currentQuoteId = quoteId;
+        submitBtn.textContent = "Update Quote";
+        document.getElementById("pageTitle").textContent = "Update Quote";
+        if (subtitle) document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + subtitle;
+        document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / update_quote</strong> via MCP';
+      }
+
+      function enterCreateMode() {
+        isUpdate = false; currentQuoteId = null;
+        submitBtn.textContent = "Create Quote";
+        document.getElementById("pageTitle").textContent = "Create Quote";
+        document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 CRM";
+        document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / create_quote</strong> via MCP';
+      }
+
+      /* ── Submit handler ── */
+      submitBtn.addEventListener("click", async function() {
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        submitBtn.disabled = true; submitBtn.textContent = isUpdate ? "Updating\u2026" : "Creating\u2026"; msgArea.innerHTML = "";
+        try {
+          var output;
+          if (isUpdate && currentQuoteId) {
+            var updateArgs = { quote_id: currentQuoteId };
+            if (nameEl.value.trim()) updateArgs.name = nameEl.value.trim();
+            if (oppIdEl.value) updateArgs.opportunity_id = oppIdEl.value;
+            if (dateEl.value) updateArgs.expiration_date = dateEl.value;
+            if (statusEl.value) updateArgs.status = statusEl.value;
+            if (descEl.value.trim()) updateArgs.description = descEl.value.trim();
+            output = await window.openai.callTool("update_quote", updateArgs);
+            var data = (output && output.structuredContent) || output;
+            if (!data || !data.success) throw new Error((data && data.error) || "Quote update failed");
+            msgArea.innerHTML = '<div class="success-msg">&#10003; Quote updated successfully.</div>';
+          } else {
+            var args = { name: nameEl.value.trim(), opportunity_id: oppIdEl.value };
+            if (dateEl.value) args.expiration_date = dateEl.value;
+            if (statusEl.value) args.status = statusEl.value;
+            if (descEl.value.trim()) args.description = descEl.value.trim();
+            output = await window.openai.callTool("create_quote", args);
+            var data = (output && output.structuredContent) || output;
+            if (!data || !data.created) throw new Error((data && data.error) || "Quote creation failed");
+            var q = data.quote || {};
+            enterUpdateMode(q.id, q.name || nameEl.value.trim());
+            msgArea.innerHTML = '<div class="success-msg">&#10003; Quote <strong>' + esc(q.name || nameEl.value) + '</strong> created successfully.</div>';
+          }
+        } catch (err) { msgArea.innerHTML = '<div class="error-msg">' + esc(err.message || "Operation failed") + '</div>'; }
+        finally { submitBtn.textContent = isUpdate ? "Update Quote" : "Create Quote"; validate(); reportHeight(); }
+      });
+
+      /* ── Reset ── */
+      resetBtn.addEventListener("click", function() {
+        nameEl.value = ""; clearOpportunity();
+        statusEl.value = "Draft"; dateEl.value = ""; descEl.value = "";
+        msgArea.innerHTML = ""; enterCreateMode(); validate(); reportHeight();
+      });
+
+      /* ── Fullscreen toggle ── */
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; reportHeight(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+
+      /* ── Pre-fill / init ── */
+      function set(el, v) { if (el && v !== undefined && v !== null && v !== "") el.value = String(v); }
+
+      var existingQuote = toolOutput.quote || toolOutput;
+      var hasExisting = !!(existingQuote && (existingQuote.id || existingQuote.quote_id));
+      if (hasExisting) {
+        var quoteId = existingQuote.id || existingQuote.quote_id;
+        enterUpdateMode(quoteId, existingQuote.name || "Quote");
+      }
+
+      var src = hasExisting ? Object.assign({}, existingQuote, toolInput) : Object.assign({}, toolOutput, toolInput);
+      set(nameEl, src.name);
+      set(statusEl, src.status || "Draft");
+      set(dateEl, src.expiration_date);
+      set(descEl, src.description);
+
+      // Pre-fill opportunity
+      if (src.opportunity_id) {
+        oppIdEl.value = src.opportunity_id;
+        var oppName = src.opportunity_name || src.opportunity_id;
+        oppSearchEl.value = oppName;
+        oppSearchEl.style.display = "none";
+        showTag(oppTagEl, oppName, clearOpportunity);
+      }
+
+      validate(); reportHeight();
+    </script>
+  </body>
+</html>
