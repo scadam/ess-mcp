@@ -2459,6 +2459,57 @@ async def tool_get_change_request(
     }
 
 
+async def tool_show_create_change_request_form(
+    short_description: Optional[str] = None,
+    type: Optional[str] = None,
+    category: Optional[str] = None,
+    risk: Optional[str] = None,
+    impact: Optional[str] = None,
+    description: Optional[str] = None,
+    planned_start_date: Optional[str] = None,
+    planned_end_date: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Show the create-change-request form widget.
+
+    Returns pre-fill data so the widget can populate the form.  The user
+    completes and submits the form inside the widget -- this tool does not
+    create the change request directly.
+
+    Args:
+        short_description: Optional pre-fill for the change summary.
+        type: Optional change type pre-fill (Normal, Standard, Emergency).
+        category: Optional category to pre-select.
+        risk: Optional risk level pre-fill (e.g. high, moderate, low).
+        impact: Optional impact pre-fill (1=High, 2=Medium, 3=Low).
+        description: Optional detailed description to pre-fill.
+        planned_start_date: Optional planned start date/time to pre-fill.
+        planned_end_date: Optional planned end date/time to pre-fill.
+    """
+    prefill: Dict[str, Any] = {}
+    if short_description:
+        prefill["short_description"] = short_description
+    if type:
+        prefill["type"] = type
+    if category:
+        prefill["category"] = category
+    if risk:
+        prefill["risk"] = risk
+    if impact:
+        prefill["impact"] = impact
+    if description:
+        prefill["description"] = description
+    if planned_start_date:
+        prefill["planned_start_date"] = planned_start_date
+    if planned_end_date:
+        prefill["planned_end_date"] = planned_end_date
+
+    return {
+        "_widget_hint": "The form is ready. Acknowledge with one short sentence (e.g. 'Here is the change request creation form.').",
+        **prefill,
+    }
+
+
 async def tool_create_change_request(
     short_description: str,
     type: Optional[str] = None,
@@ -2543,6 +2594,137 @@ async def tool_create_change_request(
         "state": created.get("state"),
         "risk": created.get("risk"),
         "link": f"{settings.instance_url}/nav_to.do?uri=change_request.do?sys_id={created.get('sys_id')}",
+    }
+
+
+async def tool_update_change_request(
+    sys_id: str,
+    short_description: Optional[str] = None,
+    type: Optional[str] = None,
+    category: Optional[str] = None,
+    risk: Optional[str] = None,
+    impact: Optional[str] = None,
+    description: Optional[str] = None,
+    assignment_group: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    state: Optional[str] = None,
+    work_notes: Optional[str] = None,
+    planned_start_date: Optional[str] = None,
+    planned_end_date: Optional[str] = None,
+    close_code: Optional[str] = None,
+    close_notes: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Update an existing ServiceNow change request.
+
+    Only the *sys_id* is required -- include only the fields you want to change.
+
+    Args:
+        sys_id: The sys_id of the change request to update.
+        short_description: Updated summary of the change.
+        type: Change type – Normal, Standard, or Emergency.
+        category: Updated category.
+        risk: Risk level (e.g. high, moderate, low).
+        impact: Impact level (1 = High, 2 = Medium, 3 = Low).
+        description: Updated detailed description.
+        assignment_group: Name of the assignment group.
+        assigned_to: Display name of the assignee.
+        state: Transition the change request state.
+        work_notes: A new internal work note to append.
+        planned_start_date: Planned start date/time (ISO 8601 or ServiceNow format).
+        planned_end_date: Planned end date/time (ISO 8601 or ServiceNow format).
+        close_code: Closure code (when closing).
+        close_notes: Closure notes (when closing).
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    payload: Dict[str, Any] = {}
+
+    _field_map: Dict[str, Optional[str]] = {
+        "short_description": short_description,
+        "type": type,
+        "category": category,
+        "risk": risk,
+        "impact": impact,
+        "description": description,
+        "assignment_group": assignment_group,
+        "assigned_to": assigned_to,
+        "state": state,
+        "work_notes": work_notes,
+        "planned_start_date": planned_start_date,
+        "planned_end_date": planned_end_date,
+        "close_code": close_code,
+        "close_notes": close_notes,
+    }
+    for field, value in _field_map.items():
+        if value is not None and value != "":
+            payload[field] = value
+
+    if not payload:
+        return {
+            "updated": False,
+            "message": "No fields provided to update.",
+            "sys_id": sys_id,
+            "link": f"{settings.instance_url}/nav_to.do?uri=change_request.do?sys_id={sys_id}",
+        }
+
+    url = f"{settings.instance_url}/api/now/table/change_request/{sys_id}"
+
+    LOGGER.info(
+        "servicenow_update_change_request",
+        sys_id=sys_id,
+        fields=list(payload.keys()),
+    )
+
+    try:
+        async with create_async_client(timeout=60.0) as client:
+            resp = await client.patch(
+                url,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+            if not resp.is_success:
+                body_text = resp.text[:500]
+                LOGGER.error(
+                    "servicenow_update_change_request_http_error",
+                    status_code=resp.status_code,
+                    body=body_text,
+                )
+                return {"updated": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+
+            # Fetch the updated record
+            get_resp = await client.get(
+                url,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+            )
+            if get_resp.is_success:
+                body = get_resp.json()
+            else:
+                body = resp.json()
+    except Exception as exc:
+        LOGGER.error("servicenow_update_change_request_error", error=str(exc))
+        return {"updated": False, "error": str(exc)}
+
+    updated = body.get("result", {})
+
+    return {
+        "updated": True,
+        "sys_id": sys_id,
+        "number": updated.get("number"),
+        "fields_changed": list(payload.keys()),
+        "short_description": updated.get("short_description"),
+        "type": updated.get("type"),
+        "state": updated.get("state"),
+        "risk": updated.get("risk"),
+        "link": f"{settings.instance_url}/nav_to.do?uri=change_request.do?sys_id={sys_id}",
     }
 
 
@@ -2734,6 +2916,49 @@ async def tool_list_problems(
     }
 
 
+async def tool_show_create_problem_form(
+    short_description: Optional[str] = None,
+    category: Optional[str] = None,
+    priority: Optional[str] = None,
+    description: Optional[str] = None,
+    impact: Optional[str] = None,
+    urgency: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Show the create-problem form widget.
+
+    Returns pre-fill data so the widget can populate the form.  The user
+    completes and submits the form inside the widget -- this tool does not
+    create the problem directly.
+
+    Args:
+        short_description: Optional pre-fill for the problem summary.
+        category: Optional category to pre-select.
+        priority: Optional priority pre-fill (1=Critical ... 5=Planning).
+        description: Optional detailed description to pre-fill.
+        impact: Optional impact pre-fill (1=High, 2=Medium, 3=Low).
+        urgency: Optional urgency pre-fill (1=High, 2=Medium, 3=Low).
+    """
+    prefill: Dict[str, Any] = {}
+    if short_description:
+        prefill["short_description"] = short_description
+    if category:
+        prefill["category"] = category
+    if priority:
+        prefill["priority"] = priority
+    if description:
+        prefill["description"] = description
+    if impact:
+        prefill["impact"] = impact
+    if urgency:
+        prefill["urgency"] = urgency
+
+    return {
+        "_widget_hint": "The form is ready. Acknowledge with one short sentence (e.g. 'Here is the problem creation form.').",
+        **prefill,
+    }
+
+
 async def tool_create_problem(
     short_description: str,
     category: Optional[str] = None,
@@ -2811,6 +3036,124 @@ async def tool_create_problem(
         "state": created.get("state"),
         "priority": created.get("priority"),
         "link": f"{settings.instance_url}/nav_to.do?uri=problem.do?sys_id={created.get('sys_id')}",
+    }
+
+
+async def tool_update_problem(
+    sys_id: str,
+    short_description: Optional[str] = None,
+    category: Optional[str] = None,
+    priority: Optional[str] = None,
+    description: Optional[str] = None,
+    impact: Optional[str] = None,
+    urgency: Optional[str] = None,
+    assignment_group: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    state: Optional[str] = None,
+    work_notes: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Update an existing ServiceNow problem record.
+
+    Only the *sys_id* is required -- include only the fields you want to change.
+
+    Args:
+        sys_id: The sys_id of the problem to update.
+        short_description: Updated summary of the problem.
+        category: Updated category.
+        priority: Priority level (1 = Critical ... 5 = Planning).
+        description: Updated detailed description.
+        impact: Impact level (1 = High, 2 = Medium, 3 = Low).
+        urgency: Urgency level (1 = High, 2 = Medium, 3 = Low).
+        assignment_group: Name of the assignment group.
+        assigned_to: Display name of the assignee.
+        state: Transition the problem state.
+        work_notes: A new internal work note to append.
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    payload: Dict[str, Any] = {}
+
+    _field_map: Dict[str, Optional[str]] = {
+        "short_description": short_description,
+        "category": category,
+        "priority": priority,
+        "description": description,
+        "impact": impact,
+        "urgency": urgency,
+        "assignment_group": assignment_group,
+        "assigned_to": assigned_to,
+        "state": state,
+        "work_notes": work_notes,
+    }
+    for field, value in _field_map.items():
+        if value is not None and value != "":
+            payload[field] = value
+
+    if not payload:
+        return {
+            "updated": False,
+            "message": "No fields provided to update.",
+            "sys_id": sys_id,
+            "link": f"{settings.instance_url}/nav_to.do?uri=problem.do?sys_id={sys_id}",
+        }
+
+    url = f"{settings.instance_url}/api/now/table/problem/{sys_id}"
+
+    LOGGER.info(
+        "servicenow_update_problem",
+        sys_id=sys_id,
+        fields=list(payload.keys()),
+    )
+
+    try:
+        async with create_async_client(timeout=60.0) as client:
+            resp = await client.patch(
+                url,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+            if not resp.is_success:
+                body_text = resp.text[:500]
+                LOGGER.error(
+                    "servicenow_update_problem_http_error",
+                    status_code=resp.status_code,
+                    body=body_text,
+                )
+                return {"updated": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+
+            # Fetch the updated record
+            get_resp = await client.get(
+                url,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+            )
+            if get_resp.is_success:
+                body = get_resp.json()
+            else:
+                body = resp.json()
+    except Exception as exc:
+        LOGGER.error("servicenow_update_problem_error", error=str(exc))
+        return {"updated": False, "error": str(exc)}
+
+    updated = body.get("result", {})
+
+    return {
+        "updated": True,
+        "sys_id": sys_id,
+        "number": updated.get("number"),
+        "fields_changed": list(payload.keys()),
+        "short_description": updated.get("short_description"),
+        "state": updated.get("state"),
+        "priority": updated.get("priority"),
+        "link": f"{settings.instance_url}/nav_to.do?uri=problem.do?sys_id={sys_id}",
     }
 
 
@@ -3117,15 +3460,51 @@ SERVICENOW_TOOL_SPECS.extend(
             },
         },
         {
+            "name": "show_create_change_request_form",
+            "summary": (
+                "Show the change request creation form. Pass any known details "
+                "(short_description, type, category, risk, impact, description, "
+                "planned_start_date, planned_end_date) to pre-fill the form. "
+                "The widget handles submission."
+            ),
+            "func": tool_show_create_change_request_form,
+            "annotations": {"readOnlyHint": True},
+            "meta": {
+                "openai/outputTemplate": "ui://widget/create-change-request.html",
+                "openai/toolInvocation/invoking": "Loading change request form\u2026",
+                "openai/toolInvocation/invoked": "Change request form ready.",
+            },
+        },
+        {
             "name": "create_change_request",
             "summary": (
-                "Create a new ServiceNow change request. Requires a short "
-                "description; optionally set type (Normal, Standard, Emergency), "
-                "category, risk, impact, assignment group, and planned dates."
+                "Create a new ServiceNow change request. Called by the create-change-request widget when the user clicks Submit. "
+                "Use show_create_change_request_form to display the form first."
             ),
             "func": tool_create_change_request,
             "annotations": {
                 "readOnlyHint": False,
+            },
+            "meta": {
+                "openai/outputTemplate": "ui://widget/create-change-request.html",
+                "openai/toolInvocation/invoking": "Creating change request\u2026",
+                "openai/toolInvocation/invoked": "Change request created.",
+            },
+        },
+        {
+            "name": "update_change_request",
+            "summary": (
+                "Update an existing ServiceNow change request. Only the sys_id "
+                "is required; include only the fields you want to change."
+            ),
+            "func": tool_update_change_request,
+            "annotations": {
+                "readOnlyHint": False,
+            },
+            "meta": {
+                "openai/outputTemplate": "ui://widget/create-change-request.html",
+                "openai/toolInvocation/invoking": "Updating change request\u2026",
+                "openai/toolInvocation/invoked": "Change request updated.",
             },
         },
         {
@@ -3165,15 +3544,50 @@ SERVICENOW_TOOL_SPECS.extend(
             },
         },
         {
+            "name": "show_create_problem_form",
+            "summary": (
+                "Show the problem creation form. Pass any known details "
+                "(short_description, category, priority, description, impact, "
+                "urgency) to pre-fill the form. The widget handles submission."
+            ),
+            "func": tool_show_create_problem_form,
+            "annotations": {"readOnlyHint": True},
+            "meta": {
+                "openai/outputTemplate": "ui://widget/create-problem.html",
+                "openai/toolInvocation/invoking": "Loading problem form\u2026",
+                "openai/toolInvocation/invoked": "Problem form ready.",
+            },
+        },
+        {
             "name": "create_problem",
             "summary": (
-                "Create a new ServiceNow problem record. Requires a short "
-                "description; optionally set category, priority, assignment "
-                "group, description, impact, and urgency."
+                "Create a new ServiceNow problem record. Called by the create-problem widget when the user clicks Submit. "
+                "Use show_create_problem_form to display the form first."
             ),
             "func": tool_create_problem,
             "annotations": {
                 "readOnlyHint": False,
+            },
+            "meta": {
+                "openai/outputTemplate": "ui://widget/create-problem.html",
+                "openai/toolInvocation/invoking": "Creating problem\u2026",
+                "openai/toolInvocation/invoked": "Problem created.",
+            },
+        },
+        {
+            "name": "update_problem",
+            "summary": (
+                "Update an existing ServiceNow problem record. Only the sys_id "
+                "is required; include only the fields you want to change."
+            ),
+            "func": tool_update_problem,
+            "annotations": {
+                "readOnlyHint": False,
+            },
+            "meta": {
+                "openai/outputTemplate": "ui://widget/create-problem.html",
+                "openai/toolInvocation/invoking": "Updating problem\u2026",
+                "openai/toolInvocation/invoked": "Problem updated.",
             },
         },
         {
