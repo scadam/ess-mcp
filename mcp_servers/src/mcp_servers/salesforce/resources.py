@@ -45,6 +45,18 @@ SALESFORCE_RESOURCES = {
         "content": _read_widget("compliance-case.html"),
         "meta": {"openai/widgetCSP": {"connect_domains": [], "resource_domains": []}},
     },
+    "crm-lead": {
+        "description": "Lead creation/update form for managing Salesforce leads.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("crm-lead.html"),
+        "meta": {"openai/widgetCSP": {"connect_domains": [], "resource_domains": []}},
+    },
+    "crm-quote": {
+        "description": "Quote creation/update form with opportunity linking.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("crm-quote.html"),
+        "meta": {"openai/widgetCSP": {"connect_domains": [], "resource_domains": []}},
+    },
     "lead-pipeline": {
         "description": "Lead pipeline view showing leads by status and source.",
         "mime_type": "text/html+skybridge",
