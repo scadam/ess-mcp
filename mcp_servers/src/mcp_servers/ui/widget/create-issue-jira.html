@@ -1,0 +1,252 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --border: #1f2630; --input-bg: #0f131a; --neg: #ff6b6b; --pos: #2bd48f; --success-bg: rgba(43,212,143,.06); --success-border: #1a5a3a; --error-bg: rgba(255,107,107,.08); --error-border: rgba(255,107,107,.25); --jira-accent: #0052cc; --jira-mid: #4e8ff5; --jira-glow: rgba(0,82,204,.12); --badge-bg: #1a2540; --badge-text: #4e8ff5; }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --border: #e0e0e0; --input-bg: #f9f9f9; --neg: #d13438; --pos: #107c10; --success-bg: rgba(16,124,16,.04); --success-border: #107c10; --error-bg: rgba(209,52,56,.06); --error-border: rgba(209,52,56,.25); --jira-accent: #0052cc; --jira-mid: #2563eb; --jira-glow: rgba(0,82,204,.08); --badge-bg: #e8f0fe; --badge-text: #0052cc; }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .jira-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--jira-glow); border: 1px solid var(--jira-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .header-text .title { font-size: 15px; font-weight: 600; }
+      .header-text .subtitle { font-size: 11px; color: var(--muted); margin-top: 1px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+      .section-label { font-size: 11px; color: var(--jira-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .full-width { grid-column: 1 / -1; }
+      .field { margin-bottom: 0; }
+      .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; font-weight: 500; }
+      .field label .required { color: var(--neg); }
+      input[type="text"], textarea, select { width: 100%; box-sizing: border-box; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: border-color .15s; resize: vertical; }
+      input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--jira-mid); }
+      textarea { min-height: 72px; }
+      .btn-primary { width: 100%; padding: 10px; border-radius: 8px; border: none; cursor: pointer; background: var(--jira-accent); color: #fff; font-size: 14px; font-weight: 600; font-family: inherit; transition: opacity .15s; margin-top: 6px; }
+      .btn-primary:hover:not(:disabled) { opacity: .88; }
+      .btn-primary:disabled { opacity: .45; cursor: default; }
+      .success-msg { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: var(--success-bg); border: 1px solid var(--success-border); font-size: 13px; color: var(--pos); display: flex; gap: 8px; align-items: flex-start; }
+      .error-msg { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: var(--error-bg); border: 1px solid var(--error-border); font-size: 13px; color: var(--neg); display: flex; gap: 8px; align-items: flex-start; }
+      .key-badge { font-family: monospace; font-weight: 700; font-size: 12px; color: var(--jira-mid); background: var(--badge-bg); padding: 1px 7px; border-radius: 5px; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+      .maximize-btn:hover { color: var(--jira-mid); border-color: var(--jira-mid); }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="jira-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--jira-mid)">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="header-text">
+            <div class="title" id="pageTitle">Create Issue</div>
+            <div class="subtitle" id="pageSubtitle">Jira &bull; New Issue</div>
+          </div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+
+      <div id="feedbackMsg"></div>
+
+      <div class="card" id="formCard">
+        <div class="section-label">Issue Details</div>
+        <div class="form-grid">
+          <div class="field" id="projectKeyField">
+            <label for="projectKey">Project Key <span class="required">*</span></label>
+            <input type="text" id="projectKey" maxlength="10" placeholder="e.g. PROJ" style="text-transform:uppercase" />
+          </div>
+          <div class="field">
+            <label for="issueType">Issue Type</label>
+            <select id="issueType">
+              <option value="Task">Task</option>
+              <option value="Bug">Bug</option>
+              <option value="Story">Story</option>
+              <option value="Epic">Epic</option>
+            </select>
+          </div>
+          <div class="field full-width">
+            <label for="summary">Summary <span class="required">*</span></label>
+            <input type="text" id="summary" maxlength="255" placeholder="Brief summary of the issue" />
+          </div>
+          <div class="field">
+            <label for="priority">Priority</label>
+            <select id="priority">
+              <option value="Medium">Medium</option>
+              <option value="Highest">Highest</option>
+              <option value="High">High</option>
+              <option value="Low">Low</option>
+              <option value="Lowest">Lowest</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="labels">Labels</label>
+            <input type="text" id="labels" placeholder="comma-separated" />
+          </div>
+          <div class="field full-width">
+            <label for="description">Description</label>
+            <textarea id="description" rows="3" placeholder="Detailed description (optional)"></textarea>
+          </div>
+          <div class="field full-width" id="commentField" style="display:none">
+            <label for="comment">Comment</label>
+            <textarea id="comment" rows="2" placeholder="Add a comment to the issue"></textarea>
+          </div>
+        </div>
+        <div id="errorMsg"></div>
+        <button id="submitBtn" class="btn-primary" disabled>Create Issue</button>
+      </div>
+      <div class="footer">Powered by <strong>jira / <span id="footerTool">create_issue</span></strong> via MCP</div>
+    </div>
+    <script>
+    (function() {
+      var toolInput = (window.openai && window.openai.toolInput) || {};
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
+
+      var projectKeyEl = document.getElementById("projectKey");
+      var summaryEl = document.getElementById("summary");
+      var issueTypeEl = document.getElementById("issueType");
+      var priorityEl = document.getElementById("priority");
+      var descEl = document.getElementById("description");
+      var labelsEl = document.getElementById("labels");
+      var commentEl = document.getElementById("comment");
+      var commentField = document.getElementById("commentField");
+      var projectKeyField = document.getElementById("projectKeyField");
+      var submitBtn = document.getElementById("submitBtn");
+      var feedbackMsg = document.getElementById("feedbackMsg");
+      var errorMsg = document.getElementById("errorMsg");
+
+      var isUpdate = false;
+      var currentKey = null;
+
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+
+      function reportHeight() {
+        if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function")
+          window.openai.notifyIntrinsicHeight(document.body.scrollHeight);
+      }
+
+      function validate() {
+        if (isUpdate) {
+          submitBtn.disabled = !(currentKey && summaryEl.value.trim());
+        } else {
+          submitBtn.disabled = !(projectKeyEl.value.trim().length >= 2 && summaryEl.value.trim());
+        }
+      }
+
+      function switchToUpdate(key) {
+        isUpdate = true;
+        currentKey = key;
+        document.getElementById("pageTitle").textContent = "Update Issue";
+        document.getElementById("pageSubtitle").innerHTML = "Jira &bull; <span class='key-badge'>" + esc(key) + "</span>";
+        submitBtn.textContent = "Update Issue";
+        document.getElementById("footerTool").textContent = "update_issue";
+        commentField.style.display = "";
+        projectKeyField.style.display = "none";
+        issueTypeEl.parentElement.style.display = "none";
+        validate();
+        reportHeight();
+      }
+
+      function parseLabels(str) {
+        if (!str) return [];
+        return str.split(",").map(function(l) { return l.trim(); }).filter(Boolean);
+      }
+
+      // Maximize / fullscreen toggle
+      var maximized = false;
+      document.getElementById("maximizeBtn").addEventListener("click", function() {
+        maximized = !maximized;
+        if (window.openai && typeof window.openai.setFullscreen === "function") {
+          window.openai.setFullscreen(maximized);
+        }
+        reportHeight();
+      });
+
+      // Input listeners
+      projectKeyEl.addEventListener("input", function() {
+        projectKeyEl.value = projectKeyEl.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        validate();
+      });
+      summaryEl.addEventListener("input", validate);
+      [issueTypeEl, priorityEl, descEl, labelsEl].forEach(function(el) {
+        el.addEventListener("input", validate);
+        el.addEventListener("change", validate);
+      });
+
+      // Submit
+      submitBtn.addEventListener("click", async function() {
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        submitBtn.disabled = true;
+        submitBtn.textContent = isUpdate ? "Updating\u2026" : "Creating\u2026";
+        errorMsg.innerHTML = "";
+        feedbackMsg.innerHTML = "";
+
+        try {
+          var output;
+          if (isUpdate && currentKey) {
+            var args = { key: currentKey };
+            if (summaryEl.value.trim()) args.summary = summaryEl.value.trim();
+            if (descEl.value.trim()) args.description = descEl.value.trim();
+            if (priorityEl.value) args.priority = priorityEl.value;
+            var lbls = parseLabels(labelsEl.value);
+            if (lbls.length) args.labels = lbls;
+            if (commentEl.value.trim()) args.comment = commentEl.value.trim();
+
+            output = await window.openai.callTool("update_issue", args);
+            feedbackMsg.innerHTML = '<div class="success-msg"><span>\u2713</span><div>Issue <strong>' + esc(currentKey) + '</strong> updated successfully.</div></div>';
+          } else {
+            var pkey = projectKeyEl.value.trim().toUpperCase();
+            var args = { project_key: pkey, summary: summaryEl.value.trim(), issue_type: issueTypeEl.value };
+            if (priorityEl.value) args.priority = priorityEl.value;
+            if (descEl.value.trim()) args.description = descEl.value.trim();
+            var lbls = parseLabels(labelsEl.value);
+            if (lbls.length) args.labels = lbls;
+
+            output = await window.openai.callTool("create_issue", args);
+            var data = (output && output.structuredContent) ? output.structuredContent : output;
+            var issue = (data && data.issue) || data || {};
+            var issueKey = issue.key || issue.issue_key || currentKey || "";
+
+            if (issueKey) {
+              switchToUpdate(issueKey);
+              feedbackMsg.innerHTML = '<div class="success-msg"><span>\u2713</span><div>Issue <strong>' + esc(issueKey) + '</strong> created successfully.</div></div>';
+            } else {
+              feedbackMsg.innerHTML = '<div class="success-msg"><span>\u2713</span><div>Issue created successfully.</div></div>';
+            }
+          }
+        } catch (err) {
+          feedbackMsg.innerHTML = '<div class="error-msg"><span>\u26A0</span><div>' + esc(err.message || String(err) || "Operation failed") + '</div></div>';
+        } finally {
+          submitBtn.textContent = isUpdate ? "Update Issue" : "Create Issue";
+          validate();
+          reportHeight();
+        }
+      });
+
+      // Pre-fill from toolOutput (existing issue → update mode)
+      var existingIssue = toolOutput.issue || toolOutput;
+      if (existingIssue && (existingIssue.key || existingIssue.issue_key)) {
+        switchToUpdate(existingIssue.key || existingIssue.issue_key);
+      }
+
+      // Merge toolOutput and toolInput for pre-fill
+      var inp = isUpdate ? Object.assign({}, existingIssue, toolInput) : toolInput;
+      if (inp.project_key) projectKeyEl.value = inp.project_key.toUpperCase();
+      if (inp.summary) summaryEl.value = inp.summary;
+      if (inp.issue_type) issueTypeEl.value = inp.issue_type;
+      if (inp.priority) priorityEl.value = inp.priority;
+      if (inp.description) descEl.value = inp.description;
+      if (inp.labels) {
+        labelsEl.value = Array.isArray(inp.labels) ? inp.labels.join(", ") : inp.labels;
+      }
+
+      validate();
+      reportHeight();
+    })();
+    </script>
+  </body>
+</html>
