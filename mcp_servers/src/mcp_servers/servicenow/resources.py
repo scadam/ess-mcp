@@ -1,6 +1,16 @@
 
 from __future__ import annotations
 
+from pathlib import Path as _Path
+
+
+def _read_widget(name: str) -> str:
+    widget_dir = _Path(__file__).resolve().parent.parent / "ui" / "widget"
+    widget_path = widget_dir / name
+    if widget_path.exists():
+        return widget_path.read_text(encoding="utf-8")
+    return f"<html><body>{name} widget</body></html>"
+
 # ---------------------------------------------------------------------------
 # Incident List dashboard – calls list_incidents via Skybridge
 # ---------------------------------------------------------------------------
@@ -731,6 +741,17 @@ SERVICENOW_RESOURCES = {
         "description": "Incident creation form – calls create_incident via Skybridge with caller, description, category, urgency, and impact fields.",
         "mime_type": "text/html+skybridge",
         "content": CREATE_INCIDENT_HTML,
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "team-incidents": {
+        "description": "Team incident workload dashboard – calls get_team_incidents via Skybridge showing priority breakdown, assignee workload, and recent incidents.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("team-incidents.html"),
         "meta": {
             "openai/widgetCSP": {
                 "connect_domains": [],

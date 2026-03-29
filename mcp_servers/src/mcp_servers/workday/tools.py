@@ -1015,6 +1015,195 @@ async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
         return {"success": False, "error": str(exc)}
 
 
+async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
+    """Team overview dashboard for managers showing headcount, role breakdown, and team member details."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        reports = await _fetch_direct_reports(wctx.workday_access_token, wctx.workday_id)
+        title_counts: Dict[str, int] = {}
+        org_counts: Dict[str, int] = {}
+        members = []
+        for r in reports:
+            title = r.get("businessTitle") or "Unknown"
+            org = r.get("primarySupervisoryOrganization") or "Unknown"
+            title_counts[title] = title_counts.get(title, 0) + 1
+            org_counts[org] = org_counts.get(org, 0) + 1
+            members.append(
+                {
+                    "name": r.get("descriptor"),
+                    "email": r.get("primaryWorkEmail"),
+                    "businessTitle": title,
+                    "organization": org,
+                    "isManager": r.get("isManager"),
+                }
+            )
+        payload = {
+            "success": True,
+            "totalHeadcount": len(reports),
+            "byTitle": title_counts,
+            "byOrganization": org_counts,
+            "teamMembers": members,
+        }
+        return _tool_response("Team overview dashboard.", payload)
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_team_overview_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_team_compensation_summary(ctx: Optional[Context] = None) -> Dict:
+    """Team compensation overview for managers with aggregate salary statistics."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        access_token = wctx.workday_access_token
+        url = (
+            "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
+            f"workers/{wctx.workday_id}/directReports"
+        )
+        data = await _fetch_json(url, access_token)
+        report_items = data.get("data", [])
+        worker_ids = [item.get("id") for item in report_items if item.get("id")]
+
+        async def _fetch_comp(worker_id: str) -> Dict[str, Any]:
+            comp_url = (
+                "https://wd2-impl-services1.workday.com/ccx/api/compensation/v3/microsoft_dpt6/"
+                f"workers/{worker_id}/compensationHistory"
+            )
+            return await _fetch_json(comp_url, access_token)
+
+        comp_results = await asyncio.gather(*[_fetch_comp(wid) for wid in worker_ids])
+
+        base_pays: List[float] = []
+        currency_counts: Dict[str, int] = {}
+        band_counts: Dict[str, int] = {}
+        for comp_data in comp_results:
+            entries = comp_data.get("data", [])
+            if not entries:
+                continue
+            latest = entries[0]
+            total_base = latest.get("totalBasePay")
+            if total_base is not None:
+                try:
+                    base_pays.append(float(total_base))
+                except (ValueError, TypeError):
+                    pass
+            currency = latest.get("currency", {}).get("descriptor", "Unknown")
+            currency_counts[currency] = currency_counts.get(currency, 0) + 1
+            frequency = latest.get("frequency", {}).get("descriptor", "Unknown")
+            band_counts[frequency] = band_counts.get(frequency, 0) + 1
+
+        comp_stats: Dict[str, Any] = {}
+        if base_pays:
+            sorted_pays = sorted(base_pays)
+            n = len(sorted_pays)
+            median_val = (
+                sorted_pays[n // 2]
+                if n % 2 == 1
+                else (sorted_pays[n // 2 - 1] + sorted_pays[n // 2]) / 2
+            )
+            comp_stats = {
+                "min": min(base_pays),
+                "max": max(base_pays),
+                "median": median_val,
+                "average": round(sum(base_pays) / len(base_pays), 2),
+            }
+
+        payload = {
+            "success": True,
+            "totalReports": len(worker_ids),
+            "compensationRange": comp_stats,
+            "byCurrency": currency_counts,
+            "byFrequency": band_counts,
+        }
+        return _tool_response("Team compensation summary.", payload)
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_team_compensation_summary_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Dict:
+    """Team performance review status for managers with inbox tasks and absence overview."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        access_token = wctx.workday_access_token
+        workday_id = wctx.workday_id
+
+        dr_url = (
+            "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
+            f"workers/{workday_id}/directReports"
+        )
+        inbox_tasks, dr_data = await asyncio.gather(
+            _fetch_inbox_tasks(access_token, workday_id),
+            _fetch_json(dr_url, access_token),
+        )
+
+        report_items = dr_data.get("data", [])
+        report_lookup = []
+        for item in report_items:
+            wid = item.get("id")
+            if wid:
+                report_lookup.append(
+                    {
+                        "id": wid,
+                        "name": item.get("descriptor", "Unknown"),
+                        "title": item.get("businessTitle"),
+                    }
+                )
+
+        time_off_results = await asyncio.gather(
+            *[_get_time_off_details(access_token, r["id"]) for r in report_lookup]
+        )
+
+        pending_reviews = []
+        pending_approvals = []
+        other_tasks = []
+        for t in inbox_tasks:
+            step = (t.get("stepType") or "").lower()
+            subject = (t.get("subject") or "").lower()
+            if "review" in step or "review" in subject:
+                pending_reviews.append(t)
+            elif "approval" in step or "approval" in subject:
+                pending_approvals.append(t)
+            else:
+                other_tasks.append(t)
+
+        today = datetime.now().date().isoformat()
+        currently_out: List[Dict[str, Any]] = []
+        upcoming_absences: List[Dict[str, Any]] = []
+        for report, time_offs in zip(report_lookup, time_off_results):
+            for entry in time_offs:
+                date = entry.get("date", "")
+                status = (entry.get("status") or "").lower()
+                if "cancel" in status:
+                    continue
+                absence_record = {"name": report["name"], **entry}
+                if date == today:
+                    currently_out.append(absence_record)
+                elif date > today:
+                    upcoming_absences.append(absence_record)
+
+        payload = {
+            "success": True,
+            "inboxSummary": {
+                "totalPending": len(inbox_tasks),
+                "pendingReviews": len(pending_reviews),
+                "pendingApprovals": len(pending_approvals),
+                "otherTasks": len(other_tasks),
+                "tasks": inbox_tasks,
+            },
+            "absenceOverview": {
+                "currentlyOut": currently_out,
+                "upcoming": upcoming_absences,
+                "totalCurrentlyOut": len(currently_out),
+                "totalUpcoming": len(upcoming_absences),
+            },
+            "openActionItems": len(inbox_tasks),
+        }
+        return _tool_response("Team performance and review status summary.", payload)
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_team_performance_summary_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
     {
         "name": "get_worker",
@@ -1086,4 +1275,17 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
     {"name": "get_org_chart", "func": tool_get_org_chart, "summary": "Get the organizational chart for the current worker's supervisory organization."},
     {"name": "get_worker_documents", "func": tool_get_worker_documents, "summary": "List personal documents for the current worker such as tax forms, offer letters, and policies."},
     {"name": "get_team_calendar", "func": tool_get_team_calendar, "summary": "Get the team time-off calendar showing who is out in the current worker's team."},
+    {
+        "name": "get_team_overview",
+        "func": tool_get_team_overview,
+        "summary": "Get a team overview dashboard for managers showing headcount, role breakdown, and team member details.",
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/team-dashboard.html",
+            "openai/toolInvocation/invoking": "Loading team overview\u2026",
+            "openai/toolInvocation/invoked": "Team overview ready.",
+        },
+    },
+    {"name": "get_team_compensation_summary", "func": tool_get_team_compensation_summary, "summary": "Get team compensation overview for managers with aggregate salary statistics and currency breakdown."},
+    {"name": "get_team_performance_summary", "func": tool_get_team_performance_summary, "summary": "Get team performance review status for managers including pending inbox items and team absence overview."},
 ]

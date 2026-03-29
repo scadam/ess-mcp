@@ -337,4 +337,15 @@ WORKDAY_RESOURCES = {
             }
         },
     },
+    "team-dashboard": {
+        "description": "Team overview dashboard showing headcount, role breakdown, and roster via get_team_overview.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("team-dashboard.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }

@@ -2,6 +2,7 @@
 the Jira REST API v3 using Bearer token auth.
 """
 
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastmcp import Context
@@ -927,6 +928,219 @@ async def tool_show_create_project_form(
     }
 
 
+# ── Manager-focused tools ────────────────────────────────────────────
+
+_OVERLOAD_THRESHOLD = 15
+
+
+async def tool_get_team_workload(
+    project_key: str = "",
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Show work distribution across the team for a manager view.
+
+    Args:
+        project_key: Optional Jira project key to scope results (e.g. "ENG").
+    """
+    LOGGER.info("jira_get_team_workload", project_key=project_key or "(all)")
+
+    jql = "resolution = Unresolved"
+    if project_key:
+        jql = f'project = "{project_key}" AND {jql}'
+    jql += " ORDER BY assignee ASC"
+
+    data = await _jira_search(
+        jql, max_results=100, fields=_SEARCH_FIELDS, ctx=ctx,
+    )
+    issues = data.get("issues", [])
+    total = data.get("total", len(issues))
+
+    assignee_map: Dict[str, Dict[str, Any]] = {}
+    unassigned_count = 0
+
+    for raw in issues:
+        fields = raw.get("fields", {})
+        assignee_obj = fields.get("assignee") or {}
+        name = (
+            assignee_obj.get("displayName")
+            if isinstance(assignee_obj, dict)
+            else None
+        )
+
+        priority = (
+            fields.get("priority", {}).get("name", "None")
+            if isinstance(fields.get("priority"), dict)
+            else "None"
+        )
+        status_obj = fields.get("status", {})
+        category = (
+            status_obj.get("statusCategory", {}).get("name", "Unknown")
+            if isinstance(status_obj, dict)
+            else "Unknown"
+        )
+
+        if not name:
+            unassigned_count += 1
+            continue
+
+        if name not in assignee_map:
+            assignee_map[name] = {
+                "assignee": name,
+                "total": 0,
+                "byPriority": {},
+                "byStatusCategory": {},
+            }
+        entry = assignee_map[name]
+        entry["total"] += 1
+        entry["byPriority"][priority] = entry["byPriority"].get(priority, 0) + 1
+        entry["byStatusCategory"][category] = (
+            entry["byStatusCategory"].get(category, 0) + 1
+        )
+
+    members = sorted(assignee_map.values(), key=lambda m: m["total"], reverse=True)
+    for m in members:
+        m["overloaded"] = m["total"] > _OVERLOAD_THRESHOLD
+
+    return {
+        "projectKey": project_key or None,
+        "totalUnresolved": total,
+        "unassignedCount": unassigned_count,
+        "teamSize": len(members),
+        "overloadedCount": sum(1 for m in members if m["overloaded"]),
+        "members": members,
+    }
+
+
+async def tool_get_team_sprint_health(
+    board_id: int = 0,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Sprint health overview for engineering managers.
+
+    Args:
+        board_id: Optional board ID. When 0 or omitted, returns an error
+                  asking the caller to supply a board ID.
+    """
+    LOGGER.info("jira_get_team_sprint_health", board_id=board_id)
+
+    if not board_id:
+        return {"error": "board_id is required. Use list_boards to find one."}
+
+    params: Dict[str, Any] = {"state": "active"}
+    sprints_data = await _jira_agile_get(
+        f"/board/{board_id}/sprint", ctx, params=params,
+    )
+    active_sprints = sprints_data.get("values", [])
+    if not active_sprints:
+        return {"board_id": board_id, "sprints": [], "message": "No active sprints."}
+
+    results: List[Dict[str, Any]] = []
+    for sprint in active_sprints:
+        sprint_id = sprint.get("id")
+        sprint_name = sprint.get("name")
+        end_date_str = sprint.get("endDate")
+
+        days_remaining: Optional[float] = None
+        if end_date_str:
+            try:
+                end_dt = datetime.fromisoformat(
+                    end_date_str.replace("Z", "+00:00"),
+                )
+                days_remaining = max(
+                    0.0,
+                    round(
+                        (end_dt - datetime.now(timezone.utc)).total_seconds()
+                        / 86400,
+                        1,
+                    ),
+                )
+            except (ValueError, TypeError):
+                pass
+
+        issues_data = await _jira_agile_get(
+            f"/sprint/{sprint_id}/issue", ctx, params={"maxResults": 100},
+        )
+        issues = issues_data.get("issues", [])
+        total_issues = issues_data.get("total", len(issues))
+
+        done_count = 0
+        in_progress_count = 0
+        todo_count = 0
+        blocked_count = 0
+        person_map: Dict[str, Dict[str, int]] = {}
+
+        for raw in issues:
+            fields = raw.get("fields", {})
+            status_obj = fields.get("status", {})
+            category = (
+                status_obj.get("statusCategory", {}).get("name", "Unknown")
+                if isinstance(status_obj, dict)
+                else "Unknown"
+            )
+
+            if category == "Done":
+                done_count += 1
+            elif category == "In Progress":
+                in_progress_count += 1
+            else:
+                todo_count += 1
+
+            labels = fields.get("labels", [])
+            status_name = (
+                status_obj.get("name", "")
+                if isinstance(status_obj, dict)
+                else ""
+            )
+            if (
+                "blocked" in [lbl.lower() for lbl in labels]
+                or "blocked" in status_name.lower()
+            ):
+                blocked_count += 1
+
+            assignee_obj = fields.get("assignee") or {}
+            name = (
+                assignee_obj.get("displayName")
+                if isinstance(assignee_obj, dict)
+                else None
+            )
+            if name:
+                if name not in person_map:
+                    person_map[name] = {"done": 0, "inProgress": 0, "toDo": 0}
+                if category == "Done":
+                    person_map[name]["done"] += 1
+                elif category == "In Progress":
+                    person_map[name]["inProgress"] += 1
+                else:
+                    person_map[name]["toDo"] += 1
+
+        completion_pct = (
+            round(done_count / total_issues * 100, 1) if total_issues else 0.0
+        )
+        work_remaining = total_issues - done_count
+
+        contributions = [
+            {"assignee": k, **v} for k, v in sorted(person_map.items())
+        ]
+
+        results.append({
+            "sprintId": sprint_id,
+            "sprintName": sprint_name,
+            "startDate": sprint.get("startDate"),
+            "endDate": end_date_str,
+            "daysRemaining": days_remaining,
+            "totalIssues": total_issues,
+            "done": done_count,
+            "inProgress": in_progress_count,
+            "toDo": todo_count,
+            "completionPct": completion_pct,
+            "workRemaining": work_remaining,
+            "blockedCount": blocked_count,
+            "contributions": contributions,
+        })
+
+    return {"board_id": board_id, "sprints": results}
+
+
 # ── Tool registry ───────────────────────────────────────────────────
 
 JIRA_TOOL_SPECS: list[dict] = [
@@ -1115,6 +1329,30 @@ JIRA_TOOL_SPECS: list[dict] = [
         "func": tool_list_projects,
         "summary": (
             "List all Jira projects accessible to the current user."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_team_workload",
+        "func": tool_get_team_workload,
+        "summary": (
+            "Show work distribution across team members -- total issues, "
+            "breakdown by priority and status, and overload warnings."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/team-sprint-health.html",
+            "openai/toolInvocation/invoking": "Loading team workload…",
+            "openai/toolInvocation/invoked": "Team workload ready.",
+        },
+    },
+    {
+        "name": "get_team_sprint_health",
+        "func": tool_get_team_sprint_health,
+        "summary": (
+            "Sprint health overview for engineering managers -- completion "
+            "percentage, blocked items, per-person contributions, and "
+            "days remaining."
         ),
         "annotations": {"readOnlyHint": True},
     },

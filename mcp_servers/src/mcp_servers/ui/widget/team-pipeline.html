@@ -1,0 +1,113 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})();</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --btn-bg: #152235; --btn-border: #243145; --sf-accent: #1589ee; --sf-glow: rgba(21,137,238,.14); --bar-bg: rgba(21,137,238,.18); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --sf-accent: #0070d2; --sf-glow: rgba(0,112,210,.08); --bar-bg: rgba(0,112,210,.12); }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sf-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sf-glow); border: 1px solid var(--sf-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+      .section-label { font-size: 11px; color: var(--sf-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .totals-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .total-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; text-align: center; }
+      .total-value { font-size: 18px; font-weight: 700; color: var(--sf-accent); }
+      .total-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+      .rep-row { margin-bottom: 10px; }
+      .rep-info { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+      .rep-name { font-size: 12px; font-weight: 600; }
+      .rep-total { font-size: 11px; color: var(--muted); }
+      .stacked-bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--bar-bg); }
+      .stacked-bar span { height: 100%; min-width: 2px; }
+      .rep-row:last-child { margin-bottom: 0; }
+      .lb-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+      .lb-row:last-child { border-bottom: none; }
+      .lb-rank { width: 22px; font-weight: 700; color: var(--sf-accent); flex-shrink: 0; }
+      .lb-name { flex: 1; font-weight: 600; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; }
+      .lb-stats { display: flex; gap: 12px; flex-shrink: 0; font-size: 11px; color: var(--muted); }
+      .lb-stats strong { color: var(--pos); font-weight: 700; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--sf-accent); border-color: var(--sf-accent); }
+      .loading { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); }
+      .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sf-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sf-accent)"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          </div>
+          <div><div class="title">Team Pipeline</div><div class="subtitle">Salesforce &middot; Manager View</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="root"><div class="loading">Loading team pipeline&hellip;</div></div>
+      <div class="footer">Powered by <strong>salesforce / get_team_pipeline_summary</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var _isFS = false, _maxBtn = document.getElementById("maximizeBtn");
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      var _stagePalette = ['#1589ee','#4cc2ff','#2bd48f','#f0b232','#ff6b6b','#a855f7','#ec4899','#06b6d4'];
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function fmt(n) { var x = Number(n || 0); if (x >= 1e6) return "$" + (x / 1e6).toFixed(1) + "M"; if (x >= 1e3) return "$" + Math.round(x / 1e3) + "K"; return "$" + x; }
+      function stageColor(i) { return _stagePalette[i % _stagePalette.length]; }
+
+      function render(d) {
+        if (!d || !d.success) { document.getElementById("root").innerHTML = '<div class="loading">No team pipeline data available.</div>'; reportHeight(); return; }
+        var tt = d.teamTotals || {}, reps = (d.byOwner || []).slice().sort(function(a, b) { return (b.totalAmount || 0) - (a.totalAmount || 0); });
+        var maxAmt = 1; for (var i = 0; i < reps.length; i++) maxAmt = Math.max(maxAmt, Number(reps[i].totalAmount || 0));
+        // Collect all stage names across reps
+        var stageSet = {}, stageList = []; for (var i = 0; i < reps.length; i++) { var bs = reps[i].byStage || {}; for (var s in bs) if (bs.hasOwnProperty(s) && !stageSet[s]) { stageSet[s] = true; stageList.push(s); } }
+        var html = '<div class="card"><div class="section-label">Team Totals</div><div class="totals-grid">';
+        html += '<div class="total-cell"><div class="total-value">' + fmt(tt.totalAmount) + '</div><div class="total-label">Total Pipeline</div></div>';
+        html += '<div class="total-cell"><div class="total-value">' + fmt(tt.totalWeightedAmount) + '</div><div class="total-label">Weighted</div></div>';
+        html += '<div class="total-cell"><div class="total-value">' + (tt.totalCount || 0) + '</div><div class="total-label">Deal Count</div></div>';
+        html += '<div class="total-cell"><div class="total-value">' + fmt(tt.avgDealSize) + '</div><div class="total-label">Avg Deal Size</div></div>';
+        html += '</div></div>';
+        // Stacked bars
+        if (reps.length) {
+          html += '<div class="card"><div class="section-label">Rep Pipeline</div>';
+          for (var j = 0; j < reps.length; j++) {
+            var r = reps[j], bs = r.byStage || {}, total = Number(r.totalAmount || 0);
+            html += '<div class="rep-row"><div class="rep-info"><span class="rep-name">' + esc(r.ownerName) + '</span><span class="rep-total">' + fmt(total) + ' &middot; ' + (r.count || 0) + ' deals</span></div>';
+            html += '<div class="stacked-bar">';
+            for (var k = 0; k < stageList.length; k++) { var cnt = Number(bs[stageList[k]] || 0); if (cnt > 0) { var w = Math.max(2, (cnt / (r.count || 1)) * 100); html += '<span style="width:' + w + '%;background:' + stageColor(k) + '" title="' + esc(stageList[k]) + ': ' + cnt + '"></span>'; } }
+            html += '</div></div>';
+          }
+          // Legend
+          html += '<div class="legend">'; for (var l = 0; l < stageList.length; l++) html += '<div class="legend-item"><span class="legend-dot" style="background:' + stageColor(l) + '"></span>' + esc(stageList[l]) + '</div>'; html += '</div>';
+          html += '</div>';
+        }
+        // Leaderboard
+        if (reps.length) {
+          html += '<div class="card"><div class="section-label">Leaderboard</div>';
+          for (var n = 0; n < reps.length; n++) { var rep = reps[n]; html += '<div class="lb-row"><span class="lb-rank">' + (n + 1) + '</span><span class="lb-name">' + esc(rep.ownerName) + '</span><div class="lb-stats"><span><strong>' + fmt(rep.totalAmount) + '</strong> pipeline</span><span>' + fmt(rep.weightedAmount) + ' wtd</span><span>' + (rep.count || 0) + ' deals</span></div></div>'; }
+          html += '</div>';
+        }
+        document.getElementById("root").innerHTML = html; reportHeight();
+      }
+
+      async function init() {
+        if (toolOutput && toolOutput.success) { render(toolOutput); return; }
+        if (window.openai && typeof window.openai.callTool === "function") { try { var out = await window.openai.callTool("get_team_pipeline_summary", toolInput); render((out && out.structuredContent) || out); } catch (e) { document.getElementById("root").innerHTML = '<div class="loading">' + esc(e.message || "Error loading pipeline") + '</div>'; reportHeight(); } }
+        else { document.getElementById("root").innerHTML = '<div class="loading">Skybridge unavailable.</div>'; reportHeight(); }
+      }
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; reportHeight(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+      init();
+    </script>
+  </body>
+</html>

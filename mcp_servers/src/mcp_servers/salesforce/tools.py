@@ -1868,6 +1868,220 @@ async def tool_run_report(report_id: str) -> Dict[str, Any]:
         return {"success": False, "error": str(exc)}
 
 
+async def tool_get_team_pipeline_summary(
+    owner_ids: str = "",
+) -> Dict[str, Any]:
+    """Get an aggregated pipeline summary grouped by sales rep.
+
+    Useful for sales managers who need a team-level view of pipeline
+    with per-rep totals, deal counts, average deal size, and stage breakdowns.
+
+    Args:
+        owner_ids: Optional comma-separated Salesforce User IDs to limit to
+                   specific reps. If empty, all open pipeline is included.
+    """
+    clauses: List[str] = ["IsClosed = false"]
+    if owner_ids:
+        ids = [f"'{_sf(uid.strip())}'" for uid in owner_ids.split(",") if uid.strip()]
+        if ids:
+            clauses.append(f"OwnerId IN ({','.join(ids)})")
+
+    where = f" WHERE {' AND '.join(clauses)}"
+
+    query = (
+        f"SELECT {_OPPORTUNITY_FIELDS} "
+        f"FROM Opportunity{where} "
+        f"ORDER BY Owner.Name ASC, Amount DESC "
+        f"LIMIT 500"
+    )
+
+    LOGGER.info("salesforce_get_team_pipeline_summary", query=query)
+    records = await _soql_query(query, ctx)
+
+    rep_rollup: Dict[str, Dict[str, Any]] = {}
+    team_total_amount = 0.0
+    team_total_weighted = 0.0
+
+    for raw in records:
+        owner = raw.get("Owner") or {}
+        owner_id = raw.get("OwnerId") or "unknown"
+        owner_name = owner.get("Name") if isinstance(owner, dict) else str(owner)
+        owner_name = owner_name or "Unknown"
+        stage = raw.get("StageName") or "Unknown"
+        amount = float(raw.get("Amount") or 0)
+        prob = float(raw.get("Probability") or 0)
+
+        team_total_amount += amount
+        team_total_weighted += amount * (prob / 100.0)
+
+        rep = rep_rollup.setdefault(
+            owner_id,
+            {
+                "owner_id": owner_id,
+                "owner_name": owner_name,
+                "total_amount": 0.0,
+                "weighted_amount": 0.0,
+                "count": 0,
+                "stages": {},
+            },
+        )
+        rep["total_amount"] += amount
+        rep["weighted_amount"] += amount * (prob / 100.0)
+        rep["count"] += 1
+
+        stage_entry = rep["stages"].setdefault(
+            stage, {"stage": stage, "count": 0, "amount": 0.0}
+        )
+        stage_entry["count"] += 1
+        stage_entry["amount"] += amount
+
+    reps: List[Dict[str, Any]] = []
+    for rep in sorted(rep_rollup.values(), key=lambda r: r["total_amount"], reverse=True):
+        avg_deal = rep["total_amount"] / rep["count"] if rep["count"] else 0.0
+        reps.append({
+            "owner_id": rep["owner_id"],
+            "owner_name": rep["owner_name"],
+            "total_amount": rep["total_amount"],
+            "weighted_amount": rep["weighted_amount"],
+            "count": rep["count"],
+            "avg_deal_size": avg_deal,
+            "stages": sorted(
+                rep["stages"].values(), key=lambda s: s["amount"], reverse=True
+            ),
+        })
+
+    return {
+        "team_totals": {
+            "reps": len(reps),
+            "opportunities": len(records),
+            "pipeline_amount": team_total_amount,
+            "weighted_pipeline_amount": team_total_weighted,
+        },
+        "reps": reps,
+    }
+
+
+_VALID_PERIODS = {"THIS_QUARTER", "THIS_MONTH", "THIS_YEAR", "LAST_QUARTER"}
+
+
+async def tool_get_team_performance_metrics(
+    period: str = "THIS_QUARTER",
+) -> Dict[str, Any]:
+    """Get team performance metrics and leaderboard for sales reps.
+
+    Computes per-rep revenue, win rate, and activity counts for the given
+    period. Useful for manager-level performance reviews and leaderboards.
+
+    Args:
+        period: Date literal for the time window. One of THIS_QUARTER
+                (default), THIS_MONTH, THIS_YEAR, or LAST_QUARTER.
+    """
+    period = period.strip().upper() if period else "THIS_QUARTER"
+    if period not in _VALID_PERIODS:
+        period = "THIS_QUARTER"
+
+    # -- Closed-Won revenue by owner ----------------------------------------
+    won_query = (
+        f"SELECT Owner.Name, OwnerId, COUNT(Id) cnt, SUM(Amount) total_amount "
+        f"FROM Opportunity "
+        f"WHERE IsWon = true AND CloseDate = {period} "
+        f"GROUP BY Owner.Name, OwnerId "
+        f"ORDER BY SUM(Amount) DESC"
+    )
+
+    LOGGER.info("salesforce_team_perf_won", query=won_query)
+    won_records = await _soql_query(won_query, ctx)
+
+    # -- Closed-Lost count by owner ------------------------------------------
+    lost_query = (
+        f"SELECT OwnerId, COUNT(Id) cnt "
+        f"FROM Opportunity "
+        f"WHERE IsClosed = true AND IsWon = false AND CloseDate = {period} "
+        f"GROUP BY OwnerId"
+    )
+
+    LOGGER.info("salesforce_team_perf_lost", query=lost_query)
+    lost_records = await _soql_query(lost_query, ctx)
+
+    lost_by_owner: Dict[str, int] = {}
+    for r in lost_records:
+        lost_by_owner[r.get("OwnerId", "")] = int(r.get("cnt") or 0)
+
+    # -- Activity counts (Tasks + Events) ------------------------------------
+    task_query = (
+        f"SELECT OwnerId, COUNT(Id) cnt "
+        f"FROM Task "
+        f"WHERE CreatedDate = {period} AND Status = 'Completed' "
+        f"GROUP BY OwnerId"
+    )
+    event_query = (
+        f"SELECT OwnerId, COUNT(Id) cnt "
+        f"FROM Event "
+        f"WHERE CreatedDate = {period} "
+        f"GROUP BY OwnerId"
+    )
+
+    LOGGER.info("salesforce_team_perf_tasks", query=task_query)
+    task_records = await _soql_query(task_query, ctx)
+    LOGGER.info("salesforce_team_perf_events", query=event_query)
+    event_records = await _soql_query(event_query, ctx)
+
+    tasks_by_owner: Dict[str, int] = {}
+    for r in task_records:
+        tasks_by_owner[r.get("OwnerId", "")] = int(r.get("cnt") or 0)
+
+    events_by_owner: Dict[str, int] = {}
+    for r in event_records:
+        events_by_owner[r.get("OwnerId", "")] = int(r.get("cnt") or 0)
+
+    # -- Build per-rep metrics -----------------------------------------------
+    team_revenue = 0.0
+    team_won = 0
+    team_lost = 0
+    reps: List[Dict[str, Any]] = []
+
+    for r in won_records:
+        owner_id = r.get("OwnerId") or "unknown"
+        owner_obj = r.get("Owner") or {}
+        owner_name = owner_obj.get("Name") if isinstance(owner_obj, dict) else str(owner_obj)
+        owner_name = owner_name or "Unknown"
+        revenue = float(r.get("total_amount") or 0)
+        won_count = int(r.get("cnt") or 0)
+        lost_count = lost_by_owner.get(owner_id, 0)
+        total_closed = won_count + lost_count
+        win_rate = (won_count / total_closed * 100.0) if total_closed else 0.0
+
+        team_revenue += revenue
+        team_won += won_count
+        team_lost += lost_count
+
+        reps.append({
+            "owner_id": owner_id,
+            "owner_name": owner_name,
+            "revenue": revenue,
+            "deals_won": won_count,
+            "deals_lost": lost_count,
+            "win_rate": round(win_rate, 1),
+            "tasks_completed": tasks_by_owner.get(owner_id, 0),
+            "events_logged": events_by_owner.get(owner_id, 0),
+        })
+
+    team_total_closed = team_won + team_lost
+    team_win_rate = (team_won / team_total_closed * 100.0) if team_total_closed else 0.0
+
+    return {
+        "period": period,
+        "team_totals": {
+            "reps": len(reps),
+            "revenue": team_revenue,
+            "deals_won": team_won,
+            "deals_lost": team_lost,
+            "win_rate": round(team_win_rate, 1),
+        },
+        "reps": reps,
+    }
+
+
 # ── Tool registry ───────────────────────────────────────────────────
 
 SALESFORCE_TOOL_SPECS: list[dict] = [
@@ -2192,6 +2406,29 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "func": tool_run_report,
         "summary": (
             "Run a Salesforce report by ID and return results."
+        ),
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_team_pipeline_summary",
+        "func": tool_get_team_pipeline_summary,
+        "summary": (
+            "Get an aggregated pipeline summary grouped by sales rep with "
+            "per-rep totals, deal counts, average deal size, and stage breakdowns."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/team-pipeline.html",
+            "openai/toolInvocation/invoking": "Loading team pipeline\u2026",
+            "openai/toolInvocation/invoked": "Team pipeline ready.",
+        },
+    },
+    {
+        "name": "get_team_performance_metrics",
+        "func": tool_get_team_performance_metrics,
+        "summary": (
+            "Get team performance metrics and leaderboard including revenue, "
+            "win rate, and activity counts per sales rep for a given period."
         ),
         "annotations": {"readOnlyHint": True},
     },
