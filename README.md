@@ -19,12 +19,12 @@
 
 | Server | Platform | Tools | Widgets | Key Actions |
 |--------|----------|-------|---------|-------------|
-| **Workday** | HR / HCM | 23 | 6 | Book leave, change title, approve/deny tasks, view compensation, org charts, **team dashboard** |
-| **ServiceNow** | ITSM | 36 | 5 | Create/update incidents, approve/reject requests, order catalog items, manage change requests, **team incidents** |
-| **Salesforce** | CRM | 39 | 9 | Create opportunities/leads/quotes, approve/reject, convert leads, run reports, **team pipeline** |
-| **Jira** | Project Management | 21 | 5 | Create/update issues, transition workflows, log work, manage sprints, **team workload** |
+| **Workday** | HR / HCM | 23 | 6 | Book leave, change title, approve/deny inbox tasks, view compensation, org charts, **team dashboard** |
+| **ServiceNow** | ITSM | 37 | 5 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, **team incidents** |
+| **Salesforce** | CRM | 42 | 9 | Create opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, **team pipeline** |
+| **Jira** | Project Management | 23 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, **team workload** |
 
-> **119 tools total** — 38 are write/action tools (create, update, approve, transition), 11 render interactive form widgets, and the rest provide rich read access. Designed for AI agents that **can act**, not just answer questions.
+> **125 tools total** — 44 are write/action tools (create, update, approve, transition, link), 11 render interactive form widgets, and the rest provide rich read access. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -326,7 +326,7 @@ WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
 
 > *Incidents, change requests, problems, service catalog, knowledge base, approvals, and CMDB.*
 
-**Tools (36):**
+**Tools (37):**
 
 | Tool | Type | Description |
 |------|------|-------------|
@@ -336,6 +336,7 @@ WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
 | `show_create_incident_form` | 🖼️ Widget | Interactive incident creation form |
 | `show_update_incident_form` | 🖼️ Widget | Interactive incident update form |
 | `list_tasks` | 📖 Read | List active tasks |
+| `update_task` | ✏️ **Update** | **Update task state, priority, assignment, or add notes** |
 | `list_approvals` / `get_approval` | 📖 Read | View pending approvals |
 | `approve_reject` | ⚡ **Action** | **Approve or reject approval request** |
 | `list_catalog_items` / `list_catalog_categories` | 📖 Read | Browse service catalog |
@@ -373,12 +374,13 @@ SERVICENOW_INSTANCE_URL=https://yourinstance.service-now.com
 
 > *Accounts, contacts, opportunities, leads, campaigns, pipeline dashboards, and compliance cases.*
 
-**Tools (39):**
+**Tools (42):**
 
 | Tool | Type | Description |
 |------|------|-------------|
 | `list_accounts` / `get_account_360` | 📖 Read | Account lookup and 360° view (contacts, opps, cases, tasks) |
 | `list_contacts` | 📖 Read | Contact directory (optionally scoped to account) |
+| `create_contact` | ✏️ **Create** | **Create new contact, optionally linked to an account** |
 | `list_opportunities` | 📖 Read | List opportunities/deals |
 | `create_opportunity` | ✏️ **Create** | **Create new opportunity** |
 | `create_opportunity_task` | ✏️ **Create** | **Create task linked to opportunity** |
@@ -390,12 +392,14 @@ SERVICENOW_INSTANCE_URL=https://yourinstance.service-now.com
 | `convert_lead` | ⚡ **Action** | **Convert lead to account/contact/opportunity** |
 | `show_create_lead_form` | 🖼️ Widget | Interactive lead creation form |
 | `list_campaigns` / `get_campaign` | 📖 Read | Campaign tracking |
+| `add_campaign_member` | ✏️ **Create** | **Add a contact or lead to a campaign** |
 | `get_pipeline_dashboard` | 📖 Read | Pipeline analytics |
 | `list_cases` / `get_case` | 📖 Read | Compliance case lookup |
 | `create_case` | ✏️ **Create** | **Create compliance case** |
 | `update_case` | ✏️ **Update** | **Update case status/description** |
 | `show_compliance_case_form` | 🖼️ Widget | Interactive compliance case form |
 | `list_tasks` / `get_task` | 📖 Read | Task management |
+| `create_task` | ✏️ **Create** | **Create standalone task, optionally linked to account/opportunity/contact** |
 | `update_task` | ✏️ **Update** | **Update task status/priority** |
 | `list_approvals` | 📖 Read | View pending approval work items |
 | `approve_reject` | ⚡ **Action** | **Approve or reject approval requests** |
@@ -424,22 +428,31 @@ SALESFORCE_DOMAIN=yourorg.my.salesforce.com
 
 > *Issues, sprints, boards, epics, comments, and transitions.*
 
-**Tools:**
+**Tools (23):**
 
-| Tool | Description |
-|------|-------------|
-| `list_issues` / `get_issue` | Issue queries |
-| `create_issue` / `update_issue` | Issue management |
-| `transition_issue` | Workflow transitions |
-| `add_comment` | Add comments |
-| `create_project` | Project creation |
-| `list_boards` / `get_board` | Board management |
-| `list_sprints` / `get_sprint` | Sprint tracking |
-| `get_backlog` | Backlog views |
-| `get_team_workload` | 👔 **Manager:** Team workload distribution |
-| `get_team_sprint_health` | 👔 **Manager:** Sprint health across boards |
+| Tool | Type | Description |
+|------|------|-------------|
+| `list_issues` / `get_issue` | 📖 Read | Issue queries with JQL or filters |
+| `create_issue` | ✏️ **Create** | **Create new issue in a project** |
+| `update_issue` | ✏️ **Update** | **Update issue fields, priority, assignee** |
+| `transition_issue` | ⚡ **Action** | **Move issue to new workflow status** |
+| `add_comment` | ✏️ **Create** | **Add comment to an issue** |
+| `log_work` | ⚡ **Action** | **Log time/work on an issue** |
+| `move_issues_to_sprint` | ⚡ **Action** | **Move issues into a sprint for planning** |
+| `link_issues` | ✏️ **Create** | **Create links between issues (Blocks, Relates, Duplicate)** |
+| `create_project` / `update_project` | ✏️ **Create/Update** | **Project management** |
+| `show_create_issue_form` | 🖼️ Widget | Interactive issue creation form |
+| `show_create_project_form` | 🖼️ Widget | Interactive project creation form |
+| `list_boards` / `get_board` | 📖 Read | Board management |
+| `list_sprints` / `get_sprint` | 📖 Read | Sprint tracking |
+| `get_backlog` | 📖 Read | Backlog views |
+| `list_epics` | 📖 Read | Epic listing on a board |
+| `get_my_issues` | 📖 Read | Current user's assigned issues |
+| `list_projects` | 📖 Read | List accessible projects |
+| `get_team_workload` | 📖 Read | 👔 **Manager:** Team workload distribution |
+| `get_team_sprint_health` | 📖 Read | 👔 **Manager:** Sprint health across boards |
 
-**Widgets:** `jira-issue`, `create-issue`, `create-project`, `team-sprint-health`
+**Widgets:** `jira-issue`, `create-issue-jira`, `create-project`, `sprint-board`, `team-sprint-health`
 
 **Configuration** (`env/jira.env`):
 ```env
@@ -1139,7 +1152,7 @@ ess-mcp/
         ├── servicenow/             # ServiceNow MCP server
         ├── salesforce/             # Salesforce MCP server
         ├── jira/                   # Jira MCP server
-        └── ui/widget/              # 27 HTML+Skybridge widgets
+        └── ui/widget/              # 25 HTML+Skybridge widgets
 ```
 
 ---
