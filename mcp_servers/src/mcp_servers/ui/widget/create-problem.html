@@ -1,5 +1,5 @@
 <html>
-  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
   <head>
     <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
