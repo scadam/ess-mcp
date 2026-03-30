@@ -436,6 +436,324 @@ Client → Authorization: Bearer <token> → MCP Server → Bearer <token> → S
 
 The MCP client is responsible for obtaining a valid bearer token for the target SaaS API (e.g. via OAuth 2.0 authorization code flow, client credentials grant, or any other mechanism). The MCP server simply passes the token through — it does not perform any token exchange, refresh, or validation.
 
+### OAuth Client Setup per SaaS Platform
+
+Each SaaS platform requires an OAuth 2.0 client registration so that the AI assistant (e.g. Microsoft 365 Copilot) can obtain bearer tokens on behalf of users. Below are step-by-step guides for creating OAuth clients with the **Authorization Code flow** for each platform.
+
+<details>
+<summary><strong>Workday – OAuth 2.0 Client (Authorization Code Grant)</strong></summary>
+
+Workday uses **API Clients for Integrations** registered through the Workday tenant.
+
+1. **Sign in** to your Workday tenant as a Security Administrator.
+2. Navigate to **Register API Client for Integrations** (search in the Workday search bar).
+3. Fill in the registration form:
+   - **Client Name:** `ESS-MCP Copilot` (or your preferred name)
+   - **Grant Type:** Select **Authorization Code Grant**
+   - **Access Token Type:** `Bearer`
+   - **Redirect URI:** Add your callback URL, e.g.:
+     - For Teams Developer Center: `https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect`
+     - For local testing: `http://localhost:8080/callback`
+   - **Scope:** Select the functional areas your integration needs:
+     - `Staffing` – worker profiles, org charts
+     - `Time Off and Leave` – leave balances and booking
+     - `Compensation` – salary and bonus data
+     - `Learning` – training assignments
+     - `Tenant Non-Configurable` – basic tenant access
+4. Click **OK** to register. **Copy the Client ID and Client Secret** — the secret is only shown once.
+5. Navigate to **View API Clients** to verify your registration.
+6. **Create an Integration System User (ISU):**
+   - Go to **Create Integration System User**.
+   - Assign the user to a security group that has the required domain permissions.
+7. **Configure Authentication Policy:**
+   - Navigate to **Manage Authentication Policies**.
+   - Add a rule to allow OAuth 2.0 authentication for your ISU.
+
+**Token Endpoints:**
+```
+Authorization: https://your-tenant.workday.com/authorize
+Token:         https://your-tenant.workday.com/token
+```
+
+</details>
+
+<details>
+<summary><strong>ServiceNow – OAuth 2.0 Application Registry</strong></summary>
+
+ServiceNow uses the **Application Registry** to create OAuth clients.
+
+1. **Sign in** to your ServiceNow instance as an admin.
+2. Navigate to **System OAuth → Application Registry** (or search for "Application Registry").
+3. Click **New** and select **Create an OAuth API endpoint for external clients**.
+4. Fill in the form:
+   - **Name:** `ESS-MCP Copilot`
+   - **Client ID:** Auto-generated (or set your own)
+   - **Client Secret:** Click **Generate** — **copy and save this immediately**
+   - **Redirect URL:** `https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect`
+   - **Token Lifespan:** `1800` seconds (30 minutes) — adjust as needed
+   - **Refresh Token Lifespan:** `8640000` seconds (100 days)
+   - **Active:** ✅ Checked
+5. Click **Submit**.
+6. **Enable OAuth scopes** (if using scoped access):
+   - Navigate to **System OAuth → OAuth Scopes**.
+   - Create scopes for `useraccount`, `incident_read`, `incident_write`, etc.
+7. **Verify** by navigating back to **Application Registry** and confirming the entry.
+
+**Token Endpoints:**
+```
+Authorization: https://yourinstance.service-now.com/oauth_auth.do
+Token:         https://yourinstance.service-now.com/oauth_token.do
+```
+
+</details>
+
+<details>
+<summary><strong>Salesforce – Connected App (OAuth 2.0)</strong></summary>
+
+Salesforce uses **Connected Apps** for OAuth 2.0 integration.
+
+1. **Sign in** to Salesforce as a System Administrator.
+2. Navigate to **Setup → Apps → App Manager** (or search "App Manager" in Quick Find).
+3. Click **New Connected App** (top right).
+4. Fill in the **Basic Information**:
+   - **Connected App Name:** `ESS-MCP Copilot`
+   - **API Name:** `ESS_MCP_Copilot`
+   - **Contact Email:** your admin email
+5. Under **API (Enable OAuth Settings)**:
+   - ✅ **Enable OAuth Settings**
+   - **Callback URL:** `https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect`
+   - **Selected OAuth Scopes** — add:
+     - `Full access (full)`
+     - `Perform requests at any time (refresh_token, offline_access)`
+     - Or more granular: `Access and manage your data (api)`, `Access custom permissions (custom_permissions)`
+   - ✅ **Require Secret for Web Server Flow**
+   - ✅ **Require Secret for Refresh Token Flow**
+   - ✅ **Enable Authorization Code and Credentials Flow**
+6. Click **Save**. Wait 2–10 minutes for the Connected App to propagate.
+7. Click **Manage Consumer Details** to view and copy the **Consumer Key** (Client ID) and **Consumer Secret** (Client Secret).
+8. **Configure Policies** (optional but recommended):
+   - Go to **Setup → Connected Apps → Manage Connected Apps**.
+   - Click your app → **Edit Policies**.
+   - Set **Permitted Users** to "Admin approved users are pre-authorized" if you want to restrict access.
+   - Set **IP Relaxation** as appropriate.
+
+**Token Endpoints:**
+```
+Authorization: https://login.salesforce.com/services/oauth2/authorize
+Token:         https://login.salesforce.com/services/oauth2/token
+```
+For sandboxes, replace `login.salesforce.com` with `test.salesforce.com`.
+
+</details>
+
+<details>
+<summary><strong>Jira Cloud – OAuth 2.0 App (3LO)</strong></summary>
+
+Jira Cloud uses the **Atlassian Developer Console** for OAuth 2.0 (3-legged OAuth).
+
+1. Go to [developer.atlassian.com/console/myapps](https://developer.atlassian.com/console/myapps/) and sign in.
+2. Click **Create** → **OAuth 2.0 integration**.
+3. Fill in:
+   - **Name:** `ESS-MCP Copilot`
+   - **Agree** to the developer terms.
+4. Click **Create**.
+5. In your app settings, go to **Authorization** → **Add** next to **OAuth 2.0 (3LO)**.
+6. Set the **Callback URL:** `https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect`
+7. Go to **Permissions** and add the required Jira scopes:
+   - `read:jira-work` – Read Jira issues, projects, boards
+   - `write:jira-work` – Create/update issues, transitions
+   - `read:jira-user` – Read user profiles
+   - `manage:jira-project` – Create/manage projects
+   - `manage:jira-configuration` – Board and sprint management
+8. Go to **Settings** to find your **Client ID** and **Secret**.
+9. **Distribute your app** (for production):
+   - Go to **Distribution** → Enable sharing.
+   - Submit for Atlassian Marketplace review if distributing externally.
+
+**Token Endpoints:**
+```
+Authorization: https://auth.atlassian.com/authorize
+Token:         https://auth.atlassian.com/oauth/token
+```
+
+**Important:** Jira Cloud OAuth 2.0 tokens require a `cloud_id` for API calls:
+```
+GET https://api.atlassian.com/oauth/token/accessible-resources
+→ Returns cloud IDs for authorized sites
+API Base: https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/
+```
+
+</details>
+
+---
+
+## 🔗 Microsoft 365 Copilot – Declarative Agent with RemoteMCP
+
+ESS-MCP servers can be consumed by **Microsoft 365 Copilot** as a **declarative agent** using the **RemoteMCP** plugin type. This section covers how to register OAuth in the **Teams Developer Center** and configure the `ai-plugin.json` manifest.
+
+### Registering OAuth in Teams Developer Center
+
+1. **Open Teams Developer Portal:**
+   - Go to [dev.teams.microsoft.com](https://dev.teams.microsoft.com/).
+   - Sign in with your Microsoft 365 admin or developer account.
+
+2. **Create or open your app:**
+   - Go to **Apps** → **New app** (or select an existing declarative agent app).
+   - Fill in the basic details (name, description, icons).
+
+3. **Register an OAuth connection:**
+   - Navigate to **Tools** → **OAuth client registrations** (or find it under the app's **Configure** section).
+   - Click **New OAuth client registration**.
+   - Fill in the registration form:
+
+   | Field | Value |
+   |-------|-------|
+   | **Registration name** | A descriptive name, e.g. `workday-oauth` or `salesforce-oauth` |
+   | **Client ID** | The OAuth Client ID from your SaaS platform (see guides above) |
+   | **Client Secret** | The OAuth Client Secret from your SaaS platform |
+   | **Authorization endpoint** | The SaaS platform's authorization URL |
+   | **Token endpoint** | The SaaS platform's token URL |
+   | **Scope** | Space-separated list of scopes required by the SaaS platform |
+   | **Token exchange endpoint** | Leave blank unless using token exchange |
+
+   **Example for Salesforce:**
+
+   | Field | Value |
+   |-------|-------|
+   | Registration name | `salesforce-oauth` |
+   | Client ID | `3MVG9...your_consumer_key` |
+   | Client Secret | `your_consumer_secret` |
+   | Authorization endpoint | `https://login.salesforce.com/services/oauth2/authorize` |
+   | Token endpoint | `https://login.salesforce.com/services/oauth2/token` |
+   | Scope | `full refresh_token` |
+
+4. **Copy the Registration ID** — you will need it in your `ai-plugin.json`.
+
+5. **Repeat** for each SaaS platform you want to connect (one registration per OAuth provider).
+
+### Configuring `ai-plugin.json` for RemoteMCP
+
+The `ai-plugin.json` manifest tells Microsoft 365 Copilot how to connect to your MCP server. Place this file in your declarative agent's app package.
+
+```json
+{
+  "$schema": "https://aka.ms/json-schemas/copilot/plugin/v2.2/schema.json",
+  "schema_version": "v2.2",
+  "name_for_human": "Enterprise Self-Service",
+  "description_for_human": "HR, IT, CRM, and project management tools powered by MCP",
+  "description_for_model": "Connects to Workday, ServiceNow, Salesforce, and Jira via MCP servers. Use these tools for employee self-service, IT incident management, CRM operations, and project tracking.",
+  "contact_email": "admin@yourorg.com",
+  "namespace": "ess_mcp",
+  "runtimes": [
+    {
+      "type": "RemoteMCP",
+      "spec": {
+        "url": "https://essmcp-workday.azurecontainerapps.io/workday/mcp",
+        "transport": "streamable-http"
+      },
+      "auth": {
+        "type": "OAuthPluginVault",
+        "reference_id": "{workday-oauth-registration-id}"
+      }
+    },
+    {
+      "type": "RemoteMCP",
+      "spec": {
+        "url": "https://essmcp-servicenow.azurecontainerapps.io/servicenow/mcp",
+        "transport": "streamable-http"
+      },
+      "auth": {
+        "type": "OAuthPluginVault",
+        "reference_id": "{servicenow-oauth-registration-id}"
+      }
+    },
+    {
+      "type": "RemoteMCP",
+      "spec": {
+        "url": "https://essmcp-salesforce.azurecontainerapps.io/salesforce/mcp",
+        "transport": "streamable-http"
+      },
+      "auth": {
+        "type": "OAuthPluginVault",
+        "reference_id": "{salesforce-oauth-registration-id}"
+      }
+    },
+    {
+      "type": "RemoteMCP",
+      "spec": {
+        "url": "https://essmcp-jira.azurecontainerapps.io/jira/mcp",
+        "transport": "streamable-http"
+      },
+      "auth": {
+        "type": "OAuthPluginVault",
+        "reference_id": "{jira-oauth-registration-id}"
+      }
+    }
+  ]
+}
+```
+
+> **Note:** Replace `{workday-oauth-registration-id}` etc. with the actual Registration IDs from the Teams Developer Center OAuth client registrations. Replace the URLs with your deployed MCP server endpoints.
+
+### Single-Server Configuration
+
+If you only need one MCP server (e.g. just Jira), your `ai-plugin.json` is simpler:
+
+```json
+{
+  "$schema": "https://aka.ms/json-schemas/copilot/plugin/v2.2/schema.json",
+  "schema_version": "v2.2",
+  "name_for_human": "Jira Project Management",
+  "description_for_human": "Manage Jira issues, sprints, and projects from Copilot",
+  "description_for_model": "Connects to Jira Cloud via MCP for issue tracking, sprint management, and project creation.",
+  "contact_email": "admin@yourorg.com",
+  "namespace": "jira_mcp",
+  "runtimes": [
+    {
+      "type": "RemoteMCP",
+      "spec": {
+        "url": "https://essmcp-jira.azurecontainerapps.io/jira/mcp",
+        "transport": "streamable-http"
+      },
+      "auth": {
+        "type": "OAuthPluginVault",
+        "reference_id": "{jira-oauth-registration-id}"
+      }
+    }
+  ]
+}
+```
+
+### Declarative Agent Manifest
+
+Your declarative agent's `declarativeAgent.json` references the plugin:
+
+```json
+{
+  "$schema": "https://aka.ms/json-schemas/copilot/declarative-agent/v1.3/schema.json",
+  "version": "v1.3",
+  "name": "Enterprise Self-Service Assistant",
+  "description": "AI assistant for HR, IT, CRM, and project management across Workday, ServiceNow, Salesforce, and Jira.",
+  "instructions": "You are an Enterprise Self-Service Assistant. Help employees with HR tasks (Workday), IT issues (ServiceNow), CRM operations (Salesforce), and project management (Jira). Always confirm before creating or updating records.",
+  "actions": [
+    {
+      "id": "essMcpPlugin",
+      "file": "ai-plugin.json"
+    }
+  ]
+}
+```
+
+### End-to-End Setup Checklist
+
+1. ✅ Deploy ESS-MCP servers to Azure Container Apps (see [Azure Deployment](#%EF%B8%8F-azure-deployment))
+2. ✅ Create OAuth clients in each SaaS platform (see [OAuth Client Setup](#oauth-client-setup-per-saas-platform))
+3. ✅ Register OAuth connections in [Teams Developer Center](https://dev.teams.microsoft.com/)
+4. ✅ Create `ai-plugin.json` with `RemoteMCP` runtimes pointing to your MCP endpoints
+5. ✅ Create `declarativeAgent.json` referencing the plugin
+6. ✅ Package and upload your declarative agent app in Teams Developer Portal
+7. ✅ Test in Microsoft 365 Copilot — the agent will prompt users for OAuth consent on first use
+
 ---
 
 ## 🤖 Agent System Prompt
