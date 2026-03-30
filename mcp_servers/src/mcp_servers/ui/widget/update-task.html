@@ -1,5 +1,5 @@
 <html>
-  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -95,6 +95,16 @@
         background: rgba(255,107,107,.06); border: 1px solid rgba(255,107,107,.3);
         color: var(--neg);
       }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color .15s, border-color .15s; margin-left: auto; flex-shrink: 0; }
+      .maximize-btn:hover { color: var(--sf-accent); border-color: var(--sf-accent); }
+    
+      /* Enhanced interactivity */
+      .card { transition: border-color .2s, box-shadow .2s; }
+      .card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+      :root[data-theme="dark"] .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+      .btn, .maximize-btn, .hub-expand-btn { transition: all .15s ease; }
+      [class*="-row"]:not(.form-grid):not(.field-row):not(.actions):not(.stats-row):not(.bar-row):not(.type-grid):not(.member-row):not(.funnel-row):not(.opp-row):not(.reports-row) { transition: background .15s; }
+      @media (max-width: 480px) { .form-grid, .grid, .meta-grid, .totals-grid, .stats-row { grid-template-columns: 1fr !important; display: grid !important; flex-direction: column; } .stats-row { flex-wrap: wrap; } .stat-card { min-width: 0; } }
     </style>
   </head>
   <body>
@@ -109,6 +119,7 @@
           <div class="title">Update Task</div>
           <div class="subtitle">Salesforce &bull; Edit &amp; Submit</div>
         </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
       </div>
 
       <div id="statusBanner" class="status-banner"></div>
@@ -249,6 +260,11 @@
         return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
       }
     })();
+    var _expandSvg='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+    var _collapseSvg='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+    var _isFS=false,_maxBtn=document.getElementById("maximizeBtn");
+    async function toggleFS(){if(!window.openai||typeof window.openai.requestDisplayMode!=="function")return;try{await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"});_isFS=!_isFS;_maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg;_maxBtn.title=_isFS?"Restore":"Maximize"}catch(e){}}
+    if(_maxBtn){if(window.openai&&typeof window.openai.requestDisplayMode==="function")_maxBtn.addEventListener("click",toggleFS);else _maxBtn.style.display="none"}
     </script>
   </body>
 </html>
