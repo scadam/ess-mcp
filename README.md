@@ -19,12 +19,12 @@
 
 | Server | Platform | Tools | Widgets | Key Actions |
 |--------|----------|-------|---------|-------------|
-| **Workday** | HR / HCM | 21 | 6 | Book leave, change title, view compensation, org charts, **team dashboard** |
+| **Workday** | HR / HCM | 23 | 6 | Book leave, change title, approve/deny tasks, view compensation, org charts, **team dashboard** |
 | **ServiceNow** | ITSM | 36 | 5 | Create/update incidents, approve/reject requests, order catalog items, manage change requests, **team incidents** |
 | **Salesforce** | CRM | 39 | 9 | Create opportunities/leads/quotes, approve/reject, convert leads, run reports, **team pipeline** |
 | **Jira** | Project Management | 21 | 5 | Create/update issues, transition workflows, log work, manage sprints, **team workload** |
 
-> **117 tools total** — 37 are write/action tools (create, update, approve, transition), 11 render interactive form widgets, and the rest provide rich read access. Designed for AI agents that **can act**, not just answer questions.
+> **119 tools total** — 38 are write/action tools (create, update, approve, transition), 11 render interactive form widgets, and the rest provide rich read access. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -285,7 +285,7 @@ az group delete --name essmcp-rg --yes --no-wait
 
 > *Employee profiles, leave management, compensation, org hierarchy, learning, and team calendar.*
 
-**Tools (21):**
+**Tools (23):**
 
 | Tool | Type | Description |
 |------|------|-------------|
@@ -310,6 +310,8 @@ az group delete --name essmcp-rg --yes --no-wait
 | `get_team_overview` | 📖 Read | 👔 **Manager:** Team headcount dashboard with role/org breakdown |
 | `get_team_compensation_summary` | 📖 Read | 👔 **Manager:** Aggregate team salary statistics |
 | `get_team_performance_summary` | 📖 Read | 👔 **Manager:** Pending reviews, team absences, action items |
+| `action_inbox_task` | ✏️ **Action** | **Approve or reject an inbox task** |
+| `get_inbox_task_detail` | 📖 Read | Get detailed info for a specific inbox task |
 
 **Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `team-dashboard`
 
