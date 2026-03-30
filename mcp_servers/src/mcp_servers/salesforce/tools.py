@@ -119,6 +119,7 @@ async def tool_list_tasks(
     priority: Optional[str] = None,
     owner_name: Optional[str] = None,
     limit: int = 20,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """List Salesforce tasks.
 
@@ -156,7 +157,7 @@ async def tool_list_tasks(
     }
 
 
-async def tool_get_task(task_id: str) -> Dict[str, Any]:
+async def tool_get_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Get details for a single Salesforce task.
 
     Args:
@@ -181,6 +182,7 @@ async def tool_update_task(
     priority: Optional[str] = None,
     description: Optional[str] = None,
     subject: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Update a Salesforce task.
 
@@ -225,6 +227,7 @@ async def tool_update_task(
 async def tool_list_approvals(
     status: Optional[str] = None,
     limit: int = 20,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """List Salesforce approval work items (pending approvals).
 
@@ -265,6 +268,7 @@ async def tool_approve_reject(
     work_item_id: str,
     action: str,
     comments: str = "",
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Approve or reject a Salesforce approval work item.
 
@@ -491,6 +495,7 @@ async def tool_list_cases(
     case_type: Optional[str] = None,
     search_text: Optional[str] = None,
     limit: int = 20,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """List Salesforce compliance cases.
 
@@ -537,7 +542,7 @@ async def tool_list_cases(
     }
 
 
-async def tool_get_case(case_id: str) -> Dict[str, Any]:
+async def tool_get_case(case_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Get full details for a single Salesforce compliance case.
 
     Args:
@@ -592,6 +597,7 @@ async def tool_create_case(
     origin: str = "Copilot",
     contact_name: Optional[str] = None,
     reason: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Create a new Salesforce compliance case.
 
@@ -662,6 +668,7 @@ async def tool_update_case(
     subject: Optional[str] = None,
     compliance_type: Optional[str] = None,
     comment: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Update an existing Salesforce compliance case.
 
@@ -897,6 +904,7 @@ async def tool_list_accounts(
     industry: Optional[str] = None,
     owner_name: Optional[str] = None,
     limit: int = 25,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """List Salesforce accounts for CRM workflows."""
     clauses: List[str] = []
@@ -928,6 +936,7 @@ async def tool_list_contacts(
     account_id: Optional[str] = None,
     search_text: Optional[str] = None,
     limit: int = 25,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """List Salesforce contacts, optionally scoped to an account."""
     clauses: List[str] = []
@@ -961,6 +970,7 @@ async def tool_list_opportunities(
     owner_name: Optional[str] = None,
     include_closed: bool = False,
     limit: int = 40,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """List Salesforce opportunities for pipeline workflows."""
     clauses: List[str] = []
@@ -993,6 +1003,7 @@ async def tool_get_account_360(
     account_id: Optional[str] = None,
     account_name: Optional[str] = None,
     section_limit: int = 12,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Get a 360-degree account view with contacts, opportunities, activities, cases, and tasks."""
     if not account_id and not account_name:
@@ -1083,6 +1094,7 @@ async def tool_get_pipeline_dashboard(
     owner_name: Optional[str] = None,
     include_closed: bool = False,
     limit: int = 200,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Get a sales pipeline dashboard (funnel/tornado-friendly aggregated view)."""
     clauses: List[str] = []
@@ -1181,6 +1193,7 @@ async def tool_create_opportunity(
     description: Optional[str] = None,
     lead_source: Optional[str] = None,
     opportunity_type: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Create a Salesforce opportunity."""
     if not close_date:
@@ -1227,6 +1240,7 @@ async def tool_create_opportunity_task(
     priority: str = "Normal",
     status: str = "Not Started",
     description: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Create a Salesforce task linked to an opportunity."""
     payload: Dict[str, Any] = {
@@ -1266,6 +1280,7 @@ async def tool_update_opportunity(
     description: Optional[str] = None,
     lead_source: Optional[str] = None,
     opportunity_type: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Update an existing Salesforce opportunity.
 
@@ -1364,6 +1379,7 @@ async def tool_create_event(
     contact_id: Optional[str] = None,
     location: Optional[str] = None,
     description: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Create a Salesforce event, optionally linked to account/opportunity/contact."""
     payload: Dict[str, Any] = {
@@ -1407,6 +1423,7 @@ async def tool_update_event(
     contact_id: Optional[str] = None,
     location: Optional[str] = None,
     description: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Update an existing Salesforce event.
 
@@ -1493,6 +1510,7 @@ async def tool_list_leads(
     lead_source: Optional[str] = None,
     search_text: Optional[str] = None,
     limit: int = 20,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """List or search Salesforce leads.
 
@@ -1532,7 +1550,7 @@ async def tool_list_leads(
     }
 
 
-async def tool_get_lead(lead_id: str) -> Dict[str, Any]:
+async def tool_get_lead(lead_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Get details for a single Salesforce lead.
 
     Args:
@@ -1615,6 +1633,7 @@ async def tool_create_lead(
     lead_source: Optional[str] = None,
     status: str = "Open - Not Contacted",
     description: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Create a new Salesforce lead.
 
@@ -1679,6 +1698,7 @@ async def tool_update_lead(
     lead_source: Optional[str] = None,
     status: Optional[str] = None,
     description: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Update an existing Salesforce lead.
 
@@ -1742,6 +1762,7 @@ async def tool_convert_lead(
     contact_id: Optional[str] = None,
     opportunity_name: Optional[str] = None,
     do_not_create_opportunity: bool = False,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Convert a Salesforce lead to an account, contact, and optionally an opportunity.
 
@@ -1812,6 +1833,7 @@ async def tool_list_campaigns(
     status: Optional[str] = None,
     campaign_type: Optional[str] = None,
     limit: int = 20,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """List Salesforce marketing campaigns.
 
@@ -1845,7 +1867,7 @@ async def tool_list_campaigns(
     }
 
 
-async def tool_get_campaign(campaign_id: str) -> Dict[str, Any]:
+async def tool_get_campaign(campaign_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Get details for a Salesforce campaign including member summary.
 
     Args:
@@ -1943,6 +1965,7 @@ async def tool_create_quote(
     expiration_date: Optional[str] = None,
     description: Optional[str] = None,
     status: str = "Draft",
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Create a Salesforce quote linked to an opportunity.
 
@@ -1994,6 +2017,7 @@ async def tool_update_quote(
     expiration_date: Optional[str] = None,
     description: Optional[str] = None,
     status: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Update an existing Salesforce quote.
 
@@ -2045,6 +2069,7 @@ async def tool_list_products(
     family: Optional[str] = None,
     search_text: Optional[str] = None,
     limit: int = 25,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """List products from the Salesforce product catalog.
 
@@ -2097,6 +2122,7 @@ async def tool_list_products(
 async def tool_get_forecast(
     owner_name: Optional[str] = None,
     fiscal_year: Optional[int] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Get a sales forecast / pipeline summary aggregated by stage.
 
@@ -2158,7 +2184,7 @@ async def tool_get_forecast(
 # ── Reports ─────────────────────────────────────────────────────────
 
 
-async def tool_list_reports(limit: int = 20) -> Dict[str, Any]:
+async def tool_list_reports(limit: int = 20, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """List available Salesforce reports.
 
     Args:
@@ -2187,7 +2213,7 @@ async def tool_list_reports(limit: int = 20) -> Dict[str, Any]:
     }
 
 
-async def tool_run_report(report_id: str) -> Dict[str, Any]:
+async def tool_run_report(report_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Run a Salesforce report and return results.
 
     Args:
@@ -2216,6 +2242,7 @@ async def tool_run_report(report_id: str) -> Dict[str, Any]:
 
 async def tool_get_team_pipeline_summary(
     owner_ids: str = "",
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Get an aggregated pipeline summary grouped by sales rep.
 
@@ -2312,6 +2339,7 @@ _VALID_PERIODS = {"THIS_QUARTER", "THIS_MONTH", "THIS_YEAR", "LAST_QUARTER"}
 
 async def tool_get_team_performance_metrics(
     period: str = "THIS_QUARTER",
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Get team performance metrics and leaderboard for sales reps.
 
