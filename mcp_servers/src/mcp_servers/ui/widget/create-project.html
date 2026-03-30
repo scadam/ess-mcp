@@ -39,6 +39,8 @@
       .result-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
       .result-row { display: flex; gap: 6px; align-items: center; font-size: 12px; margin-top: 4px; }
       .result-label { color: var(--muted); min-width: 60px; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color .15s, border-color .15s; margin-left: auto; flex-shrink: 0; }
+      .maximize-btn:hover { color: var(--jira-mid); border-color: var(--jira-mid); }
     </style>
   </head>
   <body>
@@ -53,6 +55,7 @@
           <div class="title">Create Jira Project</div>
           <div class="subtitle">Jira &bull; New Project</div>
         </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
       </div>
       <div id="statusBanner" class="status-banner"></div>
       <div id="resultCard" class="result-card">
@@ -184,6 +187,11 @@
       function validateForm() { submitBtn.disabled = !(nameInput.value.trim().length > 0 && (isUpdate || keyInput.value.trim().length >= 2)); }
       function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
     })();
+    var _expandSvg='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+    var _collapseSvg='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+    var _isFS=false,_maxBtn=document.getElementById("maximizeBtn");
+    async function toggleFS(){if(!window.openai||typeof window.openai.requestDisplayMode!=="function")return;try{await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"});_isFS=!_isFS;_maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg;_maxBtn.title=_isFS?"Restore":"Maximize"}catch(e){}}
+    if(_maxBtn){if(window.openai&&typeof window.openai.requestDisplayMode==="function")_maxBtn.addEventListener("click",toggleFS);else _maxBtn.style.display="none"}
     </script>
   </body>
 </html>
