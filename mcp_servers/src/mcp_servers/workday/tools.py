@@ -688,7 +688,7 @@ async def tool_search_learning_content(
 # ── Provider functions for TaskServer integration ───────────────────
 
 
-async def provider_list_tasks(ctx=None) -> List[Dict[str, Any]]:
+async def provider_list_tasks(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """List Workday inbox tasks that are NOT approvals.
 
     Returns raw inbox task data for TaskServer normalization.
@@ -705,7 +705,7 @@ async def provider_list_tasks(ctx=None) -> List[Dict[str, Any]]:
     return [t for t in tasks if t.get("stepType") != "Approval"]
 
 
-async def provider_list_approvals(ctx=None) -> List[Dict[str, Any]]:
+async def provider_list_approvals(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """List Workday inbox tasks where stepType is Approval.
 
     Only inbox tasks with stepType == "Approval" are approvable
@@ -722,7 +722,7 @@ async def provider_list_approvals(ctx=None) -> List[Dict[str, Any]]:
     return [t for t in tasks if t.get("stepType") == "Approval"]
 
 
-async def provider_list_learning(ctx=None) -> List[Dict[str, Any]]:
+async def provider_list_learning(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """List Workday required learning assignments for TaskServer normalization."""
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
@@ -735,7 +735,7 @@ async def provider_list_learning(ctx=None) -> List[Dict[str, Any]]:
 
 
 async def provider_get_approval_detail(
-    task_id: str, ctx=None
+    task_id: str, ctx: Optional[Context] = None
 ) -> Dict[str, Any]:
     """Get detail for a specific Workday inbox task."""
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
@@ -758,7 +758,7 @@ async def provider_get_approval_detail(
 
 
 async def provider_execute_approval(
-    task_id: str, decision: str, comment: str = "", ctx=None
+    task_id: str, decision: str, comment: str = "", ctx: Optional[Context] = None
 ) -> Dict[str, Any]:
     """Approve or reject a Workday inbox task.
 
