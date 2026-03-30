@@ -759,4 +759,26 @@ SERVICENOW_RESOURCES = {
             }
         },
     },
+    "create-change-request": {
+        "description": "Change request creation/update form – create or update ServiceNow change requests with type, risk, impact, and scheduling fields.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("create-change-request.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "create-problem": {
+        "description": "Problem creation/update form – create or update ServiceNow problem records with category, priority, impact, and urgency fields.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("create-problem.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }

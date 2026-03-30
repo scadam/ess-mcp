@@ -424,6 +424,56 @@ async def tool_create_project(
         return {"created": False, "error": str(exc)}
 
 
+async def tool_update_project(
+    key: str,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    lead_account_id: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Update an existing Jira project.
+
+    Only the provided fields are modified; omitted fields remain unchanged.
+
+    Args:
+        key: Project key (e.g. "PROJ").
+        name: New display name for the project.
+        description: New project description.
+        lead_account_id: New Atlassian account ID for the project lead.
+    """
+    LOGGER.info("jira_update_project", key=key)
+
+    try:
+        payload: Dict[str, Any] = {}
+        if name is not None:
+            payload["name"] = name
+        if description is not None:
+            payload["description"] = description
+        if lead_account_id is not None:
+            payload["leadAccountId"] = lead_account_id
+
+        if payload:
+            await _jira_put(f"/project/{key}", payload, ctx)
+
+        # Fetch updated project
+        updated = await _jira_get(f"/project/{key}", ctx)
+
+        return {
+            "success": True,
+            "project": {
+                "id": updated.get("id"),
+                "key": updated.get("key"),
+                "name": updated.get("name"),
+                "description": updated.get("description"),
+                "lead": updated.get("lead", {}).get("displayName"),
+                "self": updated.get("self"),
+            },
+        }
+    except Exception as exc:
+        LOGGER.error("jira_update_project_error", key=key, error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 def _build_adf(text: str) -> Dict[str, Any]:
     """Build a simple ADF document from plain text."""
     return {
@@ -1226,6 +1276,17 @@ JIRA_TOOL_SPECS: list[dict] = [
             "openai/outputTemplate": "ui://widget/create-project.html",
             "openai/toolInvocation/invoking": "Creating Jira project\u2026",
             "openai/toolInvocation/invoked": "Project created.",
+        },
+    },
+    {
+        "name": "update_project",
+        "func": tool_update_project,
+        "summary": "Update an existing Jira project. Called by the create-project widget when the user submits an update.",
+        "annotations": {"readOnlyHint": False},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/create-project.html",
+            "openai/toolInvocation/invoking": "Updating project\u2026",
+            "openai/toolInvocation/invoked": "Project updated.",
         },
     },
     {

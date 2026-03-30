@@ -1,0 +1,155 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --input-bg: #0f131a; --btn-bg: #152235; --btn-border: #243145; --btn-primary-bg: linear-gradient(135deg,#1a6dff,#4cc2ff); --btn-primary-border: #2a80ff; --success-border: #1a5a3a; --success-glow: rgba(43,212,143,.16); --error-bg: rgba(255,107,107,.08); --error-border: rgba(255,107,107,.25); --sf-accent: #1589ee; --sf-glow: rgba(21,137,238,.14); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --input-bg: #ffffff; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-primary-bg: linear-gradient(135deg,#0078d4,#4cc2ff); --btn-primary-border: #0078d4; --success-border: #107c10; --success-glow: rgba(16,124,16,.08); --error-bg: rgba(209,52,56,.06); --error-border: rgba(209,52,56,.25); --sf-accent: #0070d2; --sf-glow: rgba(0,112,210,.08); }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sf-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sf-glow); border: 1px solid var(--sf-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+      .section-label { font-size: 11px; color: var(--sf-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .full-width { grid-column: 1 / -1; }
+      .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+      .field input, .field select, .field textarea { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; font-family: inherit; }
+      .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--sf-accent); }
+      .field select option { background: var(--card); color: var(--text); }
+      .field textarea { resize: vertical; }
+      .actions { margin-top: 14px; display: flex; gap: 8px; }
+      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; font-family: inherit; }
+      .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-border); font-weight: 600; }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .success-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--success-glow); border: 1px solid var(--success-border); font-size: 12px; color: var(--pos); }
+      .error-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--error-bg); border: 1px solid var(--error-border); font-size: 12px; color: var(--neg); }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--sf-accent); border-color: var(--sf-accent); }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sf-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sf-accent)"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div><div class="title" id="pageTitle">Create Lead</div><div class="subtitle" id="pageSubtitle">Salesforce &middot; CRM</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div class="card">
+        <div class="section-label">Lead Details</div>
+        <div class="form-grid">
+          <div class="field"><label for="first_name">First Name *</label><input id="first_name" type="text" placeholder="e.g. Jane" /></div>
+          <div class="field"><label for="last_name">Last Name *</label><input id="last_name" type="text" placeholder="e.g. Smith" /></div>
+          <div class="field"><label for="company">Company *</label><input id="company" type="text" placeholder="e.g. Acme Corp" /></div>
+          <div class="field"><label for="title">Title</label><input id="title" type="text" placeholder="e.g. VP of Sales" /></div>
+          <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="e.g. jane@acme.com" /></div>
+          <div class="field"><label for="phone">Phone</label><input id="phone" type="text" placeholder="e.g. +1 555-0100" /></div>
+          <div class="field"><label for="lead_source">Lead Source</label><select id="lead_source"><option value="">-- Select source --</option><option value="Web">Web</option><option value="Phone Inquiry">Phone Inquiry</option><option value="Partner Referral">Partner Referral</option><option value="Purchased List">Purchased List</option><option value="Other">Other</option></select></div>
+          <div class="field"><label for="status">Status</label><select id="status"><option value="Open - Not Contacted">Open - Not Contacted</option><option value="Working - Contacted">Working - Contacted</option><option value="Closed - Converted">Closed - Converted</option><option value="Closed - Not Converted">Closed - Not Converted</option></select></div>
+          <div class="field full-width"><label for="description">Description</label><textarea id="description" rows="3" placeholder="Additional details about this lead"></textarea></div>
+        </div>
+        <div id="msgArea"></div>
+        <div class="actions">
+          <button class="btn btn-primary" id="submitBtn" disabled>Create Lead</button>
+          <button class="btn" id="resetBtn">Reset</button>
+        </div>
+      </div>
+      <div class="footer" id="footerText">Powered by <strong>salesforce / create_lead</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var firstNameEl = document.getElementById("first_name"), lastNameEl = document.getElementById("last_name"), companyEl = document.getElementById("company"), titleEl = document.getElementById("title"), emailEl = document.getElementById("email"), phoneEl = document.getElementById("phone"), leadSourceEl = document.getElementById("lead_source"), statusEl = document.getElementById("status"), descEl = document.getElementById("description");
+      var submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), msgArea = document.getElementById("msgArea"), _maxBtn = document.getElementById("maximizeBtn");
+      var _isFS = false, isUpdate = false, currentLeadId = null;
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function validate() { submitBtn.disabled = !(firstNameEl.value.trim() && lastNameEl.value.trim() && companyEl.value.trim()); }
+      [firstNameEl, lastNameEl, companyEl].forEach(function(el) { el.addEventListener("input", validate); });
+
+      resetBtn.addEventListener("click", function() {
+        firstNameEl.value = ""; lastNameEl.value = ""; companyEl.value = ""; titleEl.value = ""; emailEl.value = ""; phoneEl.value = ""; leadSourceEl.value = ""; statusEl.value = "Open - Not Contacted"; descEl.value = "";
+        msgArea.innerHTML = ""; isUpdate = false; currentLeadId = null;
+        submitBtn.textContent = "Create Lead"; document.getElementById("pageTitle").textContent = "Create Lead";
+        document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / create_lead</strong> via MCP';
+        submitBtn.disabled = true; reportHeight();
+      });
+
+      submitBtn.addEventListener("click", async function() {
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        submitBtn.disabled = true; submitBtn.textContent = "Submitting\u2026"; msgArea.innerHTML = "";
+        try {
+          var output;
+          if (isUpdate && currentLeadId) {
+            var updateArgs = { lead_id: currentLeadId };
+            if (firstNameEl.value.trim()) updateArgs.first_name = firstNameEl.value.trim();
+            if (lastNameEl.value.trim()) updateArgs.last_name = lastNameEl.value.trim();
+            if (companyEl.value.trim()) updateArgs.company = companyEl.value.trim();
+            if (titleEl.value.trim()) updateArgs.title = titleEl.value.trim();
+            if (emailEl.value.trim()) updateArgs.email = emailEl.value.trim();
+            if (phoneEl.value.trim()) updateArgs.phone = phoneEl.value.trim();
+            if (leadSourceEl.value) updateArgs.lead_source = leadSourceEl.value;
+            if (statusEl.value) updateArgs.status = statusEl.value;
+            if (descEl.value.trim()) updateArgs.description = descEl.value.trim();
+            output = await window.openai.callTool("update_lead", updateArgs);
+            var data = output && output.structuredContent ? output.structuredContent : output;
+            if (!data || !data.success) throw new Error((data && data.error) || "Lead update failed");
+            msgArea.innerHTML = '<div class="success-msg">\u2713 Lead updated successfully.</div>';
+          } else {
+            var args = { first_name: firstNameEl.value.trim(), last_name: lastNameEl.value.trim(), company: companyEl.value.trim() };
+            if (titleEl.value.trim()) args.title = titleEl.value.trim();
+            if (emailEl.value.trim()) args.email = emailEl.value.trim();
+            if (phoneEl.value.trim()) args.phone = phoneEl.value.trim();
+            if (leadSourceEl.value) args.lead_source = leadSourceEl.value;
+            if (statusEl.value) args.status = statusEl.value;
+            if (descEl.value.trim()) args.description = descEl.value.trim();
+            output = await window.openai.callTool("create_lead", args);
+            var data = output && output.structuredContent ? output.structuredContent : output;
+            if (!data || !data.created) throw new Error((data && data.error) || "Lead creation failed");
+            var lead = data.lead || {};
+            isUpdate = true; currentLeadId = lead.id; submitBtn.textContent = "Update Lead";
+            document.getElementById("pageTitle").textContent = "Update Lead";
+            document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + (lead.name || lead.last_name || "Lead");
+            document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / update_lead</strong> via MCP';
+            msgArea.innerHTML = '<div class="success-msg">\u2713 Lead <strong>' + esc(lead.name || (lead.first_name + " " + lead.last_name) || "") + '</strong> created successfully.</div>';
+          }
+        } catch (err) { msgArea.innerHTML = '<div class="error-msg">' + esc(err.message || "Operation failed") + '</div>'; }
+        finally { submitBtn.textContent = isUpdate ? "Update Lead" : "Create Lead"; validate(); reportHeight(); }
+      });
+
+      /* ── Maximize / Fullscreen toggle ── */
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; reportHeight(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+
+      /* ── Pre-fill from toolOutput / toolInput ── */
+      var existingLead = toolOutput.lead || toolOutput;
+      isUpdate = !!(existingLead && existingLead.id);
+      if (isUpdate) {
+        currentLeadId = existingLead.id; submitBtn.textContent = "Update Lead";
+        document.getElementById("pageTitle").textContent = "Update Lead";
+        document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + (existingLead.name || existingLead.last_name || "Lead");
+        document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / update_lead</strong> via MCP';
+      }
+      var inp = isUpdate ? Object.assign({}, existingLead, toolInput) : toolInput;
+      if (inp.first_name) firstNameEl.value = inp.first_name;
+      if (inp.last_name) lastNameEl.value = inp.last_name;
+      if (inp.company) companyEl.value = inp.company;
+      if (inp.title) titleEl.value = inp.title;
+      if (inp.email) emailEl.value = inp.email;
+      if (inp.phone) phoneEl.value = inp.phone;
+      if (inp.lead_source) leadSourceEl.value = inp.lead_source;
+      if (inp.status) statusEl.value = inp.status;
+      if (inp.description) descEl.value = inp.description;
+      validate(); reportHeight();
+    </script>
+  </body>
+</html>

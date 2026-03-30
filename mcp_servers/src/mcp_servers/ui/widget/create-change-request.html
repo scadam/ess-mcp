@@ -1,0 +1,180 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)');function t(){if(!d.dataset.theme)d.dataset.theme=m.matches?'dark':'light';}t();m.addEventListener('change',function(){if(!d.getAttribute('data-theme'))t();});new MutationObserver(function(){}).observe(d,{attributes:true,attributeFilter:['data-theme']});})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --input-bg: #0f131a; --btn-bg: #152235; --btn-border: #243145; --btn-primary-bg: linear-gradient(135deg,#1a6dff,#4cc2ff); --btn-primary-border: #2a80ff; --success-border: #1a5a3a; --success-glow: rgba(43,212,143,.16); --error-bg: rgba(255,107,107,.08); --error-border: rgba(255,107,107,.25); --sn-accent: #3eb489; --sn-glow: rgba(62,180,137,.12); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --input-bg: #ffffff; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-primary-bg: linear-gradient(135deg,#0078d4,#4cc2ff); --btn-primary-border: #0078d4; --success-border: #107c10; --success-glow: rgba(16,124,16,.08); --error-bg: rgba(209,52,56,.06); --error-border: rgba(209,52,56,.25); --sn-accent: #2e9968; --sn-glow: rgba(46,153,104,.08); }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
+      .wrap { padding: 16px; min-height: 100%; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sn-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sn-glow); border: 1px solid var(--sn-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .full-width { grid-column: 1 / -1; }
+      .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+      .field input, .field select, .field textarea { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; font-family: inherit; }
+      .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+      .field textarea { resize: vertical; }
+      .actions { margin-top: 14px; display: flex; gap: 8px; }
+      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; }
+      .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-border); font-weight: 600; }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .success-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--success-glow); border: 1px solid var(--success-border); font-size: 12px; color: var(--pos); }
+      .error-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--error-bg); border: 1px solid var(--error-border); font-size: 12px; color: var(--neg); }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+      .update-only { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sn-accent)">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div>
+            <div class="title" id="pageTitle">Create Change Request</div>
+            <div class="subtitle" id="pageSubtitle">ServiceNow &middot; New Change</div>
+          </div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="formView">
+        <div class="card">
+          <div class="form-grid">
+            <div class="field full-width"><label for="short_description">Short Description *</label><input id="short_description" type="text" placeholder="Brief summary of the change" /></div>
+            <div class="field"><label for="type">Type</label><select id="type"><option value="">-- Default --</option><option value="Normal">Normal</option><option value="Standard">Standard</option><option value="Emergency">Emergency</option></select></div>
+            <div class="field"><label for="category">Category</label><input id="category" type="text" placeholder="e.g. Hardware, Software" /></div>
+            <div class="field"><label for="risk">Risk</label><select id="risk"><option value="">-- Default --</option><option value="High">High</option><option value="Moderate">Moderate</option><option value="Low">Low</option></select></div>
+            <div class="field"><label for="impact">Impact</label><select id="impact"><option value="">-- Default --</option><option value="1">1 - High</option><option value="2">2 - Medium</option><option value="3">3 - Low</option></select></div>
+            <div class="field"><label for="assignment_group">Assignment Group</label><input id="assignment_group" type="text" placeholder="e.g. Change Management" /></div>
+            <div class="field"><label for="assigned_to">Assigned To</label><input id="assigned_to" type="text" placeholder="e.g. John Smith" /></div>
+            <div class="field"><label for="planned_start_date">Planned Start Date</label><input id="planned_start_date" type="datetime-local" /></div>
+            <div class="field"><label for="planned_end_date">Planned End Date</label><input id="planned_end_date" type="datetime-local" /></div>
+            <div class="field full-width"><label for="description">Description</label><textarea id="description" rows="3" placeholder="Provide detailed description of the change"></textarea></div>
+            <div class="field update-only"><label for="state">State</label><select id="state"><option value="">-- Default --</option><option value="New">New</option><option value="Assess">Assess</option><option value="Authorize">Authorize</option><option value="Scheduled">Scheduled</option><option value="Implement">Implement</option><option value="Review">Review</option><option value="Closed">Closed</option></select></div>
+            <div class="field full-width update-only"><label for="work_notes">Work Notes</label><textarea id="work_notes" rows="2" placeholder="Internal work notes (not visible to requester)"></textarea></div>
+          </div>
+          <div id="errorMsg"></div>
+          <div class="actions">
+            <button class="btn btn-primary" id="submitBtn" disabled>Create Change Request</button>
+            <button class="btn" id="resetBtn">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div class="footer">Powered by <strong>servicenow / create_change_request</strong> via MCP</div>
+    </div>
+    <script>
+      var toolInput = (window.openai && window.openai.toolInput) || {};
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      var shortDescEl = document.getElementById("short_description"), typeEl = document.getElementById("type"), categoryEl = document.getElementById("category"), riskEl = document.getElementById("risk"), impactEl = document.getElementById("impact"), assignGroupEl = document.getElementById("assignment_group"), assignedToEl = document.getElementById("assigned_to"), startDateEl = document.getElementById("planned_start_date"), endDateEl = document.getElementById("planned_end_date"), descEl = document.getElementById("description"), stateEl = document.getElementById("state"), workNotesEl = document.getElementById("work_notes"), submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), errorMsg = document.getElementById("errorMsg");
+      var isUpdate = false, currentSysId = null;
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function validate() { submitBtn.disabled = !shortDescEl.value.trim(); }
+      shortDescEl.addEventListener("input", validate);
+
+      function showUpdateFields() { var els = document.querySelectorAll(".update-only"); for (var i = 0; i < els.length; i++) els[i].style.display = ""; }
+      function hideUpdateFields() { var els = document.querySelectorAll(".update-only"); for (var i = 0; i < els.length; i++) els[i].style.display = "none"; }
+
+      function normalizeImpact(val) { if (!val) return ""; var s = String(val).trim().toLowerCase(); if (/^1\b/.test(s) || s === "high") return "1"; if (/^2\b/.test(s) || s === "medium") return "2"; if (/^3\b/.test(s) || s === "low") return "3"; if (/^[123]$/.test(s)) return s; return ""; }
+      function setSelectValue(el, rawVal, normFn) { if (!rawVal) return; var n = normFn ? normFn(rawVal) : String(rawVal); el.value = n; if (!el.value && n !== String(rawVal)) el.value = String(rawVal); }
+
+      resetBtn.addEventListener("click", function() {
+        [shortDescEl, categoryEl, assignGroupEl, assignedToEl, descEl, workNotesEl].forEach(function(el) { el.value = ""; });
+        [typeEl, riskEl, impactEl, stateEl].forEach(function(el) { el.value = ""; });
+        startDateEl.value = ""; endDateEl.value = "";
+        errorMsg.innerHTML = ""; isUpdate = false; currentSysId = null;
+        hideUpdateFields();
+        submitBtn.textContent = "Create Change Request";
+        document.getElementById("pageTitle").textContent = "Create Change Request";
+        document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 New Change";
+        submitBtn.disabled = true; reportHeight();
+      });
+
+      submitBtn.addEventListener("click", async function() {
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        submitBtn.disabled = true; submitBtn.textContent = "Submitting\u2026"; errorMsg.innerHTML = "";
+        try {
+          var output;
+          if (isUpdate && currentSysId) {
+            var args = { sys_id: currentSysId };
+            if (shortDescEl.value.trim()) args.short_description = shortDescEl.value.trim();
+            if (typeEl.value) args.type = typeEl.value;
+            if (categoryEl.value.trim()) args.category = categoryEl.value.trim();
+            if (riskEl.value) args.risk = riskEl.value;
+            if (impactEl.value) args.impact = impactEl.value;
+            if (assignGroupEl.value.trim()) args.assignment_group = assignGroupEl.value.trim();
+            if (assignedToEl.value.trim()) args.assigned_to = assignedToEl.value.trim();
+            if (startDateEl.value) args.planned_start_date = startDateEl.value;
+            if (endDateEl.value) args.planned_end_date = endDateEl.value;
+            if (descEl.value.trim()) args.description = descEl.value.trim();
+            if (stateEl.value) args.state = stateEl.value;
+            if (workNotesEl.value.trim()) args.work_notes = workNotesEl.value.trim();
+            output = await window.openai.callTool("update_change_request", args);
+            var data = output && output.structuredContent ? output.structuredContent : output;
+            if (!data || !data.updated) throw new Error((data && data.error) || "Change request update failed");
+            errorMsg.innerHTML = '<div class="success-msg">\u2713 Change request updated successfully.</div>';
+          } else {
+            var args = { short_description: shortDescEl.value.trim() };
+            if (typeEl.value) args.type = typeEl.value;
+            if (categoryEl.value.trim()) args.category = categoryEl.value.trim();
+            if (riskEl.value) args.risk = riskEl.value;
+            if (impactEl.value) args.impact = impactEl.value;
+            if (assignGroupEl.value.trim()) args.assignment_group = assignGroupEl.value.trim();
+            if (assignedToEl.value.trim()) args.assigned_to = assignedToEl.value.trim();
+            if (startDateEl.value) args.planned_start_date = startDateEl.value;
+            if (endDateEl.value) args.planned_end_date = endDateEl.value;
+            if (descEl.value.trim()) args.description = descEl.value.trim();
+            output = await window.openai.callTool("create_change_request", args);
+            var data = output && output.structuredContent ? output.structuredContent : output;
+            if (!data || !data.created) throw new Error((data && data.error) || "Change request creation failed");
+            isUpdate = true; currentSysId = data.sys_id;
+            showUpdateFields();
+            document.getElementById("pageTitle").textContent = "Update Change Request";
+            document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 " + (data.number || "Existing Change");
+            errorMsg.innerHTML = '<div class="success-msg">\u2713 Change request <strong>' + esc(data.number || "") + '</strong> created successfully.</div>';
+          }
+        } catch (err) { errorMsg.innerHTML = '<div class="error-msg">' + esc(err.message || "Failed to process change request") + '</div>'; }
+        finally { submitBtn.textContent = isUpdate ? "Update Change Request" : "Create Change Request"; validate(); reportHeight(); }
+      });
+
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      var _isFullscreen = false, _maxBtn = document.getElementById("maximizeBtn");
+      async function toggleFullscreen() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; var mode = _isFullscreen ? "inline" : "fullscreen"; try { await window.openai.requestDisplayMode({mode:mode}); _isFullscreen = !_isFullscreen; _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg; _maxBtn.title = _isFullscreen ? "Restore" : "Maximize"; reportHeight(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFullscreen); else _maxBtn.style.display = "none"; }
+
+      isUpdate = !!(toolOutput && (toolOutput.sys_id || toolOutput.number));
+      if (isUpdate) {
+        currentSysId = toolOutput.sys_id;
+        submitBtn.textContent = "Update Change Request";
+        document.getElementById("pageTitle").textContent = "Update Change Request";
+        document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 " + (toolOutput.number || "Existing Change");
+        showUpdateFields();
+      }
+      var inp = isUpdate ? Object.assign({}, toolOutput, toolInput) : toolInput;
+      if (inp.short_description) shortDescEl.value = inp.short_description;
+      if (inp.type) setSelectValue(typeEl, inp.type);
+      if (inp.category) categoryEl.value = inp.category;
+      if (inp.risk) setSelectValue(riskEl, inp.risk);
+      if (inp.impact) setSelectValue(impactEl, inp.impact, normalizeImpact);
+      if (inp.assignment_group) assignGroupEl.value = inp.assignment_group;
+      if (inp.assigned_to) assignedToEl.value = inp.assigned_to;
+      if (inp.planned_start_date) startDateEl.value = inp.planned_start_date;
+      if (inp.planned_end_date) endDateEl.value = inp.planned_end_date;
+      if (inp.description) descEl.value = inp.description;
+      if (inp.state) setSelectValue(stateEl, inp.state);
+      if (inp.work_notes) workNotesEl.value = inp.work_notes;
+      validate(); reportHeight();
+    </script>
+  </body>
+</html>
