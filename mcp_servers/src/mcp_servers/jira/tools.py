@@ -548,6 +548,7 @@ async def tool_update_issue(
     assignee_account_id: Optional[str] = None,
     labels: Optional[List[str]] = None,
     comment: Optional[str] = None,
+    ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Update fields and/or add a comment on an existing Jira issue.
 
@@ -578,13 +579,13 @@ async def tool_update_issue(
             fields["labels"] = labels
 
         if fields:
-            await _jira_put(f"/issue/{key}", {"fields": fields})
+            await _jira_put(f"/issue/{key}", {"fields": fields}, ctx)
 
         if comment:
-            await tool_add_comment(key, comment)
+            await tool_add_comment(key, comment, ctx=ctx)
 
         # Fetch updated issue
-        raw = await _jira_get(f"/issue/{key}")
+        raw = await _jira_get(f"/issue/{key}", ctx)
         result = _simplify_issue(raw)
 
         return {
@@ -885,7 +886,7 @@ async def tool_list_projects(
 # ── Provider functions for TaskServer integration ───────────────────
 
 
-async def provider_list_tasks() -> List[Dict[str, Any]]:
+async def provider_list_tasks(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """List Jira issues assigned to the configured user.
 
     Returns raw Jira issue data for TaskServer normalization.
@@ -900,6 +901,7 @@ async def provider_list_tasks() -> List[Dict[str, Any]]:
         jql="assignee = currentUser() ORDER BY updated DESC",
         max_results=50,
         fields=_SEARCH_FIELDS,
+        ctx=ctx,
     )
     return data.get("issues", [])
 

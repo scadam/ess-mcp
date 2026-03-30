@@ -730,7 +730,7 @@ async def tool_update_case(
 # ── Provider functions for TaskServer integration ───────────────────
 
 
-async def provider_list_tasks() -> List[Dict[str, Any]]:
+async def provider_list_tasks(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """List Salesforce tasks for TaskServer normalization."""
     try:
         load_salesforce_settings()
@@ -745,14 +745,14 @@ async def provider_list_tasks() -> List[Dict[str, Any]]:
         "ORDER BY CreatedDate DESC LIMIT 50"
     , ctx)
     # Add browser links for TaskServer widget
-    _, instance_url = await _get_salesforce_token()
+    instance_url = _get_instance_url()
     for r in records:
         if r.get("Id"):
             r["link"] = f"{instance_url}/{r['Id']}"
     return records
 
 
-async def provider_list_cases() -> List[Dict[str, Any]]:
+async def provider_list_cases(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """List open Salesforce compliance cases for TaskServer normalization."""
     try:
         load_salesforce_settings()
@@ -766,14 +766,14 @@ async def provider_list_cases() -> List[Dict[str, Any]]:
         f"ORDER BY CreatedDate DESC LIMIT 50"
     , ctx)
     # Add browser links for TaskServer widget
-    _, instance_url = await _get_salesforce_token()
+    instance_url = _get_instance_url()
     for r in records:
         if r.get("Id"):
             r["link"] = f"{instance_url}/{r['Id']}"
     return records
 
 
-async def provider_list_approvals() -> List[Dict[str, Any]]:
+async def provider_list_approvals(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """List pending Salesforce approvals for TaskServer normalization."""
     try:
         load_salesforce_settings()
@@ -790,7 +790,7 @@ async def provider_list_approvals() -> List[Dict[str, Any]]:
         "ORDER BY CreatedDate DESC LIMIT 50"
     , ctx)
     # Add browser links (to target object) for TaskServer widget
-    _, instance_url = await _get_salesforce_token()
+    instance_url = _get_instance_url()
     for r in records:
         pi = r.get("ProcessInstance", {}) or {}
         target_id = pi.get("TargetObjectId", r.get("Id", ""))
@@ -799,7 +799,7 @@ async def provider_list_approvals() -> List[Dict[str, Any]]:
     return records
 
 
-async def provider_get_approval_detail(item_id: str) -> Dict[str, Any]:
+async def provider_get_approval_detail(item_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Fetch approval detail for a ProcessInstanceWorkitem."""
     records = await _soql_query(
         f"SELECT Id, ActorId, ProcessInstanceId, CreatedDate, "
@@ -835,7 +835,7 @@ async def provider_get_approval_detail(item_id: str) -> Dict[str, Any]:
 
 
 async def provider_execute_approval(
-    item_id: str, decision: str, comment: str = ""
+    item_id: str, decision: str, comment: str = "", ctx: Optional[Context] = None
 ) -> Dict[str, Any]:
     """Execute an approval decision on a Salesforce work item."""
     action = "Approve" if decision == "approve" else "Reject"
@@ -1066,7 +1066,7 @@ async def tool_get_account_360(
     open_opps = [o for o in opportunities if not o.get("IsClosed")]
     open_pipeline_amount = sum(float(o.get("Amount") or 0) for o in open_opps)
 
-    _, instance_url = await _get_salesforce_token()
+    instance_url = _get_instance_url()
 
     return {
         "account": _simplify_account(account_raw),
@@ -1222,7 +1222,7 @@ async def tool_create_opportunity(
         created = await _soql_query(
             f"SELECT {_OPPORTUNITY_FIELDS} FROM Opportunity WHERE Id = '{_sf(opp_id)}'"
         , ctx)
-        _, instance_url = await _get_salesforce_token()
+        instance_url = _get_instance_url()
         return {
             "created": True,
             "opportunity": _simplify_opportunity(created[0]) if created else {"id": opp_id},
