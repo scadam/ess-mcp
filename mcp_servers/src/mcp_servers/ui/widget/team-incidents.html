@@ -54,6 +54,14 @@
       .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
       .loading, .error, .empty { text-align: center; padding: 32px 0; font-size: 13px; color: var(--muted); }
       .error { color: var(--neg); }
+    
+      /* Enhanced interactivity */
+      .card { transition: border-color .2s, box-shadow .2s; }
+      .card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+      :root[data-theme="dark"] .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+      .btn, .maximize-btn, .hub-expand-btn { transition: all .15s ease; }
+      [class*="-row"]:not(.form-grid):not(.field-row):not(.actions):not(.stats-row):not(.bar-row):not(.type-grid):not(.member-row):not(.funnel-row):not(.opp-row):not(.reports-row) { transition: background .15s; }
+      @media (max-width: 480px) { .form-grid, .grid, .meta-grid, .totals-grid, .stats-row { grid-template-columns: 1fr !important; display: grid !important; flex-direction: column; } .stats-row { flex-wrap: wrap; } .stat-card { min-width: 0; } }
     </style>
   </head>
   <body>
