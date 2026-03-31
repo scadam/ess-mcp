@@ -1,0 +1,99 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --btn-bg: #152235; --btn-border: #243145; --jira-accent: #2684ff; --jira-glow: rgba(38,132,255,.14); --col-todo: #a9b1bd; --col-progress: #f0b232; --col-done: #2bd48f; }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --jira-accent: #0052cc; --jira-glow: rgba(0,82,204,.08); --col-todo: #65707d; --col-progress: #ca5010; --col-done: #107c10; }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .jira-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--jira-glow); border: 1px solid var(--jira-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+      .column { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; min-height: 120px; }
+      .col-header { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+      .col-header .count { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; background: var(--bg); }
+      .col-todo .col-header { color: var(--col-todo); border-bottom-color: var(--col-todo); }
+      .col-progress .col-header { color: var(--col-progress); border-bottom-color: var(--col-progress); }
+      .col-done .col-header { color: var(--col-done); border-bottom-color: var(--col-done); }
+      .issue-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+      .issue-card:last-child { margin-bottom: 0; }
+      .issue-key { font-size: 10px; font-weight: 700; color: var(--jira-accent); }
+      .issue-summary { font-size: 12px; margin-top: 4px; line-height: 1.3; }
+      .issue-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+      .issue-type { font-size: 10px; color: var(--muted); }
+      .issue-priority { font-size: 10px; font-weight: 600; }
+      .priority-highest { color: var(--neg); }
+      .priority-high { color: #ff8c42; }
+      .priority-medium { color: var(--warn); }
+      .priority-low { color: var(--pos); }
+      .issue-assignee { font-size: 10px; color: var(--muted); margin-top: 4px; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--jira-accent); border-color: var(--jira-accent); }
+      .loading { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      .column { transition: border-color .2s, box-shadow .2s; }
+      .column:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+      :root[data-theme="dark"] .column:hover { box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+      .btn, .maximize-btn { transition: all .15s ease; }
+      .issue-card { transition: border-color .15s, box-shadow .15s; }
+      .issue-card:hover { border-color: var(--jira-accent); }
+      @media (max-width: 480px) { .board { grid-template-columns: 1fr !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="jira-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--jira-accent)"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <div><div class="title" id="boardTitle">Sprint Board</div><div class="subtitle" id="boardSubtitle">Jira &middot; Agile</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="root"><div class="loading">Loading sprint board&hellip;</div></div>
+      <div class="footer">Powered by <strong>jira / list_issues</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var _isFS = false, _maxBtn = document.getElementById("maximizeBtn");
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function priorityClass(p) { var l = (p || "").toLowerCase(); if (l === "highest" || l === "critical") return "priority-highest"; if (l === "high") return "priority-high"; if (l === "medium") return "priority-medium"; return "priority-low"; }
+      function categorize(statusCat) { var c = (statusCat || "").toLowerCase(); if (c === "done" || c === "complete") return "done"; if (c.indexOf("progress") >= 0 || c === "indeterminate") return "progress"; return "todo"; }
+      function render(d) {
+        var issues = d.issues || d.records || [];
+        if (!issues.length) { document.getElementById("root").innerHTML = '<div class="loading">No issues in this sprint.</div>'; reportHeight(); return; }
+        if (d.sprint_name) { document.getElementById("boardTitle").textContent = d.sprint_name; document.getElementById("boardSubtitle").textContent = "Jira \u00b7 Sprint Board"; }
+        var cols = { todo: [], progress: [], done: [] };
+        for (var i = 0; i < issues.length; i++) { var issue = issues[i]; var cat = categorize(issue.status_category || issue.statusCategory || ""); cols[cat].push(issue); }
+        var html = '<div class="board">';
+        var colDefs = [{ key: "todo", label: "To Do", cls: "col-todo" }, { key: "progress", label: "In Progress", cls: "col-progress" }, { key: "done", label: "Done", cls: "col-done" }];
+        for (var c = 0; c < colDefs.length; c++) {
+          var col = colDefs[c], items = cols[col.key];
+          html += '<div class="column ' + col.cls + '"><div class="col-header"><span>' + col.label + '</span><span class="count">' + items.length + '</span></div>';
+          var shown = _isFS ? items.length : Math.min(8, items.length);
+          for (var j = 0; j < shown; j++) { var it = items[j]; html += '<div class="issue-card"><div class="issue-key">' + esc(it.key || "") + '</div><div class="issue-summary">' + esc(it.summary || it.title || "") + '</div><div class="issue-meta"><span class="issue-type">' + esc(it.issue_type || it.type || "") + '</span><span class="issue-priority ' + priorityClass(it.priority) + '">' + esc(it.priority || "") + '</span></div>' + (it.assignee ? '<div class="issue-assignee">' + esc(it.assignee) + '</div>' : '') + '</div>'; }
+          if (!_isFS && items.length > shown) html += '<div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center">+ ' + (items.length - shown) + ' more</div>';
+          html += '</div>';
+        }
+        html += '</div>';
+        document.getElementById("root").innerHTML = html; reportHeight();
+      }
+      async function init() {
+        if (toolOutput && (toolOutput.issues || toolOutput.records)) { render(toolOutput); return; }
+        if (window.openai && typeof window.openai.callTool === "function") { try { var args = Object.assign({}, toolInput); if (!args.sprint_id && !args.jql) args.jql = "sprint in openSprints()"; var out = await window.openai.callTool("list_issues", args); render((out && out.structuredContent) || out); } catch (e) { document.getElementById("root").innerHTML = '<div class="loading">' + esc(e.message || "Error loading board") + '</div>'; reportHeight(); } }
+        else { document.getElementById("root").innerHTML = '<div class="loading">Skybridge unavailable.</div>'; reportHeight(); }
+      }
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; init(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+      init();
+    </script>
+  </body>
+</html>

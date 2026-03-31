@@ -781,4 +781,81 @@ SERVICENOW_RESOURCES = {
             }
         },
     },
+    "update-incident": {
+        "description": "Incident update form – edit an existing ServiceNow incident with pre-filled values for state, priority, assignment, and work notes.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("update-incident.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "update-task": {
+        "description": "Task update form – edit a ServiceNow task with state, priority, assignment, and comments.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("update-task.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "approval-review": {
+        "description": "Approval review widget – view pending approvals and approve or reject them directly.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("approval-review.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "catalog-list": {
+        "description": "Service catalog list – browse available catalog items with search and category filtering.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("catalog-list.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "catalog-item": {
+        "description": "Catalog item detail – view and order a specific service catalog item with configuration options.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("catalog-item.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "cart-summary": {
+        "description": "Shopping cart summary – review items in the cart, adjust quantities, and proceed to checkout.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("cart-summary.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "task-list": {
+        "description": "Task list dashboard – view and manage ServiceNow tasks with filtering by state and priority.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("task-list.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }

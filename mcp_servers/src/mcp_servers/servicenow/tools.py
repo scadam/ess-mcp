@@ -3906,6 +3906,163 @@ async def tool_get_team_approvals(
         return {"success": False, "error": str(exc)}
 
 
+async def tool_get_sla_status(
+    number: Optional[str] = None,
+    breached_only: bool = False,
+    limit: int = 25,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Get SLA status for incidents, showing compliance, breach risk, and elapsed time.
+
+    Args:
+        number: Optional incident number to check SLA for a specific incident.
+        breached_only: If True, only return breached or at-risk SLAs.
+        limit: Maximum results (default: 25, max: 100).
+    """
+    LOGGER.info("servicenow_get_sla_status", number=number, breached_only=breached_only)
+
+    try:
+        settings = load_servicenow_settings()
+        token = get_bearer_token(ctx)
+        safe_limit = max(1, min(int(limit), 100))
+
+        url = f"{settings.instance_url}/api/now/table/task_sla"
+        query_parts = ["active=true"]
+        if number:
+            query_parts.append(f"task.number={number}")
+        if breached_only:
+            query_parts.append("has_breached=true")
+        query_parts.append("ORDERBYDESCsys_updated_on")
+
+        params = {
+            "sysparm_query": "^".join(query_parts),
+            "sysparm_limit": safe_limit,
+            "sysparm_display_value": "all",
+            "sysparm_exclude_reference_link": "true",
+            "sysparm_fields": (
+                "task,sla,stage,has_breached,percentage,"
+                "business_time_left,planned_end_time,start_time,"
+                "sys_updated_on"
+            ),
+        }
+
+        async with create_async_client() as client:
+            resp = await client.get(
+                url,
+                params=params,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+            )
+            resp.raise_for_status()
+            body = resp.json()
+
+        raw_results = body.get("result", [])
+        sla_records = []
+        breached_count = 0
+        at_risk_count = 0
+
+        for raw in raw_results:
+            _dv = lambda f: (raw.get(f) or {}).get("display_value", "")  # noqa: E731
+            pct = float(_dv("percentage") or 0)
+            has_breached = _dv("has_breached").lower() == "true"
+            if has_breached:
+                breached_count += 1
+            elif pct >= 75:
+                at_risk_count += 1
+
+            sla_records.append({
+                "task": _dv("task"),
+                "sla_name": _dv("sla"),
+                "stage": _dv("stage"),
+                "has_breached": has_breached,
+                "percentage": pct,
+                "time_left": _dv("business_time_left"),
+                "planned_end": _dv("planned_end_time"),
+                "start_time": _dv("start_time"),
+            })
+
+        return {
+            "success": True,
+            "sla_records": sla_records,
+            "total": len(sla_records),
+            "breached": breached_count,
+            "at_risk": at_risk_count,
+            "compliant": len(sla_records) - breached_count - at_risk_count,
+        }
+    except Exception as exc:
+        LOGGER.error("servicenow_get_sla_status_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_create_knowledge_article(
+    title: str,
+    body_text: str,
+    knowledge_base: Optional[str] = None,
+    category: Optional[str] = None,
+    short_description: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Create a new knowledge base article in ServiceNow.
+
+    Args:
+        title: Article title (required).
+        body_text: Article body content in HTML or plain text (required).
+        knowledge_base: Knowledge base name or sys_id to publish to.
+        category: Article category.
+        short_description: Brief summary of the article.
+    """
+    LOGGER.info("servicenow_create_knowledge_article", title=title)
+
+    try:
+        settings = load_servicenow_settings()
+        token = get_bearer_token(ctx)
+
+        url = f"{settings.instance_url}/api/now/table/kb_knowledge"
+        payload: Dict[str, Any] = {
+            "short_description": short_description or title,
+            "text": body_text,
+            "topic": title,
+            "workflow_state": "draft",
+        }
+        if knowledge_base:
+            payload["kb_knowledge_base"] = knowledge_base
+        if category:
+            payload["kb_category"] = category
+
+        async with create_async_client() as client:
+            resp = await client.post(
+                url,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+            resp.raise_for_status()
+            result = resp.json().get("result", {})
+
+        _dv = lambda f: (result.get(f) or {}).get("display_value", result.get(f, ""))  # noqa: E731
+
+        return {
+            "success": True,
+            "article": {
+                "sys_id": _dv("sys_id"),
+                "number": _dv("number"),
+                "title": _dv("short_description"),
+                "state": _dv("workflow_state"),
+                "knowledge_base": _dv("kb_knowledge_base"),
+                "category": _dv("kb_category"),
+            },
+            "message": f"Knowledge article '{title}' created as draft.",
+        }
+    except Exception as exc:
+        LOGGER.error("servicenow_create_knowledge_article_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 # ── Manager-focused tool specs ───────────────────────────────────────
 SERVICENOW_TOOL_SPECS.extend(
     [
@@ -3938,6 +4095,29 @@ SERVICENOW_TOOL_SPECS.extend(
             "func": tool_get_team_approvals,
             "annotations": {
                 "readOnlyHint": True,
+            },
+        },
+        {
+            "name": "get_sla_status",
+            "summary": (
+                "Get SLA compliance status for incidents. Shows breached, at-risk, "
+                "and compliant SLAs with percentage complete and time remaining. "
+                "Optionally filter by incident number or show only breached SLAs."
+            ),
+            "func": tool_get_sla_status,
+            "annotations": {
+                "readOnlyHint": True,
+            },
+        },
+        {
+            "name": "create_knowledge_article",
+            "summary": (
+                "Create a new knowledge base article in ServiceNow as a draft. "
+                "Provide title, body content, and optionally a knowledge base and category."
+            ),
+            "func": tool_create_knowledge_article,
+            "annotations": {
+                "readOnlyHint": False,
             },
         },
     ]

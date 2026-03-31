@@ -67,6 +67,7 @@
         <div id="msgArea"></div>
         <div class="actions">
           <button class="btn btn-primary" id="submitBtn" disabled>Create Lead</button>
+          <button class="btn" id="convertBtn" style="display:none;background:linear-gradient(135deg,#107c10,#2bd48f);border-color:#1a5a3a;color:#fff;font-weight:600">Convert to Opportunity</button>
           <button class="btn" id="resetBtn">Reset</button>
         </div>
       </div>
@@ -75,7 +76,7 @@
     <script>
       var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
       var firstNameEl = document.getElementById("first_name"), lastNameEl = document.getElementById("last_name"), companyEl = document.getElementById("company"), titleEl = document.getElementById("title"), emailEl = document.getElementById("email"), phoneEl = document.getElementById("phone"), leadSourceEl = document.getElementById("lead_source"), statusEl = document.getElementById("status"), descEl = document.getElementById("description");
-      var submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), msgArea = document.getElementById("msgArea"), _maxBtn = document.getElementById("maximizeBtn");
+      var submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), convertBtn = document.getElementById("convertBtn"), msgArea = document.getElementById("msgArea"), _maxBtn = document.getElementById("maximizeBtn");
       var _isFS = false, isUpdate = false, currentLeadId = null;
       var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
       var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
@@ -128,10 +129,27 @@
             document.getElementById("pageTitle").textContent = "Update Lead";
             document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + (lead.name || lead.last_name || "Lead");
             document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / update_lead</strong> via MCP';
+            convertBtn.style.display = "";
             msgArea.innerHTML = '<div class="success-msg">\u2713 Lead <strong>' + esc(lead.name || (lead.first_name + " " + lead.last_name) || "") + '</strong> created successfully.</div>';
           }
         } catch (err) { msgArea.innerHTML = '<div class="error-msg">' + esc(err.message || "Operation failed") + '</div>'; }
         finally { submitBtn.textContent = isUpdate ? "Update Lead" : "Create Lead"; validate(); reportHeight(); }
+      });
+
+      /* ── Convert Lead to Opportunity ── */
+      convertBtn.addEventListener("click", async function() {
+        if (!window.openai || typeof window.openai.callTool !== "function" || !currentLeadId) return;
+        convertBtn.disabled = true; convertBtn.textContent = "Converting\u2026"; msgArea.innerHTML = "";
+        try {
+          var convArgs = { lead_id: currentLeadId };
+          var output = await window.openai.callTool("convert_lead", convArgs);
+          var data = output && output.structuredContent ? output.structuredContent : output;
+          if (!data || !data.success) throw new Error((data && data.error) || "Lead conversion failed");
+          msgArea.innerHTML = '<div class="success-msg">\u2713 Lead converted successfully. An Account, Contact, and Opportunity have been created.</div>';
+          convertBtn.style.display = "none";
+          statusEl.value = "Closed - Converted"; submitBtn.disabled = true;
+        } catch (err) { msgArea.innerHTML = '<div class="error-msg">' + esc(err.message || "Conversion failed") + '</div>'; }
+        finally { convertBtn.disabled = false; convertBtn.textContent = "Convert to Opportunity"; reportHeight(); }
       });
 
       /* ── Maximize / Fullscreen toggle ── */
@@ -146,6 +164,8 @@
         document.getElementById("pageTitle").textContent = "Update Lead";
         document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + (existingLead.name || existingLead.last_name || "Lead");
         document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / update_lead</strong> via MCP';
+        var st = (existingLead.status || "").toLowerCase();
+        if (st.indexOf("converted") < 0 && st.indexOf("closed") < 0) convertBtn.style.display = "";
       }
       var inp = isUpdate ? Object.assign({}, existingLead, toolInput) : toolInput;
       if (inp.first_name) firstNameEl.value = inp.first_name;

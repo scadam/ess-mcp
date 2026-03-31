@@ -1280,6 +1280,210 @@ async def tool_get_inbox_task_detail(
         return {"success": False, "error": str(exc)}
 
 
+async def tool_submit_time_entry(
+    date: str,
+    hours: str,
+    time_type: str = "Regular",
+    comment: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Submit a time entry to Workday for the current worker.
+
+    Args:
+        date: Date for the time entry (YYYY-MM-DD).
+        hours: Number of hours worked (e.g. '8' or '4.5').
+        time_type: Type of time entry (e.g. 'Regular', 'Overtime'). Defaults to 'Regular'.
+        comment: Optional comment or description for the time entry.
+    """
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        url = (
+            "https://wd2-impl-services1.workday.com/ccx/api/time/v2/microsoft_dpt6/"
+            f"workers/{wctx.workday_id}/timeEntries"
+        )
+        body: Dict[str, Any] = {
+            "date": date,
+            "hours": float(hours),
+            "timeType": time_type,
+        }
+        if comment:
+            body["comment"] = comment
+
+        headers = {
+            "Authorization": f"Bearer {wctx.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        async with create_async_client() as client:
+            response = await client.post(url, json=body, headers=headers)
+            response.raise_for_status()
+            content_type = response.headers.get("content-type", "")
+            if "application/json" in content_type and response.content:
+                result = response.json()
+            else:
+                result = {"status": "submitted"}
+
+        return {
+            "success": True,
+            "message": f"Time entry of {hours}h submitted for {date}",
+            "date": date,
+            "hours": hours,
+            "timeType": time_type,
+            "result": result,
+        }
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_submit_time_entry_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_time_entries(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Get time entries for the current worker within a date range.
+
+    Args:
+        start_date: Start date for the range (YYYY-MM-DD). Defaults to start of current week.
+        end_date: End date for the range (YYYY-MM-DD). Defaults to end of current week.
+    """
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        if not start_date:
+            today = datetime.now()
+            start_date = (today - timedelta(days=today.weekday())).strftime("%Y-%m-%d")
+        if not end_date:
+            today = datetime.now()
+            end_date = (today + timedelta(days=6 - today.weekday())).strftime("%Y-%m-%d")
+
+        url = (
+            "https://wd2-impl-services1.workday.com/ccx/api/time/v2/microsoft_dpt6/"
+            f"workers/{wctx.workday_id}/timeEntries"
+            f"?from={start_date}&to={end_date}"
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        entries = []
+        for item in data.get("data", data.get("timeEntries", [])):
+            entries.append({
+                "date": item.get("date"),
+                "hours": item.get("hours"),
+                "timeType": item.get("timeType", {}).get("descriptor", ""),
+                "status": item.get("status", {}).get("descriptor", ""),
+                "comment": item.get("comment"),
+            })
+        return {
+            "success": True,
+            "startDate": start_date,
+            "endDate": end_date,
+            "entries": entries,
+            "totalHours": sum(float(e.get("hours", 0) or 0) for e in entries),
+            "total": len(entries),
+        }
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_time_entries_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_create_expense_report(
+    description: str,
+    expense_date: str,
+    amount: str,
+    currency: str = "USD",
+    expense_type: str = "Business Expense",
+    memo: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Create and submit an expense report entry in Workday.
+
+    Args:
+        description: Short description of the expense.
+        expense_date: Date the expense was incurred (YYYY-MM-DD).
+        amount: Expense amount (e.g. '125.50').
+        currency: Currency code (default: USD).
+        expense_type: Type of expense (e.g. 'Business Expense', 'Travel', 'Meals').
+        memo: Additional notes or justification for the expense.
+    """
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        url = (
+            "https://wd2-impl-services1.workday.com/ccx/api/expenses/v1/microsoft_dpt6/"
+            f"workers/{wctx.workday_id}/expenseReports"
+        )
+        body: Dict[str, Any] = {
+            "description": description,
+            "expenseLines": [
+                {
+                    "date": expense_date,
+                    "amount": float(amount),
+                    "currency": currency,
+                    "expenseType": expense_type,
+                    "memo": memo or description,
+                }
+            ],
+        }
+        headers = {
+            "Authorization": f"Bearer {wctx.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        async with create_async_client() as client:
+            response = await client.post(url, json=body, headers=headers)
+            response.raise_for_status()
+            content_type = response.headers.get("content-type", "")
+            if "application/json" in content_type and response.content:
+                result = response.json()
+            else:
+                result = {"status": "submitted"}
+
+        return {
+            "success": True,
+            "message": f"Expense report created for {amount} {currency}",
+            "description": description,
+            "amount": amount,
+            "currency": currency,
+            "result": result,
+        }
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_create_expense_report_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_expense_reports(
+    limit: int = 20,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Get expense reports for the current worker.
+
+    Args:
+        limit: Maximum number of expense reports to return (default: 20, max: 100).
+    """
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        safe_limit = max(1, min(int(limit), 100))
+        url = (
+            "https://wd2-impl-services1.workday.com/ccx/api/expenses/v1/microsoft_dpt6/"
+            f"workers/{wctx.workday_id}/expenseReports?limit={safe_limit}"
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        reports = []
+        for item in data.get("data", data.get("expenseReports", [])):
+            reports.append({
+                "id": item.get("id"),
+                "description": item.get("descriptor") or item.get("description"),
+                "status": item.get("status", {}).get("descriptor", ""),
+                "totalAmount": item.get("totalAmount"),
+                "currency": item.get("currency", {}).get("descriptor", ""),
+                "createdDate": item.get("createdDate"),
+                "submittedDate": item.get("submittedDate"),
+            })
+        return {
+            "success": True,
+            "expenseReports": reports,
+            "total": len(reports),
+        }
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_expense_reports_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
     {
         "name": "get_worker",
@@ -1374,6 +1578,30 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         "name": "get_inbox_task_detail",
         "func": tool_get_inbox_task_detail,
         "summary": "Get detailed information about a specific Workday inbox task by its task_id.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "submit_time_entry",
+        "func": tool_submit_time_entry,
+        "summary": "Submit a time entry to Workday. Provide date (YYYY-MM-DD), hours worked, and optional time type and comment.",
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "get_time_entries",
+        "func": tool_get_time_entries,
+        "summary": "Get time entries for the current worker within a date range. Defaults to the current week.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "create_expense_report",
+        "func": tool_create_expense_report,
+        "summary": "Create and submit an expense report in Workday with description, date, amount, currency, and expense type.",
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "get_expense_reports",
+        "func": tool_get_expense_reports,
+        "summary": "List expense reports for the current worker with status, amounts, and submission dates.",
         "annotations": {"readOnlyHint": True},
     },
 ]

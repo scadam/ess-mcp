@@ -960,6 +960,144 @@ async def tool_list_projects(
     return {"total": data.get("total", len(projects)), "projects": projects}
 
 
+async def tool_list_versions(
+    project_key: str,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """List versions/releases for a Jira project.
+
+    Args:
+        project_key: The Jira project key (e.g. 'PROJ').
+    """
+    LOGGER.info("jira_list_versions", project_key=project_key)
+
+    data = await _jira_get(f"/project/{project_key}/versions", ctx)
+    versions = [
+        {
+            "id": v.get("id"),
+            "name": v.get("name"),
+            "description": v.get("description"),
+            "released": v.get("released", False),
+            "archived": v.get("archived", False),
+            "startDate": v.get("startDate"),
+            "releaseDate": v.get("releaseDate"),
+            "overdue": v.get("overdue", False),
+            "projectId": v.get("projectId"),
+        }
+        for v in (data if isinstance(data, list) else data.get("values", []))
+    ]
+    return {"total": len(versions), "versions": versions}
+
+
+async def tool_create_version(
+    project_key: str,
+    name: str,
+    description: Optional[str] = None,
+    start_date: Optional[str] = None,
+    release_date: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Create a new version/release in a Jira project.
+
+    Args:
+        project_key: The Jira project key (e.g. 'PROJ').
+        name: Version name (e.g. 'v2.1.0').
+        description: Version description.
+        start_date: Start date (YYYY-MM-DD).
+        release_date: Planned release date (YYYY-MM-DD).
+    """
+    LOGGER.info("jira_create_version", project_key=project_key, name=name)
+
+    body: Dict[str, Any] = {
+        "name": name,
+        "projectId": None,
+    }
+
+    projects = await _jira_get("/project/search", ctx, params={"keys": project_key})
+    proj_list = projects.get("values", [])
+    if proj_list:
+        body["projectId"] = int(proj_list[0].get("id", 0))
+    else:
+        return {"success": False, "error": f"Project {project_key} not found"}
+
+    if description:
+        body["description"] = description
+    if start_date:
+        body["startDate"] = start_date
+    if release_date:
+        body["releaseDate"] = release_date
+
+    try:
+        result = await _jira_post("/version", body, ctx)
+        return {
+            "success": True,
+            "version": {
+                "id": result.get("id"),
+                "name": result.get("name"),
+                "description": result.get("description"),
+                "startDate": result.get("startDate"),
+                "releaseDate": result.get("releaseDate"),
+            },
+        }
+    except Exception as exc:
+        LOGGER.error("jira_create_version_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_update_version(
+    version_id: str,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    release_date: Optional[str] = None,
+    released: Optional[bool] = None,
+    archived: Optional[bool] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Update an existing version/release. Can be used to release or archive a version.
+
+    Args:
+        version_id: The Jira version ID (required).
+        name: Updated version name.
+        description: Updated description.
+        release_date: Updated release date (YYYY-MM-DD).
+        released: Set to true to mark version as released.
+        archived: Set to true to archive the version.
+    """
+    LOGGER.info("jira_update_version", version_id=version_id)
+
+    body: Dict[str, Any] = {}
+    if name is not None:
+        body["name"] = name
+    if description is not None:
+        body["description"] = description
+    if release_date is not None:
+        body["releaseDate"] = release_date
+    if released is not None:
+        body["released"] = released
+    if archived is not None:
+        body["archived"] = archived
+
+    if not body:
+        return {"success": False, "error": "No fields provided to update."}
+
+    try:
+        result = await _jira_put(f"/version/{version_id}", body, ctx)
+        return {
+            "success": True,
+            "version": {
+                "id": result.get("id", version_id),
+                "name": result.get("name"),
+                "description": result.get("description"),
+                "released": result.get("released"),
+                "archived": result.get("archived"),
+                "releaseDate": result.get("releaseDate"),
+            },
+        }
+    except Exception as exc:
+        LOGGER.error("jira_update_version_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 # ── Provider functions for TaskServer integration ───────────────────
 
 
@@ -1514,5 +1652,23 @@ JIRA_TOOL_SPECS: list[dict] = [
             "days remaining."
         ),
         "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "list_versions",
+        "func": tool_list_versions,
+        "summary": "List versions/releases for a Jira project. Shows release status, dates, and whether versions are overdue.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "create_version",
+        "func": tool_create_version,
+        "summary": "Create a new version/release in a Jira project with name, description, and planned release date.",
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "update_version",
+        "func": tool_update_version,
+        "summary": "Update a Jira version/release. Use to mark as released, update release date, or archive.",
+        "annotations": {"readOnlyHint": False},
     },
 ]

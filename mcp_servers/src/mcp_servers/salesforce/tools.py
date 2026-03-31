@@ -2,6 +2,7 @@
 the Salesforce REST API using OAuth bearer token passthrough.
 """
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -1101,6 +1102,162 @@ async def tool_create_contact(
     except Exception as exc:
         LOGGER.error("salesforce_create_contact_error", error=str(exc))
         return {"created": False, "error": str(exc)}
+
+
+async def tool_update_contact(
+    contact_id: str,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    email: Optional[str] = None,
+    phone: Optional[str] = None,
+    title: Optional[str] = None,
+    department: Optional[str] = None,
+    mailing_street: Optional[str] = None,
+    mailing_city: Optional[str] = None,
+    mailing_state: Optional[str] = None,
+    mailing_postal_code: Optional[str] = None,
+    mailing_country: Optional[str] = None,
+    description: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Update an existing Salesforce contact.
+
+    Args:
+        contact_id: The Salesforce Contact record ID (required).
+        first_name: Updated first name.
+        last_name: Updated last name.
+        email: Updated email address.
+        phone: Updated phone number.
+        title: Updated job title.
+        department: Updated department.
+        mailing_street: Updated mailing street.
+        mailing_city: Updated mailing city.
+        mailing_state: Updated mailing state/province.
+        mailing_postal_code: Updated mailing postal/ZIP code.
+        mailing_country: Updated mailing country.
+        description: Updated notes about the contact.
+    """
+    payload: Dict[str, Any] = {}
+    if first_name:
+        payload["FirstName"] = first_name
+    if last_name:
+        payload["LastName"] = last_name
+    if email:
+        payload["Email"] = email
+    if phone:
+        payload["Phone"] = phone
+    if title:
+        payload["Title"] = title
+    if department:
+        payload["Department"] = department
+    if mailing_street:
+        payload["MailingStreet"] = mailing_street
+    if mailing_city:
+        payload["MailingCity"] = mailing_city
+    if mailing_state:
+        payload["MailingState"] = mailing_state
+    if mailing_postal_code:
+        payload["MailingPostalCode"] = mailing_postal_code
+    if mailing_country:
+        payload["MailingCountry"] = mailing_country
+    if description:
+        payload["Description"] = description
+
+    if not payload:
+        return {"success": False, "error": "No fields provided to update."}
+
+    LOGGER.info("salesforce_update_contact", contact_id=contact_id, fields=list(payload.keys()))
+
+    try:
+        await _salesforce_patch(f"/sobjects/Contact/{contact_id}", payload, ctx)
+        updated: List[Dict[str, Any]] = []
+        try:
+            updated = await _soql_query(
+                f"SELECT {_CONTACT_FIELDS} FROM Contact WHERE Id = '{_sf(contact_id)}'"
+            , ctx)
+        except Exception:  # noqa: BLE001
+            pass
+        return {
+            "success": True,
+            "contact": _simplify_contact(updated[0]) if updated else {"id": contact_id},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_update_contact_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_activity_timeline(
+    record_id: str,
+    limit: int = 25,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Get the activity timeline for a Salesforce record (Account, Contact, Opportunity, Lead).
+
+    Returns a combined, chronologically sorted list of tasks, events, and emails
+    associated with the record.
+
+    Args:
+        record_id: The Salesforce record ID (Account, Contact, Opportunity, or Lead).
+        limit: Maximum number of activities to return (default: 25, max: 100).
+    """
+    LOGGER.info("salesforce_get_activity_timeline", record_id=record_id)
+    safe_limit = max(1, min(int(limit), 100))
+
+    try:
+        tasks_q = (
+            f"SELECT Id, Subject, Status, Priority, ActivityDate, Description, "
+            f"Owner.Name, CreatedDate "
+            f"FROM Task WHERE WhatId = '{_sf(record_id)}' OR WhoId = '{_sf(record_id)}' "
+            f"ORDER BY ActivityDate DESC LIMIT {safe_limit}"
+        )
+        events_q = (
+            f"SELECT Id, Subject, StartDateTime, EndDateTime, Location, Description, "
+            f"Owner.Name, CreatedDate "
+            f"FROM Event WHERE WhatId = '{_sf(record_id)}' OR WhoId = '{_sf(record_id)}' "
+            f"ORDER BY StartDateTime DESC LIMIT {safe_limit}"
+        )
+        tasks_result, events_result = await asyncio.gather(
+            _soql_query(tasks_q, ctx),
+            _soql_query(events_q, ctx),
+        )
+
+        activities: List[Dict[str, Any]] = []
+        for t in tasks_result:
+            activities.append({
+                "type": "Task",
+                "id": t.get("Id"),
+                "subject": t.get("Subject"),
+                "status": t.get("Status"),
+                "priority": t.get("Priority"),
+                "date": t.get("ActivityDate"),
+                "description": t.get("Description"),
+                "owner": (t.get("Owner") or {}).get("Name"),
+                "created": t.get("CreatedDate"),
+            })
+        for e in events_result:
+            activities.append({
+                "type": "Event",
+                "id": e.get("Id"),
+                "subject": e.get("Subject"),
+                "date": e.get("StartDateTime"),
+                "end_date": e.get("EndDateTime"),
+                "location": e.get("Location"),
+                "description": e.get("Description"),
+                "owner": (e.get("Owner") or {}).get("Name"),
+                "created": e.get("CreatedDate"),
+            })
+
+        activities.sort(key=lambda a: a.get("date") or a.get("created") or "", reverse=True)
+        return {
+            "success": True,
+            "record_id": record_id,
+            "activities": activities[:safe_limit],
+            "total_tasks": len(tasks_result),
+            "total_events": len(events_result),
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_get_activity_timeline_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
 
 
 async def tool_list_opportunities(
@@ -2793,6 +2950,18 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "func": tool_create_contact,
         "summary": "Create a new Salesforce contact. Optionally link to an account.",
         "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "update_contact",
+        "func": tool_update_contact,
+        "summary": "Update an existing Salesforce contact. Provide the contact_id and any fields to change.",
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "get_activity_timeline",
+        "func": tool_get_activity_timeline,
+        "summary": "Get the activity timeline for a Salesforce record (Account, Contact, Opportunity, or Lead) including tasks and events sorted chronologically.",
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_opportunities",
