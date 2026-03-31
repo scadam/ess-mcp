@@ -101,6 +101,7 @@
         <div class="actions">
           <button class="btn btn-primary" id="submitBtn" disabled>Create Opportunity</button>
           <button class="btn" id="resetBtn">Reset</button>
+          <button class="btn" id="createQuoteBtn" style="display:none;margin-left:auto;background:linear-gradient(135deg,#107c10,#2bd48f);border-color:#1a5a3a;color:#fff;font-weight:600">Create Quote</button>
         </div>
       </div>
       <div class="footer" id="footerText">Powered by <strong>salesforce / create_opportunity</strong> via MCP</div>
@@ -247,6 +248,7 @@
         document.getElementById("pageTitle").textContent = "Update Opportunity";
         if (subtitle) document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + subtitle;
         document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / update_opportunity</strong> via MCP';
+        document.getElementById("createQuoteBtn").style.display = "";
       }
 
       function enterCreateMode() {
@@ -255,6 +257,7 @@
         document.getElementById("pageTitle").textContent = "Create Opportunity";
         document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 CRM";
         document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / create_opportunity</strong> via MCP';
+        document.getElementById("createQuoteBtn").style.display = "none";
       }
 
       /* ── Submit handler ── */
@@ -297,6 +300,13 @@
         nameEl.value = ""; clearAccount(); clearContact(); disableContact();
         stageEl.value = "Prospecting"; amtEl.value = ""; dateEl.value = ""; descEl.value = "";
         msgArea.innerHTML = ""; enterCreateMode(); validate(); reportHeight();
+      });
+
+      /* ── Create Quote from opportunity ── */
+      document.getElementById("createQuoteBtn").addEventListener("click", function() {
+        if (!window.openai || typeof window.openai.sendFollowUpMessage !== "function") return;
+        var oppName = nameEl.value.trim() || "this opportunity";
+        window.openai.sendFollowUpMessage({ prompt: "Create a quote for opportunity " + oppName + (currentOppId ? " (ID: " + currentOppId + ")" : "") });
       });
 
       /* ── Fullscreen toggle ── */

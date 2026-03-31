@@ -101,6 +101,7 @@
       <div id="content"><div class="loading">Loading cart&hellip;</div></div>
       <div class="toolbar">
         <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn" id="browseBtn" style="border-color:var(--sn-accent);color:var(--sn-accent)">Browse Catalog</button>
         <button class="btn btn-primary" id="checkoutBtn">Checkout</button>
         <button class="btn" id="clearBtn">Clear Cart</button>
       </div>
@@ -188,6 +189,11 @@
         document.getElementById("refreshBtn").addEventListener("click", loadCart);
         document.getElementById("checkoutBtn").addEventListener("click", checkoutCart);
         document.getElementById("clearBtn").addEventListener("click", clearCart);
+        document.getElementById("browseBtn").addEventListener("click", function() {
+          if (window.openai && typeof window.openai.sendFollowUpMessage === "function") {
+            window.openai.sendFollowUpMessage({ prompt: "Show me the ServiceNow service catalog so I can browse items" });
+          }
+        });
         var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
         var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
         var _isFullscreen = false;

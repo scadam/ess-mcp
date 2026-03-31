@@ -18,7 +18,8 @@
       .total-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; text-align: center; }
       .total-value { font-size: 18px; font-weight: 700; color: var(--sf-accent); }
       .total-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
-      .rep-row { margin-bottom: 10px; }
+      .rep-row { margin-bottom: 10px; cursor: pointer; } .rep-row:hover { background: var(--bg); border-radius: 6px; }
+      .lb-row { cursor: pointer; } .lb-row:hover { background: var(--bg); }
       .rep-info { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
       .rep-name { font-size: 12px; font-weight: 600; }
       .rep-total { font-size: 11px; color: var(--muted); }
@@ -72,6 +73,7 @@
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       function fmt(n) { var x = Number(n || 0); if (x >= 1e6) return "$" + (x / 1e6).toFixed(1) + "M"; if (x >= 1e3) return "$" + Math.round(x / 1e3) + "K"; return "$" + x; }
       function stageColor(i) { return _stagePalette[i % _stagePalette.length]; }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
 
       function render(d) {
         if (!d || !d.success) { document.getElementById("root").innerHTML = '<div class="loading">No team pipeline data available.</div>'; reportHeight(); return; }
@@ -90,7 +92,7 @@
           html += '<div class="card"><div class="section-label">Rep Pipeline</div>';
           for (var j = 0; j < reps.length; j++) {
             var r = reps[j], bs = r.byStage || {}, total = Number(r.totalAmount || 0);
-            html += '<div class="rep-row"><div class="rep-info"><span class="rep-name">' + esc(r.ownerName) + '</span><span class="rep-total">' + fmt(total) + ' &middot; ' + (r.count || 0) + ' deals</span></div>';
+            html += '<div class="rep-row" onclick="_askCopilot(\'Show me the pipeline for ' + esc(r.ownerName).replace(/'/g,'\\x27') + '\')"><div class="rep-info"><span class="rep-name">' + esc(r.ownerName) + '</span><span class="rep-total">' + fmt(total) + ' &middot; ' + (r.count || 0) + ' deals</span></div>';
             html += '<div class="stacked-bar">';
             for (var k = 0; k < stageList.length; k++) { var cnt = Number(bs[stageList[k]] || 0); if (cnt > 0) { var w = Math.max(2, (cnt / (r.count || 1)) * 100); html += '<span style="width:' + w + '%;background:' + stageColor(k) + '" title="' + esc(stageList[k]) + ': ' + cnt + '"></span>'; } }
             html += '</div></div>';
@@ -102,7 +104,7 @@
         // Leaderboard
         if (reps.length) {
           html += '<div class="card"><div class="section-label">Leaderboard</div>';
-          for (var n = 0; n < reps.length; n++) { var rep = reps[n]; html += '<div class="lb-row"><span class="lb-rank">' + (n + 1) + '</span><span class="lb-name">' + esc(rep.ownerName) + '</span><div class="lb-stats"><span><strong>' + fmt(rep.totalAmount) + '</strong> pipeline</span><span>' + fmt(rep.weightedAmount) + ' wtd</span><span>' + (rep.count || 0) + ' deals</span></div></div>'; }
+          for (var n = 0; n < reps.length; n++) { var rep = reps[n]; html += '<div class="lb-row" onclick="_askCopilot(\'Show me the pipeline for ' + esc(rep.ownerName).replace(/'/g,'\\x27') + '\')"><span class="lb-rank">' + (n + 1) + '</span><span class="lb-name">' + esc(rep.ownerName) + '</span><div class="lb-stats"><span><strong>' + fmt(rep.totalAmount) + '</strong> pipeline</span><span>' + fmt(rep.weightedAmount) + ' wtd</span><span>' + (rep.count || 0) + ' deals</span></div></div>'; }
           html += '</div>';
         }
         document.getElementById("root").innerHTML = html; reportHeight();

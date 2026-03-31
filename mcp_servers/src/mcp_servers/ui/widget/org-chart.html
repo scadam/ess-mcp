@@ -16,6 +16,7 @@
       .section-label { font-size: 11px; color: var(--wd-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
       .org-tree { display: flex; flex-direction: column; align-items: center; gap: 0; }
       .org-node { display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; min-width: 200px; max-width: 320px; position: relative; }
+      .org-node.manager, .org-node.report { cursor: pointer; } .org-node.manager:hover, .org-node.report:hover { border-color: var(--accent); }
       .org-node.current { border-color: var(--wd-accent); background: var(--wd-glow); }
       .org-node.manager { border-color: var(--accent); }
       .org-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
@@ -69,11 +70,13 @@
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       function initials(name) { return (name || "?").split(" ").map(function(p) { return p[0]; }).join("").slice(0, 2).toUpperCase(); }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
 
       function nodeHTML(person, cls, badge) {
         var name = person.name || person.descriptor || person.fullName || "Unknown";
         var title = person.title || person.businessTitle || person.jobTitle || person.position || "";
-        return '<div class="org-node ' + cls + '">' +
+        var clickAttr = (cls !== "current") ? ' onclick="_askCopilot(\'Show me the profile for ' + esc(name).replace(/'/g,'\\x27') + '\')"' : '';
+        return '<div class="org-node ' + cls + '"' + clickAttr + '>' +
           '<div class="org-avatar ' + (cls === "current" ? "self" : cls === "manager" ? "mgr" : "report") + '">' + initials(name) + '</div>' +
           '<div><div class="org-name">' + esc(name) + '</div>' +
           (title ? '<div class="org-title">' + esc(title) + '</div>' : '') +

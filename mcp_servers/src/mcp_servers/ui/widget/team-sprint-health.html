@@ -22,7 +22,7 @@
       .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
       .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
       .section-label { font-size: 11px; color: var(--jira-mid); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-      .member-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .member-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; } .member-row:hover { background: var(--bg); border-radius: 6px; }
       .member-row:last-child { margin-bottom: 0; }
       .m-name { font-size: 12px; min-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
       .overload { color: var(--neg); font-weight: 600; }
@@ -66,6 +66,7 @@
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       var prioColors = { "Highest": "#d32f2f", "High": "#e67700", "Medium": "#f0b232", "Low": "#2bd48f" };
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
 
       function render(d) {
         if (!d || !d.success) { document.getElementById("root").innerHTML = '<div class="loading">No workload data available.</div>'; reportHeight(); return; }
@@ -84,7 +85,7 @@
             var todo = s["To Do"] || 0, ip = s["In Progress"] || 0, done = s["Done"] || 0;
             var pTodo = Math.round(todo / total * 100), pIp = Math.round(ip / total * 100), pDone = Math.round(done / total * 100);
             var bp = m.byPriority || {};
-            html += '<div class="member-row">';
+            html += '<div class="member-row" onclick="_askCopilot(\'Show me Jira issues assigned to ' + esc(m.assignee).replace(/'/g,'\\x27') + '\')">';
             html += '<div class="m-name' + (m.overloaded ? ' overload' : '') + '">' + (m.overloaded ? '🔴 ' : '') + esc(m.assignee) + '</div>';
             html += '<div class="bar-track">';
             if (pTodo) html += '<div class="bar-seg" style="width:' + pTodo + '%;background:var(--bar-todo)"></div>';

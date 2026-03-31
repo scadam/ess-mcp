@@ -23,7 +23,7 @@
       .bar-track { flex: 1; background: var(--bar-bg); border-radius: 999px; height: 10px; overflow: hidden; }
       .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--sf-accent), var(--accent)); }
       .bar-label { width: 50px; font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; }
-      .lead-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
+      .lead-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); cursor: pointer; } .lead-row:hover { background: var(--bg); border-radius: 6px; }
       .lead-row:last-child { border-bottom: none; }
       .lead-name { font-size: 12px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; }
       .lead-company { font-size: 10px; color: var(--muted); flex-shrink: 0; margin-right: 8px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -65,6 +65,7 @@
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       function statusClass(s) { var l = (s || "").toLowerCase(); if (l.indexOf("converted") >= 0) return "status-converted"; if (l.indexOf("working") >= 0 || l.indexOf("contacted") >= 0) return "status-working"; if (l.indexOf("closed") >= 0 || l.indexOf("not converted") >= 0) return "status-closed"; return "status-open"; }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
       function render(d) {
         var leads = d.leads || d.records || [];
         if (!leads.length) { document.getElementById("root").innerHTML = '<div class="loading">No leads found.</div>'; reportHeight(); return; }
@@ -78,7 +79,7 @@
         if (sources.length) { var maxSrc = 1; for (var r = 0; r < sources.length; r++) maxSrc = Math.max(maxSrc, bySource[sources[r]]); html += '<div class="card"><div class="section-label">By Source</div>'; for (var r = 0; r < sources.length; r++) { var cnt = bySource[sources[r]]; var pct = Math.max(4, Math.round((cnt / maxSrc) * 100)); html += '<div class="funnel-row"><div class="stage-name">' + esc(sources[r]) + '</div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div><div class="bar-label">' + cnt + '</div></div>'; } html += '</div>'; }
         var shown = _isFS ? leads.length : Math.min(10, leads.length);
         html += '<div class="card"><div class="section-label">Recent Leads</div>';
-        for (var j = 0; j < shown; j++) { var lead = leads[j]; html += '<div class="lead-row"><div class="lead-name">' + esc(lead.name || ((lead.first_name || "") + " " + (lead.last_name || "")).trim()) + '</div><div class="lead-company">' + esc(lead.company || "") + '</div><div class="lead-status ' + statusClass(lead.status) + '">' + esc(lead.status || "Open") + '</div></div>'; }
+        for (var j = 0; j < shown; j++) { var lead = leads[j]; var leadName = lead.name || ((lead.first_name || "") + " " + (lead.last_name || "")).trim(); html += '<div class="lead-row" onclick="_askCopilot(\'Show me details for lead ' + esc(leadName).replace(/'/g,'\\x27') + '\')"><div class="lead-name">' + esc(leadName) + '</div><div class="lead-company">' + esc(lead.company || "") + '</div><div class="lead-status ' + statusClass(lead.status) + '">' + esc(lead.status || "Open") + '</div></div>'; }
         if (!_isFS && leads.length > shown) html += '<div style="font-size:11px;color:var(--muted);margin-top:6px">+ ' + (leads.length - shown) + ' more</div>';
         html += '</div>';
         document.getElementById("root").innerHTML = html; reportHeight();
