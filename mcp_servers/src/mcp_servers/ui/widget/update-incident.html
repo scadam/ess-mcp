@@ -336,20 +336,14 @@
     (function(){
       var cpBtn=document.getElementById("createProblemBtn"), ccBtn=document.getElementById("createChangeBtn");
       var incNum=document.getElementById("incNumberEl");
-      if(cpBtn) cpBtn.addEventListener("click",function(){
-        if(window.openai&&typeof window.openai.sendFollowUpMessage==="function"){
-          var num=incNum?incNum.textContent:"";
-          var desc=document.getElementById("shortDescInput").value.trim()||"";
-          window.openai.sendFollowUpMessage("Create a Problem record for incident "+(num||"this incident")+(desc?" about: "+desc:"")+".");
-        }
-      });
-      if(ccBtn) ccBtn.addEventListener("click",function(){
-        if(window.openai&&typeof window.openai.sendFollowUpMessage==="function"){
-          var num=incNum?incNum.textContent:"";
-          var desc=document.getElementById("shortDescInput").value.trim()||"";
-          window.openai.sendFollowUpMessage("Create a Change Request to address incident "+(num||"this incident")+(desc?" about: "+desc:"")+".");
-        }
-      });
+      function buildFollowUp(action){
+        var num=incNum?incNum.textContent:"";
+        var desc=document.getElementById("shortDescInput").value.trim()||"";
+        return action+" "+(num||"this incident")+(desc?" about: "+desc:"")+"."
+      }
+      function sendMsg(msg){if(window.openai&&typeof window.openai.sendFollowUpMessage==="function")window.openai.sendFollowUpMessage(msg)}
+      if(cpBtn) cpBtn.addEventListener("click",function(){sendMsg(buildFollowUp("Create a Problem record for incident"))});
+      if(ccBtn) ccBtn.addEventListener("click",function(){sendMsg(buildFollowUp("Create a Change Request to address incident"))});
     })();
     </script>
   </body>
