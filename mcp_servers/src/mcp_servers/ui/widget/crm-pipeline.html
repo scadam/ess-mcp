@@ -24,7 +24,8 @@
       .bar-track { flex: 1; background: var(--bar-bg); border-radius: 999px; height: 10px; overflow: hidden; }
       .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--sf-accent), var(--accent)); }
       .bar-label { width: 80px; font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; white-space: nowrap; }
-      .opp-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
+      .opp-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); cursor: pointer; } .opp-row:hover { background: var(--bg); border-radius: 6px; }
+      .funnel-row { cursor: pointer; } .funnel-row:hover { background: rgba(76,194,255,.05); border-radius: 6px; }
       .opp-row:last-child { border-bottom: none; }
       .opp-name { font-size: 12px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; }
       .opp-stage { font-size: 10px; color: var(--sf-accent); font-weight: 600; text-transform: uppercase; margin-right: 8px; flex-shrink: 0; }
@@ -65,13 +66,14 @@
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       function money(n) { var x = Number(n || 0); if (isNaN(x)) return String(n || "—"); return "$" + x.toLocaleString("en-US", {maximumFractionDigits: 0}); }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
       function render(d) {
         if (!d || !d.stages) { document.getElementById("root").innerHTML = '<div class="loading">No pipeline data available.</div>'; reportHeight(); return; }
         var t = d.totals || {}, opps = d.opportunities || [], stages = d.stages || [], maxAmt = 1;
         for (var i = 0; i < stages.length; i++) maxAmt = Math.max(maxAmt, Number(stages[i].amount || 0));
         var html = '<div class="card"><div class="section-label">Pipeline Summary</div><div class="totals-grid"><div class="total-cell"><div class="total-value">' + (t.opportunities || 0) + '</div><div class="total-label">Opportunities</div></div><div class="total-cell"><div class="total-value money">' + money(t.pipeline_amount) + '</div><div class="total-label">Pipeline</div></div><div class="total-cell"><div class="total-value money">' + money(t.weighted_pipeline_amount) + '</div><div class="total-label">Weighted</div></div></div></div>';
-        if (stages.length) { html += '<div class="card"><div class="section-label">By Stage</div>'; for (var j=0;j<stages.length;j++) { var s=stages[j]; var pct=Math.max(4,Math.round((Number(s.amount||0)/maxAmt)*100)); html+='<div class="funnel-row"><div class="stage-name">'+esc(s.stage)+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><div class="bar-label">'+(s.count||0)+' · '+money(s.amount)+'</div></div>'; } html+='</div>'; }
-        if (opps.length) { var shown=_isFS?opps.length:Math.min(8,opps.length); html+='<div class="card"><div class="section-label">Top Opportunities</div>'; for(var k=0;k<shown;k++){var op=opps[k];html+='<div class="opp-row"><div class="opp-name">'+esc(op.name)+'</div><div class="opp-stage">'+esc((op.stage_name||"").split(" ").slice(0,2).join(" "))+'</div><div class="opp-amount">'+money(op.amount)+'</div></div>';} if(!_isFS&&opps.length>shown)html+='<div style="font-size:11px;color:var(--muted);margin-top:6px">+ '+(opps.length-shown)+' more</div>'; html+='</div>'; }
+        if (stages.length) { html += '<div class="card"><div class="section-label">By Stage</div>'; for (var j=0;j<stages.length;j++) { var s=stages[j]; var pct=Math.max(4,Math.round((Number(s.amount||0)/maxAmt)*100)); html+='<div class="funnel-row" onclick="_askCopilot(\x27Show me opportunities in the ' + esc(s.stage).replace(/'/g,'\x27') + ' stage\x27)"><div class="stage-name">'+esc(s.stage)+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><div class="bar-label">'+(s.count||0)+' · '+money(s.amount)+'</div></div>'; } html+='</div>'; }
+        if (opps.length) { var shown=_isFS?opps.length:Math.min(8,opps.length); html+='<div class="card"><div class="section-label">Top Opportunities</div>'; for(var k=0;k<shown;k++){var op=opps[k];html+='<div class="opp-row" onclick="_askCopilot(\x27Show me details for opportunity ' + esc(op.name).replace(/'/g,'\x27') + '\x27)"><div class="opp-name">'+esc(op.name)+'</div><div class="opp-stage">'+esc((op.stage_name||"").split(" ").slice(0,2).join(" "))+'</div><div class="opp-amount">'+money(op.amount)+'</div></div>';} if(!_isFS&&opps.length>shown)html+='<div style="font-size:11px;color:var(--muted);margin-top:6px">+ '+(opps.length-shown)+' more</div>'; html+='</div>'; }
         document.getElementById("root").innerHTML = html; reportHeight();
       }
       async function init() {

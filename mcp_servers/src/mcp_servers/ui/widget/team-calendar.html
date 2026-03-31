@@ -31,6 +31,7 @@
       .event-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .event-detail { font-size: 11px; color: var(--muted); margin-top: 1px; }
       .event-dates { font-size: 11px; color: var(--wd-accent); font-weight: 600; flex-shrink: 0; }
+      .action-link { display: inline-block; font-size: 11px; color: var(--accent); cursor: pointer; margin-left: auto; font-weight: 600; } .action-link:hover { text-decoration: underline; }
       .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
       .summary-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px; text-align: center; }
       .summary-value { font-size: 20px; font-weight: 700; color: var(--wd-accent); }
@@ -75,6 +76,7 @@
       function getTypeColor(type) { var t = (type || "").toLowerCase(); for (var k in typeColors) { if (t.indexOf(k) !== -1) return 'var(' + typeColors[k] + ')'; } return 'var(--other)'; }
 
       function formatDate(ds) { if (!ds) return ""; try { var d = new Date(ds); return d.toLocaleDateString("en-US", {month: "short", day: "numeric"}); } catch(e) { return ds; } }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
 
       function renderCalendar(events) {
         var now = new Date(), year = now.getFullYear(), month = now.getMonth();
@@ -154,7 +156,7 @@
         if (entries.length) {
           var sorted = entries.slice().sort(function(a, b) { return new Date(a.startDate || a.start_date || a.date || a.start) - new Date(b.startDate || b.start_date || b.date || b.start); });
           var shown = _isFS ? sorted.length : Math.min(6, sorted.length);
-          html += '<div class="card"><div class="section-label">Upcoming Time Off</div>';
+          html += '<div class="card"><div class="section-label" style="display:flex;justify-content:space-between;align-items:center">Upcoming Time Off<span class="action-link" onclick="_askCopilot(\'I would like to request time off\')">+ Request Time Off</span></div>';
           for (var k = 0; k < shown; k++) {
             var ev = sorted[k];
             var name = ev.workerName || ev.worker_name || ev.name || ev.employee || "Team Member";

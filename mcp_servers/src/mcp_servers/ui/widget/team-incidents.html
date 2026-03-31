@@ -44,7 +44,7 @@
       table { width: 100%; border-collapse: collapse; font-size: 12px; }
       th { text-align: left; color: var(--muted); font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; padding: 4px 6px; border-bottom: 1px solid var(--border); }
       td { padding: 5px 6px; border-bottom: 1px solid var(--border); }
-      td.num-link { color: var(--accent); font-weight: 600; }
+      td.num-link { color: var(--accent); font-weight: 600; cursor: pointer; } td.num-link:hover { text-decoration: underline; }
       .tag { display: inline-block; padding: 1px 6px; border-radius: 6px; background: var(--tag-bg); border: 1px solid var(--border); font-size: 10px; }
       .tag.p1 { border-color: var(--neg); color: var(--neg); }
       .tag.p2 { border-color: var(--warn); color: var(--warn); }
@@ -84,6 +84,7 @@
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
 
       function prioClass(p) { var n = parseInt(p, 10); if (n <= 1 || /critical/i.test(p)) return "tag p1"; if (n <= 2 || /high/i.test(p)) return "tag p2"; return "tag"; }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
 
       function render(data) {
         var root = document.getElementById("root");
@@ -115,7 +116,7 @@
           var items = recent.slice(0, 10);
           html += '<div class="section-title">Recent Incidents</div><table><tr><th>Number</th><th>Description</th><th>Priority</th><th>Assigned To</th></tr>';
           items.forEach(function(inc) {
-            html += '<tr><td class="num-link">' + esc(inc.number) + '</td><td>' + esc(inc.short_description || "") + '</td><td><span class="' + prioClass(inc.priority) + '">P' + esc(String(inc.priority || "")) + '</span></td><td>' + esc(inc.assigned_to || "—") + '</td></tr>';
+            html += '<tr><td class="num-link" onclick="_askCopilot(\'Tell me about ServiceNow incident ' + esc(inc.number) + ': ' + esc(inc.short_description || '').replace(/'/g,'\\x27') + '\')">' + esc(inc.number) + '</td><td>' + esc(inc.short_description || "") + '</td><td><span class="' + prioClass(inc.priority) + '">P' + esc(String(inc.priority || "")) + '</span></td><td>' + esc(inc.assigned_to || "—") + '</td></tr>';
           });
           html += '</table>';
         }

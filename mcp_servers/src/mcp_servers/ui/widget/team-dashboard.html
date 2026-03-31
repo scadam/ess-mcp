@@ -36,6 +36,7 @@
       .m-title { font-size: 11px; color: var(--muted); }
       .m-email { font-size: 11px; color: var(--accent); text-decoration: none; }
       .m-email:hover { text-decoration: underline; }
+      .member { cursor: pointer; } .member:hover { background: var(--bg); border-radius: 8px; }
       .m-badge { font-size: 9px; color: var(--accent); text-transform: uppercase; font-weight: 700; letter-spacing: .5px; background: var(--btn-bg); border: 1px solid var(--btn-border); border-radius: 4px; padding: 1px 5px; margin-left: 6px; }
     
       /* Enhanced interactivity */
@@ -69,6 +70,7 @@
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       function initials(name) { return (name || "?").split(" ").map(function(p) { return p[0]; }).join("").slice(0, 2).toUpperCase(); }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
 
       function render(d) {
         if (!d || !d.success) { document.getElementById("root").innerHTML = '<div class="loading">No team data available.</div>'; reportHeight(); return; }
@@ -101,7 +103,7 @@
           for (var j = 0; j < members.length; j++) {
             var m = members[j];
             var isMgr = m.isManager;
-            html += '<div class="member">';
+            html += '<div class="member" onclick="_askCopilot(\'Show me the profile for ' + esc(m.name).replace(/'/g,'\\x27') + '\')">';
             html += '<div class="m-avatar' + (isMgr ? ' mgr' : '') + '">' + initials(m.name) + '</div>';
             html += '<div style="flex:1;min-width:0"><div class="m-name">' + esc(m.name) + (isMgr ? '<span class="m-badge">Mgr</span>' : '') + '</div>';
             html += '<div class="m-title">' + esc(m.businessTitle || "") + '</div>';

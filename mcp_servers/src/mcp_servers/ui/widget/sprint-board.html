@@ -19,7 +19,7 @@
       .col-todo .col-header { color: var(--col-todo); border-bottom-color: var(--col-todo); }
       .col-progress .col-header { color: var(--col-progress); border-bottom-color: var(--col-progress); }
       .col-done .col-header { color: var(--col-done); border-bottom-color: var(--col-done); }
-      .issue-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+      .issue-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; cursor: pointer; }
       .issue-card:last-child { margin-bottom: 0; }
       .issue-key { font-size: 10px; font-weight: 700; color: var(--jira-accent); }
       .issue-summary { font-size: 12px; margin-top: 4px; line-height: 1.3; }
@@ -67,6 +67,7 @@
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       function priorityClass(p) { var l = (p || "").toLowerCase(); if (l === "highest" || l === "critical") return "priority-highest"; if (l === "high") return "priority-high"; if (l === "medium") return "priority-medium"; return "priority-low"; }
       function categorize(statusCat) { var c = (statusCat || "").toLowerCase(); if (c === "done" || c === "complete") return "done"; if (c.indexOf("progress") >= 0 || c === "indeterminate") return "progress"; return "todo"; }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
       function render(d) {
         var issues = d.issues || d.records || [];
         if (!issues.length) { document.getElementById("root").innerHTML = '<div class="loading">No issues in this sprint.</div>'; reportHeight(); return; }
@@ -79,7 +80,7 @@
           var col = colDefs[c], items = cols[col.key];
           html += '<div class="column ' + col.cls + '"><div class="col-header"><span>' + col.label + '</span><span class="count">' + items.length + '</span></div>';
           var shown = _isFS ? items.length : Math.min(8, items.length);
-          for (var j = 0; j < shown; j++) { var it = items[j]; html += '<div class="issue-card"><div class="issue-key">' + esc(it.key || "") + '</div><div class="issue-summary">' + esc(it.summary || it.title || "") + '</div><div class="issue-meta"><span class="issue-type">' + esc(it.issue_type || it.type || "") + '</span><span class="issue-priority ' + priorityClass(it.priority) + '">' + esc(it.priority || "") + '</span></div>' + (it.assignee ? '<div class="issue-assignee">' + esc(it.assignee) + '</div>' : '') + '</div>'; }
+          for (var j = 0; j < shown; j++) { var it = items[j]; html += '<div class="issue-card" onclick="_askCopilot(\'Show me details for Jira issue ' + esc(it.key || '') + '\')"><div class="issue-key">' + esc(it.key || "") + '</div><div class="issue-summary">' + esc(it.summary || it.title || "") + '</div><div class="issue-meta"><span class="issue-type">' + esc(it.issue_type || it.type || "") + '</span><span class="issue-priority ' + priorityClass(it.priority) + '">' + esc(it.priority || "") + '</span></div>' + (it.assignee ? '<div class="issue-assignee">' + esc(it.assignee) + '</div>' : '') + '</div>'; }
           if (!_isFS && items.length > shown) html += '<div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center">+ ' + (items.length - shown) + ' more</div>';
           html += '</div>';
         }
