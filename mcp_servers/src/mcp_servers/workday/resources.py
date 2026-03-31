@@ -87,4 +87,26 @@ WORKDAY_RESOURCES = {
             }
         },
     },
+    "change-business-title": {
+        "description": "Business title change form – submit a request to change an employee's business title via change_business_title.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("change-business-title.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "learning-assignments": {
+        "description": "Learning assignments widget – view assigned training courses, completion status, and due dates.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("learning-assignments.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }

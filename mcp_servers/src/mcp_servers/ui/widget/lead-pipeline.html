@@ -1,0 +1,96 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3; --accent: #4cc2ff; --border: #1f2630; --pos: #2bd48f; --neg: #ff6b6b; --warn: #f0b232; --btn-bg: #152235; --btn-border: #243145; --sf-accent: #1589ee; --sf-glow: rgba(21,137,238,.14); --bar-bg: rgba(21,137,238,.18); }
+      :root[data-theme="light"] { --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e; --accent: #0078d4; --border: #e0e0e0; --pos: #107c10; --neg: #d13438; --warn: #ca5010; --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --sf-accent: #0070d2; --sf-glow: rgba(0,112,210,.08); --bar-bg: rgba(0,112,210,.12); }
+      html, body { margin: 0; background: var(--bg); }
+      body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .sf-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sf-glow); border: 1px solid var(--sf-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+      .section-label { font-size: 11px; color: var(--sf-accent); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+      .totals-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .total-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; text-align: center; }
+      .total-value { font-size: 20px; font-weight: 700; color: var(--sf-accent); }
+      .total-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+      .funnel-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+      .stage-name { width: 148px; font-size: 11px; color: var(--muted); flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .bar-track { flex: 1; background: var(--bar-bg); border-radius: 999px; height: 10px; overflow: hidden; }
+      .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--sf-accent), var(--accent)); }
+      .bar-label { width: 50px; font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; }
+      .lead-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
+      .lead-row:last-child { border-bottom: none; }
+      .lead-name { font-size: 12px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; }
+      .lead-company { font-size: 10px; color: var(--muted); flex-shrink: 0; margin-right: 8px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .lead-status { font-size: 10px; font-weight: 600; text-transform: uppercase; flex-shrink: 0; padding: 2px 8px; border-radius: 6px; }
+      .status-open { color: var(--accent); background: rgba(76,194,255,.12); }
+      .status-working { color: var(--warn); background: rgba(240,178,50,.12); }
+      .status-converted { color: var(--pos); background: rgba(43,212,143,.12); }
+      .status-closed { color: var(--neg); background: rgba(255,107,107,.12); }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
+      .maximize-btn:hover { color: var(--sf-accent); border-color: var(--sf-accent); }
+      .loading { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+      .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
+      .card { transition: border-color .2s, box-shadow .2s; }
+      .card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+      :root[data-theme="dark"] .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+      .btn, .maximize-btn, .hub-expand-btn { transition: all .15s ease; }
+      @media (max-width: 480px) { .totals-grid { grid-template-columns: 1fr 1fr !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="sf-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sf-accent)"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div><div class="title">Lead Pipeline</div><div class="subtitle">Salesforce &middot; CRM</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+      <div id="root"><div class="loading">Loading lead pipeline&hellip;</div></div>
+      <div class="footer">Powered by <strong>salesforce / list_leads</strong> via MCP</div>
+    </div>
+    <script>
+      var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
+      var _isFS = false, _maxBtn = document.getElementById("maximizeBtn");
+      var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+      var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+      function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+      function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+      function statusClass(s) { var l = (s || "").toLowerCase(); if (l.indexOf("converted") >= 0) return "status-converted"; if (l.indexOf("working") >= 0 || l.indexOf("contacted") >= 0) return "status-working"; if (l.indexOf("closed") >= 0 || l.indexOf("not converted") >= 0) return "status-closed"; return "status-open"; }
+      function render(d) {
+        var leads = d.leads || d.records || [];
+        if (!leads.length) { document.getElementById("root").innerHTML = '<div class="loading">No leads found.</div>'; reportHeight(); return; }
+        var byStatus = {}, bySource = {}, total = leads.length;
+        for (var i = 0; i < leads.length; i++) { var l = leads[i]; var st = l.status || "Unknown"; byStatus[st] = (byStatus[st] || 0) + 1; var src = l.lead_source || "Unknown"; bySource[src] = (bySource[src] || 0) + 1; }
+        var statuses = Object.keys(byStatus), sources = Object.keys(bySource);
+        var openCount = 0, workingCount = 0, convertedCount = 0;
+        for (var k in byStatus) { var kl = k.toLowerCase(); if (kl.indexOf("open") >= 0) openCount += byStatus[k]; else if (kl.indexOf("working") >= 0 || kl.indexOf("contacted") >= 0) workingCount += byStatus[k]; else if (kl.indexOf("converted") >= 0) convertedCount += byStatus[k]; }
+        var html = '<div class="card"><div class="section-label">Pipeline Summary</div><div class="totals-grid"><div class="total-cell"><div class="total-value">' + total + '</div><div class="total-label">Total Leads</div></div><div class="total-cell"><div class="total-value">' + openCount + '</div><div class="total-label">Open</div></div><div class="total-cell"><div class="total-value">' + workingCount + '</div><div class="total-label">Working</div></div><div class="total-cell"><div class="total-value">' + convertedCount + '</div><div class="total-label">Converted</div></div></div></div>';
+        if (statuses.length) { var maxCount = 1; for (var s = 0; s < statuses.length; s++) maxCount = Math.max(maxCount, byStatus[statuses[s]]); html += '<div class="card"><div class="section-label">By Status</div>'; for (var s = 0; s < statuses.length; s++) { var cnt = byStatus[statuses[s]]; var pct = Math.max(4, Math.round((cnt / maxCount) * 100)); html += '<div class="funnel-row"><div class="stage-name">' + esc(statuses[s]) + '</div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div><div class="bar-label">' + cnt + '</div></div>'; } html += '</div>'; }
+        if (sources.length) { var maxSrc = 1; for (var r = 0; r < sources.length; r++) maxSrc = Math.max(maxSrc, bySource[sources[r]]); html += '<div class="card"><div class="section-label">By Source</div>'; for (var r = 0; r < sources.length; r++) { var cnt = bySource[sources[r]]; var pct = Math.max(4, Math.round((cnt / maxSrc) * 100)); html += '<div class="funnel-row"><div class="stage-name">' + esc(sources[r]) + '</div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div><div class="bar-label">' + cnt + '</div></div>'; } html += '</div>'; }
+        var shown = _isFS ? leads.length : Math.min(10, leads.length);
+        html += '<div class="card"><div class="section-label">Recent Leads</div>';
+        for (var j = 0; j < shown; j++) { var lead = leads[j]; html += '<div class="lead-row"><div class="lead-name">' + esc(lead.name || ((lead.first_name || "") + " " + (lead.last_name || "")).trim()) + '</div><div class="lead-company">' + esc(lead.company || "") + '</div><div class="lead-status ' + statusClass(lead.status) + '">' + esc(lead.status || "Open") + '</div></div>'; }
+        if (!_isFS && leads.length > shown) html += '<div style="font-size:11px;color:var(--muted);margin-top:6px">+ ' + (leads.length - shown) + ' more</div>';
+        html += '</div>';
+        document.getElementById("root").innerHTML = html; reportHeight();
+      }
+      async function init() {
+        if (toolOutput && (toolOutput.leads || toolOutput.records)) { render(toolOutput); return; }
+        if (window.openai && typeof window.openai.callTool === "function") { try { var out = await window.openai.callTool("list_leads", toolInput); render((out && out.structuredContent) || out); } catch (e) { document.getElementById("root").innerHTML = '<div class="loading">' + esc(e.message || "Error loading leads") + '</div>'; reportHeight(); } }
+        else { document.getElementById("root").innerHTML = '<div class="loading">Skybridge unavailable.</div>'; reportHeight(); }
+      }
+      async function toggleFS() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; try { await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"}); _isFS=!_isFS; _maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg; _maxBtn.title=_isFS?"Restore":"Maximize"; init(); } catch(e){} }
+      if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFS); else _maxBtn.style.display = "none"; }
+      init();
+    </script>
+  </body>
+</html>
