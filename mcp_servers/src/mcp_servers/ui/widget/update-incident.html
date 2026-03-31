@@ -107,6 +107,10 @@
         border-bottom: 1px solid transparent; transition: border-color .15s;
       }
       .open-link a:hover { border-color: var(--sn-accent); }
+      .workflow-links { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+      .wf-btn { display: inline-flex; align-items: center; gap: 5px; background: var(--badge-bg); color: var(--sn-accent); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; text-transform: uppercase; letter-spacing: .4px; transition: border-color .15s, background .15s; }
+      .wf-btn:hover { border-color: var(--sn-accent); background: var(--sn-glow); }
+      .wf-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
       .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color .15s, border-color .15s; margin-left: auto; flex-shrink: 0; }
       .maximize-btn:hover { color: var(--sn-accent); border-color: var(--sn-accent); }
     
@@ -204,6 +208,20 @@
 
       <div class="open-link" id="openLinkRow" style="display:none">
         <a id="openLinkEl" href="#" target="_blank">Open in ServiceNow &#8599;</a>
+      </div>
+
+      <div class="card" id="workflowCard">
+        <div class="section-label">Related Actions</div>
+        <div class="workflow-links">
+          <button class="wf-btn" id="createProblemBtn" title="Create a Problem record from this incident">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+            Create Problem
+          </button>
+          <button class="wf-btn" id="createChangeBtn" title="Create a Change Request to address this incident">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Create Change Request
+          </button>
+        </div>
       </div>
     </div>
 
@@ -313,6 +331,26 @@
     var _isFS=false,_maxBtn=document.getElementById("maximizeBtn");
     async function toggleFS(){if(!window.openai||typeof window.openai.requestDisplayMode!=="function")return;try{await window.openai.requestDisplayMode({mode:_isFS?"inline":"fullscreen"});_isFS=!_isFS;_maxBtn.innerHTML=_isFS?_collapseSvg:_expandSvg;_maxBtn.title=_isFS?"Restore":"Maximize"}catch(e){}}
     if(_maxBtn){if(window.openai&&typeof window.openai.requestDisplayMode==="function")_maxBtn.addEventListener("click",toggleFS);else _maxBtn.style.display="none"}
+
+    /* ── Related-action workflow buttons ── */
+    (function(){
+      var cpBtn=document.getElementById("createProblemBtn"), ccBtn=document.getElementById("createChangeBtn");
+      var incNum=document.getElementById("incNumberEl");
+      if(cpBtn) cpBtn.addEventListener("click",function(){
+        if(window.openai&&typeof window.openai.sendFollowUpMessage==="function"){
+          var num=incNum?incNum.textContent:"";
+          var desc=document.getElementById("shortDescInput").value.trim()||"";
+          window.openai.sendFollowUpMessage("Create a Problem record for incident "+(num||"this incident")+(desc?" about: "+desc:"")+".");
+        }
+      });
+      if(ccBtn) ccBtn.addEventListener("click",function(){
+        if(window.openai&&typeof window.openai.sendFollowUpMessage==="function"){
+          var num=incNum?incNum.textContent:"";
+          var desc=document.getElementById("shortDescInput").value.trim()||"";
+          window.openai.sendFollowUpMessage("Create a Change Request to address incident "+(num||"this incident")+(desc?" about: "+desc:"")+".");
+        }
+      });
+    })();
     </script>
   </body>
 </html>
