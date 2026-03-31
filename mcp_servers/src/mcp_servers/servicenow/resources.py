@@ -781,4 +781,81 @@ SERVICENOW_RESOURCES = {
             }
         },
     },
+    "update-incident": {
+        "description": "Incident update form – edit an existing ServiceNow incident with state, urgency, category, and comments via update_incident.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("update-incident.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "task-list": {
+        "description": "Unified task list hub – view, approve/reject, transition, and comment on inbox tasks across services.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("task-list.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "approval-review": {
+        "description": "Approval review widget – review and execute approval decisions (approve/reject) with detailed context.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("approval-review.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "catalog-list": {
+        "description": "Service catalog browser – search, filter, and order items from the ServiceNow service catalog.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("catalog-list.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "catalog-item": {
+        "description": "Catalog item detail and order form – view item details, fill variables, and submit or add to cart.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("catalog-item.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "cart-summary": {
+        "description": "Shopping cart summary – review cart items, remove items, and checkout or clear the cart.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("cart-summary.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "update-task": {
+        "description": "Task update form – update ServiceNow task subject, status, priority, and description via update_task.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("update-task.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }

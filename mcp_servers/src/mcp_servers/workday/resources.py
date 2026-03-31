@@ -87,4 +87,26 @@ WORKDAY_RESOURCES = {
             }
         },
     },
+    "change-business-title": {
+        "description": "Business title change form – submit a proposed new business title via change_business_title.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("change-business-title.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "learning-assignments": {
+        "description": "Learning assignments widget – displays required and recommended training via get_learning_assignments.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("learning-assignments.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }

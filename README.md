@@ -19,12 +19,12 @@
 
 | Server | Platform | Tools | Widgets | Key Actions |
 |--------|----------|-------|---------|-------------|
-| **Workday** | HR / HCM | 23 | 6 | Book leave, change title, approve/deny inbox tasks, view compensation, org charts, **team dashboard** |
-| **ServiceNow** | ITSM | 37 | 5 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, **team incidents** |
+| **Workday** | HR / HCM | 23 | 8 | Book leave, change title, approve/deny inbox tasks, view compensation, org charts, **team dashboard** |
+| **ServiceNow** | ITSM | 37 | 12 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, **team incidents** |
 | **Salesforce** | CRM | 42 | 9 | Create opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, **team pipeline** |
 | **Jira** | Project Management | 23 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, **team workload** |
 
-> **125 tools total** — 44 are write/action tools (create, update, approve, transition, link), 11 render interactive form widgets, and the rest provide rich read access. Designed for AI agents that **can act**, not just answer questions.
+> **125 tools total** — 44 are write/action tools (create, update, approve, transition, link), 34 interactive widgets render rich UI, and the rest provide rich read access. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -32,7 +32,7 @@ Servers can be deployed **individually**, in **any combination**, or **all toget
 
 ## 🖼️ Widget Screenshots
 
-ESS-MCP includes 25 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 4 manager-specific team dashboards.
+ESS-MCP includes 34 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 4 manager-specific team dashboards.
 
 ### Self-Service Widgets
 
@@ -124,8 +124,7 @@ Each MCP server:
 ### Prerequisites
 
 - **Python 3.11+**
-- **Docker** (for containerised deployment)
-- **Azure CLI** (for Azure deployment)
+- **Azure CLI** (for Azure deployment — no local Docker required)
 
 ### Local Development
 
@@ -154,7 +153,9 @@ python -m mcp_servers.cli jira --transport http --port 8080
 python -m mcp_servers.cli all --transport both --port 8080
 ```
 
-### Docker
+### Docker (Optional – Local Development)
+
+Docker is **not required** for Azure deployment (the deploy script uses ACR remote build). For local containerised testing:
 
 ```bash
 cd mcp_servers
@@ -195,7 +196,7 @@ Deploy to **Azure Container Apps** with a single command. The script provisions 
 | Resource | Purpose |
 |----------|---------|
 | **Resource Group** | Logical container for all resources |
-| **Azure Container Registry** | Hosts the Docker image |
+| **Azure Container Registry** | Hosts the container image (built remotely via ACR Tasks) |
 | **Log Analytics Workspace** | Centralised logging and monitoring |
 | **Container App Environment** | Managed Kubernetes-based hosting |
 | **Container App(s)** | One per selected MCP server |
@@ -227,7 +228,7 @@ Deploy to **Azure Container Apps** with a single command. The script provisions 
 | `-s, --servers` | `all` | Comma-separated: `workday`, `servicenow`, `salesforce`, `jira`, or `all` |
 | `-l, --location` | `eastus` | Azure region |
 | `-n, --name` | `essmcp` | Base name for resources (3–16 chars) |
-| `-t, --tag` | `latest` | Docker image tag |
+| `-t, --tag` | `latest` | Container image tag |
 | `--cpu` | `0.5` | CPU cores per container |
 | `--memory` | `1Gi` | Memory per container |
 | `--min-replicas` | `0` | Minimum replica count (0 = scale to zero) |
@@ -313,7 +314,7 @@ az group delete --name essmcp-rg --yes --no-wait
 | `action_inbox_task` | ✏️ **Action** | **Approve or reject an inbox task** |
 | `get_inbox_task_detail` | 📖 Read | Get detailed info for a specific inbox task |
 
-**Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `team-dashboard`
+**Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `team-dashboard`, `change-business-title`, `learning-assignments`
 
 **Configuration** (`env/workday.env`):
 ```env
@@ -361,7 +362,7 @@ WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
 | `get_team_incidents` | 📖 Read | 👔 **Manager:** Team incident workload dashboard |
 | `get_team_approvals` | 📖 Read | 👔 **Manager:** Bulk team approvals view |
 
-**Widgets:** `incident-list`, `create-incident`, `team-incidents`, `create-change-request`, `create-problem`
+**Widgets:** `incident-list`, `create-incident`, `update-incident`, `task-list`, `approval-review`, `catalog-list`, `catalog-item`, `cart-summary`, `update-task`, `team-incidents`, `create-change-request`, `create-problem`
 
 **Configuration** (`env/servicenow.env`):
 ```env
@@ -469,7 +470,7 @@ JIRA_PROJECT_KEY=PROJ  # Optional
 | **stdio** | `--transport stdio` | Direct MCP client integration (single server only) |
 | **SSE** | `--transport sse` | Server-Sent Events for streaming |
 | **HTTP** | `--transport http` | Streamable HTTP for request/response |
-| **Both** | `--transport both` | SSE + HTTP simultaneously (default for Docker) |
+| **Both** | `--transport both` | SSE + HTTP simultaneously (default for container) |
 
 **Endpoints** (when running all servers with `--transport both`):
 
