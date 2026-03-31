@@ -19,12 +19,12 @@
 
 | Server | Platform | Tools | Widgets | Key Actions |
 |--------|----------|-------|---------|-------------|
-| **Workday** | HR / HCM | 23 | 6 | Book leave, change title, approve/deny inbox tasks, view compensation, org charts, **team dashboard** |
-| **ServiceNow** | ITSM | 37 | 5 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, **team incidents** |
-| **Salesforce** | CRM | 42 | 9 | Create opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, **team pipeline** |
-| **Jira** | Project Management | 23 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, **team workload** |
+| **Workday** | HR / HCM | 27 | 8 | Book leave, change title, approve/deny inbox tasks, view compensation, org charts, submit time entries, create expense reports, **team dashboard** |
+| **ServiceNow** | ITSM | 39 | 12 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, create KB articles, track SLAs, **team incidents** |
+| **Salesforce** | CRM | 44 | 9 | Create/update opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, activity timeline, **team pipeline** |
+| **Jira** | Project Management | 26 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, manage releases/versions, **team workload** |
 
-> **125 tools total** — 44 are write/action tools (create, update, approve, transition, link), 11 render interactive form widgets, and the rest provide rich read access. Designed for AI agents that **can act**, not just answer questions.
+> **136 tools total** — 45 are write/action tools (create, update, approve, transition, link), 11 render interactive form widgets, and the rest provide rich read access. 34 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -32,7 +32,7 @@ Servers can be deployed **individually**, in **any combination**, or **all toget
 
 ## 🖼️ Widget Screenshots
 
-ESS-MCP includes 25 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 4 manager-specific team dashboards.
+ESS-MCP includes 34 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 4 manager-specific team dashboards.
 
 ### Self-Service Widgets
 
@@ -124,7 +124,6 @@ Each MCP server:
 ### Prerequisites
 
 - **Python 3.11+**
-- **Docker** (for containerised deployment)
 - **Azure CLI** (for Azure deployment)
 
 ### Local Development
@@ -154,7 +153,7 @@ python -m mcp_servers.cli jira --transport http --port 8080
 python -m mcp_servers.cli all --transport both --port 8080
 ```
 
-### Docker
+### Docker (Optional – Local Dev)
 
 ```bash
 cd mcp_servers
@@ -170,6 +169,8 @@ docker run -p 8080:8080 \
   -e JIRA_BASE_URL=https://yourorg.atlassian.net \
   ess-mcp python -m mcp_servers.cli jira --transport both --host 0.0.0.0 --port 8080
 ```
+
+> **Note:** Docker is only needed for local container testing. Azure deployment uses ACR remote build — no local Docker installation required.
 
 ### Verify
 
@@ -188,14 +189,14 @@ curl -X POST http://localhost:8080/workday/mcp \
 
 ## ☁️ Azure Deployment
 
-Deploy to **Azure Container Apps** with a single command. The script provisions all required infrastructure from scratch — you only need an Azure subscription.
+Deploy to **Azure Container Apps** with a single command. The script provisions all required infrastructure from scratch and uses **ACR remote build** — no local Docker installation required. You only need an Azure subscription and the Azure CLI.
 
 ### What Gets Created
 
 | Resource | Purpose |
 |----------|---------|
 | **Resource Group** | Logical container for all resources |
-| **Azure Container Registry** | Hosts the Docker image |
+| **Azure Container Registry** | Builds and hosts the container image (remote build — no local Docker needed) |
 | **Log Analytics Workspace** | Centralised logging and monitoring |
 | **Container App Environment** | Managed Kubernetes-based hosting |
 | **Container App(s)** | One per selected MCP server |
@@ -227,7 +228,7 @@ Deploy to **Azure Container Apps** with a single command. The script provisions 
 | `-s, --servers` | `all` | Comma-separated: `workday`, `servicenow`, `salesforce`, `jira`, or `all` |
 | `-l, --location` | `eastus` | Azure region |
 | `-n, --name` | `essmcp` | Base name for resources (3–16 chars) |
-| `-t, --tag` | `latest` | Docker image tag |
+| `-t, --tag` | `latest` | Container image tag |
 | `--cpu` | `0.5` | CPU cores per container |
 | `--memory` | `1Gi` | Memory per container |
 | `--min-replicas` | `0` | Minimum replica count (0 = scale to zero) |
@@ -285,7 +286,7 @@ az group delete --name essmcp-rg --yes --no-wait
 
 > *Employee profiles, leave management, compensation, org hierarchy, learning, and team calendar.*
 
-**Tools (23):**
+**Tools (27):**
 
 | Tool | Type | Description |
 |------|------|-------------|
@@ -312,8 +313,12 @@ az group delete --name essmcp-rg --yes --no-wait
 | `get_team_performance_summary` | 📖 Read | 👔 **Manager:** Pending reviews, team absences, action items |
 | `action_inbox_task` | ✏️ **Action** | **Approve or reject an inbox task** |
 | `get_inbox_task_detail` | 📖 Read | Get detailed info for a specific inbox task |
+| `submit_time_entry` | ✏️ **Create** | **Submit a time entry (hours worked)** |
+| `get_time_entries` | 📖 Read | View time entries for a date range |
+| `create_expense_report` | ✏️ **Create** | **Create and submit an expense report** |
+| `get_expense_reports` | 📖 Read | List expense reports with status |
 
-**Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `team-dashboard`
+**Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `team-dashboard`, `change-business-title`, `learning-assignments`
 
 **Configuration** (`env/workday.env`):
 ```env
@@ -326,7 +331,7 @@ WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
 
 > *Incidents, change requests, problems, service catalog, knowledge base, approvals, and CMDB.*
 
-**Tools (37):**
+**Tools (39):**
 
 | Tool | Type | Description |
 |------|------|-------------|
@@ -352,16 +357,18 @@ WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
 | `update_change_request` | ✏️ **Update** | **Update change request** |
 | `show_create_change_request_form` | 🖼️ Widget | Interactive change request form |
 | `search_knowledge` / `get_knowledge_article` | 📖 Read | Search knowledge base |
+| `create_knowledge_article` | ✏️ **Create** | **Create new KB article as draft** |
 | `list_problems` | 📖 Read | List problem records |
 | `create_problem` | ✏️ **Create** | **Create problem record** |
 | `update_problem` | ✏️ **Update** | **Update problem record** |
 | `show_create_problem_form` | 🖼️ Widget | Interactive problem creation form |
 | `search_reference_values` | 📖 Read | Search table values for form dropdowns |
 | `get_cmdb_ci` / `list_cmdb_cis` | 📖 Read | CMDB configuration items |
+| `get_sla_status` | 📖 Read | **SLA compliance tracking** — breached, at-risk, and compliant |
 | `get_team_incidents` | 📖 Read | 👔 **Manager:** Team incident workload dashboard |
 | `get_team_approvals` | 📖 Read | 👔 **Manager:** Bulk team approvals view |
 
-**Widgets:** `incident-list`, `create-incident`, `team-incidents`, `create-change-request`, `create-problem`
+**Widgets:** `incident-list`, `create-incident`, `update-incident`, `approval-review`, `catalog-list`, `catalog-item`, `cart-summary`, `task-list`, `update-task`, `team-incidents`, `create-change-request`, `create-problem`
 
 **Configuration** (`env/servicenow.env`):
 ```env
@@ -374,13 +381,15 @@ SERVICENOW_INSTANCE_URL=https://yourinstance.service-now.com
 
 > *Accounts, contacts, opportunities, leads, campaigns, pipeline dashboards, and compliance cases.*
 
-**Tools (42):**
+**Tools (44):**
 
 | Tool | Type | Description |
 |------|------|-------------|
 | `list_accounts` / `get_account_360` | 📖 Read | Account lookup and 360° view (contacts, opps, cases, tasks) |
 | `list_contacts` | 📖 Read | Contact directory (optionally scoped to account) |
 | `create_contact` | ✏️ **Create** | **Create new contact, optionally linked to an account** |
+| `update_contact` | ✏️ **Update** | **Update existing contact fields** |
+| `get_activity_timeline` | 📖 Read | Combined activity timeline (tasks + events) for any record |
 | `list_opportunities` | 📖 Read | List opportunities/deals |
 | `create_opportunity` | ✏️ **Create** | **Create new opportunity** |
 | `create_opportunity_task` | ✏️ **Create** | **Create task linked to opportunity** |
@@ -390,7 +399,7 @@ SERVICENOW_INSTANCE_URL=https://yourinstance.service-now.com
 | `create_lead` | ✏️ **Create** | **Create new lead** |
 | `update_lead` | ✏️ **Update** | **Update lead information** |
 | `convert_lead` | ⚡ **Action** | **Convert lead to account/contact/opportunity** |
-| `show_create_lead_form` | 🖼️ Widget | Interactive lead creation form |
+| `show_create_lead_form` | 🖼️ Widget | Interactive lead creation form with convert-to-opportunity action |
 | `list_campaigns` / `get_campaign` | 📖 Read | Campaign tracking |
 | `add_campaign_member` | ✏️ **Create** | **Add a contact or lead to a campaign** |
 | `get_pipeline_dashboard` | 📖 Read | Pipeline analytics |
@@ -428,7 +437,7 @@ SALESFORCE_DOMAIN=yourorg.my.salesforce.com
 
 > *Issues, sprints, boards, epics, comments, and transitions.*
 
-**Tools (23):**
+**Tools (26):**
 
 | Tool | Type | Description |
 |------|------|-------------|
@@ -449,6 +458,9 @@ SALESFORCE_DOMAIN=yourorg.my.salesforce.com
 | `list_epics` | 📖 Read | Epic listing on a board |
 | `get_my_issues` | 📖 Read | Current user's assigned issues |
 | `list_projects` | 📖 Read | List accessible projects |
+| `list_versions` | 📖 Read | List project versions/releases |
+| `create_version` | ✏️ **Create** | **Create new release/version** |
+| `update_version` | ✏️ **Update** | **Update/release/archive a version** |
 | `get_team_workload` | 📖 Read | 👔 **Manager:** Team workload distribution |
 | `get_team_sprint_health` | 📖 Read | 👔 **Manager:** Sprint health across boards |
 
@@ -469,7 +481,7 @@ JIRA_PROJECT_KEY=PROJ  # Optional
 | **stdio** | `--transport stdio` | Direct MCP client integration (single server only) |
 | **SSE** | `--transport sse` | Server-Sent Events for streaming |
 | **HTTP** | `--transport http` | Streamable HTTP for request/response |
-| **Both** | `--transport both` | SSE + HTTP simultaneously (default for Docker) |
+| **Both** | `--transport both` | SSE + HTTP simultaneously (default for container deployment) |
 
 **Endpoints** (when running all servers with `--transport both`):
 
