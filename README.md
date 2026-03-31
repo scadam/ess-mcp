@@ -1164,7 +1164,7 @@ ess-mcp/
         ├── servicenow/             # ServiceNow MCP server
         ├── salesforce/             # Salesforce MCP server
         ├── jira/                   # Jira MCP server
-        └── ui/widget/              # 25 HTML+Skybridge widgets
+        └── ui/widget/              # 34 HTML+Skybridge widgets
 ```
 
 ---
