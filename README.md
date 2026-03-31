@@ -15,14 +15,16 @@
 
 ## 📖 Overview
 
-**ESS-MCP** is a suite of [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers that connect AI assistants to enterprise systems. Each server exposes tools and interactive UI widgets for a specific platform:
+**ESS-MCP** is a suite of [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers that connect AI assistants to enterprise systems. Each server exposes **actionable tools** and interactive UI widgets that let an AI agent **read, create, update, and act** on behalf of employees and managers:
 
-| Server | Platform | Tools | Widgets | Use Cases |
-|--------|----------|-------|---------|-----------|
-| **Workday** | HR / HCM | 21 | 8 | Employee profiles, leave booking, compensation, org charts, **team dashboard** |
-| **ServiceNow** | ITSM | 32 | 11 | Incidents, change requests, service catalog, approvals, **team incidents** |
-| **Salesforce** | CRM | 33 | 6 | Accounts, opportunities, pipeline, leads, campaigns, **team pipeline** |
-| **Jira** | Project Management | 22 | 5 | Issues, sprints, boards, epics, project tracking, **team workload** |
+| Server | Platform | Tools | Widgets | Key Actions |
+|--------|----------|-------|---------|-------------|
+| **Workday** | HR / HCM | 23 | 6 | Book leave, change title, approve/deny inbox tasks, view compensation, org charts, **team dashboard** |
+| **ServiceNow** | ITSM | 37 | 5 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, **team incidents** |
+| **Salesforce** | CRM | 42 | 9 | Create opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, **team pipeline** |
+| **Jira** | Project Management | 23 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, **team workload** |
+
+> **125 tools total** — 44 are write/action tools (create, update, approve, transition, link), 11 render interactive form widgets, and the rest provide rich read access. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -30,7 +32,7 @@ Servers can be deployed **individually**, in **any combination**, or **all toget
 
 ## 🖼️ Widget Screenshots
 
-ESS-MCP includes 27 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 4 manager-specific team dashboards.
+ESS-MCP includes 25 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 4 manager-specific team dashboards.
 
 ### Self-Service Widgets
 
@@ -283,31 +285,35 @@ az group delete --name essmcp-rg --yes --no-wait
 
 > *Employee profiles, leave management, compensation, org hierarchy, learning, and team calendar.*
 
-**Tools:**
+**Tools (23):**
 
-| Tool | Description |
-|------|-------------|
-| `get_worker` | Fetch current worker profile |
-| `get_leave_balances` | View PTO / leave balances |
-| `get_direct_reports` | List direct reports |
-| `get_inbox_tasks` | Fetch pending approval tasks |
-| `get_learning_assignments` | View learning initiatives |
-| `get_pay_slips` | Access payroll information |
-| `get_time_off_entries` | Historical time-off records |
-| `prepare_request_leave` / `book_leave` | Submit leave requests |
-| `prepare_change_business_title` / `change_business_title` | Update job title |
-| `search_learning_content` | Search the learning library |
-| `get_compensation` | Salary and bonus information |
-| `get_benefits` | Benefits enrollment and coverage |
-| `get_job_history` | Career progression history |
-| `get_org_chart` | Organization hierarchy |
-| `get_worker_documents` | HR documents |
-| `get_team_calendar` | Team availability calendar |
-| `get_team_overview` | 👔 **Manager:** Team headcount dashboard with role/org breakdown |
-| `get_team_compensation_summary` | 👔 **Manager:** Aggregate team salary statistics |
-| `get_team_performance_summary` | 👔 **Manager:** Pending reviews, team absences, action items |
+| Tool | Type | Description |
+|------|------|-------------|
+| `get_worker` | 📖 Read | Fetch current worker profile |
+| `get_leave_balances` | 📖 Read | View PTO / leave balances |
+| `get_direct_reports` | 📖 Read | List direct reports |
+| `get_inbox_tasks` | 📖 Read | Fetch pending approval tasks |
+| `get_learning_assignments` | 📖 Read | View learning initiatives |
+| `get_pay_slips` | 📖 Read | Access payroll information |
+| `get_time_off_entries` | 📖 Read | Historical time-off records |
+| `prepare_request_leave` | 🖼️ Widget | Show interactive leave booking form |
+| `book_leave` | ✏️ **Create** | **Submit leave request** |
+| `prepare_change_business_title` | 🖼️ Widget | Show business title change form |
+| `change_business_title` | ✏️ **Update** | **Submit business title change** |
+| `search_learning_content` | 📖 Read | Search the learning library |
+| `get_compensation` | 📖 Read | Salary and bonus information |
+| `get_benefits` | 📖 Read | Benefits enrollment and coverage |
+| `get_job_history` | 📖 Read | Career progression history |
+| `get_org_chart` | 📖 Read | Organization hierarchy |
+| `get_worker_documents` | 📖 Read | HR documents |
+| `get_team_calendar` | 📖 Read | Team availability calendar |
+| `get_team_overview` | 📖 Read | 👔 **Manager:** Team headcount dashboard with role/org breakdown |
+| `get_team_compensation_summary` | 📖 Read | 👔 **Manager:** Aggregate team salary statistics |
+| `get_team_performance_summary` | 📖 Read | 👔 **Manager:** Pending reviews, team absences, action items |
+| `action_inbox_task` | ✏️ **Action** | **Approve or reject an inbox task** |
+| `get_inbox_task_detail` | 📖 Read | Get detailed info for a specific inbox task |
 
-**Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `learning-assignments`, `change-business-title`, `team-dashboard`
+**Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `team-dashboard`
 
 **Configuration** (`env/workday.env`):
 ```env
@@ -320,25 +326,42 @@ WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
 
 > *Incidents, change requests, problems, service catalog, knowledge base, approvals, and CMDB.*
 
-**Tools:**
+**Tools (37):**
 
-| Tool | Description |
-|------|-------------|
-| `list_incidents` / `get_incident` | View incidents |
-| `create_incident` / `update_incident` | Manage incidents |
-| `list_tasks` / `get_task` / `update_task` | Task management |
-| `list_approvals` / `approve_reject` | Approval workflows |
-| `list_catalog_items` / `order_catalog_item` | Service catalog |
-| `add_to_cart` / `get_cart` / `checkout_cart` | Shopping cart |
-| `list_change_requests` / `create_change_request` | Change management |
-| `search_knowledge` / `get_knowledge_article` | Knowledge base |
-| `list_problems` / `create_problem` | Problem management |
-| `get_cmdb_ci` / `list_cmdb_cis` | CMDB queries |
-| `show_create_incident_form` | Interactive incident form |
-| `get_team_incidents` | 👔 **Manager:** Team incident workload dashboard |
-| `get_team_approvals` | 👔 **Manager:** Bulk team approvals view |
+| Tool | Type | Description |
+|------|------|-------------|
+| `list_incidents` / `get_incident` | 📖 Read | View and search incidents |
+| `create_incident` | ✏️ **Create** | **Create new IT service ticket** |
+| `update_incident` | ✏️ **Update** | **Update incident fields/state** |
+| `show_create_incident_form` | 🖼️ Widget | Interactive incident creation form |
+| `show_update_incident_form` | 🖼️ Widget | Interactive incident update form |
+| `list_tasks` | 📖 Read | List active tasks |
+| `update_task` | ✏️ **Update** | **Update task state, priority, assignment, or add notes** |
+| `list_approvals` / `get_approval` | 📖 Read | View pending approvals |
+| `approve_reject` | ⚡ **Action** | **Approve or reject approval request** |
+| `list_catalog_items` / `list_catalog_categories` | 📖 Read | Browse service catalog |
+| `get_catalog_item` | 📖 Read | Get catalog item details with form |
+| `order_catalog_item` | ✏️ **Create** | **Order catalog item directly** |
+| `add_to_cart` | ✏️ **Create** | **Add item to shopping cart** |
+| `get_cart` | 📖 Read | View shopping cart contents |
+| `checkout_cart` | ⚡ **Action** | **Submit cart as order** |
+| `delete_cart` / `remove_cart_item` | 🗑️ **Delete** | **Empty cart or remove items** |
+| `list_my_requests` | 📖 Read | List user's service requests |
+| `list_change_requests` / `get_change_request` | 📖 Read | View change requests |
+| `create_change_request` | ✏️ **Create** | **Create change request** |
+| `update_change_request` | ✏️ **Update** | **Update change request** |
+| `show_create_change_request_form` | 🖼️ Widget | Interactive change request form |
+| `search_knowledge` / `get_knowledge_article` | 📖 Read | Search knowledge base |
+| `list_problems` | 📖 Read | List problem records |
+| `create_problem` | ✏️ **Create** | **Create problem record** |
+| `update_problem` | ✏️ **Update** | **Update problem record** |
+| `show_create_problem_form` | 🖼️ Widget | Interactive problem creation form |
+| `search_reference_values` | 📖 Read | Search table values for form dropdowns |
+| `get_cmdb_ci` / `list_cmdb_cis` | 📖 Read | CMDB configuration items |
+| `get_team_incidents` | 📖 Read | 👔 **Manager:** Team incident workload dashboard |
+| `get_team_approvals` | 📖 Read | 👔 **Manager:** Bulk team approvals view |
 
-**Widgets:** `incident-list`, `create-incident`, `update-incident`, `approval-review`, `catalog-list`, `catalog-item`, `cart-summary`, `create-project`, `task-list`, `update-task`, `team-incidents`
+**Widgets:** `incident-list`, `create-incident`, `team-incidents`, `create-change-request`, `create-problem`
 
 **Configuration** (`env/servicenow.env`):
 ```env
@@ -351,25 +374,48 @@ SERVICENOW_INSTANCE_URL=https://yourinstance.service-now.com
 
 > *Accounts, contacts, opportunities, leads, campaigns, pipeline dashboards, and compliance cases.*
 
-**Tools:**
+**Tools (42):**
 
-| Tool | Description |
-|------|-------------|
-| `list_accounts` / `get_account_360` | Account management |
-| `list_contacts` | Contact directory |
-| `list_opportunities` / `create_opportunity` | Opportunity pipeline |
-| `list_leads` / `create_lead` / `convert_lead` | Lead management |
-| `list_campaigns` / `get_campaign` | Campaign tracking |
-| `get_pipeline_dashboard` | Pipeline analytics |
-| `list_cases` / `create_case` | Compliance cases |
-| `list_tasks` / `update_task` | Task management |
-| `list_approvals` / `approve_reject` | Approval workflows |
-| `create_quote` | Quote generation |
-| `get_forecast` / `list_reports` | Reporting |
-| `get_team_pipeline_summary` | 👔 **Manager:** Team pipeline by rep |
-| `get_team_performance_metrics` | 👔 **Manager:** Sales leaderboard by rep |
+| Tool | Type | Description |
+|------|------|-------------|
+| `list_accounts` / `get_account_360` | 📖 Read | Account lookup and 360° view (contacts, opps, cases, tasks) |
+| `list_contacts` | 📖 Read | Contact directory (optionally scoped to account) |
+| `create_contact` | ✏️ **Create** | **Create new contact, optionally linked to an account** |
+| `list_opportunities` | 📖 Read | List opportunities/deals |
+| `create_opportunity` | ✏️ **Create** | **Create new opportunity** |
+| `create_opportunity_task` | ✏️ **Create** | **Create task linked to opportunity** |
+| `update_opportunity` | ✏️ **Update** | **Update opportunity fields** |
+| `show_create_opportunity_form` | 🖼️ Widget | Interactive opportunity creation form |
+| `list_leads` / `get_lead` | 📖 Read | Lead management |
+| `create_lead` | ✏️ **Create** | **Create new lead** |
+| `update_lead` | ✏️ **Update** | **Update lead information** |
+| `convert_lead` | ⚡ **Action** | **Convert lead to account/contact/opportunity** |
+| `show_create_lead_form` | 🖼️ Widget | Interactive lead creation form |
+| `list_campaigns` / `get_campaign` | 📖 Read | Campaign tracking |
+| `add_campaign_member` | ✏️ **Create** | **Add a contact or lead to a campaign** |
+| `get_pipeline_dashboard` | 📖 Read | Pipeline analytics |
+| `list_cases` / `get_case` | 📖 Read | Compliance case lookup |
+| `create_case` | ✏️ **Create** | **Create compliance case** |
+| `update_case` | ✏️ **Update** | **Update case status/description** |
+| `show_compliance_case_form` | 🖼️ Widget | Interactive compliance case form |
+| `list_tasks` / `get_task` | 📖 Read | Task management |
+| `create_task` | ✏️ **Create** | **Create standalone task, optionally linked to account/opportunity/contact** |
+| `update_task` | ✏️ **Update** | **Update task status/priority** |
+| `list_approvals` | 📖 Read | View pending approval work items |
+| `approve_reject` | ⚡ **Action** | **Approve or reject approval requests** |
+| `create_event` | ✏️ **Create** | **Create event/meeting** |
+| `update_event` | ✏️ **Update** | **Update event details** |
+| `show_create_event_form` | 🖼️ Widget | Interactive event creation form |
+| `create_quote` | ✏️ **Create** | **Create quote linked to opportunity** |
+| `update_quote` | ✏️ **Update** | **Update existing quote** |
+| `show_create_quote_form` | 🖼️ Widget | Interactive quote creation form |
+| `list_products` | 📖 Read | Product catalog |
+| `get_forecast` | 📖 Read | Sales forecast / pipeline summary |
+| `list_reports` / `run_report` | 📖 Read | Run Salesforce reports |
+| `get_team_pipeline_summary` | 📖 Read | 👔 **Manager:** Team pipeline by rep |
+| `get_team_performance_metrics` | 📖 Read | 👔 **Manager:** Sales leaderboard and win rates |
 
-**Widgets:** `crm-account-360`, `crm-opportunity`, `crm-event`, `crm-pipeline`, `compliance-case`, `team-pipeline`
+**Widgets:** `crm-account-360`, `crm-pipeline`, `crm-opportunity`, `crm-event`, `compliance-case`, `crm-lead`, `crm-quote`, `lead-pipeline`, `team-pipeline`
 
 **Configuration** (`env/salesforce.env`):
 ```env
@@ -382,22 +428,31 @@ SALESFORCE_DOMAIN=yourorg.my.salesforce.com
 
 > *Issues, sprints, boards, epics, comments, and transitions.*
 
-**Tools:**
+**Tools (23):**
 
-| Tool | Description |
-|------|-------------|
-| `list_issues` / `get_issue` | Issue queries |
-| `create_issue` / `update_issue` | Issue management |
-| `transition_issue` | Workflow transitions |
-| `add_comment` | Add comments |
-| `create_project` | Project creation |
-| `list_boards` / `get_board` | Board management |
-| `list_sprints` / `get_sprint` | Sprint tracking |
-| `get_backlog` | Backlog views |
-| `get_team_workload` | 👔 **Manager:** Team workload distribution |
-| `get_team_sprint_health` | 👔 **Manager:** Sprint health across boards |
+| Tool | Type | Description |
+|------|------|-------------|
+| `list_issues` / `get_issue` | 📖 Read | Issue queries with JQL or filters |
+| `create_issue` | ✏️ **Create** | **Create new issue in a project** |
+| `update_issue` | ✏️ **Update** | **Update issue fields, priority, assignee** |
+| `transition_issue` | ⚡ **Action** | **Move issue to new workflow status** |
+| `add_comment` | ✏️ **Create** | **Add comment to an issue** |
+| `log_work` | ⚡ **Action** | **Log time/work on an issue** |
+| `move_issues_to_sprint` | ⚡ **Action** | **Move issues into a sprint for planning** |
+| `link_issues` | ✏️ **Create** | **Create links between issues (Blocks, Relates, Duplicate)** |
+| `create_project` / `update_project` | ✏️ **Create/Update** | **Project management** |
+| `show_create_issue_form` | 🖼️ Widget | Interactive issue creation form |
+| `show_create_project_form` | 🖼️ Widget | Interactive project creation form |
+| `list_boards` / `get_board` | 📖 Read | Board management |
+| `list_sprints` / `get_sprint` | 📖 Read | Sprint tracking |
+| `get_backlog` | 📖 Read | Backlog views |
+| `list_epics` | 📖 Read | Epic listing on a board |
+| `get_my_issues` | 📖 Read | Current user's assigned issues |
+| `list_projects` | 📖 Read | List accessible projects |
+| `get_team_workload` | 📖 Read | 👔 **Manager:** Team workload distribution |
+| `get_team_sprint_health` | 📖 Read | 👔 **Manager:** Sprint health across boards |
 
-**Widgets:** `jira-issue`, `create-issue`, `create-project`, `team-sprint-health`
+**Widgets:** `jira-issue`, `create-issue-jira`, `create-project`, `sprint-board`, `team-sprint-health`
 
 **Configuration** (`env/jira.env`):
 ```env
@@ -637,8 +692,8 @@ The `ai-plugin.json` manifest tells Microsoft 365 Copilot how to connect to your
 
 ```json
 {
-  "$schema": "https://aka.ms/json-schemas/copilot/plugin/v2.2/schema.json",
-  "schema_version": "v2.2",
+  "$schema": "https://aka.ms/json-schemas/copilot/plugin/v2.4/schema.json",
+  "schema_version": "v2.4",
   "name_for_human": "Enterprise Self-Service",
   "description_for_human": "HR, IT, CRM, and project management tools powered by MCP",
   "description_for_model": "Connects to Workday, ServiceNow, Salesforce, and Jira via MCP servers. Use these tools for employee self-service, IT incident management, CRM operations, and project tracking.",
@@ -646,54 +701,62 @@ The `ai-plugin.json` manifest tells Microsoft 365 Copilot how to connect to your
   "namespace": "ess_mcp",
   "runtimes": [
     {
-      "type": "RemoteMCP",
-      "spec": {
-        "url": "https://essmcp-workday.azurecontainerapps.io/workday/mcp",
-        "transport": "streamable-http"
-      },
+      "type": "RemoteMCPServer",
       "auth": {
         "type": "OAuthPluginVault",
         "reference_id": "{workday-oauth-registration-id}"
+      },
+      "spec": {
+        "url": "https://essmcp-workday.azurecontainerapps.io/workday/mcp",
+        "mcp_tool_description": {
+          "file": "workday-mcp-tools.json"
+        }
       }
     },
     {
-      "type": "RemoteMCP",
-      "spec": {
-        "url": "https://essmcp-servicenow.azurecontainerapps.io/servicenow/mcp",
-        "transport": "streamable-http"
-      },
+      "type": "RemoteMCPServer",
       "auth": {
         "type": "OAuthPluginVault",
         "reference_id": "{servicenow-oauth-registration-id}"
+      },
+      "spec": {
+        "url": "https://essmcp-servicenow.azurecontainerapps.io/servicenow/mcp",
+        "mcp_tool_description": {
+          "file": "servicenow-mcp-tools.json"
+        }
       }
     },
     {
-      "type": "RemoteMCP",
-      "spec": {
-        "url": "https://essmcp-salesforce.azurecontainerapps.io/salesforce/mcp",
-        "transport": "streamable-http"
-      },
+      "type": "RemoteMCPServer",
       "auth": {
         "type": "OAuthPluginVault",
         "reference_id": "{salesforce-oauth-registration-id}"
+      },
+      "spec": {
+        "url": "https://essmcp-salesforce.azurecontainerapps.io/salesforce/mcp",
+        "mcp_tool_description": {
+          "file": "salesforce-mcp-tools.json"
+        }
       }
     },
     {
-      "type": "RemoteMCP",
-      "spec": {
-        "url": "https://essmcp-jira.azurecontainerapps.io/jira/mcp",
-        "transport": "streamable-http"
-      },
+      "type": "RemoteMCPServer",
       "auth": {
         "type": "OAuthPluginVault",
         "reference_id": "{jira-oauth-registration-id}"
+      },
+      "spec": {
+        "url": "https://essmcp-jira.azurecontainerapps.io/jira/mcp",
+        "mcp_tool_description": {
+          "file": "jira-mcp-tools.json"
+        }
       }
     }
   ]
 }
 ```
 
-> **Note:** Replace `{workday-oauth-registration-id}` etc. with the actual Registration IDs from the Teams Developer Center OAuth client registrations. Replace the URLs with your deployed MCP server endpoints.
+> **Note:** Replace `{workday-oauth-registration-id}` etc. with the actual Registration IDs from the Teams Developer Center OAuth client registrations. Replace the URLs with your deployed MCP server endpoints. The `mcp_tool_description` files contain tool definitions matching the format returned by each MCP server's `tools/list` method — generate them by calling `tools/list` on your deployed servers, or use the `file` reference to point to a JSON file in your app package.
 
 ### Single-Server Configuration
 
@@ -701,8 +764,8 @@ If you only need one MCP server (e.g. just Jira), your `ai-plugin.json` is simpl
 
 ```json
 {
-  "$schema": "https://aka.ms/json-schemas/copilot/plugin/v2.2/schema.json",
-  "schema_version": "v2.2",
+  "$schema": "https://aka.ms/json-schemas/copilot/plugin/v2.4/schema.json",
+  "schema_version": "v2.4",
   "name_for_human": "Jira Project Management",
   "description_for_human": "Manage Jira issues, sprints, and projects from Copilot",
   "description_for_model": "Connects to Jira Cloud via MCP for issue tracking, sprint management, and project creation.",
@@ -710,14 +773,16 @@ If you only need one MCP server (e.g. just Jira), your `ai-plugin.json` is simpl
   "namespace": "jira_mcp",
   "runtimes": [
     {
-      "type": "RemoteMCP",
-      "spec": {
-        "url": "https://essmcp-jira.azurecontainerapps.io/jira/mcp",
-        "transport": "streamable-http"
-      },
+      "type": "RemoteMCPServer",
       "auth": {
         "type": "OAuthPluginVault",
         "reference_id": "{jira-oauth-registration-id}"
+      },
+      "spec": {
+        "url": "https://essmcp-jira.azurecontainerapps.io/jira/mcp",
+        "mcp_tool_description": {
+          "file": "jira-mcp-tools.json"
+        }
       }
     }
   ]
@@ -1087,7 +1152,7 @@ ess-mcp/
         ├── servicenow/             # ServiceNow MCP server
         ├── salesforce/             # Salesforce MCP server
         ├── jira/                   # Jira MCP server
-        └── ui/widget/              # 27 HTML+Skybridge widgets
+        └── ui/widget/              # 25 HTML+Skybridge widgets
 ```
 
 ---

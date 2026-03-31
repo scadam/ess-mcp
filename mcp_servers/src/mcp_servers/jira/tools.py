@@ -598,6 +598,83 @@ async def tool_update_issue(
         return {"success": False, "error": str(exc)}
 
 
+async def tool_move_issues_to_sprint(
+    sprint_id: int,
+    issue_keys: List[str],
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Move one or more issues into a sprint.
+
+    Args:
+        sprint_id: The sprint ID (from list_sprints).
+        issue_keys: List of issue keys to move (e.g. ["PROJ-1", "PROJ-2"]).
+    """
+    LOGGER.info("jira_move_issues_to_sprint", sprint_id=sprint_id, issue_keys=issue_keys)
+
+    try:
+        settings = load_jira_settings()
+        url = f"{settings.base_url.rstrip('/')}/rest/agile/1.0/sprint/{sprint_id}/issue"
+        headers = {
+            "Authorization": f"Bearer {get_bearer_token(ctx)}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        async with create_async_client() as client:
+            resp = await client.post(url, json={"issues": issue_keys}, headers=headers)
+            resp.raise_for_status()
+        return {
+            "success": True,
+            "sprint_id": sprint_id,
+            "issues_moved": issue_keys,
+            "count": len(issue_keys),
+        }
+    except Exception as exc:
+        LOGGER.error("jira_move_issues_to_sprint_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_link_issues(
+    inward_issue_key: str,
+    outward_issue_key: str,
+    link_type: str = "Blocks",
+    comment: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Create a link between two Jira issues.
+
+    Args:
+        inward_issue_key: The issue that IS blocked/cloned/etc.
+        outward_issue_key: The issue that BLOCKS/clones/etc.
+        link_type: Link type name -- "Blocks", "Cloners", "Duplicate", "Relates".
+        comment: Optional comment to add to the link.
+    """
+    LOGGER.info(
+        "jira_link_issues",
+        inward=inward_issue_key,
+        outward=outward_issue_key,
+        link_type=link_type,
+    )
+
+    try:
+        body: Dict[str, Any] = {
+            "type": {"name": link_type},
+            "inwardIssue": {"key": inward_issue_key},
+            "outwardIssue": {"key": outward_issue_key},
+        }
+        if comment:
+            body["comment"] = _build_adf(comment)
+        await _jira_post("/issueLink", body, ctx)
+        return {
+            "success": True,
+            "link_type": link_type,
+            "inward_issue": inward_issue_key,
+            "outward_issue": outward_issue_key,
+        }
+    except Exception as exc:
+        LOGGER.error("jira_link_issues_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 # ── Agile & additional tool functions ───────────────────────────────
 
 
@@ -1318,6 +1395,25 @@ JIRA_TOOL_SPECS: list[dict] = [
             "openai/toolInvocation/invoking": "Updating Jira issue\u2026",
             "openai/toolInvocation/invoked": "Issue updated.",
         },
+    },
+    {
+        "name": "move_issues_to_sprint",
+        "func": tool_move_issues_to_sprint,
+        "summary": (
+            "Move one or more issues into a sprint. Provide the sprint ID "
+            "(from list_sprints) and a list of issue keys."
+        ),
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "link_issues",
+        "func": tool_link_issues,
+        "summary": (
+            "Create a link between two Jira issues. Common link types: "
+            "'Blocks', 'Cloners', 'Duplicate', 'Relates'. "
+            "The inward issue is the one that IS blocked/cloned/etc."
+        ),
+        "annotations": {"readOnlyHint": False},
     },
     {
         "name": "list_boards",

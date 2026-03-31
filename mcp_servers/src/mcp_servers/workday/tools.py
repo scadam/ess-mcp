@@ -1204,6 +1204,82 @@ async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Di
         return {"success": False, "error": str(exc)}
 
 
+async def tool_action_inbox_task(
+    task_id: str,
+    decision: str,
+    comment: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Approve or reject a Workday inbox task.
+
+    Only works for tasks whose stepType is Approval.
+    """
+    try:
+        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        action = "approve" if decision == "approve" else "deny"
+        url = (
+            "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
+            f"workers/{worker_context.workday_id}/inboxTasks/{task_id}/{action}"
+        )
+        headers = {
+            "Authorization": f"Bearer {worker_context.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        body: Dict[str, Any] = {}
+        if comment:
+            body["comment"] = comment
+
+        async with create_async_client() as client:
+            response = await client.post(url, json=body, headers=headers)
+            response.raise_for_status()
+            content_type = response.headers.get("content-type", "")
+            if "application/json" in content_type and response.content:
+                result = response.json()
+            else:
+                result = {"status": "completed"}
+
+        payload = {
+            "success": True,
+            "decision": decision,
+            "taskId": task_id,
+            "result": result,
+        }
+        return _tool_response("Approve or reject a Workday inbox task.", payload)
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_action_inbox_task_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_inbox_task_detail(
+    task_id: str,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Get detailed information about a specific Workday inbox task by its task_id."""
+    try:
+        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        url = (
+            "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
+            f"workers/{worker_context.workday_id}/inboxTasks/{task_id}"
+        )
+        data = await _fetch_json(url, worker_context.workday_access_token)
+        payload = {
+            "success": True,
+            "title": data.get("descriptor", ""),
+            "summary": data.get("overallProcess", {}).get("descriptor", ""),
+            "status": data.get("status", {}).get("descriptor", ""),
+            "stepType": data.get("stepType", {}).get("descriptor", ""),
+            "initiator": data.get("initiator", {}).get("descriptor", ""),
+            "assigned": data.get("assigned"),
+            "due": data.get("due"),
+            "taskId": task_id,
+            "raw": data,
+        }
+        return _tool_response("Detailed information about a Workday inbox task.", payload)
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_inbox_task_detail_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
     {
         "name": "get_worker",
@@ -1288,4 +1364,16 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
     },
     {"name": "get_team_compensation_summary", "func": tool_get_team_compensation_summary, "summary": "Get team compensation overview for managers with aggregate salary statistics and currency breakdown."},
     {"name": "get_team_performance_summary", "func": tool_get_team_performance_summary, "summary": "Get team performance review status for managers including pending inbox items and team absence overview."},
+    {
+        "name": "action_inbox_task",
+        "func": tool_action_inbox_task,
+        "summary": "Approve or reject a Workday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment.",
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "get_inbox_task_detail",
+        "func": tool_get_inbox_task_detail,
+        "summary": "Get detailed information about a specific Workday inbox task by its task_id.",
+        "annotations": {"readOnlyHint": True},
+    },
 ]

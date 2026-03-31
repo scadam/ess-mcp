@@ -746,6 +746,100 @@ async def tool_list_tasks(
     }
 
 
+async def tool_update_task(
+    sys_id: str,
+    state: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    priority: Optional[str] = None,
+    short_description: Optional[str] = None,
+    description: Optional[str] = None,
+    work_notes: Optional[str] = None,
+    comments: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Update an existing ServiceNow task record.
+
+    Only the *sys_id* is required -- include only the fields you want to change.
+    To add a customer-visible comment use *comments*; for an internal note use
+    *work_notes*.
+
+    Args:
+        sys_id: The sys_id of the task to update.
+        state: Transition the task state (numeric code or friendly name).
+        assigned_to: Display name of the assignee.
+        priority: Priority level (1 = Critical, 2 = High, 3 = Moderate,
+            4 = Low, 5 = Planning).
+        short_description: Updated summary of the task.
+        description: Updated detailed description.
+        work_notes: A new internal work note to append.
+        comments: A new customer-visible comment to append.
+    """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
+    payload: Dict[str, Any] = {}
+
+    _field_map: Dict[str, Optional[str]] = {
+        "state": state,
+        "assigned_to": assigned_to,
+        "priority": priority,
+        "short_description": short_description,
+        "description": description,
+        "work_notes": work_notes,
+        "comments": comments,
+    }
+    for field, value in _field_map.items():
+        if value is not None and value != "":
+            payload[field] = value
+
+    if not payload:
+        return {
+            "updated": False,
+            "message": "No fields provided to update.",
+            "sys_id": sys_id,
+            "link": f"{settings.instance_url}/nav_to.do?uri=task.do?sys_id={sys_id}",
+        }
+
+    url = f"{settings.instance_url}/api/now/table/task/{sys_id}"
+
+    LOGGER.info(
+        "servicenow_update_task",
+        sys_id=sys_id,
+        fields=list(payload.keys()),
+    )
+
+    try:
+        async with create_async_client(timeout=60.0) as client:
+            resp = await client.patch(
+                url,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+            if not resp.is_success:
+                body_text = resp.text[:500]
+                LOGGER.error(
+                    "servicenow_update_task_http_error",
+                    status_code=resp.status_code,
+                    body=body_text,
+                )
+                return {"updated": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+            body = resp.json()
+    except Exception as exc:
+        LOGGER.error("servicenow_update_task_error", error=str(exc))
+        return {"updated": False, "error": str(exc)}
+
+    return {
+        "updated": True,
+        "sys_id": sys_id,
+        "fields_updated": list(payload.keys()),
+        "link": f"{settings.instance_url}/nav_to.do?uri=task.do?sys_id={sys_id}",
+    }
+
+
 async def tool_list_approvals(
     limit: int = 50,
     ctx: Optional[Context] = None,
@@ -1103,6 +1197,16 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
         "annotations": {
             "readOnlyHint": True,
         },
+    },
+    {
+        "name": "update_task",
+        "func": tool_update_task,
+        "summary": (
+            "Update a ServiceNow task. Change state, priority, assignment, "
+            "or add comments/work notes. Only the sys_id is required -- include "
+            "only the fields you want to change."
+        ),
+        "annotations": {"readOnlyHint": False},
     },
     {
         "name": "list_approvals",

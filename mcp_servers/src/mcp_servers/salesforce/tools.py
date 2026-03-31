@@ -176,6 +176,63 @@ async def tool_get_task(task_id: str, ctx: Optional[Context] = None) -> Dict[str
     return {"task": records[0]}
 
 
+async def tool_create_task(
+    subject: str,
+    status: str = "Not Started",
+    priority: str = "Normal",
+    due_date: Optional[str] = None,
+    description: Optional[str] = None,
+    what_id: Optional[str] = None,
+    who_id: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Create a standalone Salesforce task.
+
+    Args:
+        subject: Task subject (required).
+        status: Task status (default "Not Started").
+        priority: Task priority (default "Normal").
+        due_date: Due date in YYYY-MM-DD format.
+        description: Additional notes about the task.
+        what_id: Related record ID (Account or Opportunity).
+        who_id: Related person ID (Contact or Lead).
+    """
+    payload: Dict[str, Any] = {
+        "Subject": subject,
+        "Status": status,
+        "Priority": priority,
+    }
+    if due_date:
+        payload["ActivityDate"] = due_date
+    if description:
+        payload["Description"] = description
+    if what_id:
+        payload["WhatId"] = what_id
+    if who_id:
+        payload["WhoId"] = who_id
+
+    LOGGER.info("salesforce_create_task", fields=list(payload.keys()))
+
+    try:
+        result = await _salesforce_post("/sobjects/Task", payload, ctx)
+        task_id = result.get("id", "")
+        created: List[Dict[str, Any]] = []
+        if task_id:
+            try:
+                created = await _soql_query(
+                    f"SELECT {_TASK_FIELDS} FROM Task WHERE Id = '{_sf(task_id)}'"
+                , ctx)
+            except Exception:  # noqa: BLE001
+                pass
+        return {
+            "created": True,
+            "task": _simplify_task(created[0]) if created else {"id": task_id},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_create_task_error", error=str(exc))
+        return {"created": False, "error": str(exc)}
+
+
 async def tool_update_task(
     task_id: str,
     status: Optional[str] = None,
@@ -962,6 +1019,88 @@ async def tool_list_contacts(
         "total": len(records),
         "contacts": [_simplify_contact(r) for r in records],
     }
+
+
+async def tool_create_contact(
+    first_name: str,
+    last_name: str,
+    account_id: Optional[str] = None,
+    email: Optional[str] = None,
+    phone: Optional[str] = None,
+    title: Optional[str] = None,
+    department: Optional[str] = None,
+    mailing_street: Optional[str] = None,
+    mailing_city: Optional[str] = None,
+    mailing_state: Optional[str] = None,
+    mailing_postal_code: Optional[str] = None,
+    mailing_country: Optional[str] = None,
+    description: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Create a new Salesforce contact. Optionally link to an account.
+
+    Args:
+        first_name: Contact's first name (required).
+        last_name: Contact's last name (required).
+        account_id: Salesforce Account ID to associate the contact with.
+        email: Contact's email address.
+        phone: Contact's phone number.
+        title: Contact's job title.
+        department: Contact's department.
+        mailing_street: Mailing street address.
+        mailing_city: Mailing city.
+        mailing_state: Mailing state/province.
+        mailing_postal_code: Mailing postal/ZIP code.
+        mailing_country: Mailing country.
+        description: Additional notes about the contact.
+    """
+    payload: Dict[str, Any] = {
+        "FirstName": first_name,
+        "LastName": last_name,
+    }
+    if account_id:
+        payload["AccountId"] = account_id
+    if email:
+        payload["Email"] = email
+    if phone:
+        payload["Phone"] = phone
+    if title:
+        payload["Title"] = title
+    if department:
+        payload["Department"] = department
+    if mailing_street:
+        payload["MailingStreet"] = mailing_street
+    if mailing_city:
+        payload["MailingCity"] = mailing_city
+    if mailing_state:
+        payload["MailingState"] = mailing_state
+    if mailing_postal_code:
+        payload["MailingPostalCode"] = mailing_postal_code
+    if mailing_country:
+        payload["MailingCountry"] = mailing_country
+    if description:
+        payload["Description"] = description
+
+    LOGGER.info("salesforce_create_contact", fields=list(payload.keys()))
+
+    try:
+        result = await _salesforce_post("/sobjects/Contact", payload, ctx)
+        contact_id = result.get("id", "")
+        created: List[Dict[str, Any]] = []
+        if contact_id:
+            try:
+                created = await _soql_query(
+                    f"SELECT {_CONTACT_FIELDS} FROM Contact WHERE Id = '{_sf(contact_id)}'"
+                , ctx)
+            except Exception:  # noqa: BLE001
+                pass
+        return {
+            "created": True,
+            "contact": _simplify_contact(created[0]) if created else {"id": contact_id},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_create_contact_error", error=str(exc))
+        return {"created": False, "error": str(exc)}
 
 
 async def tool_list_opportunities(
@@ -1910,6 +2049,54 @@ async def tool_get_campaign(campaign_id: str, ctx: Optional[Context] = None) -> 
     }
 
 
+async def tool_add_campaign_member(
+    campaign_id: str,
+    contact_id: Optional[str] = None,
+    lead_id: Optional[str] = None,
+    status: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Add a contact or lead to a Salesforce campaign.
+
+    Provide either contact_id or lead_id, but not both.
+
+    Args:
+        campaign_id: The Salesforce Campaign record ID (required).
+        contact_id: The Salesforce Contact ID to add.
+        lead_id: The Salesforce Lead ID to add.
+        status: Campaign member status (e.g. "Sent", "Responded").
+    """
+    if not contact_id and not lead_id:
+        raise ValueError("Either contact_id or lead_id must be provided")
+    if contact_id and lead_id:
+        raise ValueError("Provide either contact_id or lead_id, not both")
+
+    payload: Dict[str, Any] = {
+        "CampaignId": campaign_id,
+    }
+    if contact_id:
+        payload["ContactId"] = contact_id
+    if lead_id:
+        payload["LeadId"] = lead_id
+    if status:
+        payload["Status"] = status
+
+    LOGGER.info("salesforce_add_campaign_member", fields=list(payload.keys()))
+
+    try:
+        result = await _salesforce_post("/sobjects/CampaignMember", payload, ctx)
+        member_id = result.get("id", "")
+        return {
+            "created": True,
+            "campaign_member": {"id": member_id, "campaign_id": campaign_id,
+                                "contact_id": contact_id, "lead_id": lead_id,
+                                "status": status},
+        }
+    except Exception as exc:
+        LOGGER.error("salesforce_add_campaign_member_error", error=str(exc))
+        return {"created": False, "error": str(exc)}
+
+
 # ── Quotes ──────────────────────────────────────────────────────────
 
 
@@ -2493,6 +2680,12 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "annotations": {"readOnlyHint": False},
     },
     {
+        "name": "create_task",
+        "func": tool_create_task,
+        "summary": "Create a standalone Salesforce task. Optionally link to an account/opportunity (what_id) or contact/lead (who_id).",
+        "annotations": {"readOnlyHint": False},
+    },
+    {
         "name": "list_approvals",
         "func": tool_list_approvals,
         "summary": (
@@ -2594,6 +2787,12 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "List Salesforce contacts, optionally filtered by account or search text."
         ),
         "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "create_contact",
+        "func": tool_create_contact,
+        "summary": "Create a new Salesforce contact. Optionally link to an account.",
+        "annotations": {"readOnlyHint": False},
     },
     {
         "name": "list_opportunities",
@@ -2798,6 +2997,12 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "Get details for a Salesforce campaign including campaign members."
         ),
         "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "add_campaign_member",
+        "func": tool_add_campaign_member,
+        "summary": "Add a contact or lead to a Salesforce campaign. Provide either contact_id or lead_id.",
+        "annotations": {"readOnlyHint": False},
     },
     {
         "name": "show_create_quote_form",
