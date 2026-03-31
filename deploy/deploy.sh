@@ -13,7 +13,6 @@
 #
 #  Prerequisites:
 #    - Azure CLI (az) installed and logged in
-#    - Docker (or Podman) installed and running
 #    - Bash 4+
 # ===========================================================================
 set -euo pipefail
@@ -71,7 +70,7 @@ ${YELLOW}Options:${NC}
   -l, --location LOC      Azure region (default: ${DEFAULT_LOCATION})
   -n, --name NAME         Base name for resources, 3-16 chars
                           (default: ${DEFAULT_BASE_NAME})
-  -t, --tag TAG           Docker image tag (default: ${DEFAULT_IMAGE_TAG})
+  -t, --tag TAG           Container image tag (default: ${DEFAULT_IMAGE_TAG})
       --cpu CPU           CPU cores per container (default: ${DEFAULT_CPU})
       --memory MEM        Memory per container (default: ${DEFAULT_MEMORY})
       --min-replicas N    Minimum replicas (default: ${DEFAULT_MIN_REPLICAS})
@@ -131,17 +130,6 @@ check_prerequisites() {
     fi
     ok "Azure CLI authenticated"
 
-    if command -v docker &>/dev/null; then
-        CONTAINER_ENGINE="docker"
-        ok "Docker found"
-    elif command -v podman &>/dev/null; then
-        CONTAINER_ENGINE="podman"
-        ok "Podman found"
-    else
-        err "Docker or Podman is required but not installed."
-        exit 1
-    fi
-
     if [[ ! -f "${BICEP_FILE}" ]]; then
         err "Bicep template not found: ${BICEP_FILE}"
         exit 1
@@ -198,7 +186,6 @@ ENV_FILE=""
 RESOURCE_GROUP=""
 SUBSCRIPTION=""
 DRY_RUN=false
-CONTAINER_ENGINE=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -275,11 +262,11 @@ main() {
         fi
     fi
 
-    # ── Build & push Docker image ─────────────────────────────────────
-    header "Building Docker image"
+    # ── Build & push container image (remote build via ACR) ─────────────
+    header "Building container image (remote)"
 
     if [[ "${DRY_RUN}" == "true" ]]; then
-        info "[DRY RUN] Would build image from ${REPO_ROOT}/mcp_servers"
+        info "[DRY RUN] Would build image from ${REPO_ROOT}/mcp_servers via ACR"
         info "[DRY RUN] Would deploy Bicep template with servers=${SERVERS}"
         header "Dry run complete"
         exit 0
@@ -333,23 +320,15 @@ main() {
     acr_server="$(az acr show --name "${acr_name}" --query 'loginServer' -o tsv)"
     ok "Container Registry: ${acr_server}"
 
-    # Login to ACR
-    info "Logging in to ACR..."
-    az acr login --name "${acr_name}"
-    ok "ACR login successful"
-
-    # Build and push image
+    # Build image remotely using ACR Tasks (no local Docker/Podman needed)
     local full_image="${acr_server}/ess-mcp:${IMAGE_TAG}"
-    info "Building image: ${full_image}"
-    ${CONTAINER_ENGINE} build \
-        -t "${full_image}" \
-        -f "${REPO_ROOT}/mcp_servers/Dockerfile" \
+    info "Building image remotely: ${full_image}"
+    az acr build \
+        --registry "${acr_name}" \
+        --image "ess-mcp:${IMAGE_TAG}" \
+        --file "${REPO_ROOT}/mcp_servers/Dockerfile" \
         "${REPO_ROOT}/mcp_servers"
-    ok "Image built"
-
-    info "Pushing image to ACR..."
-    ${CONTAINER_ENGINE} push "${full_image}"
-    ok "Image pushed: ${full_image}"
+    ok "Image built and pushed: ${full_image}"
 
     # ── Re-deploy with the image now available ────────────────────────
     header "Deploying Container Apps"

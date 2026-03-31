@@ -87,4 +87,48 @@ WORKDAY_RESOURCES = {
             }
         },
     },
+    "change-business-title": {
+        "description": "Business title change form – pre-fills current title and lets the user submit a new one via change_business_title.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("change-business-title.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "learning-assignments": {
+        "description": "Learning assignments widget showing required and overdue courses with completion status.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("learning-assignments.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "approval-review": {
+        "description": "Inbox task approval/review widget – displays task details with approve and deny actions via action_inbox_task.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("approval-review.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "task-list": {
+        "description": "Workday inbox task list widget – shows pending tasks with priority, type, and quick actions.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("task-list.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }

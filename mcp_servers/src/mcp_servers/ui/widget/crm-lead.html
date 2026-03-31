@@ -25,6 +25,8 @@
       .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; font-family: inherit; }
       .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-border); font-weight: 600; }
       .btn:disabled { opacity: .5; cursor: default; }
+      .btn-convert { background: linear-gradient(135deg,#107c10,#2bd48f); border-color: #1a7a2e; font-weight: 600; }
+      :root[data-theme="light"] .btn-convert { background: linear-gradient(135deg,#107c10,#16a34a); border-color: #107c10; }
       .success-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--success-glow); border: 1px solid var(--success-border); font-size: 12px; color: var(--pos); }
       .error-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--error-bg); border: 1px solid var(--error-border); font-size: 12px; color: var(--neg); }
       .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; }
@@ -67,6 +69,7 @@
         <div id="msgArea"></div>
         <div class="actions">
           <button class="btn btn-primary" id="submitBtn" disabled>Create Lead</button>
+          <button class="btn btn-convert" id="convertBtn" style="display:none" aria-label="Convert to Opportunity" title="Convert this lead to an Account, Contact, and Opportunity"><span aria-hidden="true">&#x1F504;</span> Convert to Opportunity</button>
           <button class="btn" id="resetBtn">Reset</button>
         </div>
       </div>
@@ -75,7 +78,7 @@
     <script>
       var toolOutput = (window.openai && window.openai.toolOutput) || {}, toolInput = (window.openai && window.openai.toolInput) || {};
       var firstNameEl = document.getElementById("first_name"), lastNameEl = document.getElementById("last_name"), companyEl = document.getElementById("company"), titleEl = document.getElementById("title"), emailEl = document.getElementById("email"), phoneEl = document.getElementById("phone"), leadSourceEl = document.getElementById("lead_source"), statusEl = document.getElementById("status"), descEl = document.getElementById("description");
-      var submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), msgArea = document.getElementById("msgArea"), _maxBtn = document.getElementById("maximizeBtn");
+      var submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), convertBtn = document.getElementById("convertBtn"), msgArea = document.getElementById("msgArea"), _maxBtn = document.getElementById("maximizeBtn");
       var _isFS = false, isUpdate = false, currentLeadId = null;
       var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
       var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
@@ -89,6 +92,7 @@
         msgArea.innerHTML = ""; isUpdate = false; currentLeadId = null;
         submitBtn.textContent = "Create Lead"; document.getElementById("pageTitle").textContent = "Create Lead";
         document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / create_lead</strong> via MCP';
+        convertBtn.style.display = "none";
         submitBtn.disabled = true; reportHeight();
       });
 
@@ -131,7 +135,23 @@
             msgArea.innerHTML = '<div class="success-msg">\u2713 Lead <strong>' + esc(lead.name || (lead.first_name + " " + lead.last_name) || "") + '</strong> created successfully.</div>';
           }
         } catch (err) { msgArea.innerHTML = '<div class="error-msg">' + esc(err.message || "Operation failed") + '</div>'; }
-        finally { submitBtn.textContent = isUpdate ? "Update Lead" : "Create Lead"; validate(); reportHeight(); }
+        finally { submitBtn.textContent = isUpdate ? "Update Lead" : "Create Lead"; if (isUpdate && currentLeadId) convertBtn.style.display = ""; validate(); reportHeight(); }
+      });
+
+      /* ── Convert to Opportunity ── */
+      convertBtn.addEventListener("click", async function() {
+        if (!window.openai || typeof window.openai.callTool !== "function" || !currentLeadId) return;
+        convertBtn.disabled = true; convertBtn.textContent = "Converting\u2026"; msgArea.innerHTML = "";
+        try {
+          var oppName = (firstNameEl.value.trim() + " " + lastNameEl.value.trim()).trim() + " - " + (companyEl.value.trim() || "Opportunity");
+          var args = { lead_id: currentLeadId, opportunity_name: oppName };
+          var output = await window.openai.callTool("convert_lead", args);
+          var data = output && output.structuredContent ? output.structuredContent : output;
+          if (!data || !data.success) throw new Error((data && data.error) || "Lead conversion failed");
+          statusEl.value = "Closed - Converted"; convertBtn.style.display = "none";
+          msgArea.innerHTML = '<div class="success-msg">\u2713 Lead converted successfully. An Account, Contact, and Opportunity have been created.</div>';
+        } catch (err) { msgArea.innerHTML = '<div class="error-msg">' + esc(err.message || "Conversion failed") + '</div>'; }
+        finally { convertBtn.disabled = false; convertBtn.textContent = "\uD83D\uDD04 Convert to Opportunity"; reportHeight(); }
       });
 
       /* ── Maximize / Fullscreen toggle ── */
@@ -146,6 +166,8 @@
         document.getElementById("pageTitle").textContent = "Update Lead";
         document.getElementById("pageSubtitle").textContent = "Salesforce \u00b7 " + (existingLead.name || existingLead.last_name || "Lead");
         document.getElementById("footerText").innerHTML = 'Powered by <strong>salesforce / update_lead</strong> via MCP';
+        var st = existingLead.status || "";
+        if (st.indexOf("Converted") === -1) convertBtn.style.display = "";
       }
       var inp = isUpdate ? Object.assign({}, existingLead, toolInput) : toolInput;
       if (inp.first_name) firstNameEl.value = inp.first_name;

@@ -781,4 +781,59 @@ SERVICENOW_RESOURCES = {
             }
         },
     },
+    "update-incident": {
+        "description": "Incident update form – load and edit an existing incident with state, priority, assignment, and work notes fields.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("update-incident.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "update-task": {
+        "description": "Task update form – edit an existing ServiceNow task with state, priority, assignment, and comments.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("update-task.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "catalog-list": {
+        "description": "Service catalog browser – browse and search ServiceNow catalog items by category with ordering actions.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("catalog-list.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "catalog-item": {
+        "description": "Catalog item detail – view and order a specific ServiceNow service catalog item with configurable options.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("catalog-item.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "cart-summary": {
+        "description": "Shopping cart summary – view cart contents, remove items, and checkout ServiceNow catalog orders.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("cart-summary.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
 }
