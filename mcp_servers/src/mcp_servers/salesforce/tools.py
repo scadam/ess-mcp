@@ -2855,7 +2855,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "approve_reject",
         "func": tool_approve_reject,
         "summary": (
-            "Approve or reject a Salesforce approval work item. Called by the task-list widget when the user makes an approval decision."
+            "Approve or reject a Salesforce approval work item."
         ),
         "annotations": {"readOnlyHint": False},
     },
