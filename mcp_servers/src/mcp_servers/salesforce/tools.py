@@ -2831,8 +2831,9 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "update_task",
         "func": tool_update_task,
         "summary": (
-            "Update a Salesforce task. Called by the update-task widget when the user clicks Submit. "
-            "Use get_task first to load the task widget."
+            "Submit task updates to Salesforce. Widget callback — called automatically "
+            "by the task widget after the user clicks Submit. To view or edit a task, "
+            "use get_task to load the task widget."
         ),
         "annotations": {"readOnlyHint": False},
     },
@@ -2890,9 +2891,10 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "show_compliance_case_form",
         "func": tool_show_compliance_case_form,
         "summary": (
-            "Show the compliance case creation form. Pass any known details "
-            "(subject, compliance_type, description, priority) to pre-fill the form. "
-            "The widget handles submission."
+            "Create a new compliance case — opens the interactive creation form "
+            "for the user to fill in and submit. Use this when the user asks to "
+            "raise a compliance concern, create a case, or log a compliance matter. "
+            "Pass any known details to pre-fill fields."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
@@ -2905,8 +2907,9 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "create_case",
         "func": tool_create_case,
         "summary": (
-            "Create a new Salesforce compliance case. Called by the compliance-case widget when the user clicks Submit. "
-            "Use show_compliance_case_form to display the form first."
+            "Submit compliance case creation to Salesforce. Widget callback — "
+            "called automatically by the compliance case form after the user clicks Submit. "
+            "To create a case, use show_compliance_case_form instead."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -2919,8 +2922,9 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "update_case",
         "func": tool_update_case,
         "summary": (
-            "Update an existing Salesforce compliance case. Called by the compliance-case widget when the user clicks Submit. "
-            "Use get_case first to load the case widget."
+            "Submit compliance case updates to Salesforce. Widget callback — "
+            "called automatically by the case widget after the user clicks Submit. "
+            "To view or edit a case, use get_case to load the case widget."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -3001,7 +3005,10 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "show_create_opportunity_form",
         "func": tool_show_create_opportunity_form,
         "summary": (
-            "Show an opportunity creation form with optional prefill. The widget handles submission."
+            "Create a new opportunity — opens the interactive creation form "
+            "for the user to fill in and submit. Use this when the user asks "
+            "to create an opportunity or log a new deal. Pass any known details "
+            "to pre-fill fields."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
@@ -3014,7 +3021,9 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "create_opportunity",
         "func": tool_create_opportunity,
         "summary": (
-            "Create a Salesforce opportunity. Called by the CRM opportunity widget when the user submits."
+            "Submit opportunity creation to Salesforce. Widget callback — "
+            "called automatically by the opportunity form after the user clicks Submit. "
+            "To create an opportunity, use show_create_opportunity_form instead."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -3035,7 +3044,8 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "update_opportunity",
         "func": tool_update_opportunity,
         "summary": (
-            "Update an existing Salesforce opportunity. Called by the CRM opportunity widget when the user submits changes."
+            "Submit opportunity updates to Salesforce. Widget callback — "
+            "called automatically by the opportunity widget after the user clicks Submit."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -3048,7 +3058,10 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "show_create_event_form",
         "func": tool_show_create_event_form,
         "summary": (
-            "Show an event creation form with optional meeting/context prefill. The widget handles submission."
+            "Create a new event or meeting — opens the interactive creation form "
+            "for the user to fill in and submit. Use this when the user asks to "
+            "schedule a meeting, create an event, or log a call. Pass any known "
+            "details to pre-fill fields."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
@@ -3061,7 +3074,9 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "create_event",
         "func": tool_create_event,
         "summary": (
-            "Create a Salesforce event. Called by the CRM event widget when the user submits."
+            "Submit event creation to Salesforce. Widget callback — "
+            "called automatically by the event form after the user clicks Submit. "
+            "To create an event, use show_create_event_form instead."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -3074,7 +3089,8 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "update_event",
         "func": tool_update_event,
         "summary": (
-            "Update an existing Salesforce event. Called by the CRM event widget when the user submits changes."
+            "Submit event updates to Salesforce. Widget callback — "
+            "called automatically by the event widget after the user clicks Submit."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -3104,8 +3120,10 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "show_create_lead_form",
         "func": tool_show_create_lead_form,
         "summary": (
-            "Show the lead creation form. Pass any known details to pre-fill the form. "
-            "The widget handles submission."
+            "Create a new lead — opens the interactive creation form "
+            "for the user to fill in and submit. Use this when the user asks "
+            "to create a lead or add a new prospect. Pass any known details "
+            "to pre-fill fields."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
@@ -3118,8 +3136,9 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "create_lead",
         "func": tool_create_lead,
         "summary": (
-            "Create a new Salesforce lead with first name, last name, company, "
-            "and optional contact details. Called by the CRM lead widget when the user submits."
+            "Submit lead creation to Salesforce. Widget callback — "
+            "called automatically by the lead form after the user clicks Submit. "
+            "To create a lead, use show_create_lead_form instead."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -3132,7 +3151,8 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "update_lead",
         "func": tool_update_lead,
         "summary": (
-            "Update an existing Salesforce lead. Called by the CRM lead widget when the user submits changes."
+            "Submit lead updates to Salesforce. Widget callback — "
+            "called automatically by the lead widget after the user clicks Submit."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -3177,8 +3197,10 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "show_create_quote_form",
         "func": tool_show_create_quote_form,
         "summary": (
-            "Show the quote creation form. Pass any known details to pre-fill the form. "
-            "The widget handles submission."
+            "Create a new quote — opens the interactive creation form "
+            "for the user to fill in and submit. Use this when the user asks "
+            "to create a quote or prepare a quotation. Pass any known details "
+            "to pre-fill fields."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
@@ -3191,7 +3213,9 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "create_quote",
         "func": tool_create_quote,
         "summary": (
-            "Create a Salesforce quote linked to an opportunity. Called by the CRM quote widget when the user submits."
+            "Submit quote creation to Salesforce. Widget callback — "
+            "called automatically by the quote form after the user clicks Submit. "
+            "To create a quote, use show_create_quote_form instead."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -3204,7 +3228,8 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "update_quote",
         "func": tool_update_quote,
         "summary": (
-            "Update an existing Salesforce quote. Called by the CRM quote widget when the user submits changes."
+            "Submit quote updates to Salesforce. Widget callback — "
+            "called automatically by the quote widget after the user clicks Submit."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {

@@ -1439,9 +1439,10 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "show_create_issue_form",
         "func": tool_show_create_issue_form,
         "summary": (
-            "Show the Jira issue creation form. Pass any known details "
-            "(project_key, summary, issue_type, description, priority) to pre-fill the form. "
-            "The widget handles submission."
+            "Create a new Jira issue — opens the interactive creation form "
+            "for the user to fill in and submit. Use this when the user asks "
+            "to create an issue, log a bug, or file a ticket. Pass any known "
+            "details to pre-fill fields."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
@@ -1454,7 +1455,8 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "add_comment",
         "func": tool_add_comment,
         "summary": (
-            "Add a comment to a Jira issue. Called by the jira-issue widget when the user submits a comment."
+            "Add a comment to a Jira issue. Also used as a widget callback by "
+            "the issue widget when the user submits a comment."
         ),
         "annotations": {"readOnlyHint": False},
     },
@@ -1462,7 +1464,9 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "transition_issue",
         "func": tool_transition_issue,
         "summary": (
-            "Transition a Jira issue to a new status. Called by the jira-issue widget when the user changes status."
+            "Transition a Jira issue to a new workflow status. Use get_issue "
+            "first to see available transitions and their IDs. Also used as a "
+            "widget callback by the issue widget."
         ),
         "annotations": {"readOnlyHint": False},
     },
@@ -1470,9 +1474,9 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "show_create_project_form",
         "func": tool_show_create_project_form,
         "summary": (
-            "Show the Jira project creation form. Pass any known details "
-            "(name, key, description, project_type) to pre-fill the form. "
-            "The widget handles submission."
+            "Create a new Jira project — opens the interactive creation form "
+            "for the user to fill in and submit. Use this when the user asks "
+            "to create a project. Pass any known details to pre-fill fields."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
@@ -1485,8 +1489,9 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "create_project",
         "func": tool_create_project,
         "summary": (
-            "Create a new Jira project. Called by the create-project widget when the user clicks Submit. "
-            "Use show_create_project_form to display the form first."
+            "Submit project creation to Jira. Widget callback — "
+            "called automatically by the project form after the user clicks Submit. "
+            "To create a project, use show_create_project_form instead."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -1498,7 +1503,7 @@ JIRA_TOOL_SPECS: list[dict] = [
     {
         "name": "update_project",
         "func": tool_update_project,
-        "summary": "Update an existing Jira project. Called by the create-project widget when the user submits an update.",
+        "summary": "Submit project updates to Jira. Widget callback — called automatically by the project widget after the user clicks Submit.",
         "annotations": {"readOnlyHint": False},
         "meta": {
             "openai/outputTemplate": "ui://widget/create-project.html",
@@ -1510,8 +1515,9 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "create_issue",
         "func": tool_create_issue,
         "summary": (
-            "Create a new Jira issue in a project. Called by the jira-issue widget when the user clicks Submit. "
-            "Use show_create_issue_form to display the form first."
+            "Submit issue creation to Jira. Widget callback — "
+            "called automatically by the issue form after the user clicks Submit. "
+            "To create an issue, use show_create_issue_form instead."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {
@@ -1524,8 +1530,9 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "update_issue",
         "func": tool_update_issue,
         "summary": (
-            "Update fields and/or add a comment on an existing Jira issue. Called by the jira-issue widget when the user clicks Submit. "
-            "Use get_issue first to load the issue widget."
+            "Submit issue updates to Jira. Widget callback — "
+            "called automatically by the issue widget after the user clicks Submit. "
+            "To view or edit an issue, use get_issue to load the issue widget."
         ),
         "annotations": {"readOnlyHint": False},
         "meta": {

@@ -1517,20 +1517,27 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
     {
         "name": "prepare_request_leave",
         "func": tool_prepare_request_leave,
-        "summary": "Prepare the data needed to submit a leave request. Pass startDate (YYYY-MM-DD), endDate (YYYY-MM-DD), quantity (number of hours or days), unit ('Hours' or 'Days'), and timeOffTypeId from eligibleAbsenceTypes[].id (from get_leave_balances). The widget renders and lets the user confirm before submitting.",
+        "summary": (
+            "Book time off — opens the interactive leave booking form for the "
+            "user to review and confirm. Use this when the user asks to book "
+            "leave, request PTO, or take time off. Pass startDate, endDate, "
+            "quantity, unit, and timeOffTypeId (from get_leave_balances). "
+            "The user confirms and submits via the widget."
+        ),
         "meta": {
             "openai/outputTemplate": "ui://widget/leave-booking.html",
             "openai/toolInvocation/invoking": "Preparing leave request\u2026",
             "openai/toolInvocation/invoked": "Leave request ready.",
         },
     },
-    {"name": "book_leave", "func": tool_book_leave, "summary": "Submit a leave request to Workday. Called by the leave-booking widget when the user clicks Submit. Use prepare_request_leave first to display the booking form."},
+    {"name": "book_leave", "func": tool_book_leave, "summary": "Submit leave request to Workday. Widget callback — called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."},
     {
         "name": "prepare_change_business_title",
         "func": tool_prepare_change_business_title,
         "summary": (
-            "Show the business title change form for the current worker. "
-            "The widget handles submission."
+            "Change business title — opens the interactive title change form "
+            "for the user to enter a new title and submit. Use this when the "
+            "user asks to change their business title."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {
@@ -1543,9 +1550,9 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         "name": "change_business_title",
         "func": tool_change_business_title,
         "summary": (
-            "Submit a business title change request to Workday. "
-            "Called by the change-business-title widget when the user clicks Submit. "
-            "Use prepare_change_business_title first."
+            "Submit business title change to Workday. Widget callback — "
+            "called automatically by the title change form after the user clicks Submit. "
+            "To change a business title, use prepare_change_business_title instead."
         ),
     },
     {"name": "search_learning_content", "func": tool_search_learning_content, "summary": "Search Workday learning content and fetch associated lessons."},

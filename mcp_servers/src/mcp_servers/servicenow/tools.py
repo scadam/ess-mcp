@@ -1126,9 +1126,10 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
     {
         "name": "show_create_incident_form",
         "summary": (
-            "Show the incident creation form. Pass any known details (short_description, "
-            "caller, description, category, urgency, impact) to pre-fill the form. "
-            "The widget handles submission."
+            "Create a new incident — opens the interactive creation form "
+            "for the user to fill in and submit. Use this when the user asks "
+            "to report an issue, create an incident, or log a problem. "
+            "Pass any known details to pre-fill fields."
         ),
         "func": tool_show_create_incident_form,
         "annotations": {"readOnlyHint": True},
@@ -1141,8 +1142,9 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
     {
         "name": "create_incident",
         "summary": (
-            "Create a new ServiceNow incident. Called by the create-incident widget when the user clicks Submit. "
-            "Use show_create_incident_form to display the form first."
+            "Submit incident creation to ServiceNow. Widget callback — "
+            "called automatically by the incident form after the user clicks Submit. "
+            "To create an incident, use show_create_incident_form instead."
         ),
         "func": tool_create_incident,
         "annotations": {
@@ -1157,9 +1159,10 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
     {
         "name": "show_update_incident_form",
         "summary": (
-            "Fetch an incident and show the update form. Provide the incident number "
-            "(e.g. INC0010006) to load current values into an editable widget. "
-            "The widget handles submission."
+            "Edit an existing incident — fetches the incident and opens the "
+            "interactive update form with current values. Use this when the user "
+            "asks to update or edit an incident. Provide the incident number "
+            "(e.g. INC0010006)."
         ),
         "func": tool_show_update_incident_form,
         "annotations": {"readOnlyHint": True},
@@ -1181,8 +1184,9 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
     {
         "name": "update_incident",
         "summary": (
-            "Update an existing ServiceNow incident. Called by the update-incident widget when the user clicks Submit. "
-            "Use show_update_incident_form first to load the incident."
+            "Submit incident updates to ServiceNow. Widget callback — "
+            "called automatically by the incident update form after the user clicks Submit. "
+            "To update an incident, use show_update_incident_form instead."
         ),
         "func": tool_update_incident,
     },
@@ -1235,7 +1239,9 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
     {
         "name": "approve_reject",
         "summary": (
-            "Approve or reject a ServiceNow approval. Called by the approval-review widget when the user makes a decision."
+            "Approve or reject a ServiceNow approval request. Provide the "
+            "sys_id and decision (approve/reject). Also used as a widget "
+            "callback by the approval-review widget."
         ),
         "func": tool_approve_reject,
         "annotations": {
@@ -3439,8 +3445,9 @@ SERVICENOW_TOOL_SPECS.extend(
         {
             "name": "order_catalog_item",
             "summary": (
-                "Submit an order for a ServiceNow catalog item. Called by the catalog-item widget when the user clicks Order Now. "
-                "Use get_catalog_item first to display the catalog item."
+                "Submit a catalog item order to ServiceNow. Widget callback — "
+                "called automatically by the catalog item widget when the user clicks Order Now. "
+                "To order an item, use get_catalog_item to display it first."
             ),
             "func": tool_order_catalog_item,
             "annotations": {
@@ -3450,8 +3457,9 @@ SERVICENOW_TOOL_SPECS.extend(
         {
             "name": "add_to_cart",
             "summary": (
-                "Add a ServiceNow catalog item to the shopping cart. Called by the catalog-item widget when the user clicks Add to Cart. "
-                "Use get_catalog_item first to display the catalog item."
+                "Add a catalog item to the ServiceNow shopping cart. Widget callback — "
+                "called automatically by the catalog item widget when the user clicks Add to Cart. "
+                "To browse items, use get_catalog_item."
             ),
             "func": tool_add_to_cart,
             "annotations": {
@@ -3477,8 +3485,8 @@ SERVICENOW_TOOL_SPECS.extend(
         {
             "name": "checkout_cart",
             "summary": (
-                "Submit the ServiceNow shopping cart as an order. Called by the catalog-item widget. "
-                "Use get_catalog_item to let the user order via the widget."
+                "Submit the ServiceNow shopping cart as an order. Widget callback — "
+                "called automatically by the cart widget. To view the cart, use get_cart."
             ),
             "func": tool_checkout_cart,
             "annotations": {
@@ -3488,7 +3496,8 @@ SERVICENOW_TOOL_SPECS.extend(
         {
             "name": "delete_cart",
             "summary": (
-                "Empty the ServiceNow shopping cart. Called by the catalog-item widget."
+                "Empty the ServiceNow shopping cart. Widget callback — "
+                "called by the cart widget, or directly to clear the cart."
             ),
             "func": tool_delete_cart,
             "annotations": {
@@ -3566,10 +3575,10 @@ SERVICENOW_TOOL_SPECS.extend(
         {
             "name": "show_create_change_request_form",
             "summary": (
-                "Show the change request creation form. Pass any known details "
-                "(short_description, type, category, risk, impact, description, "
-                "planned_start_date, planned_end_date) to pre-fill the form. "
-                "The widget handles submission."
+                "Create a new change request — opens the interactive creation form "
+                "for the user to fill in and submit. Use this when the user asks "
+                "to create or raise a change request. Pass any known details "
+                "to pre-fill fields."
             ),
             "func": tool_show_create_change_request_form,
             "annotations": {"readOnlyHint": True},
@@ -3582,8 +3591,9 @@ SERVICENOW_TOOL_SPECS.extend(
         {
             "name": "create_change_request",
             "summary": (
-                "Create a new ServiceNow change request. Called by the create-change-request widget when the user clicks Submit. "
-                "Use show_create_change_request_form to display the form first."
+                "Submit change request creation to ServiceNow. Widget callback — "
+                "called automatically by the change request form after the user clicks Submit. "
+                "To create a change request, use show_create_change_request_form instead."
             ),
             "func": tool_create_change_request,
             "annotations": {
@@ -3650,9 +3660,10 @@ SERVICENOW_TOOL_SPECS.extend(
         {
             "name": "show_create_problem_form",
             "summary": (
-                "Show the problem creation form. Pass any known details "
-                "(short_description, category, priority, description, impact, "
-                "urgency) to pre-fill the form. The widget handles submission."
+                "Create a new problem record — opens the interactive creation form "
+                "for the user to fill in and submit. Use this when the user asks "
+                "to create a problem or log a root cause analysis. Pass any known "
+                "details to pre-fill fields."
             ),
             "func": tool_show_create_problem_form,
             "annotations": {"readOnlyHint": True},
@@ -3665,8 +3676,9 @@ SERVICENOW_TOOL_SPECS.extend(
         {
             "name": "create_problem",
             "summary": (
-                "Create a new ServiceNow problem record. Called by the create-problem widget when the user clicks Submit. "
-                "Use show_create_problem_form to display the form first."
+                "Submit problem creation to ServiceNow. Widget callback — "
+                "called automatically by the problem form after the user clicks Submit. "
+                "To create a problem, use show_create_problem_form instead."
             ),
             "func": tool_create_problem,
             "annotations": {
