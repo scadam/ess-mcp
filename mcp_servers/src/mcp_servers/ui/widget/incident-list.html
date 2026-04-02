@@ -157,6 +157,8 @@
       .card-actions { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
       .sn-link { font-size: 11px; color: var(--muted); text-decoration: none; margin-left: auto; }
       .sn-link:hover { color: var(--accent); }
+      .btn-edit { display: inline-flex; align-items: center; gap: 3px; background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer; opacity: .7; transition: opacity .15s, background .15s; white-space: nowrap; }
+      .btn-edit:hover { opacity: 1; background: color-mix(in srgb, var(--accent) 12%, transparent); }
       .loading, .error, .empty {
         text-align: center; padding: 32px 0; font-size: 13px; color: var(--muted);
       }
@@ -297,7 +299,10 @@
         return '<div class="card" onclick="toggleDetail(' + idx + ')">' +
           '<div class="card-header">' +
             '<h3>' + esc(inc.short_description || "(no description)") + '</h3>' +
-            '<span class="number">' + esc(inc.number || "") + '</span>' +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+              '<button class="btn-edit" onclick="event.stopPropagation();openForUpdate(' + idx + ')" title="Open for update"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Update</button>' +
+              '<span class="number">' + esc(inc.number || "") + '</span>' +
+            '</div>' +
           '</div>' +
           '<div class="card-meta">' + meta.join("") + '</div>' +
           detail +
@@ -454,6 +459,13 @@
         if (inc.assigned_to) msg += '\nAssigned to: ' + inc.assigned_to;
         if (inc.description) msg += '\nDescription: ' + inc.description;
         window.openai.sendFollowUpMessage({ prompt: msg });
+      };
+
+      window.openForUpdate = function(idx) {
+        if (!window.openai || typeof window.openai.sendFollowUpMessage !== 'function') return;
+        var inc = _incidents[idx];
+        if (!inc) return;
+        window.openai.sendFollowUpMessage({ prompt: 'Show me the update form for ServiceNow incident ' + (inc.number || '') + ' so I can update it.' });
       };
 
       if (toolOutput && toolOutput.incidents) {

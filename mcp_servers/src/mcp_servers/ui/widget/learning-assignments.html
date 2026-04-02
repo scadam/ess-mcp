@@ -85,7 +85,16 @@
       .chip { font-size: 11px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; color: var(--muted); }
       .chip.overdue { color: var(--danger); border-color: var(--danger); }
       .chip.required { color: var(--warn); border-color: var(--warn); }
-      .actions { margin-top: 8px; display: flex; gap: 6px; }
+      .actions { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+      .card { cursor: pointer; }
+      .card-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+      .card-detail.open { display: block; }
+      .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+      .detail-field .label { margin: 0; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+      .detail-field .value { margin: 2px 0 0; font-size: 12px; font-weight: 500; }
+      .btn-copilot { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 5px 12px; font-size: 11px; cursor: pointer; }
+      .btn-copilot:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 
       .loading, .empty, .error { text-align: center; padding: 24px 0; color: var(--muted); font-size: 13px; }
       .error { color: var(--danger); }
@@ -212,7 +221,12 @@
           render();
         }
 
-        function card(item) {
+        function detailField(label, value) {
+          if (!value) return '';
+          return '<div class="detail-field"><p class="label">' + label + '</p><p class="value">' + esc(String(value)) + '</p></div>';
+        }
+
+        function card(item, idx) {
           var chips = '' +
             '<span class="chip">' + esc(item.assignmentStatus || 'Unknown') + '</span>' +
             (item.required ? '<span class="chip required">Required</span>' : '') +
@@ -227,8 +241,24 @@
             ? '<button class="btn" data-open="' + esc(item.contentURL) + '">Open in Workday</button>'
             : '';
 
+          var detail = '<div class="card-detail" id="detail-' + idx + '">' +
+            '<div class="detail-grid">' +
+              detailField('Status', item.assignmentStatus) +
+              detailField('Due Date', item.dueDate) +
+              detailField('Duration', item.courseDuration) +
+              detailField('Provider', item.contentProvider) +
+              detailField('Required', item.required ? 'Yes' : 'No') +
+              detailField('Overdue', item.overdue ? 'Yes' : 'No') +
+            '</div>' +
+            (item.comments ? '<div class="meta" style="margin-bottom:8px;">' + esc(item.comments) + '</div>' : '') +
+            '<div class="actions">' +
+              openBtn +
+              '<button class="btn-copilot" data-copilot-idx="' + idx + '">&#129504; Ask Copilot for Details</button>' +
+            '</div>' +
+          '</div>';
+
           return '' +
-            '<div class="card">' +
+            '<div class="card" data-idx="' + idx + '" onclick="toggleDetail(' + idx + ')">' +
               '<div class="top">' +
                 '<div>' +
                   '<div class="name">' + esc(item.learningContentTitle || 'Untitled assignment') + '</div>' +
@@ -236,21 +266,41 @@
                 '</div>' +
               '</div>' +
               '<div class="chips">' + chips + '</div>' +
-              (item.comments ? '<div class="meta" style="margin-top:8px;">' + esc(item.comments) + '</div>' : '') +
-              (openBtn ? '<div class="actions">' + openBtn + '</div>' : '') +
+              detail +
             '</div>';
         }
 
         function bindActions() {
           var buttons = contentEl.querySelectorAll("[data-open]");
           for (var i = 0; i < buttons.length; i++) {
-            buttons[i].addEventListener("click", function() {
+            buttons[i].addEventListener("click", function(e) {
+              e.stopPropagation();
               var url = this.getAttribute("data-open");
               if (!url) return;
               window.open(url, "_blank", "noopener,noreferrer");
             });
           }
+          var copilotBtns = contentEl.querySelectorAll("[data-copilot-idx]");
+          for (var j = 0; j < copilotBtns.length; j++) {
+            copilotBtns[j].addEventListener("click", function(e) {
+              e.stopPropagation();
+              var idx = parseInt(this.getAttribute("data-copilot-idx"), 10);
+              var item = viewAssignments[idx];
+              if (!item || !window.openai || typeof window.openai.sendFollowUpMessage !== "function") return;
+              var msg = 'Search for Workday learning content about "' + (item.learningContentTitle || '') + '" and show me the full details including lessons, description, and content type.';
+              if (item.contentProvider) msg += '\nProvider: ' + item.contentProvider;
+              if (item.courseDuration) msg += '\nDuration: ' + item.courseDuration;
+              window.openai.sendFollowUpMessage({ prompt: msg });
+            });
+          }
         }
+
+        window.toggleDetail = function(idx) {
+          var el = document.getElementById('detail-' + idx);
+          if (!el) return;
+          el.classList.toggle('open');
+          reportHeight();
+        };
 
         function render() {
           summaryEl.textContent = viewAssignments.length + " assignment" + (viewAssignments.length === 1 ? "" : "s") + " shown";
@@ -260,7 +310,7 @@
             return;
           }
           var html = '<div class="list">';
-          for (var i = 0; i < viewAssignments.length; i++) html += card(viewAssignments[i]);
+          for (var i = 0; i < viewAssignments.length; i++) html += card(viewAssignments[i], i);
           html += '</div>';
           contentEl.innerHTML = html;
           bindActions();

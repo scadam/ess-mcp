@@ -45,6 +45,8 @@
       th { text-align: left; color: var(--muted); font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; padding: 4px 6px; border-bottom: 1px solid var(--border); }
       td { padding: 5px 6px; border-bottom: 1px solid var(--border); }
       td.num-link { color: var(--accent); font-weight: 600; cursor: pointer; } td.num-link:hover { text-decoration: underline; }
+      td .btn-edit-icon { display: inline-flex; align-items: center; gap: 3px; background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 5px; padding: 2px 6px; font-size: 10px; cursor: pointer; opacity: .6; transition: opacity .15s, background .15s; white-space: nowrap; vertical-align: middle; }
+      td .btn-edit-icon:hover { opacity: 1; background: color-mix(in srgb, var(--accent) 12%, transparent); }
       .tag { display: inline-block; padding: 1px 6px; border-radius: 6px; background: var(--tag-bg); border: 1px solid var(--border); font-size: 10px; }
       .tag.p1 { border-color: var(--neg); color: var(--neg); }
       .tag.p2 { border-color: var(--warn); color: var(--warn); }
@@ -114,9 +116,9 @@
         var recent = data.recent_incidents || data.recentIncidents;
         if (recent && recent.length) {
           var items = recent.slice(0, 10);
-          html += '<div class="section-title">Recent Incidents</div><table><tr><th>Number</th><th>Description</th><th>Priority</th><th>Assigned To</th></tr>';
+          html += '<div class="section-title">Recent Incidents</div><table><tr><th>Number</th><th>Description</th><th>Priority</th><th>Assigned To</th><th></th></tr>';
           items.forEach(function(inc) {
-            html += '<tr><td class="num-link" onclick="_askCopilot(\'Tell me about ServiceNow incident ' + esc(inc.number) + ': ' + esc(inc.short_description || '').replace(/'/g,'\\x27') + '\')">' + esc(inc.number) + '</td><td>' + esc(inc.short_description || "") + '</td><td><span class="' + prioClass(inc.priority) + '">P' + esc(String(inc.priority || "")) + '</span></td><td>' + esc(inc.assigned_to || "—") + '</td></tr>';
+            html += '<tr><td class="num-link" onclick="_askCopilot(\'Tell me about ServiceNow incident ' + esc(inc.number) + ': ' + esc(inc.short_description || '').replace(/'/g,'\\x27') + '\')">' + esc(inc.number) + '</td><td>' + esc(inc.short_description || "") + '</td><td><span class="' + prioClass(inc.priority) + '">P' + esc(String(inc.priority || "")) + '</span></td><td>' + esc(inc.assigned_to || "—") + '</td><td><button class="btn-edit-icon" onclick="_askCopilot(\'Show me the update form for ServiceNow incident ' + esc(inc.number) + ' so I can update it.\')" title="Open for update"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button></td></tr>';
           });
           html += '</table>';
         }
