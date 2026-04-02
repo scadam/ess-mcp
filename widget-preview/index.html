@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESS-MCP Widget Gallery</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────── */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: #ffffff;
+      border-right: 1px solid #e0e0e0;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      overflow-y: auto;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .sidebar-header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: -0.3px;
+    }
+
+    .sidebar-header p {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .sidebar-group { padding: 12px 0 4px; }
+
+    .sidebar-group-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #9ca3af;
+      padding: 0 20px 6px;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 20px;
+      font-size: 13px;
+      color: #374151;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-link:hover { background: #f3f4f6; color: #111827; }
+    .sidebar-link.active { background: #eff6ff; color: #2563eb; border-left-color: #2563eb; font-weight: 600; }
+
+    .sidebar-link .dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* Platform badge colours */
+    .platform-workday    { background: #f59e0b; }
+    .platform-servicenow { background: #10b981; }
+    .platform-salesforce  { background: #3b82f6; }
+    .platform-jira       { background: #8b5cf6; }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-workday    { background: #fef3c7; color: #92400e; }
+    .badge-servicenow { background: #d1fae5; color: #065f46; }
+    .badge-salesforce  { background: #dbeafe; color: #1e40af; }
+    .badge-jira       { background: #ede9fe; color: #5b21b6; }
+
+    /* ── Main Content ────────────────────────────────── */
+    .main {
+      margin-left: 260px;
+      flex: 1;
+      padding: 32px;
+    }
+
+    .main-header {
+      margin-bottom: 28px;
+    }
+
+    .main-header h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .main-header p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .widget-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+      gap: 24px;
+    }
+
+    .widget-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .widget-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    .widget-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fafafa;
+    }
+
+    .widget-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .widget-card iframe {
+      width: 100%;
+      border: none;
+      display: block;
+      background: #fff;
+    }
+
+    .loading-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 400px;
+      color: #9ca3af;
+      font-size: 13px;
+    }
+
+    /* Scrollbar styling */
+    .sidebar::-webkit-scrollbar { width: 5px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      .widget-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar"></nav>
+
+<main class="main" id="main">
+  <div class="main-header">
+    <h2>ESS-MCP Widget Gallery</h2>
+    <p>Preview of all 34 enterprise service widgets with realistic sample data</p>
+  </div>
+  <div class="widget-grid" id="widgetGrid"></div>
+</main>
+
+<script src="sample-data.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* ── Widget registry grouped by platform ──────────── */
+  var PLATFORMS = [
+    {
+      name: "Workday",
+      key: "workday",
+      widgets: [
+        "worker-profile", "org-chart", "leave-booking",
+        "compensation-summary", "team-calendar", "team-dashboard",
+        "change-business-title", "learning-assignments"
+      ]
+    },
+    {
+      name: "ServiceNow",
+      key: "servicenow",
+      widgets: [
+        "incident-list", "create-incident", "update-incident",
+        "team-incidents", "approval-review", "task-list",
+        "update-task", "cart-summary", "catalog-list",
+        "catalog-item", "create-change-request", "create-problem"
+      ]
+    },
+    {
+      name: "Salesforce",
+      key: "salesforce",
+      widgets: [
+        "crm-pipeline", "crm-account-360", "crm-opportunity",
+        "crm-lead", "lead-pipeline", "team-pipeline",
+        "crm-event", "crm-quote", "compliance-case"
+      ]
+    },
+    {
+      name: "Jira",
+      key: "jira",
+      widgets: [
+        "jira-issue", "sprint-board", "create-issue-jira",
+        "create-project", "team-sprint-health"
+      ]
+    }
+  ];
+
+  /* Widgets needing extra height */
+  var HEIGHT_MAP = {
+    "crm-account-360": 700,
+    "team-dashboard":  620,
+    "sprint-board":    620,
+    "task-list":       620,
+    "catalog-list":    620,
+    "team-incidents":  580,
+    "team-pipeline":   620,
+    "team-sprint-health": 620,
+    "leave-booking":   620,
+    "team-calendar":   580,
+    "incident-list":   560,
+    "lead-pipeline":   560,
+    "crm-pipeline":    580,
+    "learning-assignments": 560,
+    "catalog-item":    560
+  };
+
+  /* Build a flat lookup: widget-name → platform key */
+  var widgetPlatform = {};
+  PLATFORMS.forEach(function (p) {
+    p.widgets.forEach(function (w) { widgetPlatform[w] = p.key; });
+  });
+
+  /* Pretty-print widget name */
+  function displayName(slug) {
+    return slug.replace(/-/g, " ").replace(/\bcrm\b/g, "CRM").replace(/\bjira\b/g, "Jira")
+      .replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
+  /* ── Build sidebar ────────────────────────────────── */
+  var sidebarEl = document.getElementById("sidebar");
+  var sidebarHtml = '<div class="sidebar-header"><h1>ESS-MCP Widget Gallery</h1><p>34 enterprise widgets</p></div>';
+
+  PLATFORMS.forEach(function (p) {
+    sidebarHtml += '<div class="sidebar-group"><div class="sidebar-group-title">' + p.name + "</div>";
+    p.widgets.forEach(function (w) {
+      sidebarHtml += '<a class="sidebar-link" data-widget="' + w + '" href="#widget-' + w + '">' +
+        '<span class="dot platform-' + p.key + '"></span>' + displayName(w) + "</a>";
+    });
+    sidebarHtml += "</div>";
+  });
+  sidebarEl.innerHTML = sidebarHtml;
+
+  /* Sidebar active-state tracking */
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        document.querySelectorAll(".sidebar-link").forEach(function (l) { l.classList.remove("active"); });
+        var link = document.querySelector('.sidebar-link[data-widget="' + e.target.id.replace("widget-", "") + '"]');
+        if (link) link.classList.add("active");
+      }
+    });
+  }, { rootMargin: "-40% 0px -55% 0px" });
+
+  /* ── Build injection script for a widget ──────────── */
+  function buildInjection(widgetName) {
+    var data = (typeof SAMPLE_DATA !== "undefined" && SAMPLE_DATA[widgetName]) || {};
+    var input = (typeof SAMPLE_INPUT !== "undefined" && SAMPLE_INPUT[widgetName]) || {};
+    var isString = (typeof STRING_WIDGETS !== "undefined") && STRING_WIDGETS.indexOf(widgetName) !== -1;
+
+    var toolOutputExpr = isString
+      ? JSON.stringify(JSON.stringify(data))   /* double-stringify → JS string literal */
+      : JSON.stringify(data);                   /* single-stringify → JS object literal */
+
+    var toolInputExpr = JSON.stringify(input);
+    var dataExpr = JSON.stringify(data);
+
+    return '<script>' +
+      'document.documentElement.setAttribute("data-theme","light");' +
+      'window.matchMedia=function(){return{matches:false,addEventListener:function(){}}};' +
+      'var __sampleData__=' + dataExpr + ';' +
+      'window.openai={' +
+        'toolOutput:' + toolOutputExpr + ',' +
+        'toolInput:' + toolInputExpr + ',' +
+        'callTool:function(){return Promise.resolve({structuredContent:__sampleData__})},' +
+        'sendFollowUpMessage:function(){},' +
+        'requestDisplayMode:function(){return Promise.resolve()},' +
+        'notifyIntrinsicHeight:function(){}' +
+      '};' +
+      '<\/script>';
+  }
+
+  /* ── Load a widget HTML, inject data, set as srcdoc ── */
+  function loadWidget(widgetName, iframe) {
+    var url = "/widgets/" + widgetName + ".html";
+    fetch(url).then(function (res) {
+      if (!res.ok) throw new Error(res.status);
+      return res.text();
+    }).then(function (html) {
+      var injection = buildInjection(widgetName);
+      /* Also force light theme via an early style to prevent flash */
+      var themeStyle = '<style>html,body{color-scheme:light!important;}</style>';
+
+      /* Inject right after <head> or at the very start */
+      var headMatch = html.match(/<head[^>]*>/i);
+      if (headMatch) {
+        var pos = headMatch.index + headMatch[0].length;
+        html = html.slice(0, pos) + injection + themeStyle + html.slice(pos);
+      } else {
+        html = injection + themeStyle + html;
+      }
+
+      iframe.srcdoc = html;
+    }).catch(function () {
+      iframe.srcdoc = '<html><body style="display:flex;align-items:center;justify-content:center;height:100%;' +
+        'font-family:system-ui;color:#9ca3af;font-size:13px;">Widget not found: ' + widgetName + '</body></html>';
+    });
+  }
+
+  /* ── Render widget cards ──────────────────────────── */
+  var grid = document.getElementById("widgetGrid");
+
+  PLATFORMS.forEach(function (p) {
+    p.widgets.forEach(function (w) {
+      var card = document.createElement("div");
+      card.className = "widget-card";
+      card.id = "widget-" + w;
+
+      var h = HEIGHT_MAP[w] || 480;
+
+      card.innerHTML =
+        '<div class="widget-card-header">' +
+          '<span class="widget-card-title">' + displayName(w) + "</span>" +
+          '<span class="badge badge-' + p.key + '">' + p.name + "</span>" +
+        "</div>" +
+        '<div class="loading-placeholder" id="ph-' + w + '">Loading\u2026</div>';
+
+      grid.appendChild(card);
+      observer.observe(card);
+
+      /* Create iframe lazily for performance */
+      var iframe = document.createElement("iframe");
+      iframe.style.height = h + "px";
+      iframe.title = displayName(w);
+
+      loadWidget(w, iframe);
+
+      iframe.addEventListener("load", function () {
+        var ph = document.getElementById("ph-" + w);
+        if (ph) ph.remove();
+      });
+
+      card.appendChild(iframe);
+    });
+  });
+})();
+</script>
+</body>
+</html>
