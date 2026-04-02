@@ -171,7 +171,25 @@
       }
       if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFullscreen); else _maxBtn.style.display = "none"; }
       if (toolOutput && (toolOutput.review || toolOutput.nonce)) render(toolOutput);
-      else { contentDiv.innerHTML = '<div class="empty">No approval review data available.</div>'; reportHeight(); }
+      else {
+        // Show sample data for demo/screenshot purposes
+        var sampleReview = {
+          nonce: "demo-nonce-sample",
+          provider: "servicenow",
+          approvalId: "APRV0012345",
+          expiresAt: new Date(Date.now() + 3600000).toISOString(),
+          item: {
+            title: "Request for New Laptop - Dell XPS 15",
+            system: "servicenow",
+            status: "Requested",
+            assignee: "Sarah Johnson",
+            dueDate: "2026-04-10",
+            createdDate: "2026-04-01",
+            summary: "Hardware request for a new Dell XPS 15 laptop for the engineering team. Includes 32GB RAM, 1TB SSD, and docking station. Estimated cost: $2,450."
+          }
+        };
+        render({ review: sampleReview });
+      }
     </script>
   </body>
 </html>

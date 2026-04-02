@@ -741,7 +741,22 @@ async function load(){
 
 /* ── Bootstrap ── */
 var to=(window.openai&&window.openai.toolOutput)||{};
-if(to&&to.items){render(to);}else{load();}
+if(to&&to.items){render(to);}else{
+  // Show sample data for demo/screenshot purposes when no real data
+  if(!window.openai||typeof window.openai.callTool!=='function'){
+    render({
+      approvalCount: 2, taskCount: 3, learningCount: 1,
+      items: [
+        { id:"sn:approval:APRV001", kind:"approval", system:"servicenow", title:"Hardware Request - Dell XPS 15", status:"Requested", priority:"2", assignee:"Sarah Johnson", dueDate:"2026-04-10", createdDate:"2026-04-01", summary:"New laptop request for engineering team member." },
+        { id:"wd:approval:WD002", kind:"approval", system:"workday", title:"PTO Request - 5 Days Annual Leave", status:"In Progress", assignee:"Michael Chen", dueDate:"2026-04-15", createdDate:"2026-04-02", summary:"Annual leave request for April 14-18." },
+        { id:"sf:task:TSK001", kind:"task", system:"salesforce", title:"Follow up with Acme Corp on renewal", status:"Working", priority:"High", assignee:"You", dueDate:"2026-04-08", createdDate:"2026-03-28" },
+        { id:"jr:task:PROJ-142", kind:"task", system:"jira", title:"Fix login page accessibility issues", status:"In Progress", priority:"3", assignee:"You", dueDate:"2026-04-12", createdDate:"2026-03-30" },
+        { id:"sn:task:TASK003", kind:"task", system:"servicenow", title:"Review firewall change request", status:"Open", priority:"2", assignee:"You", dueDate:"2026-04-09", createdDate:"2026-04-01" },
+        { id:"wd:learning:LRN001", kind:"learning", system:"workday", title:"Annual Compliance Training 2026", status:"Not Started", required:true, overdue:false, dueDate:"2026-04-30", createdDate:"2026-03-15", contentProvider:"Workday Learning", courseDuration:"45 Minutes" }
+      ]
+    });
+  }else{load();}
+}
 </script>
 </body>
 </html>
