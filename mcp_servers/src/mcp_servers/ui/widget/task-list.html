@@ -106,15 +106,13 @@ textarea{font-family:inherit;font-size:12px;resize:none}
 .detail-field .df-label{font-size:9.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;margin:0 0 2px}
 .detail-field .df-val{font-size:12px;font-weight:500;color:var(--text);margin:0;word-break:break-all}
 .detail-summary{font-size:12px;color:var(--text-muted);margin:0 0 10px;line-height:1.5}
-.detail-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-dim);margin:10px 0 6px}
 
 /* Actions shared */
 .approval-section,.task-actions-section{border-top:1px solid var(--border-soft);padding-top:10px;margin-top:2px}
 .approval-loading{font-size:12px;color:var(--text-muted);padding:8px 0}
-.approval-comment,.comment-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-btn);color:var(--text);padding:7px 10px;outline:none;transition:border-color .15s}
+.approval-comment{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-btn);color:var(--text);padding:7px 10px;outline:none;transition:border-color .15s}
 .approval-comment{margin-bottom:8px}
-.approval-comment:focus,.comment-input:focus{border-color:var(--accent)}
-.comment-input{margin-bottom:6px;height:54px}
+.approval-comment:focus{border-color:var(--accent)}
 .approval-btns,.inline-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;padding:6px 14px;border-radius:var(--r-btn);font-size:11px;font-weight:600;border:1.5px solid var(--border);background:var(--chip-bg);color:var(--text);transition:background .15s,opacity .15s;text-decoration:none;cursor:pointer;box-sizing:border-box}
 .btn:hover{background:var(--card-hover)}
@@ -127,15 +125,10 @@ textarea{font-family:inherit;font-size:12px;resize:none}
 .btn-copilot:hover{background:rgba(76,194,255,.15)}
 .btn-open{gap:4px;background:var(--chip-bg);color:var(--text-muted);border-color:var(--border);font-size:11px}
 .btn-open:hover{color:var(--accent);border-color:var(--accent)}
-.btn-send{background:rgba(76,194,255,.1);color:var(--accent);border-color:rgba(76,194,255,.3)}
 .result-msg{margin-top:8px;padding:7px 10px;border-radius:var(--r-btn);font-size:12px;text-align:center}
 .result-msg.success{background:rgba(43,212,143,.1);color:var(--pos)}
 .result-msg.error{background:rgba(255,107,107,.1);color:var(--neg)}
 .nonce-expiry{font-size:10px;color:var(--text-dim);margin-top:5px;text-align:right}
-.comment-list{max-height:140px;overflow-y:auto;margin-bottom:8px}
-.comment-item{background:var(--bg);border:1px solid var(--border-soft);border-radius:var(--r-btn);padding:7px 9px;margin-bottom:4px}
-.comment-meta{font-size:10px;color:var(--text-dim);margin-bottom:3px}
-.comment-body{font-size:11.5px;color:var(--text-muted);line-height:1.4}
 
 /* Footer */
 .hub-footer{padding:8px 14px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
@@ -212,8 +205,8 @@ textarea{font-family:inherit;font-size:12px;resize:none}
 
 <script>
 /* ── State ── */
-var _items=[],_activeTab='approvals',_activeSys='all',_sortKey='default';
-var _showClosed=false,_isFullscreen=false,_expanded={},_reviews={},_details={};
+var _items=[],_activeTab='approvals',_sortKey='default';
+var _showClosed=false,_isFullscreen=false,_expanded={},_reviews={};
 
 var CLOSED_RE=/^(done|closed|resolved|completed|won.t|cancelled?|canceled|withdrawn|inactive|finished|fixed|verified|rejected)/i;
 function isClosed(s){return CLOSED_RE.test((s||'').trim());}
@@ -244,19 +237,12 @@ function safeId(id){return(id||'').replace(/\\/g,'\\\\').replace(/'/g,"\\\'");}
 /* ── Lozenges ── */
 function buildLozenges(){
   var tk={approvals:'approval',tasks:'task'}[_activeTab]||_activeTab;
-  var counts={};
-  _items.filter(function(i){return i.kind===tk;}).forEach(function(i){
-    var p=(i.priority||'').toString().toLowerCase();
-    if(p)counts[p]=(counts[p]||0)+1;
-  });
   var total=_items.filter(function(i){return i.kind===tk;}).length;
   var bar=document.getElementById('lozengeBar');
   bar.innerHTML='';
   var allBtn=document.createElement('button');
-  allBtn.className='lozenge'+(_activeSys==='all'?' active':'');
-  allBtn.setAttribute('data-sys','all');
+  allBtn.className='lozenge active';
   allBtn.innerHTML='All <span class="lozenge-count">'+total+'</span>';
-  allBtn.onclick=function(){_activeSys='all';buildLozenges();applyFilters();};
   bar.appendChild(allBtn);
 }
 
@@ -299,7 +285,6 @@ function applyFilters(){
   var visible=[],hidden=0;
   sortItems(_items).forEach(function(item){
     if(item.kind!==tk)return;
-    if(_activeSys!=='all'&&item.system!==_activeSys)return;
     if(!_showClosed&&isClosed(item.status)){hidden++;return;}
     visible.push(item);
   });
@@ -326,9 +311,8 @@ function renderCard(item){
   if(item.priority)chips+='<span class="chip '+priClass(item.priority)+'">'+esc(item.priority)+'</span>';
   if(item.assignee)chips+='<span class="chip">'+esc(item.assignee)+'</span>';
   if(item.overdue)chips+='<span class="chip chip-overdue">&#9888; Overdue</span>';
-  var rawId='';
-  if(item.number)rawId=item.number;
-  else if(item.id&&item.id.indexOf(':')>=0){var p=item.id.split(':');rawId=p.slice(2).join(':');}
+  var rawId=item.number||'';
+  if(!rawId&&item.id&&item.id.indexOf(':')>=0){var p=item.id.split(':');rawId=p.slice(2).join(':');}
   if(rawId&&rawId.length<=20)chips+='<span class="chip">'+esc(rawId)+'</span>';
   var due='';
   if(item.dueDate){
@@ -482,7 +466,7 @@ window.askCopilotApproval=function(itemId){
 /* ── Tabs ── */
 document.getElementById('tabBar').addEventListener('click',function(e){
   var btn=e.target.closest('[data-tab]');if(!btn)return;
-  _activeTab=btn.dataset.tab;_activeSys='all';_expanded={};
+  _activeTab=btn.dataset.tab;_expanded={};
   document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===_activeTab);});
   buildLozenges();applyFilters();
 });
@@ -508,7 +492,7 @@ if(window.openai&&typeof window.openai.requestDisplayMode==='function'){
 
 /* ── Load ── */
 async function load(){
-  _expanded={};_reviews={};_details={};
+  _expanded={};_reviews={};
   document.getElementById('list').innerHTML='<div class="state-msg"><span class="loading-dots">Loading</span></div>';
   try{
     if(!window.openai||typeof window.openai.callTool!=='function'){
