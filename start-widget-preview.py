@@ -52,6 +52,13 @@ class PreviewHandler(SimpleHTTPRequestHandler):
 
     def _serve_file(self, filepath):
         filepath = os.path.realpath(filepath)
+
+        # Guard against path traversal: resolved path must be inside an allowed directory
+        allowed_dirs = (os.path.realpath(PREVIEW_DIR), os.path.realpath(WIDGET_DIR))
+        if not any(filepath.startswith(d + os.sep) or filepath == d for d in allowed_dirs):
+            self.send_error(403, "Forbidden")
+            return
+
         if not os.path.isfile(filepath):
             self.send_error(404, "Not found")
             return
