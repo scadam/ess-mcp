@@ -24,7 +24,7 @@
 | **Salesforce** | CRM | 44 | 9 | Create/update opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, activity timeline, **team pipeline** |
 | **Jira** | Project Management | 26 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, manage releases/versions, **team workload** |
 
-> **136 tools total** — 45 are write/action tools (create, update, approve, transition, link), 11 render interactive form widgets, and the rest provide rich read access. 34 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
+> **136 tools total** — 11 open interactive form widgets for user-driven creation (form tools), 34 are widget callbacks that execute when the user submits a form, and the rest provide rich read access and direct actions. 34 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -409,10 +409,10 @@ az group delete --name essmcp-rg --yes --no-wait
 | `get_learning_assignments` | 📖 Read | View learning initiatives |
 | `get_pay_slips` | 📖 Read | Access payroll information |
 | `get_time_off_entries` | 📖 Read | Historical time-off records |
-| `prepare_request_leave` | 🖼️ Widget | Show interactive leave booking form |
-| `book_leave` | ✏️ **Create** | **Submit leave request** |
-| `prepare_change_business_title` | 🖼️ Widget | Show business title change form |
-| `change_business_title` | ✏️ **Update** | **Submit business title change** |
+| `prepare_request_leave` | 🖼️ Widget | **Book time off** — interactive leave booking form |
+| `book_leave` | ⚙️ Callback | Widget callback: submits leave booking form |
+| `prepare_change_business_title` | 🖼️ Widget | **Change business title** — interactive title change form |
+| `change_business_title` | ⚙️ Callback | Widget callback: submits title change form |
 | `search_learning_content` | 📖 Read | Search the learning library |
 | `get_compensation` | 📖 Read | Salary and bonus information |
 | `get_benefits` | 📖 Read | Benefits enrollment and coverage |
@@ -448,32 +448,32 @@ WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
 | Tool | Type | Description |
 |------|------|-------------|
 | `list_incidents` / `get_incident` | 📖 Read | View and search incidents |
-| `create_incident` | ✏️ **Create** | **Create new IT service ticket** |
-| `update_incident` | ✏️ **Update** | **Update incident fields/state** |
-| `show_create_incident_form` | 🖼️ Widget | Interactive incident creation form |
-| `show_update_incident_form` | 🖼️ Widget | Interactive incident update form |
+| `show_create_incident_form` | 🖼️ Widget | **Create new incident** — interactive creation form |
+| `create_incident` | ⚙️ Callback | Widget callback: submits incident creation form |
+| `show_update_incident_form` | 🖼️ Widget | **Edit an incident** — interactive update form |
+| `update_incident` | ⚙️ Callback | Widget callback: submits incident update form |
 | `list_tasks` | 📖 Read | List active tasks |
 | `update_task` | ✏️ **Update** | **Update task state, priority, assignment, or add notes** |
 | `list_approvals` / `get_approval` | 📖 Read | View pending approvals |
 | `approve_reject` | ⚡ **Action** | **Approve or reject approval request** |
 | `list_catalog_items` / `list_catalog_categories` | 📖 Read | Browse service catalog |
-| `get_catalog_item` | 📖 Read | Get catalog item details with form |
-| `order_catalog_item` | ✏️ **Create** | **Order catalog item directly** |
-| `add_to_cart` | ✏️ **Create** | **Add item to shopping cart** |
+| `get_catalog_item` | 📖 Read | Get catalog item details with order form |
+| `order_catalog_item` | ⚙️ Callback | Widget callback: submits catalog item order |
+| `add_to_cart` | ⚙️ Callback | Widget callback: adds item to cart |
 | `get_cart` | 📖 Read | View shopping cart contents |
-| `checkout_cart` | ⚡ **Action** | **Submit cart as order** |
+| `checkout_cart` | ⚙️ Callback | Widget callback: submits cart as order |
 | `delete_cart` / `remove_cart_item` | 🗑️ **Delete** | **Empty cart or remove items** |
 | `list_my_requests` | 📖 Read | List user's service requests |
 | `list_change_requests` / `get_change_request` | 📖 Read | View change requests |
-| `create_change_request` | ✏️ **Create** | **Create change request** |
+| `show_create_change_request_form` | 🖼️ Widget | **Create new change request** — interactive creation form |
+| `create_change_request` | ⚙️ Callback | Widget callback: submits change request creation form |
 | `update_change_request` | ✏️ **Update** | **Update change request** |
-| `show_create_change_request_form` | 🖼️ Widget | Interactive change request form |
 | `search_knowledge` / `get_knowledge_article` | 📖 Read | Search knowledge base |
 | `create_knowledge_article` | ✏️ **Create** | **Create new KB article as draft** |
 | `list_problems` | 📖 Read | List problem records |
-| `create_problem` | ✏️ **Create** | **Create problem record** |
+| `show_create_problem_form` | 🖼️ Widget | **Create new problem** — interactive creation form |
+| `create_problem` | ⚙️ Callback | Widget callback: submits problem creation form |
 | `update_problem` | ✏️ **Update** | **Update problem record** |
-| `show_create_problem_form` | 🖼️ Widget | Interactive problem creation form |
 | `search_reference_values` | 📖 Read | Search table values for form dropdowns |
 | `get_cmdb_ci` / `list_cmdb_cis` | 📖 Read | CMDB configuration items |
 | `get_sla_status` | 📖 Read | **SLA compliance tracking** — breached, at-risk, and compliant |
@@ -503,33 +503,33 @@ SERVICENOW_INSTANCE_URL=https://yourinstance.service-now.com
 | `update_contact` | ✏️ **Update** | **Update existing contact fields** |
 | `get_activity_timeline` | 📖 Read | Combined activity timeline (tasks + events) for any record |
 | `list_opportunities` | 📖 Read | List opportunities/deals |
-| `create_opportunity` | ✏️ **Create** | **Create new opportunity** |
+| `show_create_opportunity_form` | 🖼️ Widget | **Create new opportunity** — interactive creation form |
+| `create_opportunity` | ⚙️ Callback | Widget callback: submits opportunity creation form |
 | `create_opportunity_task` | ✏️ **Create** | **Create task linked to opportunity** |
-| `update_opportunity` | ✏️ **Update** | **Update opportunity fields** |
-| `show_create_opportunity_form` | 🖼️ Widget | Interactive opportunity creation form |
+| `update_opportunity` | ⚙️ Callback | Widget callback: submits opportunity update form |
 | `list_leads` / `get_lead` | 📖 Read | Lead management |
-| `create_lead` | ✏️ **Create** | **Create new lead** |
-| `update_lead` | ✏️ **Update** | **Update lead information** |
+| `show_create_lead_form` | 🖼️ Widget | **Create new lead** — interactive creation form with convert-to-opportunity action |
+| `create_lead` | ⚙️ Callback | Widget callback: submits lead creation form |
+| `update_lead` | ⚙️ Callback | Widget callback: submits lead update form |
 | `convert_lead` | ⚡ **Action** | **Convert lead to account/contact/opportunity** |
-| `show_create_lead_form` | 🖼️ Widget | Interactive lead creation form with convert-to-opportunity action |
 | `list_campaigns` / `get_campaign` | 📖 Read | Campaign tracking |
 | `add_campaign_member` | ✏️ **Create** | **Add a contact or lead to a campaign** |
 | `get_pipeline_dashboard` | 📖 Read | Pipeline analytics |
 | `list_cases` / `get_case` | 📖 Read | Compliance case lookup |
-| `create_case` | ✏️ **Create** | **Create compliance case** |
-| `update_case` | ✏️ **Update** | **Update case status/description** |
-| `show_compliance_case_form` | 🖼️ Widget | Interactive compliance case form |
+| `show_compliance_case_form` | 🖼️ Widget | **Create new compliance case** — interactive creation form |
+| `create_case` | ⚙️ Callback | Widget callback: submits compliance case creation form |
+| `update_case` | ⚙️ Callback | Widget callback: submits compliance case update form |
 | `list_tasks` / `get_task` | 📖 Read | Task management |
 | `create_task` | ✏️ **Create** | **Create standalone task, optionally linked to account/opportunity/contact** |
-| `update_task` | ✏️ **Update** | **Update task status/priority** |
+| `update_task` | ⚙️ Callback | Widget callback: submits task update form |
 | `list_approvals` | 📖 Read | View pending approval work items |
 | `approve_reject` | ⚡ **Action** | **Approve or reject approval requests** |
-| `create_event` | ✏️ **Create** | **Create event/meeting** |
-| `update_event` | ✏️ **Update** | **Update event details** |
-| `show_create_event_form` | 🖼️ Widget | Interactive event creation form |
-| `create_quote` | ✏️ **Create** | **Create quote linked to opportunity** |
-| `update_quote` | ✏️ **Update** | **Update existing quote** |
-| `show_create_quote_form` | 🖼️ Widget | Interactive quote creation form |
+| `show_create_event_form` | 🖼️ Widget | **Create new event/meeting** — interactive creation form |
+| `create_event` | ⚙️ Callback | Widget callback: submits event creation form |
+| `update_event` | ⚙️ Callback | Widget callback: submits event update form |
+| `show_create_quote_form` | 🖼️ Widget | **Create new quote** — interactive creation form |
+| `create_quote` | ⚙️ Callback | Widget callback: submits quote creation form |
+| `update_quote` | ⚙️ Callback | Widget callback: submits quote update form |
 | `list_products` | 📖 Read | Product catalog |
 | `get_forecast` | 📖 Read | Sales forecast / pipeline summary |
 | `list_reports` / `run_report` | 📖 Read | Run Salesforce reports |
@@ -554,16 +554,17 @@ SALESFORCE_DOMAIN=yourorg.my.salesforce.com
 | Tool | Type | Description |
 |------|------|-------------|
 | `list_issues` / `get_issue` | 📖 Read | Issue queries with JQL or filters |
-| `create_issue` | ✏️ **Create** | **Create new issue in a project** |
-| `update_issue` | ✏️ **Update** | **Update issue fields, priority, assignee** |
+| `show_create_issue_form` | 🖼️ Widget | **Create new issue** — interactive creation form |
+| `create_issue` | ⚙️ Callback | Widget callback: submits issue creation form |
+| `update_issue` | ⚙️ Callback | Widget callback: submits issue update form |
 | `transition_issue` | ⚡ **Action** | **Move issue to new workflow status** |
 | `add_comment` | ✏️ **Create** | **Add comment to an issue** |
 | `log_work` | ⚡ **Action** | **Log time/work on an issue** |
 | `move_issues_to_sprint` | ⚡ **Action** | **Move issues into a sprint for planning** |
 | `link_issues` | ✏️ **Create** | **Create links between issues (Blocks, Relates, Duplicate)** |
-| `create_project` / `update_project` | ✏️ **Create/Update** | **Project management** |
-| `show_create_issue_form` | 🖼️ Widget | Interactive issue creation form |
-| `show_create_project_form` | 🖼️ Widget | Interactive project creation form |
+| `show_create_project_form` | 🖼️ Widget | **Create new project** — interactive creation form |
+| `create_project` | ⚙️ Callback | Widget callback: submits project creation form |
+| `update_project` | ⚙️ Callback | Widget callback: submits project update form |
 | `list_boards` / `get_board` | 📖 Read | Board management |
 | `list_sprints` / `get_sprint` | 📖 Read | Sprint tracking |
 | `get_backlog` | 📖 Read | Backlog views |
@@ -981,17 +982,26 @@ You have access to four MCP servers:
    ask for it before calling the tool. Never guess IDs or keys.
 3. **Show interactive widgets.** When a tool returns a widget resource, render it
    inline. Widgets provide richer context than plain text.
-4. **Confirm mutations.** Before creating, updating, or deleting any record,
+4. **Form-first workflow.** When the user asks to create a new record (opportunity,
+   incident, issue, lead, quote, change request, problem, project, compliance
+   case) or to book leave / change their business title, always call the
+   corresponding form tool (e.g. show_create_opportunity_form,
+   show_create_incident_form, show_create_issue_form, prepare_request_leave)
+   to open the interactive creation form. Do NOT call the backend submission
+   tool (create_opportunity, create_incident, create_issue, book_leave, etc.)
+   directly — those are widget callbacks that execute automatically when the
+   user submits the form.
+5. **Confirm mutations.** Before creating, updating, or deleting any record,
    summarise the intended action and ask the user to confirm.
-5. **Manager context.** If the user is a manager asking about their team, prefer
+6. **Manager context.** If the user is a manager asking about their team, prefer
    the manager-specific tools (get_team_overview, get_team_incidents,
    get_team_pipeline_summary, get_team_workload, etc.) over per-employee lookups.
-6. **Compose across systems.** When a question spans multiple platforms (e.g.
+7. **Compose across systems.** When a question spans multiple platforms (e.g.
    "Who on my team has both open Jira issues and pending ServiceNow incidents?"),
    call the relevant tools in parallel and correlate the results.
-7. **Error handling.** If a tool call fails, explain the issue clearly and suggest
+8. **Error handling.** If a tool call fails, explain the issue clearly and suggest
    next steps. Do not retry silently more than once.
-8. **Privacy.** Only surface data the authenticated user is authorised to see.
+9. **Privacy.** Only surface data the authenticated user is authorised to see.
    Never display bearer tokens, internal IDs, or raw API responses unless the user
    explicitly asks for debugging information.
 
