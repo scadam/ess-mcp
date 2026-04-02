@@ -1462,7 +1462,7 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "transition_issue",
         "func": tool_transition_issue,
         "summary": (
-            "Transition a Jira issue to a new status. Called by the task-list or jira-issue widget when the user changes status."
+            "Transition a Jira issue to a new status. Called by the jira-issue widget when the user changes status."
         ),
         "annotations": {"readOnlyHint": False},
     },

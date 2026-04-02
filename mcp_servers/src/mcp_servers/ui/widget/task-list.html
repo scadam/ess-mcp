@@ -11,8 +11,7 @@
   --text:#e4ecf5; --text-muted:#7a8fa8; --text-dim:#4a5f78;
   --accent:#4cc2ff; --pos:#2bd48f; --neg:#ff6b6b; --warn:#f0b232;
   --chip-bg:#0e1620;
-  --sn-color:#3eb489; --wd-color:#0875e1; --wd-orange:#f68620;
-  --sf-color:#00a1e0; --jr-color:#0052cc;
+  --sn-color:#3eb489;
   --r-card:12px; --r-chip:6px; --r-btn:8px; --r-pill:999px;
 }
 :root[data-theme="light"] {
@@ -54,10 +53,7 @@ textarea{font-family:inherit;font-size:12px;resize:none}
 .lozenge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--r-pill);font-size:11px;font-weight:600;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);transition:all .15s}
 .lozenge:hover{color:var(--text);border-color:var(--text-dim)}
 .lozenge.active{background:rgba(76,194,255,.1);color:var(--accent);border-color:rgba(76,194,255,.4)}
-.lozenge[data-sys="servicenow"].active{background:rgba(62,180,137,.1);color:var(--sn-color);border-color:rgba(62,180,137,.4)}
-.lozenge[data-sys="workday"].active{background:rgba(8,117,225,.12);color:var(--wd-color);border-color:rgba(8,117,225,.4)}
-.lozenge[data-sys="salesforce"].active{background:rgba(0,161,224,.1);color:var(--sf-color);border-color:rgba(0,161,224,.4)}
-.lozenge[data-sys="jira"].active{background:rgba(0,82,204,.12);color:var(--jr-color);border-color:rgba(0,82,204,.4)}
+.lozenge.active{background:rgba(62,180,137,.1);color:var(--sn-color);border-color:rgba(62,180,137,.4)}
 .lozenge-count{font-weight:700;opacity:.8}
 .sort-wrap{position:relative;flex-shrink:0}
 .sort-select{appearance:none;background:var(--chip-bg);border:1.5px solid var(--border);border-radius:var(--r-btn);color:var(--text-muted);padding:3px 22px 3px 8px;font-size:11px;font-family:inherit;cursor:pointer;outline:none;transition:border-color .15s}
@@ -83,15 +79,12 @@ textarea{font-family:inherit;font-size:12px;resize:none}
 .loading-dots::after{content:'...';animation:dots 1.2s infinite}
 
 /* Cards */
-.card{border-radius:var(--r-card);margin-bottom:6px;background:var(--card);overflow:hidden;border:1px solid var(--border);border-left:3px solid var(--sys-color,var(--border));cursor:pointer;transition:background .15s;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.card{border-radius:var(--r-card);margin-bottom:6px;background:var(--card);overflow:hidden;border:1px solid var(--border);border-left:3px solid var(--sn-color);cursor:pointer;transition:background .15s;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .card:hover{background:var(--card-hover)}
 .card:last-child{margin-bottom:0}
-.card[data-sys="servicenow"]{--sys-color:var(--sn-color);--sys-bg:rgba(62,180,137,.08);--sys-label:#3eb489}
-.card[data-sys="workday"]{--sys-color:var(--wd-orange);--sys-bg:rgba(246,134,32,.08);--sys-label:#f68620}
-.card[data-sys="salesforce"]{--sys-color:var(--sf-color);--sys-bg:rgba(0,161,224,.08);--sys-label:#00a1e0}
-.card[data-sys="jira"]{--sys-color:var(--jr-color);--sys-bg:rgba(0,82,204,.1);--sys-label:#4e8ff5}
+.card{--sys-bg:rgba(62,180,137,.08);--sys-label:#3eb489}
 .card-head{display:flex;align-items:flex-start;gap:10px;padding:10px 12px 8px}
-.sys-badge{width:26px;height:26px;border-radius:7px;flex-shrink:0;background:var(--sys-bg,var(--chip-bg));border:1px solid var(--sys-color,var(--border));color:var(--sys-label,var(--text-muted));font-size:9px;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;margin-top:1px;text-transform:uppercase}
+.sys-badge{width:26px;height:26px;border-radius:7px;flex-shrink:0;background:var(--sys-bg);border:1px solid var(--sn-color);color:var(--sys-label);font-size:9px;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;margin-top:1px;text-transform:uppercase}
 .card-body{flex:1;min-width:0}
 .card-title{font-size:12.5px;font-weight:600;line-height:1.35;margin:0 0 5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card-chips{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
@@ -99,7 +92,6 @@ textarea{font-family:inherit;font-size:12px;resize:none}
 .chip-priority-1,.chip-priority-2{color:var(--neg);border-color:rgba(255,107,107,.25);background:rgba(255,107,107,.08)}
 .chip-priority-3{color:var(--warn);border-color:rgba(240,178,50,.25);background:rgba(240,178,50,.08)}
 .chip-overdue{color:var(--neg);border-color:rgba(255,107,107,.25);background:rgba(255,107,107,.08)}
-.chip-required{color:var(--warn);border-color:rgba(240,178,50,.25);background:rgba(240,178,50,.08)}
 .card-right{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;flex-shrink:0;gap:6px;min-height:26px}
 .expand-arrow{font-size:9px;color:var(--text-dim);transition:transform .2s;display:inline-block}
 .card.expanded .expand-arrow{transform:rotate(180deg)}
@@ -135,14 +127,7 @@ textarea{font-family:inherit;font-size:12px;resize:none}
 .btn-copilot:hover{background:rgba(76,194,255,.15)}
 .btn-open{gap:4px;background:var(--chip-bg);color:var(--text-muted);border-color:var(--border);font-size:11px}
 .btn-open:hover{color:var(--accent);border-color:var(--accent)}
-.btn-sys{background:var(--sys-bg,var(--chip-bg));color:var(--sys-label,var(--text));border-color:var(--sys-color,var(--border))}
-.btn-sys:hover{opacity:.85}
 .btn-send{background:rgba(76,194,255,.1);color:var(--accent);border-color:rgba(76,194,255,.3)}
-.btn-send:hover:not(:disabled){background:rgba(76,194,255,.2)}
-.btn-launch{background:rgba(8,117,225,.12);color:var(--wd-color);border-color:rgba(8,117,225,.35);gap:5px}
-.btn-launch:hover{background:rgba(8,117,225,.22)}
-.btn-transition{padding:4px 10px;border-radius:var(--r-pill);font-size:10px;font-weight:600;border:1.5px solid var(--border);background:var(--chip-bg);color:var(--text-muted);transition:all .15s}
-.btn-transition:hover{background:var(--card-hover);color:var(--text)}
 .result-msg{margin-top:8px;padding:7px 10px;border-radius:var(--r-btn);font-size:12px;text-align:center}
 .result-msg.success{background:rgba(43,212,143,.1);color:var(--pos)}
 .result-msg.error{background:rgba(255,107,107,.1);color:var(--neg)}
@@ -151,7 +136,6 @@ textarea{font-family:inherit;font-size:12px;resize:none}
 .comment-item{background:var(--bg);border:1px solid var(--border-soft);border-radius:var(--r-btn);padding:7px 9px;margin-bottom:4px}
 .comment-meta{font-size:10px;color:var(--text-dim);margin-bottom:3px}
 .comment-body{font-size:11.5px;color:var(--text-muted);line-height:1.4}
-.transitions-label{font-size:10px;color:var(--text-dim);font-style:italic}
 
 /* Footer */
 .hub-footer{padding:8px 14px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
@@ -179,7 +163,7 @@ textarea{font-family:inherit;font-size:12px;resize:none}
       </div>
       <div>
         <div class="hub-title">Tasks &amp; Approvals</div>
-        <div class="hub-subtitle">Unified Activity Hub</div>
+        <div class="hub-subtitle">ServiceNow</div>
       </div>
     </div>
     <div class="hub-meta">
@@ -195,7 +179,6 @@ textarea{font-family:inherit;font-size:12px;resize:none}
   <div class="hub-tabs" id="tabBar">
     <button class="tab active" data-tab="approvals">Approvals <span class="tab-badge" id="badgeApprovals">0</span></button>
     <button class="tab" data-tab="tasks">Tasks <span class="tab-badge" id="badgeTasks">0</span></button>
-    <button class="tab" data-tab="learning">Learning <span class="tab-badge" id="badgeLearning">0</span></button>
   </div>
 
   <div class="hub-filters">
@@ -208,7 +191,6 @@ textarea{font-family:inherit;font-size:12px;resize:none}
         <option value="created-desc">Newest first</option>
         <option value="created-asc">Oldest first</option>
         <option value="priority">By priority</option>
-        <option value="system">By system</option>
       </select>
       <span class="sort-chevron">&#9662;</span>
     </div>
@@ -236,13 +218,6 @@ var _showClosed=false,_isFullscreen=false,_expanded={},_reviews={},_details={};
 var CLOSED_RE=/^(done|closed|resolved|completed|won.t|cancelled?|canceled|withdrawn|inactive|finished|fixed|verified|rejected)/i;
 function isClosed(s){return CLOSED_RE.test((s||'').trim());}
 
-var SYS_META={
-  servicenow:{abbr:'SN',label:'ServiceNow'},
-  workday:{abbr:'WD',label:'Workday'},
-  salesforce:{abbr:'SF',label:'Salesforce'},
-  jira:{abbr:'JR',label:'Jira'}
-};
-
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 function fmt(s){if(!s)return '\u2014';try{return new Date(s).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}catch(e){return s;}}
 function notifyHeight(){if(window.openai&&typeof window.openai.notifyIntrinsicHeight==='function')window.openai.notifyIntrinsicHeight(document.body.scrollHeight);}
@@ -268,9 +243,12 @@ function safeId(id){return(id||'').replace(/\\/g,'\\\\').replace(/'/g,"\\\'");}
 
 /* ── Lozenges ── */
 function buildLozenges(){
-  var tk={approvals:'approval',tasks:'task',learning:'learning'}[_activeTab]||_activeTab;
+  var tk={approvals:'approval',tasks:'task'}[_activeTab]||_activeTab;
   var counts={};
-  _items.filter(function(i){return i.kind===tk;}).forEach(function(i){counts[i.system]=(counts[i.system]||0)+1;});
+  _items.filter(function(i){return i.kind===tk;}).forEach(function(i){
+    var p=(i.priority||'').toString().toLowerCase();
+    if(p)counts[p]=(counts[p]||0)+1;
+  });
   var total=_items.filter(function(i){return i.kind===tk;}).length;
   var bar=document.getElementById('lozengeBar');
   bar.innerHTML='';
@@ -280,15 +258,6 @@ function buildLozenges(){
   allBtn.innerHTML='All <span class="lozenge-count">'+total+'</span>';
   allBtn.onclick=function(){_activeSys='all';buildLozenges();applyFilters();};
   bar.appendChild(allBtn);
-  Object.keys(counts).sort().forEach(function(sys){
-    var meta=SYS_META[sys]||{label:sys,abbr:sys.slice(0,2).toUpperCase()};
-    var btn=document.createElement('button');
-    btn.className='lozenge'+(_activeSys===sys?' active':'');
-    btn.setAttribute('data-sys',sys);
-    btn.innerHTML=esc(meta.label)+' <span class="lozenge-count">'+counts[sys]+'</span>';
-    btn.onclick=(function(s){return function(){_activeSys=_activeSys===s?'all':s;buildLozenges();applyFilters();};})(sys);
-    bar.appendChild(btn);
-  });
 }
 
 /* ── Sort ── */
@@ -296,7 +265,7 @@ function sortItems(items){
   var key=_sortKey;
   return items.slice().sort(function(a,b){
     if(key==='default'){
-      var ko={approval:0,task:1,learning:2};
+      var ko={approval:0,task:1};
       var ka=ko[a.kind]||1,kb=ko[b.kind]||1;
       if(ka!==kb)return ka-kb;
       return(a.dueDate||'9999')<(b.dueDate||'9999')?-1:1;
@@ -305,7 +274,6 @@ function sortItems(items){
     if(key==='due-desc')return(a.dueDate||'9999')>(b.dueDate||'9999')?-1:1;
     if(key==='created-desc')return(a.createdDate||'0')>(b.createdDate||'0')?-1:1;
     if(key==='created-asc')return(a.createdDate||'9')<(b.createdDate||'9')?-1:1;
-    if(key==='system')return(a.system||'').localeCompare(b.system||'');
     if(key==='priority'){
       var pa=parseInt(a.priority)||99,pb=parseInt(b.priority)||99;
       if(pa!==pb)return pa-pb;
@@ -321,14 +289,13 @@ function render(data){
   _items=(data&&data.items)||[];
   document.getElementById('badgeApprovals').textContent=data?(data.approvalCount||0):0;
   document.getElementById('badgeTasks').textContent=data?(data.taskCount||0):0;
-  document.getElementById('badgeLearning').textContent=data?(data.learningCount||0):0;
   document.getElementById('countBadge').textContent=_items.length+' item'+(_items.length!==1?'s':'');
   buildLozenges();applyFilters();
 }
 
 function applyFilters(){
   var list=document.getElementById('list');
-  var tk={approvals:'approval',tasks:'task',learning:'learning'}[_activeTab]||_activeTab;
+  var tk={approvals:'approval',tasks:'task'}[_activeTab]||_activeTab;
   var visible=[],hidden=0;
   sortItems(_items).forEach(function(item){
     if(item.kind!==tk)return;
@@ -353,16 +320,15 @@ document.getElementById('sortSelect').onchange=function(){_sortKey=this.value;ap
 
 /* ── Card ── */
 function renderCard(item){
-  var meta=SYS_META[item.system]||{abbr:(item.system||'??').slice(0,2).toUpperCase(),label:item.system||'Unknown'};
   var isExp=!!_expanded[item.id];
   var chips='';
   if(item.status)chips+='<span class="chip">'+esc(item.status)+'</span>';
   if(item.priority)chips+='<span class="chip '+priClass(item.priority)+'">'+esc(item.priority)+'</span>';
   if(item.assignee)chips+='<span class="chip">'+esc(item.assignee)+'</span>';
   if(item.overdue)chips+='<span class="chip chip-overdue">&#9888; Overdue</span>';
-  if(item.required)chips+='<span class="chip chip-required">Required</span>';
   var rawId='';
-  if(item.id&&item.id.indexOf(':')>=0){var p=item.id.split(':');rawId=p.slice(2).join(':');}
+  if(item.number)rawId=item.number;
+  else if(item.id&&item.id.indexOf(':')>=0){var p=item.id.split(':');rawId=p.slice(2).join(':');}
   if(rawId&&rawId.length<=20)chips+='<span class="chip">'+esc(rawId)+'</span>';
   var due='';
   if(item.dueDate){
@@ -371,9 +337,9 @@ function renderCard(item){
   }
   var sid=safeId(item.id);
   var det=isExp?renderCardDetail(item):'';
-  return '<div class="card'+(isExp?' expanded':'')+'" data-sys="'+esc(item.system)+'" data-id="'+esc(item.id)+'" onclick="toggleCard(\''+sid+'\')">'+
+  return '<div class="card'+(isExp?' expanded':'')+'" data-id="'+esc(item.id)+'" onclick="toggleCard(\''+sid+'\')">'+
     '<div class="card-head">'+
-      '<div class="sys-badge">'+esc(meta.abbr)+'</div>'+
+      '<div class="sys-badge">SN</div>'+
       '<div class="card-body">'+
         '<div class="card-title">'+esc(item.title||'(untitled)')+'</div>'+
         '<div class="card-chips">'+chips+'</div>'+
@@ -388,10 +354,10 @@ function renderCardDetail(item){
   var h='<div class="detail-divider"></div>';
   if(item.summary)h+='<p class="detail-summary">'+esc(item.summary)+'</p>';
   var fields=[];
-  if(item.system)fields.push(['System',item.system]);
   if(item.status)fields.push(['Status',item.status]);
   if(item.priority)fields.push(['Priority',item.priority]);
   if(item.assignee)fields.push(['Assignee',item.assignee]);
+  if(item.number)fields.push(['Number',item.number]);
   if(item.createdDate)fields.push(['Created',fmt(item.createdDate)]);
   if(item.dueDate)fields.push(['Due',fmt(item.dueDate)]);
   if(fields.length){
@@ -400,8 +366,6 @@ function renderCardDetail(item){
     h+='</div>';
   }
   if(item.kind==='approval')h+=renderApprovalSection(item);
-  else if(item.kind==='learning')h+=renderLearningSection(item);
-  else if(item.system==='jira'||item.system==='salesforce')h+=renderTaskActionSection(item);
   else h+=renderBasicTaskSection(item);
   return h;
 }
@@ -433,100 +397,6 @@ function renderApprovalSection(item){
   return h;
 }
 
-/* ── Learning section ── */
-function renderLearningSection(item){
-  var sid=safeId(item.id);
-  var h='<div class="task-actions-section" onclick="event.stopPropagation()">';
-  // Status + metadata chips
-  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">';
-  if(item.status)h+='<span class="chip">'+esc(item.status)+'</span>';
-  if(item.required)h+='<span class="chip chip-required">Required</span>';
-  if(item.overdue)h+='<span class="chip chip-overdue">&#9888; Overdue</span>';
-  if(item.dueDate)h+='<span class="chip">Due: '+esc(fmt(item.dueDate))+'</span>';
-  if(item.contentProvider)h+='<span class="chip">'+esc(item.contentProvider)+'</span>';
-  if(item.courseDuration)h+='<span class="chip">'+esc(item.courseDuration)+'</span>';
-  h+='</div>';
-  // Comments thread
-  if(item.comments&&item.comments.trim()){
-    var commentLines=item.comments.split(';').map(function(s){return s.trim();}).filter(Boolean);
-    h+='<div class="detail-section-title">Comments ('+commentLines.length+')</div>';
-    h+='<div class="comment-list">';
-    commentLines.forEach(function(line){
-      // Lines are formatted "DD/MM/YYYY, HH:MM:SS: (Author) text"
-      var m=line.match(/^(\d[^:]+):\s*\(([^)]+)\)\s*(.*)$/);
-      if(m){
-        h+='<div class="comment-item"><div class="comment-meta">'+esc(m[2])+' &middot; '+esc(m[1])+'</div><div class="comment-body">'+esc(m[3])+'</div></div>';
-      }else{
-        h+='<div class="comment-item"><div class="comment-body">'+esc(line)+'</div></div>';
-      }
-    });
-    h+='</div>';
-  }
-  // Action buttons
-  h+='<div class="inline-actions">';
-  if(item.link){
-    h+='<a class="btn btn-launch" href="'+esc(item.link)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#9654; Launch Course</a>';
-  }else{
-    h+='<span class="transitions-label">No course link available</span>';
-  }
-  h+='<button class="btn btn-copilot" onclick="askCopilotTask(\''+sid+'\')" style="margin-left:auto">&#129504; Ask Copilot</button>';
-  h+='</div></div>';
-  return h;
-}
-
-/* ── Task action section (Jira / Salesforce) ── */
-function renderTaskActionSection(item){
-  var det=_details[item.id];
-  var sid=safeId(item.id);
-  var h='<div class="task-actions-section" onclick="event.stopPropagation()">';
-  if(!det||det.loading){
-    h+='<div class="approval-loading"><span class="loading-dots">Loading details</span></div>';
-  }else if(det.error){
-    h+='<div class="result-msg error">'+esc(det.error)+'</div>'+renderBasicTaskSection(item);
-  }else if(det.data){
-    var d=det.data,comments=d.comments||[];
-    h+='<div class="detail-section-title">Comments ('+comments.length+')</div>';
-    if(comments.length){
-      h+='<div class="comment-list">';
-      comments.forEach(function(c){
-        var author=c.author||c.created_by||'';
-        var body=c.body||c.CommentBody||'';
-        var dt=fmt(c.created||c.created_date||c.CreatedDate||'');
-        h+='<div class="comment-item"><div class="comment-meta">'+esc(author)+(dt?' &middot; '+esc(dt):'')+
-           '</div><div class="comment-body">'+esc(body)+'</div></div>';
-      });
-      h+='</div>';
-    }else{
-      h+='<p style="font-size:11px;color:var(--text-dim);margin:0 0 6px;">No comments yet.</p>';
-    }
-    h+='<textarea class="comment-input" id="ci-'+esc(item.id)+'" placeholder="Write a comment..."></textarea>';
-    h+='<div class="inline-actions">';
-    h+='<button class="btn btn-send" id="bs-'+esc(item.id)+'" onclick="addComment(\''+sid+'\')">&#10148; Post</button>';
-    if(item.system==='salesforce'){
-      h+='<select class="sort-select" id="sfs-'+esc(item.id)+'" style="font-size:11px;padding:3px 18px 3px 7px;">';
-      ['New','Working','Escalated','Closed'].forEach(function(s){
-        h+='<option value="'+esc(s)+'"'+(item.status===s?' selected':'')+'>'+esc(s)+'</option>';
-      });
-      h+='</select><button class="btn btn-sys" onclick="updateStatus(\''+sid+'\')">Update Status</button>';
-    }
-    if(item.system==='jira'){
-      var trans=d.transitions||[];
-      if(trans.length){
-        h+='<span class="transitions-label">Transition:</span>';
-        trans.slice(0,6).forEach(function(t){
-          h+='<button class="btn btn-transition" onclick="execTransition(\''+sid+'\',\''+safeId(t.id||'')+'\')">'+esc(t.name)+'</button>';
-        });
-      }
-    }
-    if(item.link)h+=renderOpenBtn(item);
-    h+='<button class="btn btn-copilot" onclick="askCopilotTask(\''+sid+'\')" style="margin-left:auto">&#129504; Ask Copilot</button>';
-    h+='</div>';
-    if(det.resultMsg)h+='<div class="result-msg '+(det.resultSuccess?'success':'error')+'">'+esc(det.resultMsg)+'</div>';
-  }
-  h+='</div>';
-  return h;
-}
-
 function renderBasicTaskSection(item){
   var sid=safeId(item.id);
   var h='<div class="task-actions-section" onclick="event.stopPropagation()">';
@@ -539,10 +409,7 @@ function renderBasicTaskSection(item){
 
 function renderOpenBtn(item){
   if(!item.link)return '';
-  var meta=SYS_META[item.system]||{label:item.system||'system'};
-  // Use openLink() so Skybridge's openUrl API is used when available.
-  // return false prevents the <a> from also trying to navigate (blocked in sandbox).
-  return '<a class="btn btn-open" href="'+esc(item.link)+'" onclick="openLink(this.href);return false;">&nearr; Open in '+esc(meta.label)+'</a>';
+  return '<a class="btn btn-open" href="'+esc(item.link)+'" onclick="openLink(this.href);return false;">&nearr; Open in ServiceNow</a>';
 }
 
 /* ── Toggle ── */
@@ -551,10 +418,7 @@ window.toggleCard=function(itemId){
   _expanded[itemId]=!wasExp;
   if(!wasExp){
     var item=_items.find(function(i){return i.id===itemId;});
-    if(item){
-      if(item.kind==='approval'&&!_reviews[itemId])loadApprovalReview(itemId);
-      else if((item.system==='jira'||item.system==='salesforce')&&item.kind==='task'&&!_details[itemId])loadItemDetail(itemId);
-    }
+    if(item&&item.kind==='approval'&&!_reviews[itemId])loadApprovalReview(itemId);
   }
   applyFilters();
 };
@@ -590,96 +454,16 @@ window.execDecision=async function(itemId,decision,nonce){
   applyFilters();
 };
 
-/* ── Item detail ── */
-async function loadItemDetail(itemId){
-  _details[itemId]={loading:true};applyFilters();
-  try{
-    if(!window.openai||typeof window.openai.callTool!=='function')throw new Error('Skybridge not available');
-    var out=await window.openai.callTool('get_item_detail',{item_id:itemId});
-    _details[itemId]={loading:false,data:(out&&out.structuredContent)||out||{}};
-  }catch(e){_details[itemId]={loading:false,error:e.message||'Failed to load details'};}
-  applyFilters();
-}
-
-window.addComment=async function(itemId){
-  event.stopPropagation();
-  var btn=document.getElementById('bs-'+itemId),ta=document.getElementById('ci-'+itemId);
-  if(!ta||!ta.value.trim())return;
-  var comment=ta.value.trim();if(btn)btn.disabled=true;
-  try{
-    if(!window.openai||typeof window.openai.callTool!=='function')throw new Error('Skybridge not available');
-    await window.openai.callTool('add_item_comment',{item_id:itemId,comment:comment});
-    // Optimistically insert the new comment so it appears immediately even if
-    // the provider API has a short indexing delay before returning it in the reload.
-    if(_details[itemId]&&_details[itemId].data){
-      var now=new Date().toISOString();
-      var optimistic={body:comment,author:'You',created:now};
-      _details[itemId].data.comments=(_details[itemId].data.comments||[]).concat([optimistic]);
-      applyFilters();
-    }
-    ta.value='';
-    // Reload in the background to get canonical server state.
-    delete _details[itemId];
-    await loadItemDetail(itemId);
-  }catch(e){
-    if(_details[itemId])_details[itemId].resultMsg=e.message||'Failed';
-    if(_details[itemId])_details[itemId].resultSuccess=false;
-    if(btn)btn.disabled=false;applyFilters();
-  }
-};
-
-window.updateStatus=async function(itemId){
-  event.stopPropagation();
-  var sel=document.getElementById('sfs-'+itemId);if(!sel)return;
-  var ns=sel.value,ce=document.getElementById('ci-'+itemId),comment=ce?ce.value.trim():'';
-  try{
-    if(!window.openai||typeof window.openai.callTool!=='function')throw new Error('Skybridge not available');
-    await window.openai.callTool('execute_item_transition',{item_id:itemId,action:ns,comment:comment});
-    if(ce)ce.value='';
-    var item=_items.find(function(i){return i.id===itemId;});if(item)item.status=ns;
-    if(_details[itemId])_details[itemId].resultMsg='✓ Status updated to '+ns;
-    if(_details[itemId])_details[itemId].resultSuccess=true;
-  }catch(e){
-    if(_details[itemId])_details[itemId].resultMsg=e.message||'Failed';
-    if(_details[itemId])_details[itemId].resultSuccess=false;
-  }
-  applyFilters();
-};
-
-window.execTransition=async function(itemId,transitionId){
-  event.stopPropagation();
-  var ce=document.getElementById('ci-'+itemId),comment=ce?ce.value.trim():'';
-  try{
-    if(!window.openai||typeof window.openai.callTool!=='function')throw new Error('Skybridge not available');
-    var out=await window.openai.callTool('execute_item_transition',{item_id:itemId,action:transitionId,comment:comment});
-    var res=(out&&out.structuredContent)||out||{};
-    var ns=res.newStatus||res.status||'updated';
-    if(ce)ce.value='';
-    var item=_items.find(function(i){return i.id===itemId;});if(item&&ns)item.status=ns;
-    delete _details[itemId];await loadItemDetail(itemId);
-  }catch(e){
-    if(_details[itemId])_details[itemId].resultMsg=e.message||'Failed';
-    if(_details[itemId])_details[itemId].resultSuccess=false;
-    applyFilters();
-  }
-};
-
 /* ── Ask Copilot ── */
 window.askCopilotTask=function(itemId){
   event.stopPropagation();
   if(!window.openai||typeof window.openai.sendFollowUpMessage!=='function')return;
   var item=_items.find(function(i){return i.id===itemId;});if(!item)return;
-  var msg;
-  if(item.kind==='learning'){
-    msg='I have a Workday learning assignment: "'+item.title+'". Please help me understand what this course covers and whether it is relevant to my role.';
-    if(item.dueDate)msg+='\nDue: '+item.dueDate;
-  }else{
-    msg='I have a task in '+(item.system||'the system')+': "'+item.title+'". Please help me understand what I need to do to complete it.';
-    if(item.summary)msg+='\nDescription: '+item.summary;
-    if(item.status)msg+='\nStatus: '+item.status;
-    if(item.priority)msg+='\nPriority: '+item.priority;
-    if(item.dueDate)msg+='\nDue: '+item.dueDate;
-  }
+  var msg='I have a ServiceNow task: "'+item.title+'". Please help me understand what I need to do to complete it.';
+  if(item.summary)msg+='\nDescription: '+item.summary;
+  if(item.status)msg+='\nStatus: '+item.status;
+  if(item.priority)msg+='\nPriority: '+item.priority;
+  if(item.dueDate)msg+='\nDue: '+item.dueDate;
   msg+='\n(Ref: '+itemId+')';
   window.openai.sendFollowUpMessage({prompt:msg});
 };
@@ -688,7 +472,7 @@ window.askCopilotApproval=function(itemId){
   event.stopPropagation();
   if(!window.openai||typeof window.openai.sendFollowUpMessage!=='function')return;
   var item=_items.find(function(i){return i.id===itemId;});if(!item)return;
-  var msg='Please summarise this approval request in '+(item.system||'the system')+' so I can decide whether to approve or reject it.\n\n"'+item.title+'"';
+  var msg='Please summarise this ServiceNow approval request so I can decide whether to approve or reject it.\n\n"'+item.title+'"';
   if(item.summary)msg+='\nContext: '+item.summary;
   if(item.assignee)msg+='\nRequested by: '+item.assignee;
   msg+='\n(Ref: '+itemId+')';
@@ -745,14 +529,13 @@ if(to&&to.items){render(to);}else{
   // Show sample data for demo/screenshot purposes when no real data
   if(!window.openai||typeof window.openai.callTool!=='function'){
     render({
-      approvalCount: 2, taskCount: 3, learningCount: 1,
+      approvalCount: 2, taskCount: 3,
       items: [
         { id:"sn:approval:APRV001", kind:"approval", system:"servicenow", title:"Hardware Request - Dell XPS 15", status:"Requested", priority:"2", assignee:"Sarah Johnson", dueDate:"2026-04-10", createdDate:"2026-04-01", summary:"New laptop request for engineering team member." },
-        { id:"wd:approval:WD002", kind:"approval", system:"workday", title:"PTO Request - 5 Days Annual Leave", status:"In Progress", assignee:"Michael Chen", dueDate:"2026-04-15", createdDate:"2026-04-02", summary:"Annual leave request for April 14-18." },
-        { id:"sf:task:TSK001", kind:"task", system:"salesforce", title:"Follow up with Acme Corp on renewal", status:"Working", priority:"High", assignee:"You", dueDate:"2026-04-08", createdDate:"2026-03-28" },
-        { id:"jr:task:PROJ-142", kind:"task", system:"jira", title:"Fix login page accessibility issues", status:"In Progress", priority:"3", assignee:"You", dueDate:"2026-04-12", createdDate:"2026-03-30" },
-        { id:"sn:task:TASK003", kind:"task", system:"servicenow", title:"Review firewall change request", status:"Open", priority:"2", assignee:"You", dueDate:"2026-04-09", createdDate:"2026-04-01" },
-        { id:"wd:learning:LRN001", kind:"learning", system:"workday", title:"Annual Compliance Training 2026", status:"Not Started", required:true, overdue:false, dueDate:"2026-04-30", createdDate:"2026-03-15", contentProvider:"Workday Learning", courseDuration:"45 Minutes" }
+        { id:"sn:approval:APRV002", kind:"approval", system:"servicenow", title:"VPN Access Request - Remote Developer", status:"Requested", priority:"3", assignee:"David Park", dueDate:"2026-04-14", createdDate:"2026-04-02", summary:"VPN access for new remote contractor joining the backend team." },
+        { id:"sn:task:TASK001", kind:"task", system:"servicenow", title:"Review firewall change request", status:"Open", priority:"2", number:"TASK0010045", assignee:"You", dueDate:"2026-04-09", createdDate:"2026-04-01", summary:"Review and validate the proposed firewall rule changes for the production environment." },
+        { id:"sn:task:TASK002", kind:"task", system:"servicenow", title:"Update KB article for password reset", status:"Work in Progress", priority:"3", number:"TASK0010046", assignee:"You", dueDate:"2026-04-11", createdDate:"2026-04-02", summary:"Update the knowledge base article with the new self-service password reset procedure." },
+        { id:"sn:task:TASK003", kind:"task", system:"servicenow", title:"Patch server cluster - security update", status:"Open", priority:"1", number:"TASK0010047", assignee:"You", dueDate:"2026-04-07", createdDate:"2026-03-30", summary:"Apply critical security patches to the production server cluster." }
       ]
     });
   }else{load();}

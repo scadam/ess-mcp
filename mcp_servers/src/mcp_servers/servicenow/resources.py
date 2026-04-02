@@ -848,7 +848,7 @@ SERVICENOW_RESOURCES = {
         },
     },
     "task-list": {
-        "description": "Task list dashboard – view and manage ServiceNow tasks with filtering by state and priority.",
+        "description": "Task list dashboard – view and manage ServiceNow tasks and approvals with filtering by state and priority.",
         "mime_type": "text/html+skybridge",
         "content": _read_widget("task-list.html"),
         "meta": {
