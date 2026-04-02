@@ -36,26 +36,27 @@ class PreviewHandler(SimpleHTTPRequestHandler):
         path = self.path.split("?")[0].split("#")[0]  # strip query/fragment
 
         if path == "/" or path == "/index.html":
-            self._serve_file(os.path.join(PREVIEW_DIR, "index.html"))
+            self._serve_static(os.path.join(PREVIEW_DIR, "index.html"))
         elif path == "/sample-data.js":
-            self._serve_file(os.path.join(PREVIEW_DIR, "sample-data.js"))
+            self._serve_static(os.path.join(PREVIEW_DIR, "sample-data.js"))
         elif path.startswith("/widgets/"):
+            # Only allow simple filenames — no path traversal
             filename = os.path.basename(path)
-            self._serve_file(os.path.join(WIDGET_DIR, filename))
-        else:
-            # Try preview dir, then widget dir
-            candidate = os.path.join(PREVIEW_DIR, path.lstrip("/"))
-            if os.path.isfile(candidate):
-                self._serve_file(candidate)
+            if filename and not filename.startswith("."):
+                self._serve_static(os.path.join(WIDGET_DIR, filename))
             else:
                 self.send_error(404, "Not found")
+        else:
+            self.send_error(404, "Not found")
 
-    def _serve_file(self, filepath):
+    def _serve_static(self, filepath):
+        """Serve a file after validating it stays inside allowed directories."""
         filepath = os.path.realpath(filepath)
 
-        # Guard against path traversal: resolved path must be inside an allowed directory
         allowed_dirs = (os.path.realpath(PREVIEW_DIR), os.path.realpath(WIDGET_DIR))
-        if not any(filepath.startswith(d + os.sep) or filepath == d for d in allowed_dirs):
+        if not any(
+            filepath.startswith(allowed + os.sep) for allowed in allowed_dirs
+        ):
             self.send_error(403, "Forbidden")
             return
 
@@ -66,7 +67,7 @@ class PreviewHandler(SimpleHTTPRequestHandler):
         ext = os.path.splitext(filepath)[1].lower()
         content_type = CONTENT_TYPES.get(ext, "application/octet-stream")
 
-        with open(filepath, "rb") as f:
+        with open(filepath, "rb") as f:  # noqa: S108
             body = f.read()
 
         self.send_response(200)
