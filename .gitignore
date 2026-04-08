@@ -32,6 +32,11 @@ MANIFEST
 *.manifest
 *.spec
 
+# REST API clients for tokens
+*.rest
+*.txt
+test_*.py
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

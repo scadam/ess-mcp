@@ -9,9 +9,20 @@ from fastmcp import Context
 from ..auth import get_bearer_token, TokenValidationError
 from ..http import create_async_client
 from ..logging import get_logger
+from .config import get_endpoints
 from .helpers import build_worker_context_from_bearer
 
 LOGGER = get_logger(__name__)
+
+
+class WorkdayApiNotAvailable(Exception):
+    """Raised when a Workday REST API returns 404 (not enabled for this tenant)."""
+
+    def __init__(self, api_name: str, status_code: int, detail: str = ""):
+        self.api_name = api_name
+        self.status_code = status_code
+        self.detail = detail
+        super().__init__(f"{api_name} API is not available for this Workday tenant: {detail}")
 
 
 def _get_auth_token(ctx: Optional[Context] = None) -> str:
@@ -24,24 +35,32 @@ def _transform_worker(worker_data: Dict[str, Any]) -> Dict[str, Any]:
     primary_job = worker_data.get("primaryJob", {})
     location = primary_job.get("location", {})
     country = location.get("country", {})
+
+    # The staffing API provides primaryJob/person/workerType.
+    # Fall back to the flat /workers/me shape for fields available there.
     return {
         "workdayId": worker_data.get("id"),
         "workerId": worker_data.get("workerId"),
         "name": worker_data.get("descriptor"),
-        "email": worker_data.get("person", {}).get("email"),
+        "email": worker_data.get("person", {}).get("email")
+            or worker_data.get("primaryWorkEmail"),
         "workerType": worker_data.get("workerType", {}).get("descriptor"),
-        "businessTitle": primary_job.get("businessTitle"),
-        "location": location.get("descriptor"),
+        "businessTitle": primary_job.get("businessTitle")
+            or worker_data.get("businessTitle"),
+        "location": location.get("descriptor")
+            or worker_data.get("location", {}).get("descriptor"),
         "locationId": location.get("Location_ID"),
         "country": country.get("descriptor"),
         "countryCode": country.get("ISO_3166-1_Alpha-3_Code"),
-        "supervisoryOrganization": primary_job.get("supervisoryOrganization", {}).get(
-            "descriptor"
-        ),
+        "supervisoryOrganization": primary_job.get("supervisoryOrganization", {}).get("descriptor")
+            or worker_data.get("primarySupervisoryOrganization", {}).get("descriptor"),
         "jobType": primary_job.get("jobType", {}).get("descriptor"),
         "jobProfile": primary_job.get("jobProfile", {}).get("descriptor"),
         "primaryJobId": primary_job.get("id"),
         "primaryJobDescriptor": primary_job.get("descriptor"),
+        "isManager": worker_data.get("isManager"),
+        "yearsOfService": worker_data.get("yearsOfService"),
+        "primaryWorkAddress": worker_data.get("primaryWorkAddressText"),
     }
 
 
@@ -49,6 +68,15 @@ async def _fetch_json(url: str, access_token: str) -> Dict[str, Any]:
     headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
     async with create_async_client() as client:
         response = await client.get(url, headers=headers)
+        if response.status_code in (404, 400):
+            try:
+                body = response.json()
+                detail = body.get("error", response.text[:200])
+            except Exception:
+                detail = response.text[:200]
+            # Extract the API name from the URL path for a clear message
+            api_name = url.split("/ccx/api/")[-1].split("/")[0] if "/ccx/api/" in url else url
+            raise WorkdayApiNotAvailable(api_name, response.status_code, detail)
         response.raise_for_status()
         return response.json()
 
@@ -67,9 +95,10 @@ async def tool_get_worker(ctx: Optional[Context] = None) -> Dict:
 
 
 async def _get_leave_balances(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/absenceManagement/v1/microsoft_dpt6/"
-        f"balances?worker={workday_id}"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/absenceManagement/v1/{tenant}/balances?worker={workday_id}",
+        workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
     balances = []
@@ -89,9 +118,10 @@ async def _get_leave_balances(access_token: str, workday_id: str) -> List[Dict[s
 
 
 async def _get_eligible_absence_types(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/absenceManagement/v1/microsoft_dpt6/"
-        f"workers/{workday_id}/eligibleAbsenceTypes"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/absenceManagement/v1/{tenant}/workers/{workday_id}/eligibleAbsenceTypes",
+        workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
     absence_types = []
@@ -109,9 +139,10 @@ async def _get_eligible_absence_types(access_token: str, workday_id: str) -> Lis
 
 
 async def _get_leaves_of_absence(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/absenceManagement/v1/microsoft_dpt6/"
-        f"workers/{workday_id}/leavesOfAbsence"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/absenceManagement/v1/{tenant}/workers/{workday_id}/leavesOfAbsence",
+        workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
     leaves = []
@@ -131,9 +162,10 @@ async def _get_leaves_of_absence(access_token: str, workday_id: str) -> List[Dic
 
 
 async def _get_time_off_details(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/absenceManagement/v1/microsoft_dpt6/"
-        f"workers/{workday_id}/timeOffDetails"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/absenceManagement/v1/{tenant}/workers/{workday_id}/timeOffDetails",
+        workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
     details = []
@@ -172,9 +204,10 @@ async def tool_get_leave_balances(ctx: Optional[Context] = None) -> Dict:
 
 
 async def _fetch_direct_reports(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-        f"workers/{workday_id}/directReports"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/directReports",
+        workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
     reports = []
@@ -201,28 +234,25 @@ async def tool_get_direct_reports(ctx: Optional[Context] = None) -> Dict:
     return _tool_response("List direct reports for the current worker.", payload)
 
 
-# Workday implementation tenant UI base -- derived from the API host pattern.
-# wd2-impl-services1.workday.com -> impl.workday.com/{tenant}
-_WORKDAY_TENANT = "microsoft_dpt6"
-_WORKDAY_UI_BASE = f"https://impl.workday.com/{_WORKDAY_TENANT}"
-
-
 def _workday_inbox_url() -> str:
     """Return the Workday inbox home URL for this tenant."""
-    return f"{_WORKDAY_UI_BASE}/d/home.htmld"
+    endpoints = get_endpoints()
+    return f"https://impl.workday.com/{endpoints.tenant}/d/home.htmld"
 
 
 def _workday_learning_url(content_id: str) -> Optional[str]:
     """Return the Workday Learning course-detail URL for a given content ID."""
     if not content_id:
         return None
-    return f"{_WORKDAY_UI_BASE}/learning/course-details/{content_id}"
+    endpoints = get_endpoints()
+    return f"https://impl.workday.com/{endpoints.tenant}/learning/course-details/{content_id}"
 
 
 async def _fetch_inbox_tasks(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-        f"workers/{workday_id}/inboxTasks"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks",
+        workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
     tasks = []
@@ -254,10 +284,11 @@ async def tool_get_inbox_tasks(ctx: Optional[Context] = None) -> Dict:
 
 
 async def _fetch_learning_assignments(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/service/customreport2/"
-        "microsoft_dpt6/svasireddy/Required_Learning"
-        f"?Worker_s__for_Learning_Assignment%21WID={workday_id}&format=json"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/service/customreport2/{tenant}/svasireddy/Required_Learning"
+        "?Worker_s__for_Learning_Assignment%21WID={workday_id}&format=json",
+        workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
     assignments = []
@@ -308,9 +339,10 @@ async def tool_get_learning_assignments(ctx: Optional[Context] = None) -> Dict:
 
 
 async def _fetch_pay_slips(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-        f"workers/{workday_id}/paySlips"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/paySlips",
+        workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
     pay_slips = []
@@ -335,9 +367,10 @@ async def tool_get_pay_slips(ctx: Optional[Context] = None) -> Dict:
 
 
 async def _fetch_time_off_entries(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-        f"workers/{workday_id}/timeOffEntries"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/timeOffEntries",
+        workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
     entries = []
@@ -462,9 +495,10 @@ async def tool_book_leave(
         raise ValueError("startDate, endDate, and timeOffTypeId are required")
     
     days = _create_days_array(startDate, endDate, quantity, unit, reason, timeOffTypeId)
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/absenceManagement/v1/microsoft_dpt6/"
-        f"workers/{worker_context.workday_id}/requestTimeOff"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/absenceManagement/v1/{tenant}/workers/{workday_id}/requestTimeOff",
+        workday_id=worker_context.workday_id,
     )
     payload = {"days": days}
     headers = {
@@ -540,9 +574,10 @@ async def tool_change_business_title(
         return {"success": False, "error": "proposedBusinessTitle is required"}
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-            f"workers/{worker_context.workday_id}/businessTitleChanges?type=me"
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/businessTitleChanges",
+            workday_id=worker_context.workday_id,
         )
         headers = {
             "Authorization": f"Bearer {worker_context.workday_access_token}",
@@ -572,7 +607,8 @@ async def tool_change_business_title(
 
 
 async def _search_learning_content(access_token: str, skills: Iterable[str], topics: Iterable[str]) -> Dict[str, Any]:
-    url = "https://wd2-impl-services1.workday.com/ccx/api/learning/v1/microsoft_dpt6/content"
+    endpoints = get_endpoints()
+    url = endpoints.full_url("/ccx/api/learning/v1/{tenant}/content")
     params: List[tuple[str, str]] = []
     for skill in skills:
         params.append(("skills", str(skill)))
@@ -585,7 +621,11 @@ async def _search_learning_content(access_token: str, skills: Iterable[str], top
 
 
 async def _get_lessons(access_token: str, content_id: str) -> Dict[str, Any]:
-    url = f"https://wd2-impl-services1.workday.com/ccx/api/learning/v1/microsoft_dpt6/content/{content_id}/lessons"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/learning/v1/{tenant}/content/{content_id}/lessons",
+        content_id=content_id,
+    )
     async with create_async_client() as client:
         response = await client.get(url, headers={"Authorization": f"Bearer {access_token}"})
         response.raise_for_status()
@@ -685,6 +725,59 @@ async def tool_search_learning_content(
     return _tool_response("Search Workday learning content and fetch associated lessons.", payload)
 
 
+async def tool_prepare_learning_search(ctx: Optional[Context] = None) -> Dict:
+    """Prepare the learning search/browse widget with available skills and topics as filters.
+
+    Returns filter lists so the widget can render clickable chips for skills
+    and topics. The user selects filters and then searches. Result is rendered
+    as the learning-search widget.
+    """
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        access_token = wctx.workday_access_token
+        endpoints = get_endpoints()
+
+        # Fetch a broad set of content to extract unique skills/topics
+        url = endpoints.full_url("/ccx/api/learning/v1/{tenant}/content") + "?limit=100&lifecycleStatus=Active"
+        data = await _fetch_json(url, access_token)
+        items = data.get("data", [])
+
+        skill_map: Dict[str, str] = {}
+        topic_map: Dict[str, str] = {}
+        for item in items:
+            for s in item.get("skills", []):
+                sid = s.get("id")
+                if sid and sid not in skill_map:
+                    skill_map[sid] = s.get("descriptor", sid)
+            for t in item.get("topics", []):
+                tid = t.get("id")
+                if tid and tid not in topic_map:
+                    topic_map[tid] = t.get("descriptor", tid)
+
+        skills = sorted(
+            [{"id": k, "descriptor": v} for k, v in skill_map.items()],
+            key=lambda x: x["descriptor"],
+        )
+        topics = sorted(
+            [{"id": k, "descriptor": v} for k, v in topic_map.items()],
+            key=lambda x: x["descriptor"],
+        )
+        payload = {
+            "success": True,
+            "_widget_hint": "The learning search widget is ready. Acknowledge with one short sentence.",
+            "skills": skills,
+            "topics": topics,
+            "totalSkills": len(skills),
+            "totalTopics": len(topics),
+        }
+        return _tool_response("Learning search filters ready.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Learning API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_prepare_learning_search_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 # ── Provider functions for TaskServer integration ───────────────────
 
 
@@ -739,9 +832,11 @@ async def provider_get_approval_detail(
 ) -> Dict[str, Any]:
     """Get detail for a specific Workday inbox task."""
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-        f"workers/{worker_context.workday_id}/inboxTasks/{task_id}"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}",
+        workday_id=worker_context.workday_id,
+        task_id=task_id,
     )
     data = await _fetch_json(url, worker_context.workday_access_token)
     return {
@@ -767,9 +862,12 @@ async def provider_execute_approval(
     """
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
     action = "approve" if decision == "approve" else "deny"
-    url = (
-        "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-        f"workers/{worker_context.workday_id}/inboxTasks/{task_id}/{action}"
+    endpoints = get_endpoints()
+    url = endpoints.full_url(
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}/{action}",
+        workday_id=worker_context.workday_id,
+        task_id=task_id,
+        action=action,
     )
     headers = {
         "Authorization": f"Bearer {worker_context.workday_access_token}",
@@ -796,118 +894,13 @@ async def provider_execute_approval(
     }
 
 
-async def tool_get_compensation(ctx: Optional[Context] = None) -> Dict:
-    """Get compensation details for the current worker including salary, bonuses, and total compensation."""
-    try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/compensation/v3/microsoft_dpt6/"
-            f"workers/{wctx.workday_id}/compensationHistory"
-        )
-        data = await _fetch_json(url, wctx.workday_access_token)
-        entries = []
-        for item in data.get("data", []):
-            entries.append(
-                {
-                    "effectiveDate": item.get("effectiveDate"),
-                    "reason": item.get("reason", {}).get("descriptor"),
-                    "basePay": item.get("basePay"),
-                    "totalBasePay": item.get("totalBasePay"),
-                    "totalSalaryAndAllowances": item.get("totalSalaryAndAllowances"),
-                    "currency": item.get("currency", {}).get("descriptor"),
-                    "frequency": item.get("frequency", {}).get("descriptor"),
-                    "compensationPlanAssignments": [
-                        {
-                            "plan": a.get("compensationPlan", {}).get("descriptor"),
-                            "amount": a.get("amount"),
-                            "percentage": a.get("percentage"),
-                            "currency": a.get("currency", {}).get("descriptor"),
-                        }
-                        for a in item.get("compensationPlanAssignments", [])
-                    ],
-                }
-            )
-        payload = {"success": True, "compensationHistory": entries, "total": len(entries)}
-        return _tool_response("Compensation details for the current worker.", payload)
-    except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_get_compensation_error", error=str(exc))
-        return {"success": False, "error": str(exc)}
 
 
-async def tool_get_benefits(ctx: Optional[Context] = None) -> Dict:
-    """Get benefit elections for the current worker including health, dental, vision, and retirement plans."""
-    try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/benefits/v1/microsoft_dpt6/"
-            f"workers/{wctx.workday_id}/benefitElections"
-        )
-        data = await _fetch_json(url, wctx.workday_access_token)
-        elections = []
-        for item in data.get("data", []):
-            elections.append(
-                {
-                    "benefitPlan": item.get("benefitPlan", {}).get("descriptor"),
-                    "benefitPlanId": item.get("benefitPlan", {}).get("id"),
-                    "coverageLevel": item.get("coverageLevel", {}).get("descriptor"),
-                    "coverageBeginDate": item.get("coverageBeginDate"),
-                    "deductionBeginDate": item.get("deductionBeginDate"),
-                    "electionStatus": item.get("electionStatus", {}).get("descriptor"),
-                    "benefitType": item.get("benefitType", {}).get("descriptor"),
-                    "employeeCost": item.get("employeeCost"),
-                    "employerContribution": item.get("employerContribution"),
-                    "dependents": [
-                        {
-                            "name": d.get("descriptor"),
-                            "relationship": d.get("relationship", {}).get("descriptor"),
-                        }
-                        for d in item.get("dependents", [])
-                    ],
-                }
-            )
-        payload = {"success": True, "benefitElections": elections, "total": len(elections)}
-        return _tool_response("Benefit elections for the current worker.", payload)
-    except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_get_benefits_error", error=str(exc))
-        return {"success": False, "error": str(exc)}
 
 
-async def tool_get_job_history(ctx: Optional[Context] = None) -> Dict:
-    """Get job change history for the current worker including promotions, transfers, and title changes."""
-    try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/staffing/v6/microsoft_dpt6/"
-            f"workers/{wctx.workday_id}/jobChanges"
-        )
-        data = await _fetch_json(url, wctx.workday_access_token)
-        changes = []
-        for item in data.get("data", []):
-            changes.append(
-                {
-                    "effectiveDate": item.get("effectiveDate"),
-                    "reason": item.get("reason", {}).get("descriptor"),
-                    "jobChangeType": item.get("jobChangeType", {}).get("descriptor"),
-                    "previousJobProfile": item.get("previousJobProfile", {}).get("descriptor"),
-                    "newJobProfile": item.get("newJobProfile", {}).get("descriptor"),
-                    "previousBusinessTitle": item.get("previousBusinessTitle"),
-                    "newBusinessTitle": item.get("newBusinessTitle"),
-                    "previousLocation": item.get("previousLocation", {}).get("descriptor"),
-                    "newLocation": item.get("newLocation", {}).get("descriptor"),
-                    "previousSupervisoryOrg": item.get("previousSupervisoryOrganization", {}).get(
-                        "descriptor"
-                    ),
-                    "newSupervisoryOrg": item.get("newSupervisoryOrganization", {}).get(
-                        "descriptor"
-                    ),
-                    "status": item.get("status", {}).get("descriptor"),
-                }
-            )
-        payload = {"success": True, "jobChanges": changes, "total": len(changes)}
-        return _tool_response("Job change history for the current worker.", payload)
-    except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_get_job_history_error", error=str(exc))
-        return {"success": False, "error": str(exc)}
+
+
+
 
 
 async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
@@ -917,23 +910,29 @@ async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
         sup_org = wctx.worker_data.get("primaryJob", {}).get("supervisoryOrganization", {})
         org_id = sup_org.get("id")
         if not org_id:
+            # Fallback: /workers/me uses primarySupervisoryOrganization at top level
+            sup_org = wctx.worker_data.get("primarySupervisoryOrganization", {})
+            org_id = sup_org.get("id")
+        if not org_id:
             return {"success": False, "error": "No supervisory organization found for worker."}
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/workday/v3/microsoft_dpt6/"
-            f"organizationCharts/{org_id}"
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/common/v1/{tenant}/supervisoryOrganizations/{org_id}/workers",
+            org_id=org_id,
         )
         data = await _fetch_json(url, wctx.workday_access_token)
         members = []
-        for item in data.get("workers", []):
+        for item in data.get("data", []):
             members.append(
                 {
                     "name": item.get("descriptor"),
-                    "workerId": item.get("workerId"),
-                    "businessTitle": item.get("primaryJob", {}).get("businessTitle"),
-                    "jobProfile": item.get("primaryJob", {}).get("jobProfile", {}).get(
+                    "workerId": item.get("id"),
+                    "businessTitle": item.get("businessTitle"),
+                    "email": item.get("primaryWorkEmail"),
+                    "isManager": item.get("isManager"),
+                    "organization": item.get("primarySupervisoryOrganization", {}).get(
                         "descriptor"
                     ),
-                    "isManager": item.get("isManager"),
                 }
             )
         payload = {
@@ -949,34 +948,7 @@ async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
         return {"success": False, "error": str(exc)}
 
 
-async def tool_get_worker_documents(ctx: Optional[Context] = None) -> Dict:
-    """List personal documents for the current worker such as tax forms, offer letters, and policies."""
-    try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/documentManagement/v1/microsoft_dpt6/"
-            f"workers/{wctx.workday_id}/documents"
-        )
-        data = await _fetch_json(url, wctx.workday_access_token)
-        documents = []
-        for item in data.get("data", []):
-            documents.append(
-                {
-                    "id": item.get("id"),
-                    "name": item.get("descriptor"),
-                    "category": item.get("documentCategory", {}).get("descriptor"),
-                    "uploadDate": item.get("uploadDate"),
-                    "fileSize": item.get("fileSize"),
-                    "contentType": item.get("contentType"),
-                    "fileName": item.get("fileName"),
-                    "comment": item.get("comment", ""),
-                }
-            )
-        payload = {"success": True, "documents": documents, "total": len(documents)}
-        return _tool_response("Worker documents for the current worker.", payload)
-    except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_get_worker_documents_error", error=str(exc))
-        return {"success": False, "error": str(exc)}
+
 
 
 async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
@@ -1050,76 +1022,6 @@ async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
         return {"success": False, "error": str(exc)}
 
 
-async def tool_get_team_compensation_summary(ctx: Optional[Context] = None) -> Dict:
-    """Team compensation overview for managers with aggregate salary statistics."""
-    try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        access_token = wctx.workday_access_token
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-            f"workers/{wctx.workday_id}/directReports"
-        )
-        data = await _fetch_json(url, access_token)
-        report_items = data.get("data", [])
-        worker_ids = [item.get("id") for item in report_items if item.get("id")]
-
-        async def _fetch_comp(worker_id: str) -> Dict[str, Any]:
-            comp_url = (
-                "https://wd2-impl-services1.workday.com/ccx/api/compensation/v3/microsoft_dpt6/"
-                f"workers/{worker_id}/compensationHistory"
-            )
-            return await _fetch_json(comp_url, access_token)
-
-        comp_results = await asyncio.gather(*[_fetch_comp(wid) for wid in worker_ids])
-
-        base_pays: List[float] = []
-        currency_counts: Dict[str, int] = {}
-        band_counts: Dict[str, int] = {}
-        for comp_data in comp_results:
-            entries = comp_data.get("data", [])
-            if not entries:
-                continue
-            latest = entries[0]
-            total_base = latest.get("totalBasePay")
-            if total_base is not None:
-                try:
-                    base_pays.append(float(total_base))
-                except (ValueError, TypeError):
-                    pass
-            currency = latest.get("currency", {}).get("descriptor", "Unknown")
-            currency_counts[currency] = currency_counts.get(currency, 0) + 1
-            frequency = latest.get("frequency", {}).get("descriptor", "Unknown")
-            band_counts[frequency] = band_counts.get(frequency, 0) + 1
-
-        comp_stats: Dict[str, Any] = {}
-        if base_pays:
-            sorted_pays = sorted(base_pays)
-            n = len(sorted_pays)
-            median_val = (
-                sorted_pays[n // 2]
-                if n % 2 == 1
-                else (sorted_pays[n // 2 - 1] + sorted_pays[n // 2]) / 2
-            )
-            comp_stats = {
-                "min": min(base_pays),
-                "max": max(base_pays),
-                "median": median_val,
-                "average": round(sum(base_pays) / len(base_pays), 2),
-            }
-
-        payload = {
-            "success": True,
-            "totalReports": len(worker_ids),
-            "compensationRange": comp_stats,
-            "byCurrency": currency_counts,
-            "byFrequency": band_counts,
-        }
-        return _tool_response("Team compensation summary.", payload)
-    except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_get_team_compensation_summary_error", error=str(exc))
-        return {"success": False, "error": str(exc)}
-
-
 async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Dict:
     """Team performance review status for managers with inbox tasks and absence overview."""
     try:
@@ -1127,9 +1029,10 @@ async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Di
         access_token = wctx.workday_access_token
         workday_id = wctx.workday_id
 
-        dr_url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-            f"workers/{workday_id}/directReports"
+        endpoints = get_endpoints()
+        dr_url = endpoints.full_url(
+            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/directReports",
+            workday_id=workday_id,
         )
         inbox_tasks, dr_data = await asyncio.gather(
             _fetch_inbox_tasks(access_token, workday_id),
@@ -1217,9 +1120,12 @@ async def tool_action_inbox_task(
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
         action = "approve" if decision == "approve" else "deny"
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-            f"workers/{worker_context.workday_id}/inboxTasks/{task_id}/{action}"
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}/{action}",
+            workday_id=worker_context.workday_id,
+            task_id=task_id,
+            action=action,
         )
         headers = {
             "Authorization": f"Bearer {worker_context.workday_access_token}",
@@ -1257,9 +1163,11 @@ async def tool_get_inbox_task_detail(
     """Get detailed information about a specific Workday inbox task by its task_id."""
     try:
         worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/common/v1/microsoft_dpt6/"
-            f"workers/{worker_context.workday_id}/inboxTasks/{task_id}"
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}",
+            workday_id=worker_context.workday_id,
+            task_id=task_id,
         )
         data = await _fetch_json(url, worker_context.workday_access_token)
         payload = {
@@ -1280,35 +1188,204 @@ async def tool_get_inbox_task_detail(
         return {"success": False, "error": str(exc)}
 
 
-async def tool_submit_time_entry(
-    date: str,
-    hours: str,
-    time_type: str = "Regular",
+# ── Performance Enablement tools ────────────────────────────────────
+
+
+async def tool_get_goals(ctx: Optional[Context] = None) -> Dict:
+    """Get performance goals for the current worker."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/goals",
+            workday_id=wctx.workday_id,
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        goals = []
+        for item in data.get("data", []):
+            goals.append({
+                "id": item.get("id"),
+                "name": item.get("name"),
+                "description": item.get("description"),
+                "status": item.get("status", {}).get("descriptor"),
+                "state": item.get("state", {}).get("descriptor"),
+                "dueDate": item.get("dueDate"),
+                "completedOn": item.get("completedOn"),
+                "category": [c.get("descriptor") for c in item.get("category", [])],
+                "relatesTo": [r.get("descriptor") for r in item.get("relatesTo", [])],
+                "supports": item.get("supports", {}).get("descriptor"),
+            })
+        payload = {"success": True, "goals": goals, "total": len(goals)}
+        return _tool_response("Worker performance goals.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_goals_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_feedback(ctx: Optional[Context] = None) -> Dict:
+    """Get anytime feedback events received by the current worker."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/anytimeFeedbackEvents",
+            workday_id=wctx.workday_id,
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        events = []
+        for item in data.get("data", []):
+            events.append({
+                "id": item.get("id"),
+                "comment": item.get("comment"),
+                "badge": item.get("badge", {}).get("descriptor"),
+                "fromWorker": item.get("fromWorker", {}).get("descriptor"),
+                "toWorker": item.get("toWorker", {}).get("descriptor"),
+                "feedbackGivenDate": item.get("feedbackGivenDate"),
+                "hiddenFromWorker": item.get("hiddenFromWorker"),
+                "hiddenFromManager": item.get("hiddenFromManager"),
+            })
+        payload = {"success": True, "feedbackEvents": events, "total": len(events)}
+        return _tool_response("Anytime feedback received.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_feedback_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_give_feedback(
+    worker_id: str,
+    comment: str,
+    badge: Optional[str] = None,
+    hidden_from_worker: bool = False,
+    hidden_from_manager: bool = False,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Give anytime feedback to a worker.
+
+    Args:
+        worker_id: The Workday ID of the worker to give feedback to.
+        comment: The feedback comment text.
+        badge: Optional feedback badge ID (use get_feedback_badges to see available badges).
+        hidden_from_worker: If True, feedback is hidden from the worker.
+        hidden_from_manager: If True, feedback is hidden from the worker's manager.
+    """
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/anytimeFeedbackEvents",
+            workday_id=wctx.workday_id,
+        )
+        body: Dict[str, Any] = {
+            "toWorker": {"id": worker_id},
+            "comment": comment,
+            "hiddenFromWorker": hidden_from_worker,
+            "hiddenFromManager": hidden_from_manager,
+        }
+        if badge:
+            body["badge"] = {"id": badge}
+        headers = {
+            "Authorization": f"Bearer {wctx.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        async with create_async_client() as client:
+            response = await client.post(url, json=body, headers=headers)
+            response.raise_for_status()
+            content_type = response.headers.get("content-type", "")
+            if "application/json" in content_type and response.content:
+                result = response.json()
+            else:
+                result = {"status": "submitted"}
+        payload = {
+            "success": True,
+            "message": "Feedback submitted successfully.",
+            "result": result,
+        }
+        return _tool_response("Give anytime feedback.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_give_feedback_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_feedback_badges(ctx: Optional[Context] = None) -> Dict:
+    """Get available feedback badges that can be used when giving feedback."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/performanceEnablement/v5/{tenant}/feedbackBadges",
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        badges = []
+        for item in data.get("data", []):
+            badges.append({
+                "id": item.get("id"),
+                "descriptor": item.get("descriptor"),
+            })
+        payload = {"success": True, "badges": badges, "total": len(badges)}
+        return _tool_response("Available feedback badges.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_feedback_badges_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_development_items(ctx: Optional[Context] = None) -> Dict:
+    """Get development items (individual development plan) for the current worker."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/developmentItems",
+            workday_id=wctx.workday_id,
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        items = []
+        for item in data.get("data", []):
+            items.append({
+                "id": item.get("id"),
+                "title": item.get("title") or item.get("descriptor"),
+                "status": item.get("status", {}).get("descriptor"),
+                "startDate": item.get("startDate"),
+                "completionDate": item.get("completionDate"),
+                "additionalInformation": item.get("additionalInformation"),
+                "category": [c.get("descriptor") for c in item.get("category", [])],
+                "skills": [s.get("descriptor") for s in item.get("relatedSkills", item.get("skills", []))],
+            })
+        payload = {"success": True, "developmentItems": items, "total": len(items)}
+        return _tool_response("Worker development items.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_development_items_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_request_feedback_on_self(
     comment: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict:
-    """Submit a time entry to Workday for the current worker.
+    """Request feedback on yourself from peers/managers.
 
     Args:
-        date: Date for the time entry (YYYY-MM-DD).
-        hours: Number of hours worked (e.g. '8' or '4.5').
-        time_type: Type of time entry (e.g. 'Regular', 'Overtime'). Defaults to 'Regular'.
-        comment: Optional comment or description for the time entry.
+        comment: Optional message to include with the feedback request.
     """
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/time/v2/microsoft_dpt6/"
-            f"workers/{wctx.workday_id}/timeEntries"
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/requestedFeedbackOnSelfEvents",
+            workday_id=wctx.workday_id,
         )
-        body: Dict[str, Any] = {
-            "date": date,
-            "hours": float(hours),
-            "timeType": time_type,
-        }
+        body: Dict[str, Any] = {}
         if comment:
             body["comment"] = comment
-
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
             "Content-Type": "application/json",
@@ -1321,104 +1398,75 @@ async def tool_submit_time_entry(
                 result = response.json()
             else:
                 result = {"status": "submitted"}
-
-        return {
+        payload = {
             "success": True,
-            "message": f"Time entry of {hours}h submitted for {date}",
-            "date": date,
-            "hours": hours,
-            "timeType": time_type,
+            "message": "Feedback request submitted.",
             "result": result,
         }
+        return _tool_response("Request feedback on self.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
     except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_submit_time_entry_error", error=str(exc))
+        LOGGER.error("workday_request_feedback_on_self_error", error=str(exc))
         return {"success": False, "error": str(exc)}
 
 
-async def tool_get_time_entries(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+# ── Learning tools ──────────────────────────────────────────────────
+
+
+async def tool_get_learning_content_detail(
+    content_id: str,
     ctx: Optional[Context] = None,
 ) -> Dict:
-    """Get time entries for the current worker within a date range.
+    """Get full details for a specific learning content item including all lessons.
 
     Args:
-        start_date: Start date for the range (YYYY-MM-DD). Defaults to start of current week.
-        end_date: End date for the range (YYYY-MM-DD). Defaults to end of current week.
+        content_id: The Workday Learning content ID (from search_learning_content or learning assignments).
     """
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        if not start_date:
-            today = datetime.now()
-            start_date = (today - timedelta(days=today.weekday())).strftime("%Y-%m-%d")
-        if not end_date:
-            today = datetime.now()
-            end_date = (today + timedelta(days=6 - today.weekday())).strftime("%Y-%m-%d")
-
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/time/v2/microsoft_dpt6/"
-            f"workers/{wctx.workday_id}/timeEntries"
-            f"?from={start_date}&to={end_date}"
+        access_token = _get_auth_token(ctx)
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/learning/v1/{tenant}/content/{content_id}",
+            content_id=content_id,
         )
-        data = await _fetch_json(url, wctx.workday_access_token)
-        entries = []
-        for item in data.get("data", data.get("timeEntries", [])):
-            entries.append({
-                "date": item.get("date"),
-                "hours": item.get("hours"),
-                "timeType": item.get("timeType", {}).get("descriptor", ""),
-                "status": item.get("status", {}).get("descriptor", ""),
-                "comment": item.get("comment"),
-            })
-        return {
-            "success": True,
-            "startDate": start_date,
-            "endDate": end_date,
-            "entries": entries,
-            "totalHours": sum(float(e.get("hours", 0) or 0) for e in entries),
-            "total": len(entries),
-        }
+        data = await _fetch_json(url, access_token)
+        content = _flatten_content(data)
+        content["workdayURL"] = _workday_learning_url(content_id)
+        # Fetch lessons
+        try:
+            lessons_response = await _get_lessons(access_token, content_id)
+            content["lessons"] = [_flatten_lesson(lesson) for lesson in lessons_response.get("data", [])]
+        except Exception as exc:  # noqa: BLE001
+            LOGGER.warning("lesson_fetch_failed", content_id=content_id, error=str(exc))
+            content["lessons"] = []
+        payload = {"success": True, "content": content}
+        return _tool_response("Learning content detail.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Learning API is not available for this tenant."}
     except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_get_time_entries_error", error=str(exc))
+        LOGGER.error("workday_get_learning_content_detail_error", error=str(exc))
         return {"success": False, "error": str(exc)}
 
 
-async def tool_create_expense_report(
-    description: str,
-    expense_date: str,
-    amount: str,
-    currency: str = "USD",
-    expense_type: str = "Business Expense",
-    memo: Optional[str] = None,
+async def tool_enroll_in_learning(
+    content_id: str,
     ctx: Optional[Context] = None,
 ) -> Dict:
-    """Create and submit an expense report entry in Workday.
+    """Self-enroll in a learning content item.
 
     Args:
-        description: Short description of the expense.
-        expense_date: Date the expense was incurred (YYYY-MM-DD).
-        amount: Expense amount (e.g. '125.50').
-        currency: Currency code (default: USD).
-        expense_type: Type of expense (e.g. 'Business Expense', 'Travel', 'Meals').
-        memo: Additional notes or justification for the expense.
+        content_id: The Workday Learning content ID to enroll in.
     """
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/expenses/v1/microsoft_dpt6/"
-            f"workers/{wctx.workday_id}/expenseReports"
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/learning/v1/{tenant}/manageEnrollments",
         )
-        body: Dict[str, Any] = {
-            "description": description,
-            "expenseLines": [
-                {
-                    "date": expense_date,
-                    "amount": float(amount),
-                    "currency": currency,
-                    "expenseType": expense_type,
-                    "memo": memo or description,
-                }
-            ],
+        body = {
+            "content": {"id": content_id},
+            "learner": {"id": wctx.workday_id},
         }
         headers = {
             "Authorization": f"Bearer {wctx.workday_access_token}",
@@ -1431,56 +1479,420 @@ async def tool_create_expense_report(
             if "application/json" in content_type and response.content:
                 result = response.json()
             else:
-                result = {"status": "submitted"}
-
-        return {
+                result = {"status": "enrolled"}
+        payload = {
             "success": True,
-            "message": f"Expense report created for {amount} {currency}",
-            "description": description,
-            "amount": amount,
-            "currency": currency,
+            "message": "Successfully enrolled in learning content.",
+            "contentId": content_id,
             "result": result,
         }
+        return _tool_response("Enroll in learning.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Learning API is not available for this tenant."}
     except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_create_expense_report_error", error=str(exc))
+        LOGGER.error("workday_enroll_in_learning_error", error=str(exc))
         return {"success": False, "error": str(exc)}
 
 
-async def tool_get_expense_reports(
+async def tool_get_learning_records(
     limit: int = 20,
     ctx: Optional[Context] = None,
 ) -> Dict:
-    """Get expense reports for the current worker.
+    """Get learning history and completion records for the current worker.
 
     Args:
-        limit: Maximum number of expense reports to return (default: 20, max: 100).
+        limit: Maximum number of records to return (default: 20, max: 100).
     """
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         safe_limit = max(1, min(int(limit), 100))
-        url = (
-            "https://wd2-impl-services1.workday.com/ccx/api/expenses/v1/microsoft_dpt6/"
-            f"workers/{wctx.workday_id}/expenseReports?limit={safe_limit}"
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/learning/v1/{tenant}/records?learner={workday_id}&limit={limit}",
+            workday_id=wctx.workday_id,
+            limit=str(safe_limit),
         )
         data = await _fetch_json(url, wctx.workday_access_token)
-        reports = []
-        for item in data.get("data", data.get("expenseReports", [])):
-            reports.append({
+        records = []
+        for item in data.get("data", []):
+            records.append({
                 "id": item.get("id"),
-                "description": item.get("descriptor") or item.get("description"),
-                "status": item.get("status", {}).get("descriptor", ""),
-                "totalAmount": item.get("totalAmount"),
-                "currency": item.get("currency", {}).get("descriptor", ""),
-                "createdDate": item.get("createdDate"),
-                "submittedDate": item.get("submittedDate"),
+                "content": item.get("content", {}).get("descriptor"),
+                "contentId": item.get("content", {}).get("id"),
+                "completionStatus": item.get("completionStatus", {}).get("descriptor"),
+                "completionDate": item.get("completionDate"),
+                "expirationDate": item.get("expirationDate"),
+                "grade": item.get("grade"),
+                "score": item.get("score"),
+                "registrationDate": item.get("registrationDate"),
             })
-        return {
-            "success": True,
-            "expenseReports": reports,
-            "total": len(reports),
-        }
+        payload = {"success": True, "records": records, "total": len(records)}
+        return _tool_response("Learning history records.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Learning API is not available for this tenant."}
     except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_get_expense_reports_error", error=str(exc))
+        LOGGER.error("workday_get_learning_records_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+# ── Staffing / Check-in tools ──────────────────────────────────────
+
+
+async def tool_get_check_ins(
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Get 1:1 check-in records for the current worker (manager or employee)."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/checkIns",
+            workday_id=wctx.workday_id,
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        check_ins = []
+        for item in data.get("data", []):
+            check_ins.append({
+                "id": item.get("id"),
+                "description": item.get("description"),
+                "date": item.get("date"),
+                "participant": item.get("participant", {}).get("descriptor"),
+                "archived": item.get("archived"),
+                "associatedTopics": [t.get("descriptor") for t in item.get("associatedTopics", [])],
+            })
+        payload = {"success": True, "checkIns": check_ins, "total": len(check_ins)}
+        return _tool_response("Check-in records.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Staffing Check-ins API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_check_ins_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_create_check_in(
+    description: str,
+    date: str,
+    participant_id: str,
+    topic_ids: Optional[List[str]] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Create a 1:1 check-in record.
+
+    Args:
+        description: Description or notes for the check-in.
+        date: Date of the check-in (YYYY-MM-DD).
+        participant_id: Workday ID of the other participant (e.g. a direct report).
+        topic_ids: Optional list of check-in topic IDs to associate.
+    """
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/checkIns",
+            workday_id=wctx.workday_id,
+        )
+        body: Dict[str, Any] = {
+            "description": description,
+            "date": date,
+            "participant": {"id": participant_id},
+        }
+        if topic_ids:
+            body["associatedTopics"] = [{"id": tid} for tid in topic_ids]
+        headers = {
+            "Authorization": f"Bearer {wctx.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        async with create_async_client() as client:
+            response = await client.post(url, json=body, headers=headers)
+            response.raise_for_status()
+            content_type = response.headers.get("content-type", "")
+            if "application/json" in content_type and response.content:
+                result = response.json()
+            else:
+                result = {"status": "created"}
+        payload = {
+            "success": True,
+            "message": "Check-in created successfully.",
+            "result": result,
+        }
+        return _tool_response("Create a check-in.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Staffing Check-ins API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_create_check_in_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_check_in_topics(
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Get check-in topics for the current worker (used for creating check-ins)."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/checkInTopics",
+            workday_id=wctx.workday_id,
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        topics = []
+        for item in data.get("data", []):
+            topics.append({
+                "id": item.get("id"),
+                "descriptor": item.get("descriptor"),
+            })
+        payload = {"success": True, "topics": topics, "total": len(topics)}
+        return _tool_response("Check-in topics.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Staffing Check-in Topics API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_check_in_topics_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_worker_skills(ctx: Optional[Context] = None) -> Dict:
+    """Get skills for the current worker from their Workday profile."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/skillItems",
+            workday_id=wctx.workday_id,
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        skills = []
+        for item in data.get("data", []):
+            skills.append({
+                "id": item.get("id"),
+                "skillName": item.get("descriptor") or item.get("skillName"),
+            })
+        payload = {"success": True, "skills": skills, "total": len(skills)}
+        return _tool_response("Worker skills.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Staffing Skills API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_worker_skills_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+# ── Manager tools ──────────────────────────────────────────────────
+
+
+async def tool_get_team_goals(ctx: Optional[Context] = None) -> Dict:
+    """Get performance goals for all direct reports (manager tool)."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        access_token = wctx.workday_access_token
+        endpoints = get_endpoints()
+        # Get direct reports first
+        reports_url = endpoints.full_url(
+            "/ccx/api/common/v1/{tenant}/workers/{workday_id}/directReports",
+            workday_id=wctx.workday_id,
+        )
+        reports_data = await _fetch_json(reports_url, access_token)
+        report_items = reports_data.get("data", [])
+
+        async def _fetch_goals(worker_id: str, name: str) -> Dict[str, Any]:
+            goal_url = endpoints.full_url(
+                "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/goals",
+                workday_id=worker_id,
+            )
+            try:
+                data = await _fetch_json(goal_url, access_token)
+                goals = []
+                for item in data.get("data", []):
+                    goals.append({
+                        "name": item.get("name"),
+                        "status": item.get("status", {}).get("descriptor"),
+                        "state": item.get("state", {}).get("descriptor"),
+                        "dueDate": item.get("dueDate"),
+                    })
+                return {"worker": name, "workerId": worker_id, "goals": goals}
+            except Exception:  # noqa: BLE001
+                return {"worker": name, "workerId": worker_id, "goals": [], "error": "Could not fetch goals"}
+
+        results = await asyncio.gather(*[
+            _fetch_goals(item.get("id"), item.get("descriptor", ""))
+            for item in report_items if item.get("id")
+        ])
+        payload = {
+            "success": True,
+            "teamGoals": list(results),
+            "totalReports": len(report_items),
+        }
+        return _tool_response("Team goals summary.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_team_goals_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_request_feedback_on_worker(
+    worker_id: str,
+    comment: Optional[str] = None,
+    ctx: Optional[Context] = None,
+) -> Dict:
+    """Request feedback on a specific worker (manager tool for direct reports).
+
+    Args:
+        worker_id: The Workday ID of the worker to request feedback on.
+        comment: Optional message to include with the feedback request.
+    """
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/requestedFeedbackOnWorkerEvents",
+            workday_id=wctx.workday_id,
+        )
+        body: Dict[str, Any] = {"worker": {"id": worker_id}}
+        if comment:
+            body["comment"] = comment
+        headers = {
+            "Authorization": f"Bearer {wctx.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        async with create_async_client() as client:
+            response = await client.post(url, json=body, headers=headers)
+            response.raise_for_status()
+            content_type = response.headers.get("content-type", "")
+            if "application/json" in content_type and response.content:
+                result = response.json()
+            else:
+                result = {"status": "submitted"}
+        payload = {
+            "success": True,
+            "message": "Feedback request submitted for worker.",
+            "workerId": worker_id,
+            "result": result,
+        }
+        return _tool_response("Request feedback on worker.", payload)
+    except WorkdayApiNotAvailable:
+        return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_request_feedback_on_worker_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_prepare_give_feedback(ctx: Optional[Context] = None) -> Dict:
+    """Load colleagues and feedback badges for the interactive feedback widget."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        people: List[Dict[str, Any]] = []
+        badges: List[Dict[str, Any]] = []
+
+        # Fetch direct reports first
+        try:
+            dr_url = endpoints.full_url(
+                "/ccx/api/v1/{tenant}/workers/{workday_id}/directReports",
+                workday_id=wctx.workday_id,
+            )
+            dr_data = await _fetch_json(dr_url, wctx.workday_access_token)
+            for r in dr_data.get("data", []):
+                people.append({
+                    "workerId": r.get("id"),
+                    "descriptor": r.get("descriptor"),
+                    "businessTitle": r.get("businessTitle"),
+                    "primaryWorkEmail": r.get("primaryWorkEmail"),
+                })
+        except Exception:
+            pass
+
+        # Fetch org chart members as additional candidates
+        try:
+            org_url = endpoints.full_url(
+                "/ccx/api/v1/{tenant}/workers/{workday_id}/organizationChain",
+                workday_id=wctx.workday_id,
+            )
+            org_data = await _fetch_json(org_url, wctx.workday_access_token)
+            existing_ids = {p["workerId"] for p in people}
+            for member in org_data.get("data", []):
+                mid = member.get("id")
+                if mid and mid != wctx.workday_id and mid not in existing_ids:
+                    people.append({
+                        "workerId": mid,
+                        "descriptor": member.get("descriptor"),
+                        "businessTitle": member.get("businessTitle"),
+                        "primaryWorkEmail": member.get("primaryWorkEmail"),
+                    })
+                    existing_ids.add(mid)
+        except Exception:
+            pass
+
+        # Fetch feedback badges
+        try:
+            badges_url = endpoints.full_url(
+                "/ccx/api/performanceEnablement/v5/{tenant}/feedbackBadges"
+            )
+            badges_data = await _fetch_json(badges_url, wctx.workday_access_token)
+            for b in badges_data.get("data", []):
+                badges.append({
+                    "id": b.get("id"),
+                    "descriptor": b.get("descriptor"),
+                })
+        except Exception:
+            pass
+
+        return {
+            "people": people,
+            "badges": badges,
+            "workerName": wctx.worker_data.get("descriptor"),
+            "_widget_hint": "Give feedback widget ready.",
+        }
+    except Exception as exc:
+        LOGGER.error("workday_prepare_give_feedback_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_prepare_create_check_in(ctx: Optional[Context] = None) -> Dict:
+    """Load direct reports and check-in topics for the interactive check-in creation widget."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        people: List[Dict[str, Any]] = []
+        topics: List[Dict[str, Any]] = []
+
+        # Fetch direct reports
+        try:
+            dr_url = endpoints.full_url(
+                "/ccx/api/v1/{tenant}/workers/{workday_id}/directReports",
+                workday_id=wctx.workday_id,
+            )
+            dr_data = await _fetch_json(dr_url, wctx.workday_access_token)
+            for r in dr_data.get("data", []):
+                people.append({
+                    "workerId": r.get("id"),
+                    "descriptor": r.get("descriptor"),
+                    "businessTitle": r.get("businessTitle"),
+                    "primaryWorkEmail": r.get("primaryWorkEmail"),
+                })
+        except Exception:
+            pass
+
+        # Fetch check-in topics
+        try:
+            topics_url = endpoints.full_url(
+                "/ccx/api/performanceEnablement/v5/{tenant}/checkInTopics"
+            )
+            topics_data = await _fetch_json(topics_url, wctx.workday_access_token)
+            for t in topics_data.get("data", []):
+                topics.append({
+                    "id": t.get("id"),
+                    "descriptor": t.get("descriptor"),
+                })
+        except Exception:
+            pass
+
+        return {
+            "people": people,
+            "topics": topics,
+            "workerName": wctx.worker_data.get("descriptor"),
+            "_widget_hint": "Check-in form ready.",
+        }
+    except Exception as exc:
+        LOGGER.error("workday_prepare_create_check_in_error", error=str(exc))
         return {"success": False, "error": str(exc)}
 
 
@@ -1500,7 +1912,17 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
     },
     {"name": "get_leave_balances", "func": tool_get_leave_balances, "summary": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave."},
     {"name": "get_direct_reports", "func": tool_get_direct_reports, "summary": "List direct reports for the current worker."},
-    {"name": "get_inbox_tasks", "func": tool_get_inbox_tasks, "summary": "List Workday inbox tasks for the current worker."},
+    {
+        "name": "get_inbox_tasks",
+        "func": tool_get_inbox_tasks,
+        "summary": "List Workday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny.",
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/inbox-tasks.html",
+            "openai/toolInvocation/invoking": "Loading inbox tasks\u2026",
+            "openai/toolInvocation/invoked": "Inbox tasks ready.",
+        },
+    },
     {
         "name": "get_learning_assignments",
         "func": tool_get_learning_assignments,
@@ -1556,11 +1978,21 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         ),
     },
     {"name": "search_learning_content", "func": tool_search_learning_content, "summary": "Search Workday learning content and fetch associated lessons."},
-    {"name": "get_compensation", "func": tool_get_compensation, "summary": "Get compensation details for the current worker including salary, bonuses, and total compensation history."},
-    {"name": "get_benefits", "func": tool_get_benefits, "summary": "Get benefit elections for the current worker including health, dental, vision, and retirement plans."},
-    {"name": "get_job_history", "func": tool_get_job_history, "summary": "Get job change history for the current worker including promotions, transfers, and title changes."},
+    {
+        "name": "prepare_learning_search",
+        "func": tool_prepare_learning_search,
+        "summary": (
+            "Open the learning search/browse widget with skill and topic filters. "
+            "Use this when the user wants to browse or discover learning content."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/learning-search.html",
+            "openai/toolInvocation/invoking": "Loading learning search\u2026",
+            "openai/toolInvocation/invoked": "Learning search ready.",
+        },
+    },
     {"name": "get_org_chart", "func": tool_get_org_chart, "summary": "Get the organizational chart for the current worker's supervisory organization."},
-    {"name": "get_worker_documents", "func": tool_get_worker_documents, "summary": "List personal documents for the current worker such as tax forms, offer letters, and policies."},
     {"name": "get_team_calendar", "func": tool_get_team_calendar, "summary": "Get the team time-off calendar showing who is out in the current worker's team."},
     {
         "name": "get_team_overview",
@@ -1573,7 +2005,6 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "openai/toolInvocation/invoked": "Team overview ready.",
         },
     },
-    {"name": "get_team_compensation_summary", "func": tool_get_team_compensation_summary, "summary": "Get team compensation overview for managers with aggregate salary statistics and currency breakdown."},
     {"name": "get_team_performance_summary", "func": tool_get_team_performance_summary, "summary": "Get team performance review status for managers including pending inbox items and team absence overview."},
     {
         "name": "action_inbox_task",
@@ -1587,28 +2018,142 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         "summary": "Get detailed information about a specific Workday inbox task by its task_id.",
         "annotations": {"readOnlyHint": True},
     },
+    # ── Performance Enablement ──
     {
-        "name": "submit_time_entry",
-        "func": tool_submit_time_entry,
-        "summary": "Submit a time entry to Workday. Provide date (YYYY-MM-DD), hours worked, and optional time type and comment.",
-        "annotations": {"readOnlyHint": False},
+        "name": "get_goals",
+        "func": tool_get_goals,
+        "summary": "Get your performance goals including status, due dates, and categories. Result is rendered as an interactive dashboard.",
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/goals-dashboard.html",
+            "openai/toolInvocation/invoking": "Loading goals\u2026",
+            "openai/toolInvocation/invoked": "Goals dashboard ready.",
+        },
     },
     {
-        "name": "get_time_entries",
-        "func": tool_get_time_entries,
-        "summary": "Get time entries for the current worker within a date range. Defaults to the current week.",
+        "name": "get_feedback",
+        "func": tool_get_feedback,
+        "summary": "Get anytime feedback you've received from colleagues and managers.",
         "annotations": {"readOnlyHint": True},
     },
     {
-        "name": "create_expense_report",
-        "func": tool_create_expense_report,
-        "summary": "Create and submit an expense report in Workday with description, date, amount, currency, and expense type.",
+        "name": "give_feedback",
+        "func": tool_give_feedback,
+        "summary": "Give anytime feedback to a colleague. Provide worker_id, comment, and optional badge ID (from get_feedback_badges).",
         "annotations": {"readOnlyHint": False},
     },
     {
-        "name": "get_expense_reports",
-        "func": tool_get_expense_reports,
-        "summary": "List expense reports for the current worker with status, amounts, and submission dates.",
+        "name": "get_feedback_badges",
+        "func": tool_get_feedback_badges,
+        "summary": "List available feedback badges that can be used when giving anytime feedback.",
         "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_development_items",
+        "func": tool_get_development_items,
+        "summary": "Get your individual development plan items including skills, dates, and status. Result is rendered as an interactive widget.",
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/development-items.html",
+            "openai/toolInvocation/invoking": "Loading development items\u2026",
+            "openai/toolInvocation/invoked": "Development items ready.",
+        },
+    },
+    {
+        "name": "request_feedback_on_self",
+        "func": tool_request_feedback_on_self,
+        "summary": "Request feedback on yourself from peers and managers. Optionally include a message.",
+        "annotations": {"readOnlyHint": False},
+    },
+    # ── Learning ──
+    {
+        "name": "get_learning_content_detail",
+        "func": tool_get_learning_content_detail,
+        "summary": "Get full details for a learning content item including all lessons, skills, topics, duration, and rating. Provide the content_id.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "enroll_in_learning",
+        "func": tool_enroll_in_learning,
+        "summary": "Self-enroll in a learning content item. Provide the content_id from search or assignments.",
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "get_learning_records",
+        "func": tool_get_learning_records,
+        "summary": "Get your learning history with completion status, grades, scores, and expiration dates.",
+        "annotations": {"readOnlyHint": True},
+    },
+    # ── Check-ins ──
+    {
+        "name": "get_check_ins",
+        "func": tool_get_check_ins,
+        "summary": "Get 1:1 check-in records with topics and notes.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "create_check_in",
+        "func": tool_create_check_in,
+        "summary": "Create a 1:1 check-in record. Provide description, date, participant_id, and optional topic_ids.",
+        "annotations": {"readOnlyHint": False},
+    },
+    {
+        "name": "get_check_in_topics",
+        "func": tool_get_check_in_topics,
+        "summary": "List check-in topics available for creating check-ins.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_worker_skills",
+        "func": tool_get_worker_skills,
+        "summary": "Get skills listed on your Workday profile.",
+        "annotations": {"readOnlyHint": True},
+    },
+    # ── Manager ──
+    {
+        "name": "get_team_goals",
+        "func": tool_get_team_goals,
+        "summary": "Get performance goals for all direct reports showing goal status and due dates (manager tool). Result is rendered as an interactive widget.",
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/team-goals.html",
+            "openai/toolInvocation/invoking": "Loading team goals\u2026",
+            "openai/toolInvocation/invoked": "Team goals ready.",
+        },
+    },
+    {
+        "name": "request_feedback_on_worker",
+        "func": tool_request_feedback_on_worker,
+        "summary": "Request feedback on a specific direct report. Provide worker_id and optional comment (manager tool).",
+        "annotations": {"readOnlyHint": False},
+    },
+    # ── Prepare (Widget Launchers) ──
+    {
+        "name": "prepare_give_feedback",
+        "func": tool_prepare_give_feedback,
+        "summary": (
+            "Open the give feedback widget — select a colleague, pick a badge, and "
+            "write feedback. Use when the user wants to recognize or give feedback to someone."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/give-feedback.html",
+            "openai/toolInvocation/invoking": "Loading feedback form\u2026",
+            "openai/toolInvocation/invoked": "Feedback form ready.",
+        },
+    },
+    {
+        "name": "prepare_create_check_in",
+        "func": tool_prepare_create_check_in,
+        "summary": (
+            "Open the check-in creation widget — select a team member, choose topics, "
+            "set a date, and create a 1:1 check-in. Use when a manager wants to schedule or create a check-in."
+        ),
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/create-check-in-form.html",
+            "openai/toolInvocation/invoking": "Loading check-in form\u2026",
+            "openai/toolInvocation/invoked": "Check-in form ready.",
+        },
     },
 ]

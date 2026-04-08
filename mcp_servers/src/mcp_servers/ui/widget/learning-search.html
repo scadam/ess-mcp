@@ -1,0 +1,470 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --input-bg: #0f131a;
+        --btn-bg: #152235; --btn-border: #243145; --btn-hover: #1a2d44;
+        --wd-accent: #f68620; --wd-glow: rgba(246,134,32,.12);
+        --ok: #2bd48f; --warn: #f0b232; --danger: #ff6b6b;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --input-bg: #ffffff;
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-hover: #e4e4e4;
+        --wd-accent: #c2670d; --wd-glow: rgba(194,103,13,.08);
+        --ok: #107c10; --warn: #ca5010; --danger: #d13438;
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; min-height: 100%; }
+
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .wd-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--wd-glow); border: 1px solid var(--wd-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { font-size: 12px; color: var(--muted); }
+
+      /* Filter area */
+      .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+      .filter-bar .input { flex: 1; min-width: 160px; }
+      .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+      .filter-chip {
+        font-size: 11px; border: 1px solid var(--border); border-radius: 999px;
+        padding: 3px 10px; color: var(--muted); cursor: pointer; user-select: none;
+        transition: all .15s;
+      }
+      .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+      .filter-chip.active { background: color-mix(in srgb, var(--accent) 15%, transparent); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+      .filter-section-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; margin-top: 6px; }
+
+      .input, .select {
+        width: 100%; box-sizing: border-box;
+        background: var(--input-bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 8px 10px; font-size: 12px;
+      }
+      .btn {
+        background: var(--btn-bg); color: var(--text);
+        border: 1px solid var(--btn-border); border-radius: 8px;
+        padding: 8px 12px; font-size: 12px; cursor: pointer; white-space: nowrap;
+        transition: all .15s;
+      }
+      .btn:hover { background: var(--btn-hover); }
+      .btn-accent { background: color-mix(in srgb, var(--accent) 15%, transparent); border-color: var(--accent); color: var(--accent); }
+      .btn-accent:hover { background: color-mix(in srgb, var(--accent) 25%, transparent); }
+
+      .summary { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+
+      /* Content carousel/grid */
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+      .card {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 10px; padding: 12px; cursor: pointer;
+        transition: border-color .2s, box-shadow .2s;
+      }
+      .card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+      :root[data-theme="dark"] .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+      .card-image { width: 100%; height: 120px; border-radius: 8px; object-fit: cover; background: var(--input-bg); margin-bottom: 8px; display: none; }
+      .card-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+      .card-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+      .card-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+      .chip { font-size: 10px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 7px; color: var(--muted); }
+      .chip.type { color: var(--accent); border-color: var(--accent); }
+      .card-stats { display: flex; gap: 10px; margin-top: 6px; font-size: 11px; color: var(--muted); }
+      .stat-star { color: var(--warn); }
+
+      /* Expanded content detail */
+      .detail-panel { display: none; margin-top: 10px; }
+      .detail-panel.open { display: block; }
+      .detail-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+      .detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+      .detail-title { font-size: 15px; font-weight: 600; }
+      .detail-close { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; color: var(--muted); cursor: pointer; }
+      .detail-close:hover { color: var(--accent); border-color: var(--accent); }
+      .detail-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+      .detail-field .label { margin: 0; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+      .detail-field .value { margin: 2px 0 0; font-size: 12px; font-weight: 500; }
+      .detail-desc { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+      .detail-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+
+      /* Collapsible lessons */
+      .lessons-header {
+        font-size: 13px; font-weight: 600; cursor: pointer; user-select: none;
+        display: flex; align-items: center; gap: 6px; margin-bottom: 6px; margin-top: 6px;
+        padding: 6px 0; border-top: 1px solid var(--border);
+      }
+      .lessons-header .arrow { transition: transform .2s; display: inline-block; font-size: 10px; }
+      .lessons-header.open .arrow { transform: rotate(90deg); }
+      .lessons-list { display: none; }
+      .lessons-list.open { display: block; }
+      .lesson-item {
+        padding: 8px 10px; border-left: 2px solid var(--border);
+        margin-left: 4px; margin-bottom: 4px;
+      }
+      .lesson-item .lesson-name { font-size: 12px; font-weight: 600; }
+      .lesson-item .lesson-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+      .lesson-item .lesson-desc { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+      .detail-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+      .btn-copilot { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 5px 12px; font-size: 11px; cursor: pointer; }
+      .btn-copilot:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+      .loading, .empty, .error { text-align: center; padding: 24px 0; color: var(--muted); font-size: 13px; }
+      .error { color: var(--danger); }
+
+      .maximize-btn {
+        background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px;
+        padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+      @media (max-width: 480px) { .grid { grid-template-columns: 1fr !important; } .detail-meta { grid-template-columns: 1fr !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="wd-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--wd-accent)">
+              <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+            </svg>
+          </div>
+          <div>
+            <div class="title">Learning Content</div>
+            <div class="subtitle">Workday &middot; Search &amp; Browse</div>
+          </div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+
+      <!-- Filter chips for skills and topics -->
+      <div id="filterArea">
+        <div class="filter-section-label">Skills</div>
+        <div class="filter-chips" id="skillChips"></div>
+        <div class="filter-section-label">Topics</div>
+        <div class="filter-chips" id="topicChips"></div>
+      </div>
+      <div class="filter-bar">
+        <input id="search" class="input" placeholder="Search content by name&hellip;" />
+        <button id="searchBtn" class="btn btn-accent">Search</button>
+      </div>
+
+      <div id="summary" class="summary"></div>
+      <div id="content"><div class="loading">Select skills or topics to search&hellip;</div></div>
+      <div id="detailPanel" class="detail-panel"></div>
+    </div>
+
+    <script>
+      (function() {
+        "use strict";
+
+        var toolOutput = (window.openai && window.openai.toolOutput) || {};
+        var filterData = toolOutput; // from prepare_learning_search
+        var allContent = [];
+        var selectedSkills = [];
+        var selectedTopics = [];
+        var expandedContentId = null;
+
+        var skillChipsEl = document.getElementById("skillChips");
+        var topicChipsEl = document.getElementById("topicChips");
+        var searchEl = document.getElementById("search");
+        var searchBtnEl = document.getElementById("searchBtn");
+        var summaryEl = document.getElementById("summary");
+        var contentEl = document.getElementById("content");
+        var detailEl = document.getElementById("detailPanel");
+
+        function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+        function reportHeight() {
+          if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") {
+            window.openai.notifyIntrinsicHeight(document.body.scrollHeight);
+          }
+        }
+
+        function renderFilterChips() {
+          var skills = (filterData && filterData.skills) ? filterData.skills : [];
+          var topics = (filterData && filterData.topics) ? filterData.topics : [];
+          skillChipsEl.innerHTML = "";
+          topicChipsEl.innerHTML = "";
+          for (var i = 0; i < skills.length; i++) {
+            var ch = document.createElement("span");
+            ch.className = "filter-chip";
+            ch.textContent = skills[i].descriptor || skills[i];
+            ch.setAttribute("data-id", skills[i].id || skills[i]);
+            ch.setAttribute("data-type", "skill");
+            if (selectedSkills.indexOf(skills[i].id || skills[i]) >= 0) ch.className += " active";
+            ch.addEventListener("click", toggleChip);
+            skillChipsEl.appendChild(ch);
+          }
+          for (var j = 0; j < topics.length; j++) {
+            var ct = document.createElement("span");
+            ct.className = "filter-chip";
+            ct.textContent = topics[j].descriptor || topics[j];
+            ct.setAttribute("data-id", topics[j].id || topics[j]);
+            ct.setAttribute("data-type", "topic");
+            if (selectedTopics.indexOf(topics[j].id || topics[j]) >= 0) ct.className += " active";
+            ct.addEventListener("click", toggleChip);
+            topicChipsEl.appendChild(ct);
+          }
+          if (!skills.length) skillChipsEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">No skills available</span>';
+          if (!topics.length) topicChipsEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">No topics available</span>';
+        }
+
+        function toggleChip(e) {
+          var id = e.target.getAttribute("data-id");
+          var type = e.target.getAttribute("data-type");
+          var arr = type === "skill" ? selectedSkills : selectedTopics;
+          var idx = arr.indexOf(id);
+          if (idx >= 0) arr.splice(idx, 1);
+          else arr.push(id);
+          renderFilterChips();
+          reportHeight();
+        }
+
+        function renderStars(rating) {
+          if (!rating) return "";
+          var r = parseFloat(rating);
+          if (isNaN(r)) return "";
+          var full = Math.floor(r);
+          var html = '<span class="stat-star">';
+          for (var i = 0; i < 5; i++) html += i < full ? "★" : "☆";
+          html += " " + r.toFixed(1) + "</span>";
+          return html;
+        }
+
+        function cardHtml(item, idx) {
+          var meta = [];
+          if (item.contentType) meta.push(item.contentType);
+          if (item.deliveryMode) meta.push(item.deliveryMode);
+          if (item.contentProvider) meta.push(item.contentProvider);
+
+          var chips = "";
+          var skills = item.skills || [];
+          var topics = item.topics || [];
+          for (var i = 0; i < Math.min(skills.length, 3); i++) chips += '<span class="chip">' + esc(skills[i]) + "</span>";
+          for (var j = 0; j < Math.min(topics.length, 2); j++) chips += '<span class="chip type">' + esc(topics[j]) + "</span>";
+
+          var stats = "";
+          if (item.averageRating) stats += renderStars(item.averageRating);
+          if (item.ratingCount) stats += '<span>(' + item.ratingCount + ')</span>';
+          if (item.popularity) stats += '<span>Pop: ' + item.popularity + '</span>';
+
+          var imgHtml = "";
+          if (item.imageURL) imgHtml = '<img class="card-image" src="' + esc(item.imageURL) + '" style="display:block" onerror="this.style.display=\'none\'" />';
+
+          return '<div class="card" data-idx="' + idx + '">' +
+            imgHtml +
+            '<div class="card-name">' + esc(item.descriptor || "Untitled") + '</div>' +
+            '<div class="card-meta">' + esc(meta.join(" · ")) + '</div>' +
+            '<div class="card-chips">' + chips + '</div>' +
+            (stats ? '<div class="card-stats">' + stats + '</div>' : '') +
+          '</div>';
+        }
+
+        function renderGrid() {
+          if (!allContent.length) {
+            contentEl.innerHTML = '<div class="empty">No content found. Try different filters.</div>';
+            reportHeight();
+            return;
+          }
+          summaryEl.textContent = allContent.length + " content item" + (allContent.length === 1 ? "" : "s") + " found";
+          var html = '<div class="grid">';
+          for (var i = 0; i < allContent.length; i++) html += cardHtml(allContent[i], i);
+          html += '</div>';
+          contentEl.innerHTML = html;
+          // Bind click to show detail
+          var cards = contentEl.querySelectorAll(".card");
+          for (var j = 0; j < cards.length; j++) {
+            cards[j].addEventListener("click", function() {
+              var idx = parseInt(this.getAttribute("data-idx"), 10);
+              showDetail(allContent[idx]);
+            });
+          }
+          reportHeight();
+        }
+
+        function detailField(label, value) {
+          if (!value) return "";
+          return '<div class="detail-field"><p class="label">' + label + '</p><p class="value">' + esc(String(value)) + '</p></div>';
+        }
+
+        function showDetail(item) {
+          if (!item) return;
+          expandedContentId = item.id;
+          var tags = "";
+          var skills = item.skills || [];
+          var topics = item.topics || [];
+          for (var i = 0; i < skills.length; i++) tags += '<span class="chip">' + esc(skills[i]) + '</span>';
+          for (var j = 0; j < topics.length; j++) tags += '<span class="chip type">' + esc(topics[j]) + '</span>';
+
+          var lessons = item.lessons || [];
+          var lessonsHtml = "";
+          if (lessons.length) {
+            lessonsHtml = '<div class="lessons-header" id="lessonsToggle"><span class="arrow">▶</span> Lessons (' + lessons.length + ')</div>';
+            lessonsHtml += '<div class="lessons-list" id="lessonsList">';
+            for (var k = 0; k < lessons.length; k++) {
+              var ls = lessons[k];
+              var lsMeta = [];
+              if (ls.contentType) lsMeta.push(ls.contentType);
+              if (ls.duration) lsMeta.push(ls.duration);
+              if (ls.required) lsMeta.push("Required");
+              if (ls.order != null) lsMeta.push("Step " + ls.order);
+              lessonsHtml += '<div class="lesson-item">' +
+                '<div class="lesson-name">' + esc(ls.descriptor || "Lesson " + (k + 1)) + '</div>' +
+                (lsMeta.length ? '<div class="lesson-meta">' + esc(lsMeta.join(" · ")) + '</div>' : '') +
+                (ls.description ? '<div class="lesson-desc">' + esc(ls.description) + '</div>' : '') +
+              '</div>';
+            }
+            lessonsHtml += '</div>';
+          } else {
+            lessonsHtml = '<div style="font-size:12px;color:var(--muted);margin-top:8px;">No lessons available for this content.</div>';
+          }
+
+          var enrollBtn = '<button class="btn btn-accent" id="enrollBtn">Enroll</button>';
+          var openBtn = item.contentURL ? '<button class="btn" id="openBtn">Open Content</button>' : '';
+          var workdayBtn = item.workdayURL ? '<button class="btn" id="wdBtn">View in Workday</button>' : '';
+
+          detailEl.innerHTML = '<div class="detail-section">' +
+            '<div class="detail-header">' +
+              '<div class="detail-title">' + esc(item.descriptor || "Content Detail") + '</div>' +
+              '<button class="detail-close" id="closeDetail">✕ Close</button>' +
+            '</div>' +
+            (item.description ? '<div class="detail-desc">' + esc(item.description) + '</div>' : '') +
+            '<div class="detail-meta">' +
+              detailField("Type", item.contentType) +
+              detailField("Provider", item.contentProvider) +
+              detailField("Delivery", item.deliveryMode) +
+              detailField("Skill Level", item.skillLevel) +
+              detailField("Rating", item.averageRating ? item.averageRating + " (" + (item.ratingCount || 0) + " ratings)" : null) +
+              detailField("Status", item.lifecycleStatus) +
+              detailField("Catalogs", (item.learningCatalogs || []).join(", ") || null) +
+              detailField("Languages", (item.languages || []).join(", ") || null) +
+            '</div>' +
+            '<div class="detail-tags">' + tags + '</div>' +
+            lessonsHtml +
+            '<div class="detail-actions">' + enrollBtn + openBtn + workdayBtn + '</div>' +
+          '</div>';
+
+          detailEl.className = "detail-panel open";
+
+          // Bind events
+          document.getElementById("closeDetail").addEventListener("click", function() {
+            detailEl.className = "detail-panel";
+            expandedContentId = null;
+            reportHeight();
+          });
+
+          var lt = document.getElementById("lessonsToggle");
+          var ll = document.getElementById("lessonsList");
+          if (lt && ll) {
+            lt.addEventListener("click", function() {
+              lt.classList.toggle("open");
+              ll.classList.toggle("open");
+              reportHeight();
+            });
+          }
+
+          var eb = document.getElementById("enrollBtn");
+          if (eb) {
+            eb.addEventListener("click", function() {
+              enrollInContent(item.id);
+            });
+          }
+
+          var ob = document.getElementById("openBtn");
+          if (ob && item.contentURL) {
+            ob.addEventListener("click", function() {
+              window.open(item.contentURL, "_blank", "noopener,noreferrer");
+            });
+          }
+
+          var wb = document.getElementById("wdBtn");
+          if (wb && item.workdayURL) {
+            wb.addEventListener("click", function() {
+              window.open(item.workdayURL, "_blank", "noopener,noreferrer");
+            });
+          }
+
+          reportHeight();
+        }
+
+        async function enrollInContent(contentId) {
+          if (!window.openai || typeof window.openai.callTool !== "function") return;
+          try {
+            var out = await window.openai.callTool("enroll_in_learning", { content_id: contentId });
+            var data = out && out.structuredContent ? out.structuredContent : out;
+            if (data && data.success) {
+              alert("Successfully enrolled!");
+            } else {
+              alert("Enrollment failed: " + (data && data.error ? data.error : "Unknown error"));
+            }
+          } catch (e) {
+            alert("Enrollment error: " + (e.message || e));
+          }
+        }
+
+        async function doSearch() {
+          contentEl.innerHTML = '<div class="loading">Searching learning content&hellip;</div>';
+          detailEl.className = "detail-panel";
+          summaryEl.textContent = "";
+          reportHeight();
+          try {
+            if (!window.openai || typeof window.openai.callTool !== "function") {
+              throw new Error("Skybridge not available");
+            }
+            var params = {};
+            if (selectedSkills.length) params.skills = selectedSkills;
+            if (selectedTopics.length) params.topics = selectedTopics;
+            var out = await window.openai.callTool("search_learning_content", params);
+            var data = out && out.structuredContent ? out.structuredContent : out;
+            allContent = (data && data.content) ? data.content : [];
+            // Client-side text filter
+            var q = (searchEl.value || "").toLowerCase().trim();
+            if (q) {
+              allContent = allContent.filter(function(item) {
+                return (item.descriptor || "").toLowerCase().indexOf(q) >= 0 ||
+                       (item.description || "").toLowerCase().indexOf(q) >= 0 ||
+                       (item.contentProvider || "").toLowerCase().indexOf(q) >= 0;
+              });
+            }
+            renderGrid();
+          } catch (e) {
+            contentEl.innerHTML = '<div class="error">' + esc(e && e.message ? e.message : "Search failed") + '</div>';
+            reportHeight();
+          }
+        }
+
+        searchBtnEl.addEventListener("click", doSearch);
+        searchEl.addEventListener("keydown", function(e) { if (e.key === "Enter") doSearch(); });
+
+        // Fullscreen toggle
+        var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+        var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+        var _isFullscreen = false;
+        var _maxBtn = document.getElementById("maximizeBtn");
+
+        async function toggleFullscreen() {
+          if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return;
+          var mode = _isFullscreen ? "inline" : "fullscreen";
+          try {
+            await window.openai.requestDisplayMode({ mode: mode });
+            _isFullscreen = !_isFullscreen;
+            _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg;
+            _maxBtn.title = _isFullscreen ? "Restore" : "Maximize";
+            reportHeight();
+          } catch (e) {}
+        }
+        if (_maxBtn) _maxBtn.addEventListener("click", toggleFullscreen);
+
+        // Initialize: render filter chips from tool output
+        renderFilterChips();
+        reportHeight();
+      })();
+    </script>
+  </body>
+</html>

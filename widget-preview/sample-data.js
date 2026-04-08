@@ -59,23 +59,6 @@ const SAMPLE_DATA = {
     ]
   },
 
-  "compensation-summary": {
-    baseSalary: 165000,
-    bonus: 24750,
-    totalCompensation: 215000,
-    currency: "USD",
-    components: [
-      { name: "Base Salary", type: "salary", amount: 165000 },
-      { name: "Annual Bonus", type: "bonus", amount: 24750 },
-      { name: "Stock Options", type: "equity", amount: 25250 }
-    ],
-    history: [
-      { date: "2025-01-01", description: "Annual Merit Increase", amount: 165000 },
-      { date: "2024-01-01", description: "Promotion Adjustment", amount: 150000 },
-      { date: "2023-06-01", description: "Starting Salary", amount: 135000 }
-    ]
-  },
-
   "team-calendar": {
     entries: [
       { startDate: "2026-04-06", endDate: "2026-04-10", type: "Time Off", workerName: "Alex Rivera" },
@@ -127,6 +110,109 @@ const SAMPLE_DATA = {
       { learningContentTitle: "Data Privacy & GDPR", assignmentStatus: "Completed", dueDate: "2026-03-15", contentProvider: "Internal", required: true, overdue: false, contentURL: "#" },
       { learningContentTitle: "Agile Project Management", assignmentStatus: "Overdue", dueDate: "2026-03-01", contentProvider: "Coursera", required: true, overdue: true, contentURL: "#" },
       { learningContentTitle: "Cloud Architecture Basics", assignmentStatus: "In Progress", dueDate: "2026-06-01", contentProvider: "AWS Training", required: false, overdue: false, contentURL: "#" }
+    ]
+  },
+
+  "learning-search": {
+    skills: [
+      { id: "skill_001", descriptor: "Project Management" },
+      { id: "skill_002", descriptor: "Cloud Computing" },
+      { id: "skill_003", descriptor: "Data Analysis" },
+      { id: "skill_004", descriptor: "Leadership" },
+      { id: "skill_005", descriptor: "Machine Learning" }
+    ],
+    topics: [
+      { id: "topic_001", descriptor: "Career Development" },
+      { id: "topic_002", descriptor: "Technical Skills" },
+      { id: "topic_003", descriptor: "Compliance" },
+      { id: "topic_004", descriptor: "Management" },
+      { id: "topic_005", descriptor: "Diversity & Inclusion" }
+    ]
+  },
+
+  "inbox-tasks": {
+    tasks: [
+      { id: "task_3001", descriptor: "Approve Time Off Request – Alex Rivera", subject: "Time Off Request", stepType: "Approval", status: "Awaiting Action", initiator: "Alex Rivera", assigned: "2026-03-28", due: "2026-04-05" },
+      { id: "task_3002", descriptor: "Approve Expense Report – Maya Johnson", subject: "Expense Report", stepType: "Approval", status: "Awaiting Action", initiator: "Maya Johnson", assigned: "2026-03-29", due: "2026-04-06" },
+      { id: "task_3003", descriptor: "Review Job Requisition – Engineering", subject: "Job Requisition", stepType: "To Do", status: "In Progress", initiator: "David Park", assigned: "2026-03-25", due: "2026-04-10" },
+      { id: "task_3004", descriptor: "Approve Title Change – James Wilson", subject: "Title Change", stepType: "Approval", status: "Awaiting Action", initiator: "James Wilson", assigned: "2026-03-30", due: "2026-04-02" },
+      { id: "task_3005", descriptor: "Complete Onboarding Checklist", subject: "Onboarding", stepType: "To Do", status: "Not Started", initiator: "HR System", assigned: "2026-04-01", due: "2026-04-15" }
+    ]
+  },
+
+  "give-feedback": {
+    people: [
+      { descriptor: "Alex Rivera", businessTitle: "Software Engineer", workerId: "WD-204852" },
+      { descriptor: "Maya Johnson", businessTitle: "Software Engineer", workerId: "WD-204853" },
+      { descriptor: "James Wilson", businessTitle: "Junior Developer", workerId: "WD-204854" },
+      { descriptor: "Priya Sharma", businessTitle: "DevOps Engineer", workerId: "WD-204855" },
+      { descriptor: "David Park", businessTitle: "VP of Engineering", workerId: "WD-204856" }
+    ],
+    badges: [
+      { id: "badge_001", descriptor: "Innovation Champion" },
+      { id: "badge_002", descriptor: "Team Player" },
+      { id: "badge_003", descriptor: "Customer Focus" },
+      { id: "badge_004", descriptor: "Going Above & Beyond" },
+      { id: "badge_005", descriptor: "Mentorship" }
+    ]
+  },
+
+  "goals-dashboard": {
+    goals: [
+      { id: "goal_001", name: "Deliver Platform v2.0", description: "Ship the next major platform release with OAuth 2.0 rotation and rate limiting.", status: "On Track", percentComplete: 72, dueDate: "2026-06-30", categories: ["Engineering", "Delivery"] },
+      { id: "goal_002", name: "Reduce API Latency by 40%", description: "Optimize database queries and caching layers to reduce p95 latency from 800ms to 480ms.", status: "At Risk", percentComplete: 45, dueDate: "2026-05-15", categories: ["Engineering", "Performance"] },
+      { id: "goal_003", name: "Complete AWS Solutions Architect Cert", description: "Obtain the AWS Solutions Architect Professional certification.", status: "In Progress", percentComplete: 60, dueDate: "2026-07-31", categories: ["Learning", "Career Development"] },
+      { id: "goal_004", name: "Mentor 2 Junior Engineers", description: "Provide structured mentorship program for two new team members.", status: "On Track", percentComplete: 50, dueDate: "2026-12-31", categories: ["Leadership", "Team"] },
+      { id: "goal_005", name: "Improve Test Coverage to 85%", description: "Increase unit and integration test coverage across the platform codebase.", status: "Not Started", percentComplete: 0, dueDate: "2026-09-30", categories: ["Engineering", "Quality"] }
+    ]
+  },
+
+  "create-check-in-form": {
+    people: [
+      { descriptor: "Alex Rivera", businessTitle: "Software Engineer", workerId: "WD-204852" },
+      { descriptor: "Maya Johnson", businessTitle: "Software Engineer", workerId: "WD-204853" },
+      { descriptor: "James Wilson", businessTitle: "Junior Developer", workerId: "WD-204854" },
+      { descriptor: "Priya Sharma", businessTitle: "DevOps Engineer", workerId: "WD-204855" }
+    ],
+    topics: [
+      { id: "topic_ci_001", descriptor: "Career Development" },
+      { id: "topic_ci_002", descriptor: "Performance Review" },
+      { id: "topic_ci_003", descriptor: "Project Updates" },
+      { id: "topic_ci_004", descriptor: "Work-Life Balance" },
+      { id: "topic_ci_005", descriptor: "Skills Growth" },
+      { id: "topic_ci_006", descriptor: "Feedback" }
+    ]
+  },
+
+  "development-items": {
+    items: [
+      { name: "Complete AWS Solutions Architect Certification", description: "Prepare for and pass the AWS SA Professional exam to deepen cloud architecture skills.", status: "In Progress", category: "Formal Education", relatedSkills: ["Cloud Computing", "AWS", "Architecture"], dueDate: "2026-07-31" },
+      { name: "Lead Cross-Team API Design Workshop", description: "Design and facilitate a workshop on REST API best practices for the engineering department.", status: "Not Started", category: "Assignment", relatedSkills: ["API Design", "Leadership", "Communication"], dueDate: "2026-06-15" },
+      { name: "Advanced Kubernetes Training", description: "Complete the CKA preparation course and hands-on labs.", status: "In Progress", category: "Training", relatedSkills: ["Kubernetes", "DevOps", "Container Orchestration"], dueDate: "2026-08-30" },
+      { name: "Contribute to Open Source MCP SDK", description: "Make meaningful contributions to the MCP Python SDK open source project.", status: "Active", category: "Assignment", relatedSkills: ["Python", "Open Source", "MCP"], dueDate: "2026-09-30" },
+      { name: "Data Engineering Fundamentals Course", description: "Complete the data engineering pathway covering ETL, data pipelines, and warehousing.", status: "Completed", category: "Training", relatedSkills: ["Data Engineering", "SQL", "ETL"], completionDate: "2026-03-15" }
+    ]
+  },
+
+  "team-goals": {
+    team: [
+      { descriptor: "Alex Rivera", businessTitle: "Software Engineer", goals: [
+        { name: "Implement Rate Limiting", status: "On Track", percentComplete: 80, dueDate: "2026-05-30", description: "Add rate limiting to all public API endpoints." },
+        { name: "Reduce Bug Backlog by 50%", status: "At Risk", percentComplete: 35, dueDate: "2026-06-30", description: "Triage and resolve high-priority bugs in the backlog." }
+      ]},
+      { descriptor: "Maya Johnson", businessTitle: "Software Engineer", goals: [
+        { name: "Lead Frontend Redesign", status: "On Track", percentComplete: 65, dueDate: "2026-07-15", description: "Redesign the dashboard UI with accessibility improvements." },
+        { name: "Improve Lighthouse Score to 95+", status: "On Track", percentComplete: 70, dueDate: "2026-06-30", description: "Optimize performance, accessibility, and SEO metrics." },
+        { name: "Mentor Intern on React", status: "In Progress", percentComplete: 40, dueDate: "2026-08-31", description: "Provide weekly mentorship sessions on React patterns." }
+      ]},
+      { descriptor: "James Wilson", businessTitle: "Junior Developer", goals: [
+        { name: "Complete Onboarding Milestones", status: "On Track", percentComplete: 90, dueDate: "2026-04-30", description: "Finish all onboarding tasks and first contribution." },
+        { name: "Learn CI/CD Pipeline", status: "Behind", percentComplete: 20, dueDate: "2026-05-15", description: "Understand and document the team's CI/CD pipeline." }
+      ]},
+      { descriptor: "Priya Sharma", businessTitle: "DevOps Engineer", goals: [
+        { name: "Migrate to Kubernetes 1.30", status: "On Track", percentComplete: 55, dueDate: "2026-06-30", description: "Upgrade all production clusters to Kubernetes 1.30." },
+        { name: "Implement Zero-Downtime Deployments", status: "Not Started", percentComplete: 0, dueDate: "2026-08-31", description: "Set up blue-green deployments across all services." }
+      ]}
     ]
   },
 

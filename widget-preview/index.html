@@ -190,7 +190,7 @@
 <main class="main" id="main">
   <div class="main-header">
     <h2>ESS-MCP Widget Gallery</h2>
-    <p>Preview of all 34 enterprise service widgets with realistic sample data</p>
+    <p>Preview of all 40 enterprise service widgets with realistic sample data</p>
   </div>
   <div class="widget-grid" id="widgetGrid"></div>
 </main>
@@ -207,8 +207,10 @@
       key: "workday",
       widgets: [
         "worker-profile", "org-chart", "leave-booking",
-        "compensation-summary", "team-calendar", "team-dashboard",
-        "change-business-title", "learning-assignments"
+        "team-calendar", "team-dashboard", "change-business-title",
+        "learning-assignments", "learning-search", "inbox-tasks",
+        "give-feedback", "goals-dashboard", "create-check-in-form",
+        "development-items", "team-goals"
       ]
     },
     {
@@ -256,6 +258,13 @@
     "lead-pipeline":   560,
     "crm-pipeline":    580,
     "learning-assignments": 560,
+    "learning-search":  620,
+    "inbox-tasks":     620,
+    "give-feedback":   580,
+    "goals-dashboard": 580,
+    "create-check-in-form": 560,
+    "development-items": 580,
+    "team-goals":      620,
     "catalog-item":    560
   };
 
@@ -273,7 +282,7 @@
 
   /* ── Build sidebar ────────────────────────────────── */
   var sidebarEl = document.getElementById("sidebar");
-  var sidebarHtml = '<div class="sidebar-header"><h1>ESS-MCP Widget Gallery</h1><p>34 enterprise widgets</p></div>';
+  var sidebarHtml = '<div class="sidebar-header"><h1>ESS-MCP Widget Gallery</h1><p>40 enterprise widgets</p></div>';
 
   PLATFORMS.forEach(function (p) {
     sidebarHtml += '<div class="sidebar-group"><div class="sidebar-group-title">' + p.name + "</div>";

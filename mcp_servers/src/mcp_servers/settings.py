@@ -14,7 +14,8 @@ class BaseEnvSettings(BaseSettings):
 
 class WorkdaySettings(BaseEnvSettings):
     """Settings for Workday API access."""
-    workers_api_url: str = Field(..., alias="WORKDAY_WORKERS_API_URL")
+    base_url: str = Field(..., alias="WORKDAY_BASE_URL")
+    tenant: str = Field(..., alias="WORKDAY_TENANT")
     openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
 
 

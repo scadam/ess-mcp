@@ -1,0 +1,212 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --input-bg: #0f131a;
+        --wd-accent: #f68620; --wd-glow: rgba(246,134,32,.12);
+        --ok: #2bd48f; --warn: #f0b232; --danger: #ff6b6b;
+        --in-progress: #4cc2ff; --completed: #2bd48f; --not-started: #a9b1bd;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --input-bg: #ffffff;
+        --wd-accent: #c2670d; --wd-glow: rgba(194,103,13,.08);
+        --ok: #107c10; --warn: #ca5010; --danger: #d13438;
+        --in-progress: #0078d4; --completed: #107c10; --not-started: #65707d;
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; min-height: 100%; }
+
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .wd-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--wd-glow); border: 1px solid var(--wd-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { font-size: 12px; color: var(--muted); }
+
+      .stats-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+      .stat { padding: 6px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+      .stat .dot { width: 8px; height: 8px; border-radius: 50%; }
+      .stat .num { font-weight: 700; font-size: 16px; }
+
+      .filter-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+      .filter-chip { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; font-size: 11px; cursor: pointer; background: var(--card); color: var(--muted); transition: all .15s; }
+      .filter-chip:hover { border-color: var(--accent); color: var(--text); }
+      .filter-chip.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--accent); font-weight: 600; }
+
+      .grid { display: grid; gap: 10px; }
+      .di-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+      .di-card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+      :root[data-theme="dark"] .di-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.2); }
+      .di-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+      .di-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+      .di-name { font-size: 14px; font-weight: 600; flex: 1; }
+      .di-status { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+      .di-desc { font-size: 12px; color: var(--muted); line-height: 1.4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .di-desc.expanded { -webkit-line-clamp: unset; }
+      .di-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+      .skill-tag { font-size: 10px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--accent); }
+      .date-tag { font-size: 10px; color: var(--muted); margin-left: auto; }
+
+      /* Category icons */
+      .cat-formal { background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--accent); }
+      .cat-training { background: color-mix(in srgb, var(--wd-accent) 12%, var(--card)); color: var(--wd-accent); }
+      .cat-assignment { background: color-mix(in srgb, var(--ok) 12%, var(--card)); color: var(--ok); }
+      .cat-default { background: color-mix(in srgb, var(--muted) 12%, var(--card)); color: var(--muted); }
+
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+      .loading, .empty { text-align: center; padding: 24px 0; color: var(--muted); font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="wd-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--wd-accent)"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
+          <div><div class="title">Development Items</div><div class="subtitle">Workday &middot; Growth &amp; Skills</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+
+      <div id="stats" class="stats-row"></div>
+      <div id="filters" class="filter-row"></div>
+      <div id="content"><div class="loading">Loading development items&hellip;</div></div>
+    </div>
+
+    <script>
+      (function() {
+        "use strict";
+        var allItems = [], currentFilter = "all";
+        var contentEl = document.getElementById("content");
+        var statsEl = document.getElementById("stats");
+        var filtersEl = document.getElementById("filters");
+        function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+        function rh() { if (window.openai && window.openai.notifyIntrinsicHeight) window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+
+        function normStatus(s) {
+          s = (s || "").toLowerCase();
+          if (s.indexOf("progress") >= 0 || s.indexOf("active") >= 0) return "in-progress";
+          if (s.indexOf("complete") >= 0 || s.indexOf("done") >= 0) return "completed";
+          return "not-started";
+        }
+        function statusColor(ns) { return ns === "in-progress" ? "var(--in-progress)" : ns === "completed" ? "var(--completed)" : "var(--not-started)"; }
+        function statusLabel(ns) { return ns === "in-progress" ? "In Progress" : ns === "completed" ? "Completed" : "Not Started"; }
+        function catClass(c) {
+          c = (c || "").toLowerCase();
+          if (c.indexOf("formal") >= 0 || c.indexOf("education") >= 0) return "cat-formal";
+          if (c.indexOf("training") >= 0 || c.indexOf("course") >= 0) return "cat-training";
+          if (c.indexOf("assignment") >= 0 || c.indexOf("project") >= 0) return "cat-assignment";
+          return "cat-default";
+        }
+        function catIcon(c) {
+          c = (c || "").toLowerCase();
+          if (c.indexOf("formal") >= 0 || c.indexOf("education") >= 0) return "&#127891;";
+          if (c.indexOf("training") >= 0 || c.indexOf("course") >= 0) return "&#128218;";
+          if (c.indexOf("assignment") >= 0 || c.indexOf("project") >= 0) return "&#128188;";
+          return "&#128161;";
+        }
+        function fmtDate(d) { if (!d) return ""; try { return new Date(d).toLocaleDateString(undefined, {month:"short",day:"numeric",year:"numeric"}); } catch(e) { return d; } }
+
+        function renderStats() {
+          var counts = {"in-progress":0,"completed":0,"not-started":0};
+          allItems.forEach(function(it) { var ns = normStatus(it.status); counts[ns]++; });
+          statsEl.innerHTML =
+            '<div class="stat"><div class="dot" style="background:var(--in-progress)"></div><span class="num">' + counts["in-progress"] + '</span>Active</div>' +
+            '<div class="stat"><div class="dot" style="background:var(--completed)"></div><span class="num">' + counts["completed"] + '</span>Done</div>' +
+            '<div class="stat"><div class="dot" style="background:var(--not-started)"></div><span class="num">' + counts["not-started"] + '</span>Pending</div>';
+        }
+
+        function renderFilters() {
+          var html = '<div class="filter-chip' + (currentFilter === "all" ? " active" : "") + '" data-f="all">All</div>';
+          ["in-progress","completed","not-started"].forEach(function(ns) {
+            html += '<div class="filter-chip' + (currentFilter === ns ? " active" : "") + '" data-f="' + ns + '">' + statusLabel(ns) + '</div>';
+          });
+          filtersEl.innerHTML = html;
+          filtersEl.querySelectorAll(".filter-chip").forEach(function(el) {
+            el.addEventListener("click", function() { currentFilter = this.getAttribute("data-f"); renderFilters(); render(); });
+          });
+        }
+
+        function filtered() {
+          if (currentFilter === "all") return allItems;
+          return allItems.filter(function(it) { return normStatus(it.status) === currentFilter; });
+        }
+
+        function diCard(it) {
+          var ns = normStatus(it.status);
+          var col = statusColor(ns);
+          var cat = it.category || it.type || "";
+          var skills = it.relatedSkills || it.skills || [];
+          var skillHtml = '';
+          (typeof skills === "string" ? [skills] : skills).forEach(function(sk) { skillHtml += '<span class="skill-tag">' + esc(typeof sk === "string" ? sk : sk.descriptor || sk.name || "") + '</span>'; });
+
+          return '<div class="di-card">' +
+            '<div class="di-top">' +
+              '<div class="di-icon ' + catClass(cat) + '">' + catIcon(cat) + '</div>' +
+              '<div class="di-name">' + esc(it.name || it.descriptor || "Untitled") + '</div>' +
+              '<span class="di-status" style="color:' + col + ';border:1px solid ' + col + '">' + statusLabel(ns) + '</span>' +
+            '</div>' +
+            (it.description ? '<div class="di-desc">' + esc(it.description) + '</div>' : '') +
+            '<div class="di-footer">' +
+              skillHtml +
+              (it.dueDate || it.completionDate ? '<span class="date-tag">' + (it.completionDate ? 'Completed ' + fmtDate(it.completionDate) : 'Due ' + fmtDate(it.dueDate)) + '</span>' : '') +
+            '</div>' +
+          '</div>';
+        }
+
+        function render() {
+          var items = filtered();
+          if (!items.length) { contentEl.innerHTML = '<div class="empty">No items match this filter.</div>'; rh(); return; }
+          var html = '<div class="grid">';
+          items.forEach(function(it) { html += diCard(it); });
+          html += '</div>';
+          contentEl.innerHTML = html;
+          contentEl.querySelectorAll(".di-card").forEach(function(el) {
+            el.addEventListener("click", function() {
+              var desc = this.querySelector(".di-desc");
+              if (desc) desc.classList.toggle("expanded");
+              rh();
+            });
+          });
+          rh();
+        }
+
+        async function load() {
+          try {
+            var toolData = window.openai && window.openai.toolOutput;
+            if (toolData) {
+              var td = typeof toolData === "string" ? JSON.parse(toolData) : toolData;
+              allItems = td.items || td.development_items || td.data || [];
+            }
+            if (allItems.length === 0 && window.openai && window.openai.callTool) {
+              var out = await window.openai.callTool("get_development_items", {});
+              var d = out && out.structuredContent ? out.structuredContent : out;
+              allItems = (d && (d.items || d.development_items)) ? (d.items || d.development_items) : [];
+            }
+            renderStats();
+            renderFilters();
+            render();
+          } catch (e) {
+            contentEl.innerHTML = '<div class="loading" style="color:var(--danger)">' + esc(e.message) + '</div>';
+            rh();
+          }
+        }
+
+        var _fs = false, _mb = document.getElementById("maximizeBtn");
+        _mb.addEventListener("click", async function() {
+          if (!window.openai || !window.openai.requestDisplayMode) return;
+          try { await window.openai.requestDisplayMode({ mode: _fs ? "inline" : "fullscreen" }); _fs = !_fs; rh(); } catch(e) {}
+        });
+
+        load();
+      })();
+    </script>
+  </body>
+</html>

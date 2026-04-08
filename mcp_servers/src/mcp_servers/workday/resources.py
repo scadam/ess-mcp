@@ -43,17 +43,6 @@ WORKDAY_RESOURCES = {
             }
         },
     },
-    "compensation-summary": {
-        "description": "Compensation summary widget showing base salary, bonuses, and total compensation.",
-        "mime_type": "text/html+skybridge",
-        "content": _read_widget("compensation-summary.html"),
-        "meta": {
-            "openai/widgetCSP": {
-                "connect_domains": [],
-                "resource_domains": [],
-            }
-        },
-    },
     "org-chart": {
         "description": "Organization chart widget showing manager, current worker, and direct reports hierarchy.",
         "mime_type": "text/html+skybridge",
@@ -102,6 +91,83 @@ WORKDAY_RESOURCES = {
         "description": "Learning assignments widget – view assigned training courses, completion status, and due dates.",
         "mime_type": "text/html+skybridge",
         "content": _read_widget("learning-assignments.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "learning-search": {
+        "description": "Learning search/browse widget – discover content with skill and topic filters, view lessons, and enroll.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("learning-search.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "inbox-tasks": {
+        "description": "Inbox tasks widget – view, search, and approve/deny Workday inbox tasks inline with comments.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("inbox-tasks.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "give-feedback": {
+        "description": "Give feedback widget – 3-step wizard to select a colleague, pick a badge, and write recognition feedback.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("give-feedback.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "goals-dashboard": {
+        "description": "Goals dashboard – view performance goals with status indicators, progress bars, and category filters.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("goals-dashboard.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "create-check-in-form": {
+        "description": "Check-in creation widget – 3-step wizard to select a team member, pick topics, and create a 1:1 check-in.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("create-check-in-form.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "development-items": {
+        "description": "Development items widget – view individual development plan items with skills, status filters, and category icons.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("development-items.html"),
+        "meta": {
+            "openai/widgetCSP": {
+                "connect_domains": [],
+                "resource_domains": [],
+            }
+        },
+    },
+    "team-goals": {
+        "description": "Team goals widget – manager view of all direct reports' goals with aggregate stats and expandable per-report sections.",
+        "mime_type": "text/html+skybridge",
+        "content": _read_widget("team-goals.html"),
         "meta": {
             "openai/widgetCSP": {
                 "connect_domains": [],

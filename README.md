@@ -19,12 +19,12 @@
 
 | Server | Platform | Tools | Widgets | Key Actions |
 |--------|----------|-------|---------|-------------|
-| **Workday** | HR / HCM | 27 | 8 | Book leave, change title, approve/deny inbox tasks, view compensation, org charts, submit time entries, create expense reports, **team dashboard** |
+| **Workday** | HR / HCM | 36 | 14 | Book leave, change title, approve/deny inbox tasks, browse learning, give feedback, track goals, create check-ins, view development items, org charts, **team dashboard**, **team goals** |
 | **ServiceNow** | ITSM | 39 | 12 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, create KB articles, track SLAs, **team incidents** |
 | **Salesforce** | CRM | 44 | 9 | Create/update opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, activity timeline, **team pipeline** |
 | **Jira** | Project Management | 26 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, manage releases/versions, **team workload** |
 
-> **136 tools total** — 11 open interactive form widgets for user-driven creation (form tools), 34 are widget callbacks that execute when the user submits a form, and the rest provide rich read access and direct actions. 34 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
+> **145 tools total** — 11 open interactive form widgets for user-driven creation (form tools), 34 are widget callbacks that execute when the user submits a form, and the rest provide rich read access and direct actions. 40 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -32,9 +32,9 @@ Servers can be deployed **individually**, in **any combination**, or **all toget
 
 ## 🖼️ Widget Screenshots
 
-ESS-MCP includes 34 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 4 manager-specific team dashboards. Every widget supports dark/light mode, fullscreen expansion, and cross-widget navigation via `sendFollowUpMessage`.
+ESS-MCP includes 40 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 5 manager-specific team dashboards. Every widget supports dark/light mode, fullscreen expansion, and cross-widget navigation via `sendFollowUpMessage`.
 
-### Workday – HR Widgets (8)
+### Workday – HR Widgets (14)
 
 <table>
   <tr>
@@ -47,27 +47,51 @@ ESS-MCP includes 34 interactive HTML+Skybridge widgets that render directly in A
   </tr>
   <tr>
     <td align="center"><strong>Leave Booking</strong></td>
-    <td align="center"><strong>Compensation Summary</strong></td>
+    <td align="center"><strong>Team Calendar</strong></td>
   </tr>
   <tr>
     <td><img src="docs/images/widget-leave-booking.png" width="400" alt="Leave Booking Widget"/></td>
-    <td><img src="docs/images/widget-compensation-summary.png" width="400" alt="Compensation Summary Widget"/></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Team Calendar</strong></td>
-    <td align="center"><strong>Team Dashboard</strong></td>
-  </tr>
-  <tr>
     <td><img src="docs/images/widget-team-calendar.png" width="400" alt="Team Calendar Widget"/></td>
-    <td><img src="docs/images/widget-team-dashboard.png" width="400" alt="Team Dashboard Widget"/></td>
   </tr>
   <tr>
+    <td align="center"><strong>Team Dashboard</strong></td>
     <td align="center"><strong>Change Business Title</strong></td>
-    <td align="center"><strong>Learning Assignments</strong></td>
   </tr>
   <tr>
+    <td><img src="docs/images/widget-team-dashboard.png" width="400" alt="Team Dashboard Widget"/></td>
     <td><img src="docs/images/widget-change-business-title.png" width="400" alt="Change Business Title Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Learning Assignments</strong></td>
+    <td align="center"><strong>Learning Search</strong></td>
+  </tr>
+  <tr>
     <td><img src="docs/images/widget-learning-assignments.png" width="400" alt="Learning Assignments Widget"/></td>
+    <td><img src="docs/images/widget-learning-search.png" width="400" alt="Learning Search Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Inbox Tasks</strong></td>
+    <td align="center"><strong>Give Feedback</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-inbox-tasks.png" width="400" alt="Inbox Tasks Widget"/></td>
+    <td><img src="docs/images/widget-give-feedback.png" width="400" alt="Give Feedback Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Goals Dashboard</strong></td>
+    <td align="center"><strong>Create Check-In</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-goals-dashboard.png" width="400" alt="Goals Dashboard Widget"/></td>
+    <td><img src="docs/images/widget-create-check-in-form.png" width="400" alt="Create Check-In Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Development Items</strong></td>
+    <td align="center"><strong>Team Goals</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-development-items.png" width="400" alt="Development Items Widget"/></td>
+    <td><img src="docs/images/widget-team-goals.png" width="400" alt="Team Goals Widget"/></td>
   </tr>
 </table>
 
@@ -398,15 +422,15 @@ az group delete --name essmcp-rg --yes --no-wait
 
 > *Employee profiles, leave management, compensation, org hierarchy, learning, and team calendar.*
 
-**Tools (27):**
+**Tools (36):**
 
 | Tool | Type | Description |
 |------|------|-------------|
 | `get_worker` | 📖 Read | Fetch current worker profile |
 | `get_leave_balances` | 📖 Read | View PTO / leave balances |
 | `get_direct_reports` | 📖 Read | List direct reports |
-| `get_inbox_tasks` | 📖 Read | Fetch pending approval tasks |
-| `get_learning_assignments` | 📖 Read | View learning initiatives |
+| `get_inbox_tasks` | 📖 Read | Fetch pending approval tasks (rendered as interactive widget) |
+| `get_learning_assignments` | 📖 Read | View learning initiatives (rendered as interactive widget) |
 | `get_pay_slips` | 📖 Read | Access payroll information |
 | `get_time_off_entries` | 📖 Read | Historical time-off records |
 | `prepare_request_leave` | 🖼️ Widget | **Book time off** — interactive leave booking form |
@@ -414,27 +438,37 @@ az group delete --name essmcp-rg --yes --no-wait
 | `prepare_change_business_title` | 🖼️ Widget | **Change business title** — interactive title change form |
 | `change_business_title` | ⚙️ Callback | Widget callback: submits title change form |
 | `search_learning_content` | 📖 Read | Search the learning library |
-| `get_compensation` | 📖 Read | Salary and bonus information |
-| `get_benefits` | 📖 Read | Benefits enrollment and coverage |
-| `get_job_history` | 📖 Read | Career progression history |
+| `prepare_learning_search` | 🖼️ Widget | **Browse learning** — interactive search with skill and topic filters |
 | `get_org_chart` | 📖 Read | Organization hierarchy |
-| `get_worker_documents` | 📖 Read | HR documents |
 | `get_team_calendar` | 📖 Read | Team availability calendar |
 | `get_team_overview` | 📖 Read | 👔 **Manager:** Team headcount dashboard with role/org breakdown |
-| `get_team_compensation_summary` | 📖 Read | 👔 **Manager:** Aggregate team salary statistics |
 | `get_team_performance_summary` | 📖 Read | 👔 **Manager:** Pending reviews, team absences, action items |
 | `action_inbox_task` | ✏️ **Action** | **Approve or reject an inbox task** |
 | `get_inbox_task_detail` | 📖 Read | Get detailed info for a specific inbox task |
-| `submit_time_entry` | ✏️ **Create** | **Submit a time entry (hours worked)** |
-| `get_time_entries` | 📖 Read | View time entries for a date range |
-| `create_expense_report` | ✏️ **Create** | **Create and submit an expense report** |
-| `get_expense_reports` | 📖 Read | List expense reports with status |
+| `get_goals` | 📖 Read | Performance goals with status and progress (rendered as dashboard) |
+| `get_feedback` | 📖 Read | Anytime feedback received from colleagues |
+| `give_feedback` | ✏️ **Action** | **Give anytime feedback to a colleague** |
+| `get_feedback_badges` | 📖 Read | List available feedback badges |
+| `get_development_items` | 📖 Read | Individual development plan items (rendered as interactive widget) |
+| `request_feedback_on_self` | ✏️ **Action** | **Request feedback on yourself from peers** |
+| `get_learning_content_detail` | 📖 Read | Full details for a learning content item |
+| `enroll_in_learning` | ✏️ **Action** | **Self-enroll in a learning content item** |
+| `get_learning_records` | 📖 Read | Learning history with completion status |
+| `get_check_ins` | 📖 Read | 1:1 check-in records with topics |
+| `create_check_in` | ✏️ **Create** | **Create a 1:1 check-in record** |
+| `get_check_in_topics` | 📖 Read | List check-in topics |
+| `get_worker_skills` | 📖 Read | Skills on your Workday profile |
+| `get_team_goals` | 📖 Read | 👔 **Manager:** Direct reports' goals with status (rendered as widget) |
+| `request_feedback_on_worker` | ✏️ **Action** | 👔 **Manager:** Request feedback on a direct report |
+| `prepare_give_feedback` | 🖼️ Widget | **Give feedback** — 3-step wizard with person picker and badges |
+| `prepare_create_check_in` | 🖼️ Widget | **Create check-in** — wizard with person picker and topic selection |
 
-**Widgets:** `worker-profile`, `leave-booking`, `compensation-summary`, `org-chart`, `team-calendar`, `team-dashboard`, `change-business-title`, `learning-assignments`
+**Widgets:** `worker-profile`, `leave-booking`, `org-chart`, `team-calendar`, `team-dashboard`, `change-business-title`, `learning-assignments`, `learning-search`, `inbox-tasks`, `give-feedback`, `goals-dashboard`, `create-check-in-form`, `development-items`, `team-goals`
 
 **Configuration** (`env/workday.env`):
 ```env
-WORKDAY_WORKERS_API_URL=https://your-workday.com/api/v1/workers
+WORKDAY_BASE_URL=https://your-workday-host.workday.com
+WORKDAY_TENANT=your_tenant_name
 ```
 
 ---
@@ -1048,11 +1082,11 @@ When asked to "book leave" or "request PTO":
    and end date.
 4. Confirm the booking with the response details.
 
-### Viewing compensation
-When asked "what's my salary" or "show my compensation":
-1. Call `get_compensation`.
-2. Show the compensation-summary widget.
-3. Summarise base pay, currency, frequency, and any additional compensation.
+### Viewing goals and development
+When asked "show my goals" or "how are my goals going":
+1. Call `get_goals` to fetch goals rendered as the goals-dashboard widget.
+2. Highlight any at-risk or overdue goals.
+3. Call `get_development_items` if the user also wants their development plan.
 
 ### Organisation chart
 When asked "show my org chart" or "who reports to me":

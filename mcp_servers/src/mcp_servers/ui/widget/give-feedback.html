@@ -1,0 +1,272 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --input-bg: #0f131a;
+        --btn-bg: #152235; --btn-border: #243145; --btn-hover: #1a2d44;
+        --wd-accent: #f68620; --wd-glow: rgba(246,134,32,.12);
+        --ok: #2bd48f; --warn: #f0b232; --danger: #ff6b6b;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --input-bg: #ffffff;
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-hover: #e4e4e4;
+        --wd-accent: #c2670d; --wd-glow: rgba(194,103,13,.08);
+        --ok: #107c10; --warn: #ca5010; --danger: #d13438;
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; min-height: 100%; }
+
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+      .wd-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--wd-glow); border: 1px solid var(--wd-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { font-size: 12px; color: var(--muted); }
+
+      /* Steps */
+      .steps { display: flex; gap: 0; margin-bottom: 16px; align-items: center; }
+      .step-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; border: 2px solid var(--border); color: var(--muted); background: var(--card); transition: all .2s; }
+      .step-num.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .step-num.done { background: var(--ok); color: #fff; border-color: var(--ok); }
+      .step-line { width: 32px; height: 2px; background: var(--border); transition: background .2s; }
+      .step-line.done { background: var(--ok); }
+      .step-label { font-size: 10px; color: var(--muted); margin-left: 8px; }
+      .step-label.active { color: var(--text); font-weight: 600; }
+
+      /* Person picker */
+      .picker { position: relative; margin-bottom: 14px; }
+      .picker-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+      .picker-input { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; outline: none; }
+      .picker-input:focus { border-color: var(--accent); }
+      .picker-dropdown { position: absolute; top: 100%; left: 0; right: 0; z-index: 100; background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-top: 4px; max-height: 240px; overflow-y: auto; display: none; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+      .picker-dropdown.open { display: block; }
+      .picker-item { padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); transition: background .12s; }
+      .picker-item:last-child { border-bottom: none; }
+      .picker-item:hover { background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
+      .picker-item .avatar { width: 32px; height: 32px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 20%, var(--card)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--accent); flex-shrink: 0; }
+      .picker-item .info .name { font-size: 13px; font-weight: 600; }
+      .picker-item .info .role { font-size: 11px; color: var(--muted); }
+      .selected-person { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; }
+      .selected-person .avatar { width: 36px; height: 36px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 20%, var(--card)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--accent); }
+      .selected-person .info .name { font-size: 13px; font-weight: 600; }
+      .selected-person .info .role { font-size: 11px; color: var(--muted); }
+      .selected-person .remove { margin-left: auto; cursor: pointer; color: var(--danger); font-size: 18px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--deny-bg, transparent); }
+
+      /* Badge picker */
+      .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+      .badge-chip { padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; font-size: 12px; cursor: pointer; transition: all .15s; background: var(--card); color: var(--text); }
+      .badge-chip:hover { border-color: var(--accent); }
+      .badge-chip.active { border-color: var(--wd-accent); background: var(--wd-glow); color: var(--wd-accent); font-weight: 600; }
+
+      /* Form */
+      .form-group { margin-bottom: 14px; }
+      .form-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; font-weight: 600; display: block; }
+      textarea.feedback-text { width: 100%; box-sizing: border-box; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 90px; outline: none; }
+      textarea.feedback-text:focus { border-color: var(--accent); }
+
+      /* Toggle */
+      .toggle-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+      .toggle { position: relative; width: 36px; height: 20px; cursor: pointer; }
+      .toggle input { display: none; }
+      .toggle .track { position: absolute; inset: 0; background: var(--border); border-radius: 10px; transition: background .2s; }
+      .toggle input:checked + .track { background: var(--ok); }
+      .toggle .thumb { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: transform .2s; }
+      .toggle input:checked ~ .thumb { transform: translateX(16px); }
+      .toggle-label { font-size: 12px; color: var(--text); }
+
+      /* Submit */
+      .btn-submit { width: 100%; padding: 12px; font-size: 14px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: all .15s; background: linear-gradient(135deg, var(--wd-accent), color-mix(in srgb, var(--wd-accent) 70%, var(--accent))); color: #fff; }
+      .btn-submit:hover { filter: brightness(1.1); transform: translateY(-1px); }
+      .btn-submit:disabled { opacity: .5; cursor: not-allowed; filter: none; transform: none; }
+
+      .result-msg { margin-top: 12px; padding: 10px 14px; border-radius: 10px; font-size: 13px; }
+      .result-msg.success { background: rgba(43,212,143,.1); border: 1px solid rgba(43,212,143,.3); color: var(--ok); }
+      .result-msg.error { background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.25); color: var(--danger); }
+
+      .loading { text-align: center; padding: 24px 0; color: var(--muted); font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="wd-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--wd-accent)"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+        <div><div class="title">Give Feedback</div><div class="subtitle">Workday &middot; Recognize a colleague</div></div>
+      </div>
+
+      <!-- Step indicator -->
+      <div class="steps" id="stepsBar">
+        <div class="step-num active" id="s1">1</div><span class="step-label active" id="sl1">Select</span>
+        <div class="step-line" id="ln1"></div>
+        <div class="step-num" id="s2">2</div><span class="step-label" id="sl2">Badge</span>
+        <div class="step-line" id="ln2"></div>
+        <div class="step-num" id="s3">3</div><span class="step-label" id="sl3">Write</span>
+      </div>
+
+      <div id="content"><div class="loading">Loading&hellip;</div></div>
+    </div>
+
+    <script>
+      (function() {
+        "use strict";
+        var people = [], badges = [], selPerson = null, selBadge = null, step = 1;
+        var contentEl = document.getElementById("content");
+        function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+        function rh() { if (window.openai && window.openai.notifyIntrinsicHeight) window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+        function initials(n) { return (n||"").split(/\s+/).map(function(w){return w[0]}).join("").substring(0,2).toUpperCase(); }
+
+        function updateSteps() {
+          for (var i = 1; i <= 3; i++) {
+            var sn = document.getElementById("s" + i), sl = document.getElementById("sl" + i);
+            sn.className = "step-num" + (i === step ? " active" : i < step ? " done" : "");
+            sl.className = "step-label" + (i === step ? " active" : "");
+            if (i < step) sn.innerHTML = "&#10003;";
+            if (i < 3) { var ln = document.getElementById("ln" + i); ln.className = "step-line" + (i < step ? " done" : ""); }
+          }
+        }
+
+        function renderStep1() {
+          step = 1; updateSteps();
+          var html = '<div class="picker"><div class="picker-label">Search &amp; select a colleague</div>' +
+            '<input class="picker-input" id="personSearch" placeholder="Type a name&hellip;" autocomplete="off" />' +
+            '<div class="picker-dropdown" id="personDrop">';
+          for (var i = 0; i < people.length; i++) {
+            var p = people[i];
+            html += '<div class="picker-item" data-idx="' + i + '"><div class="avatar">' + esc(initials(p.descriptor || p.name)) + '</div><div class="info"><div class="name">' + esc(p.descriptor || p.name) + '</div><div class="role">' + esc(p.businessTitle || p.title || "") + '</div></div></div>';
+          }
+          html += '</div></div>';
+          contentEl.innerHTML = html;
+          bindStep1();
+          rh();
+        }
+
+        function bindStep1() {
+          var inp = document.getElementById("personSearch");
+          var drop = document.getElementById("personDrop");
+          inp.addEventListener("focus", function() { drop.classList.add("open"); filterPeople(); rh(); });
+          inp.addEventListener("input", function() { filterPeople(); });
+          document.addEventListener("click", function(e) { if (!e.target.closest(".picker")) drop.classList.remove("open"); });
+          drop.querySelectorAll(".picker-item").forEach(function(el) {
+            el.addEventListener("click", function() {
+              selPerson = people[parseInt(this.getAttribute("data-idx"), 10)];
+              renderStep2();
+            });
+          });
+        }
+
+        function filterPeople() {
+          var q = (document.getElementById("personSearch").value || "").toLowerCase();
+          document.querySelectorAll(".picker-item").forEach(function(el) {
+            var idx = parseInt(el.getAttribute("data-idx"), 10);
+            var p = people[idx];
+            var text = ((p.descriptor || p.name || "") + " " + (p.businessTitle || p.title || "")).toLowerCase();
+            el.style.display = text.indexOf(q) >= 0 ? "" : "none";
+          });
+          rh();
+        }
+
+        function renderStep2() {
+          step = 2; updateSteps();
+          var html = '<div class="selected-person"><div class="avatar">' + esc(initials(selPerson.descriptor || selPerson.name)) + '</div><div class="info"><div class="name">' + esc(selPerson.descriptor || selPerson.name) + '</div><div class="role">' + esc(selPerson.businessTitle || selPerson.title || "") + '</div></div><div class="remove" id="changePerson" title="Change">&times;</div></div>';
+          html += '<div class="picker-label">Select a badge</div><div class="badges" id="badgesGrid">';
+          if (badges.length === 0) {
+            html += '<div style="color:var(--muted);font-size:12px;">No badges available — you can still write feedback below.</div>';
+          } else {
+            for (var i = 0; i < badges.length; i++) {
+              html += '<div class="badge-chip" data-idx="' + i + '">' + esc(badges[i].descriptor || badges[i].name || badges[i]) + '</div>';
+            }
+          }
+          html += '</div><button class="btn-submit" id="nextToWrite" style="margin-top:8px">Next &rarr;</button>';
+          contentEl.innerHTML = html;
+
+          document.getElementById("changePerson").addEventListener("click", function() { selPerson = null; selBadge = null; renderStep1(); });
+          document.querySelectorAll(".badge-chip").forEach(function(el) {
+            el.addEventListener("click", function() {
+              document.querySelectorAll(".badge-chip").forEach(function(b) { b.classList.remove("active"); });
+              this.classList.add("active");
+              selBadge = badges[parseInt(this.getAttribute("data-idx"), 10)];
+              rh();
+            });
+          });
+          document.getElementById("nextToWrite").addEventListener("click", function() { renderStep3(); });
+          rh();
+        }
+
+        function renderStep3() {
+          step = 3; updateSteps();
+          var personName = esc(selPerson.descriptor || selPerson.name || "");
+          var badgeLabel = selBadge ? esc(selBadge.descriptor || selBadge.name || selBadge) : "";
+          var html = '<div class="selected-person"><div class="avatar">' + esc(initials(selPerson.descriptor || selPerson.name)) + '</div><div class="info"><div class="name">' + personName + '</div>' + (badgeLabel ? '<div class="role" style="color:var(--wd-accent)">' + badgeLabel + '</div>' : '') + '</div><div class="remove" id="backBtn" title="Back">&larr;</div></div>';
+          html += '<div class="form-group"><label class="form-label">Your feedback</label><textarea class="feedback-text" id="feedbackText" placeholder="What would you like this person to know?"></textarea></div>';
+          html += '<div class="toggle-row"><label class="toggle"><input type="checkbox" id="hideWorker"><span class="track"></span><span class="thumb"></span></label><span class="toggle-label">Hide from worker</span></div>';
+          html += '<div class="toggle-row"><label class="toggle"><input type="checkbox" id="hideManager"><span class="track"></span><span class="thumb"></span></label><span class="toggle-label">Hide from manager</span></div>';
+          html += '<button class="btn-submit" id="submitBtn">Send Feedback</button>';
+          html += '<div id="resultArea"></div>';
+          contentEl.innerHTML = html;
+
+          document.getElementById("backBtn").addEventListener("click", function() { renderStep2(); });
+          document.getElementById("submitBtn").addEventListener("click", submitFeedback);
+          rh();
+        }
+
+        async function submitFeedback() {
+          var comment = (document.getElementById("feedbackText").value || "").trim();
+          if (!comment) { document.getElementById("resultArea").innerHTML = '<div class="result-msg error">Please write some feedback.</div>'; rh(); return; }
+          var btn = document.getElementById("submitBtn");
+          btn.disabled = true; btn.textContent = "Sending\u2026";
+          try {
+            if (!window.openai || !window.openai.callTool) throw new Error("Skybridge not available");
+            var params = { worker_id: selPerson.workerId || selPerson.id || "", comment: comment };
+            if (selBadge) params.badge = selBadge.id || selBadge.descriptor || selBadge.name || "";
+            if (document.getElementById("hideWorker").checked) params.hidden_from_worker = true;
+            if (document.getElementById("hideManager").checked) params.hidden_from_manager = true;
+            var out = await window.openai.callTool("give_feedback", params);
+            var data = out && out.structuredContent ? out.structuredContent : out;
+            document.getElementById("resultArea").innerHTML = '<div class="result-msg success">&#10003; Feedback sent to ' + esc(selPerson.descriptor || selPerson.name) + '!</div>';
+            btn.textContent = "Sent!";
+          } catch (e) {
+            document.getElementById("resultArea").innerHTML = '<div class="result-msg error">' + esc(e.message || "Failed to send feedback") + '</div>';
+            btn.disabled = false; btn.textContent = "Send Feedback";
+          }
+          rh();
+        }
+
+        async function load() {
+          contentEl.innerHTML = '<div class="loading">Loading colleagues &amp; badges&hellip;</div>';
+          try {
+            var toolData = window.openai && window.openai.toolOutput;
+            if (toolData) {
+              var td = typeof toolData === "string" ? JSON.parse(toolData) : toolData;
+              people = td.people || td.direct_reports || [];
+              badges = td.badges || [];
+            }
+            if (people.length === 0 && window.openai && window.openai.callTool) {
+              try {
+                var drOut = await window.openai.callTool("get_direct_reports", {});
+                var drData = drOut && drOut.structuredContent ? drOut.structuredContent : drOut;
+                people = drData && drData.direct_reports ? drData.direct_reports : (drData && drData.reports ? drData.reports : []);
+              } catch(e) {}
+            }
+            if (badges.length === 0 && window.openai && window.openai.callTool) {
+              try {
+                var bOut = await window.openai.callTool("get_feedback_badges", {});
+                var bData = bOut && bOut.structuredContent ? bOut.structuredContent : bOut;
+                badges = bData && bData.badges ? bData.badges : [];
+              } catch(e) {}
+            }
+            renderStep1();
+          } catch (e) {
+            contentEl.innerHTML = '<div class="loading" style="color:var(--danger)">' + esc(e.message || "Failed to load") + '</div>';
+            rh();
+          }
+        }
+
+        load();
+      })();
+    </script>
+  </body>
+</html>

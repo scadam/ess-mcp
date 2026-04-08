@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1.7
 
-FROM python:3.11-slim AS builder
+FROM mcr.microsoft.com/devcontainers/python:3.11 AS builder
 
 WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY src ./src
 RUN pip install --upgrade pip && pip install --no-cache-dir .
 
-FROM python:3.11-slim AS runtime
+FROM mcr.microsoft.com/devcontainers/python:3.11 AS runtime
 
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app

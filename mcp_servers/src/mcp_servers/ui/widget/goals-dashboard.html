@@ -1,0 +1,211 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --input-bg: #0f131a;
+        --wd-accent: #f68620; --wd-glow: rgba(246,134,32,.12);
+        --ok: #2bd48f; --warn: #f0b232; --danger: #ff6b6b;
+        --on-track: #2bd48f; --at-risk: #f0b232; --behind: #ff6b6b; --not-started: #a9b1bd;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --input-bg: #ffffff;
+        --wd-accent: #c2670d; --wd-glow: rgba(194,103,13,.08);
+        --ok: #107c10; --warn: #ca5010; --danger: #d13438;
+        --on-track: #107c10; --at-risk: #ca5010; --behind: #d13438; --not-started: #65707d;
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; min-height: 100%; }
+
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .wd-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--wd-glow); border: 1px solid var(--wd-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { font-size: 12px; color: var(--muted); }
+
+      .stats-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+      .stat { padding: 6px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+      .stat .dot { width: 8px; height: 8px; border-radius: 50%; }
+      .stat .num { font-weight: 700; font-size: 16px; }
+
+      .controls { display: flex; gap: 8px; margin-bottom: 10px; }
+      .filter-chip { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; font-size: 11px; cursor: pointer; background: var(--card); color: var(--muted); transition: all .15s; }
+      .filter-chip:hover { border-color: var(--accent); color: var(--text); }
+      .filter-chip.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--accent); font-weight: 600; }
+
+      .grid { display: grid; gap: 10px; }
+      .goal-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+      .goal-card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+      :root[data-theme="dark"] .goal-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.2); }
+      .goal-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+      .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+      .goal-name { font-size: 14px; font-weight: 600; flex: 1; }
+      .goal-due { font-size: 11px; color: var(--muted); white-space: nowrap; }
+      .goal-desc { font-size: 12px; color: var(--muted); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .goal-desc.expanded { -webkit-line-clamp: unset; }
+      .tags { display: flex; gap: 5px; flex-wrap: wrap; }
+      .tag { font-size: 10px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); }
+      .status-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; padding: 2px 8px; border-radius: 999px; }
+
+      /* Progress bar */
+      .progress-bar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 8px; overflow: hidden; }
+      .progress-fill { height: 100%; border-radius: 2px; transition: width .3s ease; }
+
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+      .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+      .loading, .empty { text-align: center; padding: 24px 0; color: var(--muted); font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="wd-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--wd-accent)"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <div><div class="title">Goals Dashboard</div><div class="subtitle">Workday &middot; Performance</div></div>
+        </div>
+        <button class="maximize-btn" id="maximizeBtn" title="Maximize"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg></button>
+      </div>
+
+      <div id="stats" class="stats-row"></div>
+      <div id="filters" class="controls"></div>
+      <div id="content"><div class="loading">Loading goals&hellip;</div></div>
+    </div>
+
+    <script>
+      (function() {
+        "use strict";
+        var allGoals = [], currentFilter = "all";
+        var contentEl = document.getElementById("content");
+        var statsEl = document.getElementById("stats");
+        var filtersEl = document.getElementById("filters");
+        function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+        function rh() { if (window.openai && window.openai.notifyIntrinsicHeight) window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
+
+        function normalizeStatus(s) {
+          s = (s || "").toLowerCase();
+          if (s.indexOf("track") >= 0 || s === "completed" || s === "achieved") return "on-track";
+          if (s.indexOf("risk") >= 0 || s === "behind") return "at-risk";
+          if (s.indexOf("not started") >= 0 || s === "draft") return "not-started";
+          if (s.indexOf("behind") >= 0 || s.indexOf("off") >= 0) return "behind";
+          return "on-track";
+        }
+        function statusColor(ns) {
+          switch(ns) { case "on-track": return "var(--on-track)"; case "at-risk": return "var(--at-risk)"; case "behind": return "var(--behind)"; default: return "var(--not-started)"; }
+        }
+        function statusLabel(ns) {
+          switch(ns) { case "on-track": return "On Track"; case "at-risk": return "At Risk"; case "behind": return "Behind"; default: return "Not Started"; }
+        }
+        function fmtDate(d) { if (!d) return ""; try { return new Date(d).toLocaleDateString(undefined, {month:"short",day:"numeric"}); } catch(e) { return d; } }
+
+        function renderStats() {
+          var counts = {"on-track":0, "at-risk":0, "behind":0, "not-started":0};
+          allGoals.forEach(function(g) { var ns = normalizeStatus(g.status); counts[ns] = (counts[ns]||0) + 1; });
+          statsEl.innerHTML =
+            '<div class="stat"><div class="dot" style="background:var(--on-track)"></div><span class="num">' + (counts["on-track"]||0) + '</span>On Track</div>' +
+            '<div class="stat"><div class="dot" style="background:var(--at-risk)"></div><span class="num">' + (counts["at-risk"]||0) + '</span>At Risk</div>' +
+            '<div class="stat"><div class="dot" style="background:var(--behind)"></div><span class="num">' + (counts["behind"]||0) + '</span>Behind</div>' +
+            '<div class="stat"><div class="dot" style="background:var(--not-started)"></div><span class="num">' + (counts["not-started"]||0) + '</span>Not Started</div>';
+        }
+
+        function renderFilters() {
+          var cats = {};
+          allGoals.forEach(function(g) { (g.categories || []).forEach(function(c) { cats[c] = true; }); });
+          var html = '<div class="filter-chip' + (currentFilter === "all" ? " active" : "") + '" data-f="all">All</div>';
+          ["on-track","at-risk","behind","not-started"].forEach(function(ns) {
+            html += '<div class="filter-chip' + (currentFilter === ns ? " active" : "") + '" data-f="' + ns + '" style="border-color:' + statusColor(ns) + '">' + statusLabel(ns) + '</div>';
+          });
+          Object.keys(cats).sort().forEach(function(c) {
+            html += '<div class="filter-chip' + (currentFilter === c ? " active" : "") + '" data-f="cat:' + esc(c) + '">' + esc(c) + '</div>';
+          });
+          filtersEl.innerHTML = html;
+          filtersEl.querySelectorAll(".filter-chip").forEach(function(el) {
+            el.addEventListener("click", function() { currentFilter = this.getAttribute("data-f"); renderFilters(); render(); });
+          });
+        }
+
+        function filtered() {
+          if (currentFilter === "all") return allGoals;
+          if (currentFilter.startsWith("cat:")) {
+            var cat = currentFilter.substring(4);
+            return allGoals.filter(function(g) { return (g.categories || []).indexOf(cat) >= 0; });
+          }
+          return allGoals.filter(function(g) { return normalizeStatus(g.status) === currentFilter; });
+        }
+
+        function goalCard(g) {
+          var ns = normalizeStatus(g.status);
+          var col = statusColor(ns);
+          var pct = g.percentComplete != null ? g.percentComplete : (ns === "on-track" ? 75 : ns === "at-risk" ? 40 : ns === "behind" ? 15 : 0);
+          var tags = '';
+          (g.categories || []).forEach(function(c) { tags += '<span class="tag">' + esc(c) + '</span>'; });
+          tags += '<span class="status-label" style="color:' + col + ';border:1px solid ' + col + '">' + esc(statusLabel(ns)) + '</span>';
+
+          return '<div class="goal-card" data-id="' + esc(g.id || '') + '">' +
+            '<div class="goal-top">' +
+              '<div class="status-dot" style="background:' + col + '"></div>' +
+              '<div class="goal-name">' + esc(g.name || g.descriptor || "Untitled Goal") + '</div>' +
+              (g.dueDate ? '<div class="goal-due">Due ' + esc(fmtDate(g.dueDate)) + '</div>' : '') +
+            '</div>' +
+            (g.description ? '<div class="goal-desc">' + esc(g.description) + '</div>' : '') +
+            '<div class="tags">' + tags + '</div>' +
+            '<div class="progress-bar"><div class="progress-fill" style="width:' + Math.min(100, Math.max(0, pct)) + '%;background:' + col + '"></div></div>' +
+          '</div>';
+        }
+
+        function render() {
+          var goals = filtered();
+          if (!goals.length) { contentEl.innerHTML = '<div class="empty">No goals match this filter.</div>'; rh(); return; }
+          var html = '<div class="grid">';
+          goals.forEach(function(g) { html += goalCard(g); });
+          html += '</div>';
+          contentEl.innerHTML = html;
+
+          contentEl.querySelectorAll(".goal-card").forEach(function(el) {
+            el.addEventListener("click", function() {
+              var desc = this.querySelector(".goal-desc");
+              if (desc) desc.classList.toggle("expanded");
+              rh();
+            });
+          });
+          rh();
+        }
+
+        async function load() {
+          try {
+            var toolData = window.openai && window.openai.toolOutput;
+            if (toolData) {
+              var td = typeof toolData === "string" ? JSON.parse(toolData) : toolData;
+              allGoals = td.goals || td.data || [];
+            }
+            if (allGoals.length === 0 && window.openai && window.openai.callTool) {
+              var out = await window.openai.callTool("get_goals", {});
+              var d = out && out.structuredContent ? out.structuredContent : out;
+              allGoals = (d && d.goals) ? d.goals : [];
+            }
+            renderStats();
+            renderFilters();
+            render();
+          } catch (e) {
+            contentEl.innerHTML = '<div class="loading" style="color:var(--danger)">' + esc(e.message) + '</div>';
+            rh();
+          }
+        }
+
+        var _fs = false, _mb = document.getElementById("maximizeBtn");
+        _mb.addEventListener("click", async function() {
+          if (!window.openai || !window.openai.requestDisplayMode) return;
+          try { await window.openai.requestDisplayMode({ mode: _fs ? "inline" : "fullscreen" }); _fs = !_fs; rh(); } catch(e) {}
+        });
+
+        load();
+      })();
+    </script>
+  </body>
+</html>
