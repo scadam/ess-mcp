@@ -142,7 +142,7 @@
         function diCard(it) {
           var ns = normStatus(it.status);
           var col = statusColor(ns);
-          var cat = it.category || it.type || "";
+          var cat = Array.isArray(it.category) ? (it.category[0] || "") : (it.category || it.type || "");
           var skills = it.relatedSkills || it.skills || [];
           var skillHtml = '';
           (typeof skills === "string" ? [skills] : skills).forEach(function(sk) { skillHtml += '<span class="skill-tag">' + esc(typeof sk === "string" ? sk : sk.descriptor || sk.name || "") + '</span>'; });
@@ -150,10 +150,10 @@
           return '<div class="di-card">' +
             '<div class="di-top">' +
               '<div class="di-icon ' + catClass(cat) + '">' + catIcon(cat) + '</div>' +
-              '<div class="di-name">' + esc(it.name || it.descriptor || "Untitled") + '</div>' +
+              '<div class="di-name">' + esc(it.title || it.name || it.descriptor || "Untitled") + '</div>' +
               '<span class="di-status" style="color:' + col + ';border:1px solid ' + col + '">' + statusLabel(ns) + '</span>' +
             '</div>' +
-            (it.description ? '<div class="di-desc">' + esc(it.description) + '</div>' : '') +
+            (it.additionalInformation || it.description ? '<div class="di-desc">' + esc(it.additionalInformation || it.description) + '</div>' : '') +
             '<div class="di-footer">' +
               skillHtml +
               (it.dueDate || it.completionDate ? '<span class="date-tag">' + (it.completionDate ? 'Completed ' + fmtDate(it.completionDate) : 'Due ' + fmtDate(it.dueDate)) + '</span>' : '') +
@@ -183,12 +183,12 @@
             var toolData = window.openai && window.openai.toolOutput;
             if (toolData) {
               var td = typeof toolData === "string" ? JSON.parse(toolData) : toolData;
-              allItems = td.items || td.development_items || td.data || [];
+              allItems = td.developmentItems || td.items || td.development_items || td.data || [];
             }
             if (allItems.length === 0 && window.openai && window.openai.callTool) {
               var out = await window.openai.callTool("get_development_items", {});
               var d = out && out.structuredContent ? out.structuredContent : out;
-              allItems = (d && (d.items || d.development_items)) ? (d.items || d.development_items) : [];
+              allItems = (d && (d.developmentItems || d.items || d.development_items)) ? (d.developmentItems || d.items || d.development_items) : [];
             }
             renderStats();
             renderFilters();

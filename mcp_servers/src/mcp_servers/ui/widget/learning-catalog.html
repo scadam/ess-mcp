@@ -302,6 +302,8 @@
 
         function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
         function stripHtml(s) { if (!s) return ""; return s.replace(/<[^>]*>/g, "").trim(); }
+        function skillStr(s) { return (typeof s === "object" && s !== null) ? (s.descriptor || s.id || "") : (s || ""); }
+        function skillId(s) { return (typeof s === "object" && s !== null) ? (s.id || "") : ""; }
         function reportHeight() {
           if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") {
             window.openai.notifyIntrinsicHeight(document.body.scrollHeight);
@@ -349,7 +351,7 @@
               var idx = selectedSkillIds.indexOf(id);
               if (idx >= 0) selectedSkillIds.splice(idx, 1); else selectedSkillIds.push(id);
               renderSkillChips();
-              applyFilters();
+              doServerReload();
             });
             skillChipsEl.appendChild(ch);
           }
@@ -368,13 +370,13 @@
             selectedSkillIds = selectedSkillIds.filter(function(id) { return catSkillIds[id]; });
           }
           renderSkillChips();
-          applyFilters();
+          doServerReload();
         });
 
         clearFiltersEl.addEventListener("click", function() {
           selectedSkillIds = [];
           renderSkillChips();
-          applyFilters();
+          doServerReload();
         });
 
         // Text + chip filtering (client-side)
@@ -394,7 +396,10 @@
               var found = false;
               for (var i = 0; i < selectedSkillIds.length; i++) {
                 for (var j = 0; j < itemSkills.length; j++) {
-                  if (itemSkills[j].toLowerCase() === (getSkillName(selectedSkillIds[i]) || "").toLowerCase()) { found = true; break; }
+                  var sid = skillId(itemSkills[j]);
+                  if (sid && sid === selectedSkillIds[i]) { found = true; break; }
+                  var sname = skillStr(itemSkills[j]).toLowerCase();
+                  if (sname === (getSkillName(selectedSkillIds[i]) || "").toLowerCase()) { found = true; break; }
                 }
                 if (found) break;
               }
@@ -416,12 +421,15 @@
         searchInput.addEventListener("keydown", function(e) { if (e.key === "Enter") applyFilters(); });
 
         // Reload with selected skill IDs and category via callTool
-        reloadBtn.addEventListener("click", async function() {
+        async function doServerReload() {
+          if (!window.openai || typeof window.openai.callTool !== "function") {
+            applyFilters();
+            return;
+          }
           contentArea.innerHTML = '<div class="loading">Searching with selected skills&hellip;</div>';
           summaryEl.textContent = "";
           reportHeight();
           try {
-            if (!window.openai || typeof window.openai.callTool !== "function") throw new Error("Skybridge not available");
             var params = {};
             if (selectedSkillIds.length) params.skills = selectedSkillIds;
             if (categorySelect.value) params.category = categorySelect.value;
@@ -439,6 +447,10 @@
             contentArea.innerHTML = '<div class="error">' + esc(e && e.message ? e.message : "Search failed") + '</div>';
             reportHeight();
           }
+        }
+
+        reloadBtn.addEventListener("click", function() {
+          doServerReload();
         });
 
         // Stars
@@ -540,7 +552,7 @@
           var topics = item.topics || [];
           var skills = item.skills || [];
           for (var j = 0; j < Math.min(topics.length, 3); j++) html += '<span class="chip chip-topic">' + esc(topics[j]) + '</span>';
-          for (var i = 0; i < Math.min(skills.length, 2); i++) html += '<span class="chip chip-skill">' + esc(skills[i]) + '</span>';
+          for (var i = 0; i < Math.min(skills.length, 2); i++) html += '<span class="chip chip-skill">' + esc(skillStr(skills[i])) + '</span>';
           return html;
         }
 
@@ -566,7 +578,7 @@
           var tags = "";
           var topics = item.topics || []; var skills = item.skills || [];
           for (var j = 0; j < topics.length; j++) tags += '<span class="chip chip-topic">' + esc(topics[j]) + '</span>';
-          for (var i = 0; i < skills.length; i++) tags += '<span class="chip chip-skill">' + esc(skills[i]) + '</span>';
+          for (var i = 0; i < skills.length; i++) tags += '<span class="chip chip-skill">' + esc(skillStr(skills[i])) + '</span>';
           if (item.learningCatalogs) {
             for (var c = 0; c < item.learningCatalogs.length; c++) tags += '<span class="chip">' + esc(item.learningCatalogs[c]) + '</span>';
           }

@@ -608,7 +608,7 @@ async def tool_change_business_title(
 async def _search_learning_content(access_token: str, skills: Iterable[str], topics: Iterable[str]) -> Dict[str, Any]:
     endpoints = get_endpoints()
     url = endpoints.full_url("/ccx/api/learning/v1/{tenant}/content")
-    params: List[tuple[str, str]] = []
+    params: List[tuple[str, str]] = [("limit", "100")]
     for skill in skills:
         params.append(("skills", str(skill)))
     for topic in topics:
@@ -681,7 +681,7 @@ def _flatten_content(content: Dict[str, Any]) -> Dict[str, Any]:
         "excludeFromSearchAndBrowse": content.get("excludeFromSearchAndBrowse"),
         "learningCatalogs": [c.get("descriptor") for c in content.get("learningCatalogs", [])],
         "languages": [lang.get("descriptor") for lang in content.get("languages", [])],
-        "skills": [s.get("descriptor") for s in content.get("skills", [])],
+        "skills": [{"id": s.get("id"), "descriptor": s.get("descriptor")} for s in content.get("skills", [])],
         "topics": [t.get("descriptor") for t in content.get("topics", [])],
         "securityCategories": [sc.get("descriptor") for sc in content.get("securityCategories", [])],
         "contactPersons": [cp.get("descriptor") for cp in content.get("contactPersons", [])],
