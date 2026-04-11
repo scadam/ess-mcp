@@ -33,7 +33,7 @@ def build_servicenow_server() -> FastMCP:
     # ── Register resources ──────────────────────────────────────────────
     for name, res in SERVICENOW_RESOURCES.items():
         resource_kwargs: dict = {
-            "uri": f"ui://servicenow/{name}",
+            "uri": f"ui://widget/{name}.html",
             "name": name,
             "description": res["description"],
             "mime_type": res["mime_type"],

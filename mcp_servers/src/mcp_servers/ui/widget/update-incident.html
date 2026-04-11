@@ -207,7 +207,7 @@
       </div>
 
       <div class="open-link" id="openLinkRow" style="display:none">
-        <a id="openLinkEl" href="#" target="_blank">Open in ServiceNow &#8599;</a>
+        <button id="openLinkEl" class="sn-link">Open in ServiceNow &#8599;</button>
       </div>
 
       <div class="card" id="workflowCard">
@@ -227,8 +227,8 @@
 
     <script>
     (async function () {
-      var toolOutput = {};
-      try { toolOutput = JSON.parse(window.openai.toolOutput || "{}"); } catch (_) {}
+      var toolOutput = (window.openai && window.openai.toolOutput) || {};
+      if (typeof toolOutput === "string") { try { toolOutput = JSON.parse(toolOutput); } catch (_) { toolOutput = {}; } }
 
       var incident = toolOutput.incident || {};
       var number   = incident.number || "";
@@ -253,7 +253,9 @@
 
       if (link) {
         var linkEl = document.getElementById("openLinkEl");
-        linkEl.href = link;
+        linkEl.addEventListener("click", function() {
+          if (window.openai && typeof window.openai.openUrl === "function") { window.openai.openUrl(link); } else { window.open(link, "_blank"); }
+        });
         document.getElementById("openLinkRow").style.display = "block";
       }
 

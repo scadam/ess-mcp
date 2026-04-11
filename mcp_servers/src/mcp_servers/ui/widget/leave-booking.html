@@ -209,8 +209,9 @@
       .booked-item {
         display: flex; align-items: center; justify-content: space-between;
         padding: 6px 0; border-bottom: 1px solid var(--border);
-        font-size: 12px;
+        font-size: 12px; cursor: pointer; border-radius: 4px; transition: background 0.15s;
       }
+      .booked-item:hover { background: var(--border); }
       .booked-item:last-child { border-bottom: none; }
       .booked-item .date { font-weight: 600; min-width: 86px; }
       .booked-item .type { color: var(--muted); flex: 1; margin: 0 8px; }
@@ -365,6 +366,8 @@
           window.openai.notifyIntrinsicHeight(document.body.scrollHeight);
         }
       }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
+      var _bookedEntries = [];
 
       /* ---- State ---- */
       var calYear, calMonth; // 0-indexed month for display
@@ -555,8 +558,8 @@
           return;
         }
         var html = "";
-        entries.forEach(function(e) {
-          html += '<div class="booked-item">' +
+        entries.forEach(function(e, idx) {
+          html += '<div class="booked-item" data-booked-idx="' + idx + '">' +
             '<span class="date">' + formatDateNice(e.date) + '</span>' +
             '<span class="type">' + esc(e.info.type) + '</span>' +
             '<span class="qty">' + esc(e.info.qty + " " + e.info.unit) + '</span>' +
@@ -564,6 +567,16 @@
           '</div>';
         });
         bookedListEl.innerHTML = html;
+        _bookedEntries = entries;
+        // Wire up click handlers
+        var items = bookedListEl.querySelectorAll('[data-booked-idx]');
+        for (var bi = 0; bi < items.length; bi++) {
+          items[bi].addEventListener('click', function() {
+            var idx = parseInt(this.getAttribute('data-booked-idx'), 10);
+            var e = _bookedEntries[idx]; if (!e) return;
+            _askCopilot('Tell me more about my ' + e.info.type + ' time off on ' + formatDateNice(e.date) + ' (' + e.info.qty + ' ' + e.info.unit + ', status: ' + e.info.status + '). Can I modify or cancel this booking?');
+          });
+        }
       }
 
       /* ---- Populate types dropdown ---- */

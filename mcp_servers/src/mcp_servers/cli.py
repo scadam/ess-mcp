@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse
 import asyncio
+import json as _json
 from contextlib import asynccontextmanager
 from typing import Dict, List
 import uvicorn
@@ -18,6 +19,114 @@ from .servicenow import build_servicenow_server
 from .workday import build_workday_server
 
 LOGGER = get_logger(__name__)
+
+# ── Auth-error passthrough ──────────────────────────────────────────
+# M365 Copilot declarative agents rely on the *HTTP status code* to
+# trigger OAuth re-authentication.  FastMCP always returns HTTP 200 for
+# MCP protocol responses, even when a tool encounters a backend 401.
+# This middleware inspects JSON-RPC response bodies and, when a backend
+# 401/403 is detected inside an MCP tool error, rewrites the HTTP status
+# so the agent's token service initiates a token refresh.
+
+
+def _detect_auth_error_status(body: bytes) -> int:
+    """Return 401 or 403 if the JSON-RPC body signals a backend auth failure."""
+    try:
+        data = _json.loads(body)
+    except (ValueError, UnicodeDecodeError):
+        return 0
+
+    # Path 1 – JSON-RPC error object
+    error = data.get("error") if isinstance(data, dict) else None
+    if isinstance(error, dict):
+        msg = str(error.get("message", ""))
+        if "401" in msg and "nauthorized" in msg:
+            return 401
+        if "403" in msg and "orbidden" in msg:
+            return 403
+
+    # Path 2 – MCP CallToolResult with isError
+    result = data.get("result") if isinstance(data, dict) else None
+    if isinstance(result, dict) and result.get("isError"):
+        for item in result.get("content", []):
+            if not isinstance(item, dict):
+                continue
+            text = str(item.get("text", ""))
+            if "401 Unauthorized" in text:
+                return 401
+            if "403 Forbidden" in text:
+                return 403
+
+    return 0
+
+
+class AuthErrorPassthroughMiddleware:
+    """ASGI middleware that rewrites HTTP 200 → 401/403 for MCP auth errors."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        start_message = None
+        body_chunks: list[bytes] = []
+        is_sse = False
+
+        async def buffered_send(message):
+            nonlocal start_message, is_sse
+
+            if message["type"] == "http.response.start":
+                start_message = message
+                # Detect SSE (streaming) – pass through immediately
+                for key, val in message.get("headers", []):
+                    if key in (b"content-type", "content-type"):
+                        val_str = val if isinstance(val, str) else val.decode("latin-1")
+                        if "text/event-stream" in val_str:
+                            is_sse = True
+                            break
+                if is_sse:
+                    await send(message)
+                return
+
+            if message["type"] == "http.response.body":
+                if is_sse:
+                    await send(message)
+                    return
+
+                body = message.get("body", b"")
+                more_body = message.get("more_body", False)
+                body_chunks.append(body)
+
+                if not more_body:
+                    full_body = b"".join(body_chunks)
+                    status = start_message.get("status", 200) if start_message else 200
+
+                    if status == 200:
+                        auth_status = _detect_auth_error_status(full_body)
+                        if auth_status:
+                            status = auth_status
+
+                    # Forward (possibly rewritten) start + body
+                    out_start = dict(start_message) if start_message else {
+                        "type": "http.response.start", "headers": [],
+                    }
+                    out_start["status"] = status
+                    await send(out_start)
+                    await send({"type": "http.response.body", "body": full_body})
+                else:
+                    # Chunked non-SSE – unlikely for MCP, forward as-is
+                    if start_message:
+                        await send(start_message)
+                        start_message = None
+                    await send(message)
+
+        await self.app(scope, receive, buffered_send)
+
+
+# ── Server registry ─────────────────────────────────────────────────
 
 SERVER_BUILDERS: Dict[str, callable] = {
     "workday": build_workday_server,
@@ -116,7 +225,8 @@ def main() -> None:
         expose_headers=["mcp-session-id", "mcp-protocol-version"],
         allow_credentials=True,
     )
-    app = build_app(server_names, transport=args.transport, middleware=[cors])
+    auth_passthrough = Middleware(AuthErrorPassthroughMiddleware)
+    app = build_app(server_names, transport=args.transport, middleware=[cors, auth_passthrough])
     LOGGER.info("starting_server", transport=args.transport, host=args.host, port=args.port)
     uvicorn.run(app, host=args.host, port=args.port)
 

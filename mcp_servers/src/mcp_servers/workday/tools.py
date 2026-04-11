@@ -11,6 +11,7 @@ from ..http import create_async_client
 from ..logging import get_logger
 from .config import get_endpoints
 from .helpers import build_worker_context_from_bearer
+import httpx
 
 LOGGER = get_logger(__name__)
 
@@ -251,7 +252,7 @@ def _workday_learning_url(content_id: str) -> Optional[str]:
 async def _fetch_inbox_tasks(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
     endpoints = get_endpoints()
     url = endpoints.full_url(
-        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks",
+        "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks?limit=100",
         workday_id=workday_id,
     )
     data = await _fetch_json(url, access_token)
@@ -285,11 +286,7 @@ async def tool_get_inbox_tasks(ctx: Optional[Context] = None) -> Dict:
 
 async def _fetch_learning_assignments(access_token: str, workday_id: str) -> List[Dict[str, Any]]:
     endpoints = get_endpoints()
-    url = endpoints.full_url(
-        "/ccx/service/customreport2/{tenant}/svasireddy/Required_Learning"
-        "?Worker_s__for_Learning_Assignment%21WID={workday_id}&format=json",
-        workday_id=workday_id,
-    )
+    url = endpoints.learning_report_url(workday_id)
     data = await _fetch_json(url, access_token)
     assignments = []
     for item in data.get("Report_Entry", []):
@@ -527,7 +524,7 @@ async def tool_book_leave(
                 error=message,
                 body=str(parsed_body)[:500],
             )
-            return {"success": False, "error": message}
+            response.raise_for_status()
     business_process = parsed_body.get("businessProcessParameters", {}).get(
         "overallBusinessProcess", {}
     ).get("descriptor")
@@ -593,7 +590,7 @@ async def tool_change_business_title(
                     status_code=response.status_code,
                     body=body_text,
                 )
-                return {"success": False, "error": f"HTTP {response.status_code}: {body_text}"}
+                response.raise_for_status()
             data = response.json()
         result_payload = {
             "success": True,
@@ -601,6 +598,8 @@ async def tool_change_business_title(
             "changeDetails": data,
         }
         return _tool_response("Request a business title change for the current worker.", result_payload)
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("workday_change_business_title_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -694,8 +693,20 @@ def _flatten_content(content: Dict[str, Any]) -> Dict[str, Any]:
 async def tool_search_learning_content(
     ctx: Optional[Context] = None,
     skills: Optional[List[str]] = None,
-    topics: Optional[List[str]] = None,
+    category: Optional[str] = None,
 ) -> Dict:
+    """Search Workday learning content filtered by skills and/or category.
+
+    *category* – a skill-category name (e.g. "Cloud Computing").  When
+    supplied, the widget will only show skills that belong to this
+    category.  The name is resolved case-insensitively against the
+    Workday Skills RaaS report.
+
+    Each value in *skills* can be either a Workday skill ID or a
+    human-readable skill name.  Names are resolved to their Workday IDs
+    via the Skills RaaS report; any value that cannot be resolved is
+    silently dropped so the search still runs.
+    """
     access_token = _get_auth_token(ctx)
 
     def _normalize(value: Any) -> List[str]:
@@ -707,9 +718,70 @@ async def tool_search_learning_content(
             return [str(item) for item in value]
         return [str(value)]
 
-    skills = _normalize(skills)
-    topics = _normalize(topics)
-    content_response = await _search_learning_content(access_token, skills, topics)
+    raw_skills = _normalize(skills)
+
+    # -- Fetch the skills catalogue so we can map names → Workday IDs ----
+    all_skills: list[dict] = []
+    name_to_id: dict[str, str] = {}
+    id_set: set[str] = set()
+    categories_set: set[str] = set()
+    try:
+        endpoints = get_endpoints()
+        skills_url = endpoints.skills_report_url()
+        skills_data = await _fetch_json(skills_url, access_token)
+        seen: set[str] = set()
+        for entry in skills_data.get("Report_Entry", []):
+            name = entry.get("skillName") or entry.get("Skills") or ""
+            if not name or name in seen or entry.get("Inactive") == "1":
+                continue
+            seen.add(name)
+            wid = entry.get("workdayID", name)
+            cat = entry.get("Skill_Categories", "")
+            usage = int(entry.get("Usage_Count", 0) or 0)
+            name_to_id[name.lower()] = wid
+            id_set.add(wid)
+            if cat:
+                categories_set.add(cat)
+            all_skills.append({
+                "id": wid,
+                "descriptor": name,
+                "category": cat,
+                "usageCount": usage,
+            })
+        all_skills.sort(key=lambda x: (-x["usageCount"], x["descriptor"]))
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.warning("skills_raas_fetch_failed", error=str(exc))
+
+    # Resolve category name (case-insensitive)
+    resolved_category: str = ""
+    if category:
+        cat_lower = category.strip().lower()
+        for cat in categories_set:
+            if cat.lower() == cat_lower:
+                resolved_category = cat
+                break
+        if not resolved_category:
+            LOGGER.info("category_filter_not_matched", category=category)
+
+    # Filter skills list by category when one is selected
+    if resolved_category:
+        available_skills = [s for s in all_skills if s["category"] == resolved_category]
+    else:
+        available_skills = all_skills
+
+    available_categories = sorted(categories_set)
+
+    # Resolve each skill to a Workday ID; drop unknowns
+    resolved_skills: list[str] = []
+    for s in raw_skills:
+        if s in id_set:
+            resolved_skills.append(s)
+        elif s.lower() in name_to_id:
+            resolved_skills.append(name_to_id[s.lower()])
+        else:
+            LOGGER.info("skill_filter_dropped", skill=s, reason="not a valid Workday skill ID or name")
+
+    content_response = await _search_learning_content(access_token, resolved_skills, [])
     items = content_response.get("data", [])
     enriched = []
     for item in items:
@@ -721,61 +793,17 @@ async def tool_search_learning_content(
             LOGGER.warning("lesson_fetch_failed", content_id=item.get("id"), error=str(exc))
             flattened["lessons"] = []
         enriched.append(flattened)
-    payload = {"success": True, "content": enriched, "total": len(enriched)}
+
+    payload = {
+        "success": True,
+        "content": enriched,
+        "total": len(enriched),
+        "availableSkills": available_skills,
+        "availableCategories": available_categories,
+        "selectedCategory": resolved_category,
+        "selectedSkills": resolved_skills,
+    }
     return _tool_response("Search Workday learning content and fetch associated lessons.", payload)
-
-
-async def tool_prepare_learning_search(ctx: Optional[Context] = None) -> Dict:
-    """Prepare the learning search/browse widget with available skills and topics as filters.
-
-    Returns filter lists so the widget can render clickable chips for skills
-    and topics. The user selects filters and then searches. Result is rendered
-    as the learning-search widget.
-    """
-    try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        access_token = wctx.workday_access_token
-        endpoints = get_endpoints()
-
-        # Fetch a broad set of content to extract unique skills/topics
-        url = endpoints.full_url("/ccx/api/learning/v1/{tenant}/content") + "?limit=100&lifecycleStatus=Active"
-        data = await _fetch_json(url, access_token)
-        items = data.get("data", [])
-
-        skill_map: Dict[str, str] = {}
-        topic_map: Dict[str, str] = {}
-        for item in items:
-            for s in item.get("skills", []):
-                sid = s.get("id")
-                if sid and sid not in skill_map:
-                    skill_map[sid] = s.get("descriptor", sid)
-            for t in item.get("topics", []):
-                tid = t.get("id")
-                if tid and tid not in topic_map:
-                    topic_map[tid] = t.get("descriptor", tid)
-
-        skills = sorted(
-            [{"id": k, "descriptor": v} for k, v in skill_map.items()],
-            key=lambda x: x["descriptor"],
-        )
-        topics = sorted(
-            [{"id": k, "descriptor": v} for k, v in topic_map.items()],
-            key=lambda x: x["descriptor"],
-        )
-        payload = {
-            "success": True,
-            "_widget_hint": "The learning search widget is ready. Acknowledge with one short sentence.",
-            "skills": skills,
-            "topics": topics,
-            "totalSkills": len(skills),
-            "totalTopics": len(topics),
-        }
-        return _tool_response("Learning search filters ready.", payload)
-    except WorkdayApiNotAvailable:
-        return {"success": False, "error": "Learning API is not available for this tenant."}
-    except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_prepare_learning_search_error", error=str(exc))
-        return {"success": False, "error": str(exc)}
 
 
 # ── Provider functions for TaskServer integration ───────────────────
@@ -907,6 +935,9 @@ async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
     """Get the organizational chart for the current worker's supervisory organization."""
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        worker = _transform_worker(wctx.worker_data)
+        current_id = wctx.workday_id
+
         sup_org = wctx.worker_data.get("primaryJob", {}).get("supervisoryOrganization", {})
         org_id = sup_org.get("id")
         if not org_id:
@@ -921,28 +952,45 @@ async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
             org_id=org_id,
         )
         data = await _fetch_json(url, wctx.workday_access_token)
-        members = []
+
+        # Separate members into manager(s), the current worker, and others
+        manager_node = None
+        direct_reports = []
         for item in data.get("data", []):
-            members.append(
-                {
-                    "name": item.get("descriptor"),
-                    "workerId": item.get("id"),
-                    "businessTitle": item.get("businessTitle"),
-                    "email": item.get("primaryWorkEmail"),
-                    "isManager": item.get("isManager"),
-                    "organization": item.get("primarySupervisoryOrganization", {}).get(
-                        "descriptor"
-                    ),
-                }
-            )
+            member = {
+                "name": item.get("descriptor"),
+                "workerId": item.get("id"),
+                "businessTitle": item.get("businessTitle"),
+                "email": item.get("primaryWorkEmail"),
+                "isManager": item.get("isManager"),
+                "organization": item.get("primarySupervisoryOrganization", {}).get(
+                    "descriptor"
+                ),
+            }
+            if item.get("id") == current_id:
+                continue  # skip self — we already have the worker node
+            if item.get("isManager") and not manager_node:
+                manager_node = member
+            else:
+                direct_reports.append(member)
+
         payload = {
             "success": True,
             "organization": sup_org.get("descriptor"),
             "organizationId": org_id,
-            "members": members,
-            "total": len(members),
+            "manager": manager_node,
+            "worker": {
+                "name": worker.get("name"),
+                "businessTitle": worker.get("businessTitle"),
+                "email": worker.get("email"),
+                "workerId": current_id,
+            },
+            "directReports": direct_reports,
+            "total": len(direct_reports),
         }
         return _tool_response("Organization chart for the worker's supervisory org.", payload)
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_org_chart_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -982,6 +1030,8 @@ async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
             "totalTeamMembers": len(team_time_off),
         }
         return _tool_response("Team time-off calendar.", payload)
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_team_calendar_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1017,6 +1067,8 @@ async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
             "teamMembers": members,
         }
         return _tool_response("Team overview dashboard.", payload)
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_team_overview_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1102,6 +1154,8 @@ async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Di
             "openActionItems": len(inbox_tasks),
         }
         return _tool_response("Team performance and review status summary.", payload)
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_team_performance_summary_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1151,6 +1205,8 @@ async def tool_action_inbox_task(
             "result": result,
         }
         return _tool_response("Approve or reject a Workday inbox task.", payload)
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_action_inbox_task_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1183,6 +1239,8 @@ async def tool_get_inbox_task_detail(
             "raw": data,
         }
         return _tool_response("Detailed information about a Workday inbox task.", payload)
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_inbox_task_detail_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1219,6 +1277,8 @@ async def tool_get_goals(ctx: Optional[Context] = None) -> Dict:
         return _tool_response("Worker performance goals.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_goals_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1250,6 +1310,8 @@ async def tool_get_feedback(ctx: Optional[Context] = None) -> Dict:
         return _tool_response("Anytime feedback received.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_feedback_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1307,6 +1369,8 @@ async def tool_give_feedback(
         return _tool_response("Give anytime feedback.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_give_feedback_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1324,13 +1388,16 @@ async def tool_get_feedback_badges(ctx: Optional[Context] = None) -> Dict:
         badges = []
         for item in data.get("data", []):
             badges.append({
-                "id": item.get("id"),
-                "descriptor": item.get("descriptor"),
+                "id": item.get("workdayID") or item.get("id"),
+                "descriptor": item.get("name") or item.get("descriptor"),
+                "badgeId": item.get("feedbackBadgeID"),
             })
         payload = {"success": True, "badges": badges, "total": len(badges)}
         return _tool_response("Available feedback badges.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_feedback_badges_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1362,6 +1429,8 @@ async def tool_get_development_items(ctx: Optional[Context] = None) -> Dict:
         return _tool_response("Worker development items.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_development_items_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1406,92 +1475,14 @@ async def tool_request_feedback_on_self(
         return _tool_response("Request feedback on self.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_request_feedback_on_self_error", error=str(exc))
         return {"success": False, "error": str(exc)}
 
 
 # ── Learning tools ──────────────────────────────────────────────────
-
-
-async def tool_get_learning_content_detail(
-    content_id: str,
-    ctx: Optional[Context] = None,
-) -> Dict:
-    """Get full details for a specific learning content item including all lessons.
-
-    Args:
-        content_id: The Workday Learning content ID (from search_learning_content or learning assignments).
-    """
-    try:
-        access_token = _get_auth_token(ctx)
-        endpoints = get_endpoints()
-        url = endpoints.full_url(
-            "/ccx/api/learning/v1/{tenant}/content/{content_id}",
-            content_id=content_id,
-        )
-        data = await _fetch_json(url, access_token)
-        content = _flatten_content(data)
-        content["workdayURL"] = _workday_learning_url(content_id)
-        # Fetch lessons
-        try:
-            lessons_response = await _get_lessons(access_token, content_id)
-            content["lessons"] = [_flatten_lesson(lesson) for lesson in lessons_response.get("data", [])]
-        except Exception as exc:  # noqa: BLE001
-            LOGGER.warning("lesson_fetch_failed", content_id=content_id, error=str(exc))
-            content["lessons"] = []
-        payload = {"success": True, "content": content}
-        return _tool_response("Learning content detail.", payload)
-    except WorkdayApiNotAvailable:
-        return {"success": False, "error": "Learning API is not available for this tenant."}
-    except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_get_learning_content_detail_error", error=str(exc))
-        return {"success": False, "error": str(exc)}
-
-
-async def tool_enroll_in_learning(
-    content_id: str,
-    ctx: Optional[Context] = None,
-) -> Dict:
-    """Self-enroll in a learning content item.
-
-    Args:
-        content_id: The Workday Learning content ID to enroll in.
-    """
-    try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
-        endpoints = get_endpoints()
-        url = endpoints.full_url(
-            "/ccx/api/learning/v1/{tenant}/manageEnrollments",
-        )
-        body = {
-            "content": {"id": content_id},
-            "learner": {"id": wctx.workday_id},
-        }
-        headers = {
-            "Authorization": f"Bearer {wctx.workday_access_token}",
-            "Content-Type": "application/json",
-        }
-        async with create_async_client() as client:
-            response = await client.post(url, json=body, headers=headers)
-            response.raise_for_status()
-            content_type = response.headers.get("content-type", "")
-            if "application/json" in content_type and response.content:
-                result = response.json()
-            else:
-                result = {"status": "enrolled"}
-        payload = {
-            "success": True,
-            "message": "Successfully enrolled in learning content.",
-            "contentId": content_id,
-            "result": result,
-        }
-        return _tool_response("Enroll in learning.", payload)
-    except WorkdayApiNotAvailable:
-        return {"success": False, "error": "Learning API is not available for this tenant."}
-    except Exception as exc:  # noqa: BLE001
-        LOGGER.error("workday_enroll_in_learning_error", error=str(exc))
-        return {"success": False, "error": str(exc)}
 
 
 async def tool_get_learning_records(
@@ -1530,6 +1521,8 @@ async def tool_get_learning_records(
         return _tool_response("Learning history records.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Learning API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_learning_records_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1564,6 +1557,8 @@ async def tool_get_check_ins(
         return _tool_response("Check-in records.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Staffing Check-ins API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_check_ins_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1618,6 +1613,8 @@ async def tool_create_check_in(
         return _tool_response("Create a check-in.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Staffing Check-ins API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_create_check_in_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1645,6 +1642,8 @@ async def tool_get_check_in_topics(
         return _tool_response("Check-in topics.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Staffing Check-in Topics API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_check_in_topics_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1670,6 +1669,8 @@ async def tool_get_worker_skills(ctx: Optional[Context] = None) -> Dict:
         return _tool_response("Worker skills.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Staffing Skills API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_worker_skills_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1708,6 +1709,8 @@ async def tool_get_team_goals(ctx: Optional[Context] = None) -> Dict:
                         "dueDate": item.get("dueDate"),
                     })
                 return {"worker": name, "workerId": worker_id, "goals": goals}
+            except httpx.HTTPStatusError:
+                raise
             except Exception:  # noqa: BLE001
                 return {"worker": name, "workerId": worker_id, "goals": [], "error": "Could not fetch goals"}
 
@@ -1723,6 +1726,8 @@ async def tool_get_team_goals(ctx: Optional[Context] = None) -> Dict:
         return _tool_response("Team goals summary.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_get_team_goals_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1770,6 +1775,8 @@ async def tool_request_feedback_on_worker(
         return _tool_response("Request feedback on worker.", payload)
     except WorkdayApiNotAvailable:
         return {"success": False, "error": "Performance Enablement API is not available for this tenant."}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:  # noqa: BLE001
         LOGGER.error("workday_request_feedback_on_worker_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1829,8 +1836,9 @@ async def tool_prepare_give_feedback(ctx: Optional[Context] = None) -> Dict:
             badges_data = await _fetch_json(badges_url, wctx.workday_access_token)
             for b in badges_data.get("data", []):
                 badges.append({
-                    "id": b.get("id"),
-                    "descriptor": b.get("descriptor"),
+                    "id": b.get("workdayID") or b.get("id"),
+                    "descriptor": b.get("name") or b.get("descriptor"),
+                    "badgeId": b.get("feedbackBadgeID"),
                 })
         except Exception:
             pass
@@ -1841,6 +1849,8 @@ async def tool_prepare_give_feedback(ctx: Optional[Context] = None) -> Dict:
             "workerName": wctx.worker_data.get("descriptor"),
             "_widget_hint": "Give feedback widget ready.",
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("workday_prepare_give_feedback_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1891,6 +1901,8 @@ async def tool_prepare_create_check_in(ctx: Optional[Context] = None) -> Dict:
             "workerName": wctx.worker_data.get("descriptor"),
             "_widget_hint": "Check-in form ready.",
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("workday_prepare_create_check_in_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1977,23 +1989,30 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "To change a business title, use prepare_change_business_title instead."
         ),
     },
-    {"name": "search_learning_content", "func": tool_search_learning_content, "summary": "Search Workday learning content and fetch associated lessons."},
-    {
-        "name": "prepare_learning_search",
-        "func": tool_prepare_learning_search,
-        "summary": (
-            "Open the learning search/browse widget with skill and topic filters. "
-            "Use this when the user wants to browse or discover learning content."
-        ),
+    {"name": "search_learning_content", "func": tool_search_learning_content, "summary": "Search Workday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Workday IDs automatically; invalid values are dropped.",
         "annotations": {"readOnlyHint": True},
         "meta": {
-            "openai/outputTemplate": "ui://widget/learning-search.html",
-            "openai/toolInvocation/invoking": "Loading learning search\u2026",
-            "openai/toolInvocation/invoked": "Learning search ready.",
+            "openai/outputTemplate": "ui://widget/learning-catalog.html",
+            "openai/toolInvocation/invoking": "Searching learning catalog\u2026",
+            "openai/toolInvocation/invoked": "Learning catalog ready.",
         },
     },
-    {"name": "get_org_chart", "func": tool_get_org_chart, "summary": "Get the organizational chart for the current worker's supervisory organization."},
-    {"name": "get_team_calendar", "func": tool_get_team_calendar, "summary": "Get the team time-off calendar showing who is out in the current worker's team."},
+    {"name": "get_org_chart", "func": tool_get_org_chart, "summary": "Get the organizational chart for the current worker's supervisory organization.",
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/org-chart.html",
+            "openai/toolInvocation/invoking": "Loading org chart\u2026",
+            "openai/toolInvocation/invoked": "Org chart ready.",
+        },
+    },
+    {"name": "get_team_calendar", "func": tool_get_team_calendar, "summary": "Get the team time-off calendar showing who is out in the current worker's team.",
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/outputTemplate": "ui://widget/team-calendar.html",
+            "openai/toolInvocation/invoking": "Loading team calendar\u2026",
+            "openai/toolInvocation/invoked": "Team calendar ready.",
+        },
+    },
     {
         "name": "get_team_overview",
         "func": tool_get_team_overview,
@@ -2010,7 +2029,7 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         "name": "action_inbox_task",
         "func": tool_action_inbox_task,
         "summary": "Approve or reject a Workday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment.",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_inbox_task_detail",
@@ -2040,7 +2059,7 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         "name": "give_feedback",
         "func": tool_give_feedback,
         "summary": "Give anytime feedback to a colleague. Provide worker_id, comment, and optional badge ID (from get_feedback_badges).",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_feedback_badges",
@@ -2063,21 +2082,9 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         "name": "request_feedback_on_self",
         "func": tool_request_feedback_on_self,
         "summary": "Request feedback on yourself from peers and managers. Optionally include a message.",
-        "annotations": {"readOnlyHint": False},
-    },
-    # ── Learning ──
-    {
-        "name": "get_learning_content_detail",
-        "func": tool_get_learning_content_detail,
-        "summary": "Get full details for a learning content item including all lessons, skills, topics, duration, and rating. Provide the content_id.",
         "annotations": {"readOnlyHint": True},
     },
-    {
-        "name": "enroll_in_learning",
-        "func": tool_enroll_in_learning,
-        "summary": "Self-enroll in a learning content item. Provide the content_id from search or assignments.",
-        "annotations": {"readOnlyHint": False},
-    },
+    # ── Learning ──
     {
         "name": "get_learning_records",
         "func": tool_get_learning_records,
@@ -2095,7 +2102,7 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         "name": "create_check_in",
         "func": tool_create_check_in,
         "summary": "Create a 1:1 check-in record. Provide description, date, participant_id, and optional topic_ids.",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_check_in_topics",
@@ -2125,7 +2132,7 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         "name": "request_feedback_on_worker",
         "func": tool_request_feedback_on_worker,
         "summary": "Request feedback on a specific direct report. Provide worker_id and optional comment (manager tool).",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     # ── Prepare (Widget Launchers) ──
     {

@@ -24,7 +24,8 @@
       .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
       .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); }
       .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
-      .event-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+      .event-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; border-radius: 4px; transition: background 0.15s; }
+      .event-row:hover { background: var(--border); }
       .event-row:last-child { border-bottom: none; }
       .event-indicator { width: 4px; height: 28px; border-radius: 2px; flex-shrink: 0; }
       .event-info { flex: 1; min-width: 0; }
@@ -77,6 +78,7 @@
 
       function formatDate(ds) { if (!ds) return ""; try { var d = new Date(ds); return d.toLocaleDateString("en-US", {month: "short", day: "numeric"}); } catch(e) { return ds; } }
       function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
+      var _sortedEvents = [];
 
       function renderCalendar(events) {
         var now = new Date(), year = now.getFullYear(), month = now.getMonth();
@@ -155,6 +157,7 @@
 
         if (entries.length) {
           var sorted = entries.slice().sort(function(a, b) { return new Date(a.startDate || a.start_date || a.date || a.start) - new Date(b.startDate || b.start_date || b.date || b.start); });
+          _sortedEvents = sorted;
           var shown = _isFS ? sorted.length : Math.min(6, sorted.length);
           html += '<div class="card"><div class="section-label" style="display:flex;justify-content:space-between;align-items:center">Upcoming Time Off<span class="action-link" onclick="_askCopilot(\'I would like to request time off\')">+ Request Time Off</span></div>';
           for (var k = 0; k < shown; k++) {
@@ -165,7 +168,7 @@
             var end = ev.endDate || ev.end_date || ev.end || "";
             var dateStr = formatDate(start);
             if (end && end !== start) dateStr += " \u2013 " + formatDate(end);
-            html += '<div class="event-row">';
+            html += '<div class="event-row" data-event-idx="' + k + '">';
             html += '<div class="event-indicator" style="background:' + getTypeColor(type) + '"></div>';
             html += '<div class="event-info"><div class="event-name">' + esc(name) + '</div><div class="event-detail">' + esc(type) + '</div></div>';
             html += '<div class="event-dates">' + esc(dateStr) + '</div>';
@@ -176,6 +179,19 @@
         }
 
         document.getElementById("root").innerHTML = html; reportHeight();
+
+        // Wire up click handlers for event rows
+        var eventRows = document.querySelectorAll('[data-event-idx]');
+        for (var ei = 0; ei < eventRows.length; ei++) {
+          eventRows[ei].addEventListener('click', function() {
+            var idx = parseInt(this.getAttribute('data-event-idx'), 10);
+            var ev = _sortedEvents[idx]; if (!ev) return;
+            var name = ev.workerName || ev.worker_name || ev.name || ev.employee || "Team Member";
+            var type = ev.type || ev.timeOffType || ev.leaveType || "Time Off";
+            var start = ev.startDate || ev.start_date || ev.date || ev.start || "";
+            _askCopilot('Tell me more about ' + name + '\'s upcoming ' + type + ' starting ' + start + '. Show me their worker profile.');
+          });
+        }
       }
 
       async function init() {

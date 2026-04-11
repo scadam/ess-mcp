@@ -11,6 +11,8 @@
         --neg: #ff6b6b; --pill-border: #253040; --card-hover-border: #2a3442;
         --tag-bg: #0f131a; --btn-bg: #152235; --btn-border: #243145;
         --bar-bg: #1a2233; --sn-accent: #3eb489; --sn-glow: rgba(62,180,137,.12);
+        --p-critical: #ff6b6b; --p-high: #f0b232; --p-moderate: #a9b1bd;
+        --p-planning: #7b8fa3; --p-low: #2bd48f;
       }
       :root[data-theme="light"] {
         --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
@@ -18,6 +20,8 @@
         --neg: #d13438; --pill-border: #d0d0d0; --card-hover-border: #c8c8c8;
         --tag-bg: #f5f5f5; --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
         --bar-bg: #e8e8e8; --sn-accent: #2e9968; --sn-glow: rgba(46,153,104,.08);
+        --p-critical: #d13438; --p-high: #ca5010; --p-moderate: #65707d;
+        --p-planning: #8a8a8a; --p-low: #107c10;
       }
       html, body { height: 100%; background: var(--bg); }
       body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg); }
@@ -31,39 +35,62 @@
       .total-label { font-size: 12px; color: var(--muted); font-weight: 400; }
       .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin: 12px 0 6px; }
       .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
-      .pill { font-size: 11px; padding: 3px 10px; border-radius: 999px; font-weight: 600; border: 1px solid var(--pill-border); }
-      .pill-critical { background: rgba(255,107,107,.15); color: var(--neg); border-color: var(--neg); }
-      .pill-high { background: rgba(240,178,50,.15); color: var(--warn); border-color: var(--warn); }
-      .pill-medium { background: rgba(240,220,50,.12); color: #e0c030; border-color: #c0a828; }
-      .pill-low { background: rgba(43,212,143,.12); color: var(--pos); border-color: var(--pos); }
-      .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; font-size: 12px; }
-      .bar-name { width: 90px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
-      .bar-track { flex: 1; height: 16px; background: var(--bar-bg); border-radius: 4px; overflow: hidden; }
-      .bar-fill { height: 100%; background: var(--accent); border-radius: 4px; min-width: 2px; transition: width .3s; }
+      .pill { font-size: 11px; padding: 3px 10px; border-radius: 999px; font-weight: 600; border: 1px solid var(--pill-border); cursor: pointer; transition: opacity .15s, transform .1s; user-select: none; }
+      .pill:hover { transform: scale(1.05); }
+      .pill.active { opacity: 1; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px currentColor; }
+      .pill.dimmed { opacity: .4; }
+      .pill-critical { background: rgba(255,107,107,.15); color: var(--p-critical); border-color: var(--p-critical); }
+      .pill-high { background: rgba(240,178,50,.15); color: var(--p-high); border-color: var(--p-high); }
+      .pill-moderate { background: transparent; color: var(--p-moderate); border-color: var(--p-moderate); }
+      .pill-planning { background: transparent; color: var(--p-planning); border-color: var(--p-planning); }
+      .pill-low { background: rgba(43,212,143,.12); color: var(--p-low); border-color: var(--p-low); }
+
+      /* Stacked bar chart */
+      .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; font-size: 12px; cursor: pointer; }
+      .bar-row:hover .bar-name { color: var(--text); }
+      .bar-row.active .bar-name { color: var(--accent); font-weight: 600; }
+      .bar-name { width: 100px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); transition: color .15s; }
+      .bar-track { flex: 1; height: 18px; background: var(--bar-bg); border-radius: 4px; overflow: hidden; display: flex; }
+      .bar-seg { height: 100%; min-width: 2px; transition: width .3s; position: relative; }
+      .bar-seg:first-child { border-radius: 4px 0 0 4px; }
+      .bar-seg:last-child { border-radius: 0 4px 4px 0; }
+      .bar-seg:only-child { border-radius: 4px; }
       .bar-count { width: 28px; font-weight: 600; font-size: 11px; }
+
+      /* Table */
+      .filters-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+      .filters-row input, .filters-row select { background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; outline: none; }
+      .filters-row input { flex: 1; min-width: 120px; }
+      .filters-row select { min-width: 90px; }
+      .active-filters { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; font-size: 11px; }
+      .active-filter-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--tag-bg); cursor: pointer; }
+      .active-filter-tag:hover { border-color: var(--neg); color: var(--neg); }
+      .clear-all-btn { font-size: 11px; color: var(--accent); cursor: pointer; background: none; border: none; padding: 2px 6px; }
+      .clear-all-btn:hover { text-decoration: underline; }
       table { width: 100%; border-collapse: collapse; font-size: 12px; }
-      th { text-align: left; color: var(--muted); font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+      th { text-align: left; color: var(--muted); font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; padding: 6px 6px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
+      th:hover { color: var(--text); }
+      th .sort-arrow { font-size: 9px; margin-left: 2px; }
       td { padding: 5px 6px; border-bottom: 1px solid var(--border); }
       td.num-link { color: var(--accent); font-weight: 600; cursor: pointer; } td.num-link:hover { text-decoration: underline; }
       td .btn-edit-icon { display: inline-flex; align-items: center; gap: 3px; background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 5px; padding: 2px 6px; font-size: 10px; cursor: pointer; opacity: .6; transition: opacity .15s, background .15s; white-space: nowrap; vertical-align: middle; }
       td .btn-edit-icon:hover { opacity: 1; background: color-mix(in srgb, var(--accent) 12%, transparent); }
       .tag { display: inline-block; padding: 1px 6px; border-radius: 6px; background: var(--tag-bg); border: 1px solid var(--border); font-size: 10px; }
-      .tag.p1 { border-color: var(--neg); color: var(--neg); }
-      .tag.p2 { border-color: var(--warn); color: var(--warn); }
+      .tag.p-critical { border-color: var(--p-critical); color: var(--p-critical); background: rgba(255,107,107,.1); }
+      .tag.p-high { border-color: var(--p-high); color: var(--p-high); background: rgba(240,178,50,.1); }
+      .tag.p-moderate { border-color: var(--p-moderate); color: var(--p-moderate); }
+      .tag.p-planning { border-color: var(--p-planning); color: var(--p-planning); }
+      .tag.p-low { border-color: var(--p-low); color: var(--p-low); background: rgba(43,212,143,.08); }
       .footer { margin-top: 10px; display: flex; gap: 8px; }
       .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer; }
       .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color .15s, border-color .15s; }
       .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
       .loading, .error, .empty { text-align: center; padding: 32px 0; font-size: 13px; color: var(--muted); }
       .error { color: var(--neg); }
-    
-      /* Enhanced interactivity */
-      .card { transition: border-color .2s, box-shadow .2s; }
-      .card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
-      :root[data-theme="dark"] .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.25); }
-      .btn, .maximize-btn, .hub-expand-btn { transition: all .15s ease; }
-      [class*="-row"]:not(.form-grid):not(.field-row):not(.actions):not(.stats-row):not(.bar-row):not(.type-grid):not(.member-row):not(.funnel-row):not(.opp-row):not(.reports-row) { transition: background .15s; }
-      @media (max-width: 480px) { .form-grid, .grid, .meta-grid, .totals-grid, .stats-row { grid-template-columns: 1fr !important; display: grid !important; flex-direction: column; } .stats-row { flex-wrap: wrap; } .stat-card { min-width: 0; } }
+      .showing-count { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+
+      .btn, .maximize-btn { transition: all .15s ease; }
+      @media (max-width: 480px) { .filters-row { flex-direction: column; } .bar-name { width: 70px; font-size: 11px; } }
     </style>
   </head>
   <body>
@@ -84,46 +111,235 @@
       var toolOutput = (window.openai && window.openai.toolOutput) || {};
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
-
-      function prioClass(p) { var n = parseInt(p, 10); if (n <= 1 || /critical/i.test(p)) return "tag p1"; if (n <= 2 || /high/i.test(p)) return "tag p2"; return "tag"; }
       function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
 
-      function render(data) {
-        var root = document.getElementById("root");
-        if (!data || !data.success) { root.innerHTML = '<div class="error">No data available</div>'; reportHeight(); return; }
-        var html = '<div class="total-stat">' + (data.total_open || data.totalOpen || 0) + ' <span class="total-label">open incidents</span></div>';
+      /* Priority config — order, labels, CSS classes, colours */
+      var PRIO_ORDER = ["1 - Critical", "2 - High", "3 - Moderate", "4 - Low", "5 - Planning"];
+      var PRIO_CSS = {
+        "1 - Critical": { pill: "pill-critical", tag: "p-critical", color: "var(--p-critical)" },
+        "2 - High":     { pill: "pill-high",     tag: "p-high",     color: "var(--p-high)" },
+        "3 - Moderate": { pill: "pill-moderate", tag: "p-moderate", color: "var(--p-moderate)" },
+        "4 - Low":      { pill: "pill-low",      tag: "p-low",      color: "var(--p-low)" },
+        "5 - Planning": { pill: "pill-planning", tag: "p-planning", color: "var(--p-planning)" }
+      };
+      function prioKey(p) {
+        if (!p) return "";
+        for (var i = 0; i < PRIO_ORDER.length; i++) { if (p === PRIO_ORDER[i] || p.indexOf(PRIO_ORDER[i]) >= 0) return PRIO_ORDER[i]; }
+        var n = parseInt(p, 10);
+        if (n === 1) return PRIO_ORDER[0]; if (n === 2) return PRIO_ORDER[1];
+        if (n === 3) return PRIO_ORDER[2]; if (n === 4) return PRIO_ORDER[3];
+        if (n === 5) return PRIO_ORDER[4]; return "";
+      }
+      function prioCfg(p) { return PRIO_CSS[prioKey(p)] || { pill: "", tag: "", color: "var(--muted)" }; }
 
-        var prio = data.by_priority || data.byPriority;
-        if (prio) {
-          html += '<div class="section-title">By Priority</div><div class="pills">';
-          var pmap = {"1 - Critical":"pill-critical","2 - High":"pill-high","3 - Medium":"pill-medium","4 - Low":"pill-low"};
-          Object.keys(prio).forEach(function(k) { var cls = pmap[k] || ""; html += '<span class="pill ' + cls + '">' + esc(k) + ': ' + prio[k] + '</span>'; });
-          html += '</div>';
+      /* State */
+      var _data = null;
+      var _allIncidents = [];
+      var _filterPriority = null;   /* null = all */
+      var _filterAssignee = null;   /* null = all */
+      var _filterSearch = "";
+      var _sortCol = "number";
+      var _sortAsc = false;
+
+      function filteredIncidents() {
+        var list = _allIncidents;
+        if (_filterPriority) list = list.filter(function(i) { return prioKey(i.priority) === _filterPriority; });
+        if (_filterAssignee) list = list.filter(function(i) { return (i.assigned_to || "Unassigned") === _filterAssignee; });
+        if (_filterSearch) {
+          var q = _filterSearch.toLowerCase();
+          list = list.filter(function(i) {
+            return (i.number || "").toLowerCase().indexOf(q) >= 0 ||
+                   (i.short_description || "").toLowerCase().indexOf(q) >= 0 ||
+                   (i.assigned_to || "").toLowerCase().indexOf(q) >= 0 ||
+                   (i.category || "").toLowerCase().indexOf(q) >= 0;
+          });
         }
+        list = list.slice();
+        list.sort(function(a, b) {
+          var va, vb;
+          if (_sortCol === "priority") { va = parseInt(a.priority, 10) || 99; vb = parseInt(b.priority, 10) || 99; }
+          else { va = (a[_sortCol] || "").toLowerCase(); vb = (b[_sortCol] || "").toLowerCase(); }
+          if (va < vb) return _sortAsc ? -1 : 1;
+          if (va > vb) return _sortAsc ? 1 : -1;
+          return 0;
+        });
+        return list;
+      }
 
-        var assignee = data.by_assignee || data.byAssignee;
-        if (assignee) {
+      function renderAll() {
+        if (!_data || !_data.success) { document.getElementById("root").innerHTML = '<div class="error">No data available</div>'; reportHeight(); return; }
+        var html = '';
+
+        /* Total */
+        var shown = filteredIncidents();
+        var totalOpen = _data.total_open || 0;
+        html += '<div class="total-stat">' + totalOpen + ' <span class="total-label">open incidents</span></div>';
+
+        /* Priority pills (clickable filter) */
+        var prio = _data.by_priority || {};
+        html += '<div class="section-title">By Priority</div><div class="pills">';
+        PRIO_ORDER.forEach(function(k) {
+          if (!prio[k]) return;
+          var cfg = PRIO_CSS[k] || {};
+          var cls = cfg.pill || "";
+          var active = _filterPriority === k ? " active" : (_filterPriority ? " dimmed" : "");
+          html += '<span class="pill ' + cls + active + '" data-prio="' + esc(k) + '">' + esc(k) + ': ' + prio[k] + '</span>';
+        });
+        /* Also render any priority keys not in PRIO_ORDER */
+        Object.keys(prio).forEach(function(k) {
+          if (PRIO_ORDER.indexOf(k) >= 0) return;
+          var active = _filterPriority === k ? " active" : (_filterPriority ? " dimmed" : "");
+          html += '<span class="pill' + active + '" data-prio="' + esc(k) + '">' + esc(k) + ': ' + prio[k] + '</span>';
+        });
+        html += '</div>';
+
+        /* Stacked bar chart per assignee */
+        var bap = _data.by_assignee_priority || {};
+        var assignee = _data.by_assignee || {};
+        if (Object.keys(assignee).length) {
           html += '<div class="section-title">Assignee Workload</div>';
           var entries = Object.keys(assignee).map(function(k) { return { name: k, count: assignee[k] }; });
           entries.sort(function(a, b) { return b.count - a.count; });
-          var max = entries.length ? entries[0].count : 1;
+          var maxCount = entries.length ? entries[0].count : 1;
           entries.forEach(function(e) {
-            var pct = Math.round((e.count / max) * 100);
-            html += '<div class="bar-row"><span class="bar-name">' + esc(e.name) + '</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div><span class="bar-count">' + e.count + '</span></div>';
+            var activeClass = _filterAssignee === e.name ? " active" : "";
+            html += '<div class="bar-row' + activeClass + '" data-assignee="' + esc(e.name) + '"><span class="bar-name" title="' + esc(e.name) + '">' + esc(e.name) + '</span><div class="bar-track">';
+            var prioBd = bap[e.name] || {};
+            var totalWidth = Math.round((e.count / maxCount) * 100);
+            PRIO_ORDER.forEach(function(pk) {
+              var cnt = prioBd[pk] || 0;
+              if (!cnt) return;
+              var segPct = (cnt / maxCount) * 100;
+              var cfg = PRIO_CSS[pk] || {};
+              html += '<div class="bar-seg" style="width:' + segPct.toFixed(1) + '%;background:' + (cfg.color || 'var(--accent)') + '" title="' + esc(pk) + ': ' + cnt + '"></div>';
+            });
+            /* Any remaining priorities not in PRIO_ORDER */
+            Object.keys(prioBd).forEach(function(pk) {
+              if (PRIO_ORDER.indexOf(pk) >= 0) return;
+              var cnt = prioBd[pk]; if (!cnt) return;
+              var segPct = (cnt / maxCount) * 100;
+              html += '<div class="bar-seg" style="width:' + segPct.toFixed(1) + '%;background:var(--accent)" title="' + esc(pk) + ': ' + cnt + '"></div>';
+            });
+            html += '</div><span class="bar-count">' + e.count + '</span></div>';
           });
         }
 
-        var recent = data.recent_incidents || data.recentIncidents;
-        if (recent && recent.length) {
-          var items = recent.slice(0, 10);
-          html += '<div class="section-title">Recent Incidents</div><table><tr><th>Number</th><th>Description</th><th>Priority</th><th>Assigned To</th><th></th></tr>';
-          items.forEach(function(inc) {
-            html += '<tr><td class="num-link" onclick="_askCopilot(\'Tell me about ServiceNow incident ' + esc(inc.number) + ': ' + esc(inc.short_description || '').replace(/'/g,'\\x27') + '\')">' + esc(inc.number) + '</td><td>' + esc(inc.short_description || "") + '</td><td><span class="' + prioClass(inc.priority) + '">P' + esc(String(inc.priority || "")) + '</span></td><td>' + esc(inc.assigned_to || "—") + '</td><td><button class="btn-edit-icon" onclick="_askCopilot(\'Show me the update form for ServiceNow incident ' + esc(inc.number) + ' so I can update it.\')" title="Open for update"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button></td></tr>';
-          });
-          html += '</table>';
+        /* Active filter tags */
+        if (_filterPriority || _filterAssignee) {
+          html += '<div class="active-filters">';
+          if (_filterPriority) html += '<span class="active-filter-tag" data-clear="priority">' + esc(_filterPriority) + ' &times;</span>';
+          if (_filterAssignee) html += '<span class="active-filter-tag" data-clear="assignee">' + esc(_filterAssignee) + ' &times;</span>';
+          html += '<button class="clear-all-btn" id="clearAllFilters">Clear all</button></div>';
         }
-        root.innerHTML = html;
+
+        /* Search + assignee filter for table */
+        html += '<div class="section-title">Incidents</div>';
+        html += '<div class="filters-row"><input type="text" id="tableSearch" placeholder="Search incidents&hellip;" value="' + esc(_filterSearch) + '" />';
+        html += '<select id="assigneeSelect"><option value="">All assignees</option>';
+        var sortedAssignees = Object.keys(assignee).slice().sort();
+        sortedAssignees.forEach(function(a) {
+          var sel = _filterAssignee === a ? ' selected' : '';
+          html += '<option value="' + esc(a) + '"' + sel + '>' + esc(a) + '</option>';
+        });
+        html += '</select></div>';
+
+        /* Showing count */
+        html += '<div class="showing-count">Showing ' + shown.length + ' of ' + totalOpen + ' incidents</div>';
+
+        /* Sortable table */
+        var cols = [
+          { key: "number", label: "Number" },
+          { key: "short_description", label: "Description" },
+          { key: "priority", label: "Priority" },
+          { key: "assigned_to", label: "Assigned To" },
+          { key: "_actions", label: "" }
+        ];
+        html += '<table><tr>';
+        cols.forEach(function(c) {
+          if (c.key === "_actions") { html += '<th></th>'; return; }
+          var arrow = "";
+          if (_sortCol === c.key) arrow = '<span class="sort-arrow">' + (_sortAsc ? "&#9650;" : "&#9660;") + '</span>';
+          html += '<th data-sort="' + c.key + '">' + c.label + arrow + '</th>';
+        });
+        html += '</tr>';
+
+        shown.forEach(function(inc) {
+          var cfg = prioCfg(inc.priority);
+          var pLabel = prioKey(inc.priority) || ("P" + (inc.priority || "?"));
+          html += '<tr>' +
+            '<td class="num-link" onclick="_askCopilot(\'Tell me about ServiceNow incident ' + esc(inc.number) + '\')">' + esc(inc.number) + '</td>' +
+            '<td>' + esc(inc.short_description || "") + '</td>' +
+            '<td><span class="tag ' + cfg.tag + '">' + esc(pLabel) + '</span></td>' +
+            '<td>' + esc(inc.assigned_to || "\u2014") + '</td>' +
+            '<td><button class="btn-edit-icon" onclick="_askCopilot(\'Show me the update form for ServiceNow incident ' + esc(inc.number) + ' so I can update it.\')" title="Open for update"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button></td>' +
+          '</tr>';
+        });
+        html += '</table>';
+
+        document.getElementById("root").innerHTML = html;
+        bindEvents();
         reportHeight();
+      }
+
+      function bindEvents() {
+        /* Priority pill toggle */
+        document.querySelectorAll('.pill[data-prio]').forEach(function(el) {
+          el.addEventListener('click', function() {
+            var p = this.getAttribute('data-prio');
+            _filterPriority = (_filterPriority === p) ? null : p;
+            renderAll();
+          });
+        });
+        /* Assignee bar click */
+        document.querySelectorAll('.bar-row[data-assignee]').forEach(function(el) {
+          el.addEventListener('click', function() {
+            var a = this.getAttribute('data-assignee');
+            _filterAssignee = (_filterAssignee === a) ? null : a;
+            renderAll();
+          });
+        });
+        /* Clear filter tags */
+        document.querySelectorAll('.active-filter-tag').forEach(function(el) {
+          el.addEventListener('click', function() {
+            var c = this.getAttribute('data-clear');
+            if (c === 'priority') _filterPriority = null;
+            if (c === 'assignee') _filterAssignee = null;
+            renderAll();
+          });
+        });
+        var clearAll = document.getElementById('clearAllFilters');
+        if (clearAll) clearAll.addEventListener('click', function() {
+          _filterPriority = null; _filterAssignee = null; _filterSearch = ""; renderAll();
+        });
+        /* Sort headers */
+        document.querySelectorAll('th[data-sort]').forEach(function(th) {
+          th.addEventListener('click', function() {
+            var col = this.getAttribute('data-sort');
+            if (_sortCol === col) _sortAsc = !_sortAsc;
+            else { _sortCol = col; _sortAsc = true; }
+            renderAll();
+          });
+        });
+        /* Search input */
+        var searchEl = document.getElementById('tableSearch');
+        if (searchEl) {
+          searchEl.addEventListener('input', function() { _filterSearch = this.value; renderAll(); });
+          searchEl.focus();
+          searchEl.setSelectionRange(searchEl.value.length, searchEl.value.length);
+        }
+        /* Assignee dropdown */
+        var assigneeSelect = document.getElementById('assigneeSelect');
+        if (assigneeSelect) assigneeSelect.addEventListener('change', function() {
+          _filterAssignee = this.value || null; renderAll();
+        });
+      }
+
+      function render(data) {
+        _data = data;
+        _allIncidents = (data && data.incidents) || data && data.recent_incidents || [];
+        _filterPriority = null; _filterAssignee = null; _filterSearch = "";
+        _sortCol = "number"; _sortAsc = false;
+        renderAll();
       }
 
       async function load() {
@@ -135,7 +351,7 @@
         } catch (err) { document.getElementById("root").innerHTML = '<div class="error">' + esc(err.message || "Failed to load") + '</div>'; }
       }
 
-      document.getElementById("refreshBtn").addEventListener("click", load);
+      document.getElementById("refreshBtn").addEventListener("click", function() { load(); });
 
       var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
       var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';

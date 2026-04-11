@@ -19,12 +19,12 @@
 
 | Server | Platform | Tools | Widgets | Key Actions |
 |--------|----------|-------|---------|-------------|
-| **Workday** | HR / HCM | 36 | 14 | Book leave, change title, approve/deny inbox tasks, browse learning, give feedback, track goals, create check-ins, view development items, org charts, **team dashboard**, **team goals** |
+| **Workday** | HR / HCM | 33 | 14 | Book leave, change title, approve/deny inbox tasks, browse learning, give feedback, track goals, create check-ins, view development items, org charts, **team dashboard**, **team goals** |
 | **ServiceNow** | ITSM | 39 | 12 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, create KB articles, track SLAs, **team incidents** |
 | **Salesforce** | CRM | 44 | 9 | Create/update opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, activity timeline, **team pipeline** |
 | **Jira** | Project Management | 26 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, manage releases/versions, **team workload** |
 
-> **145 tools total** — 11 open interactive form widgets for user-driven creation (form tools), 34 are widget callbacks that execute when the user submits a form, and the rest provide rich read access and direct actions. 40 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
+> **143 tools total** — 11 open interactive form widgets for user-driven creation (form tools), 34 are widget callbacks that execute when the user submits a form, and the rest provide rich read access and direct actions. 40 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -422,7 +422,7 @@ az group delete --name essmcp-rg --yes --no-wait
 
 > *Employee profiles, leave management, compensation, org hierarchy, learning, and team calendar.*
 
-**Tools (36):**
+**Tools (34):**
 
 | Tool | Type | Description |
 |------|------|-------------|
@@ -439,9 +439,9 @@ az group delete --name essmcp-rg --yes --no-wait
 | `change_business_title` | ⚙️ Callback | Widget callback: submits title change form |
 | `search_learning_content` | 📖 Read | Search the learning library |
 | `prepare_learning_search` | 🖼️ Widget | **Browse learning** — interactive search with skill and topic filters |
-| `get_org_chart` | 📖 Read | Organization hierarchy |
-| `get_team_calendar` | 📖 Read | Team availability calendar |
-| `get_team_overview` | 📖 Read | 👔 **Manager:** Team headcount dashboard with role/org breakdown |
+| `get_org_chart` | 📖 Read | Organization hierarchy (rendered as interactive widget) |
+| `get_team_calendar` | 📖 Read | Team availability calendar (rendered as interactive widget) |
+| `get_team_overview` | 📖 Read | 👔 **Manager:** Team headcount dashboard with role/org breakdown (rendered as interactive widget) |
 | `get_team_performance_summary` | 📖 Read | 👔 **Manager:** Pending reviews, team absences, action items |
 | `action_inbox_task` | ✏️ **Action** | **Approve or reject an inbox task** |
 | `get_inbox_task_detail` | 📖 Read | Get detailed info for a specific inbox task |
@@ -451,9 +451,8 @@ az group delete --name essmcp-rg --yes --no-wait
 | `get_feedback_badges` | 📖 Read | List available feedback badges |
 | `get_development_items` | 📖 Read | Individual development plan items (rendered as interactive widget) |
 | `request_feedback_on_self` | ✏️ **Action** | **Request feedback on yourself from peers** |
-| `get_learning_content_detail` | 📖 Read | Full details for a learning content item |
-| `enroll_in_learning` | ✏️ **Action** | **Self-enroll in a learning content item** |
-| `get_learning_records` | 📖 Read | Learning history with completion status |
+| `get_learning_records` | 📖 Read | Learning history with completion status, grades, and scores |
+
 | `get_check_ins` | 📖 Read | 1:1 check-in records with topics |
 | `create_check_in` | ✏️ **Create** | **Create a 1:1 check-in record** |
 | `get_check_in_topics` | 📖 Read | List check-in topics |

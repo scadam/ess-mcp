@@ -33,7 +33,7 @@ def build_workday_server() -> FastMCP:
     # ── Register resources ──────────────────────────────────────────────
     for name, res in WORKDAY_RESOURCES.items():
         resource_kwargs: dict = {
-            "uri": f"ui://workday/{name}",
+            "uri": f"ui://widget/{name}.html",
             "name": name,
             "description": res["description"],
             "mime_type": res["mime_type"],

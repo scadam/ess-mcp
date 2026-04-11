@@ -12,6 +12,7 @@ from ..auth import get_bearer_token, TokenValidationError
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_salesforce_settings
+import httpx
 
 LOGGER = get_logger(__name__)
 
@@ -229,6 +230,8 @@ async def tool_create_task(
             "created": True,
             "task": _simplify_task(created[0]) if created else {"id": task_id},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_create_task_error", error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -277,6 +280,8 @@ async def tool_update_task(
             "success": True,
             "task": updated[0] if updated else {},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_update_task_error", task_id=task_id, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -363,6 +368,8 @@ async def tool_approve_reject(
             "workItemId": work_item_id,
             "result": result,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_approve_reject_error", work_item_id=work_item_id, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -637,6 +644,8 @@ async def tool_get_case(case_id: str, ctx: Optional[Context] = None) -> Dict[str
                 "created_date": c.get("CreatedDate"),
                 "created_by": c.get("CreatedById"),
             })
+    except httpx.HTTPStatusError:
+        raise
     except Exception:  # noqa: BLE001
         LOGGER.debug("case_comments_fetch_failed")
 
@@ -713,6 +722,8 @@ async def tool_create_case(
             "compliance_types": _COMPLIANCE_TYPES,
         }
 
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_create_case_error", subject=subject, error=str(exc), exc_info=True)
         return {"created": False, "error": f"Failed to create compliance case: {exc}"}
@@ -780,6 +791,8 @@ async def tool_update_case(
             "success": True,
             "case": _simplify_case(updated[0]) if updated else {},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_update_case_error", case_id=case_id, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1099,6 +1112,8 @@ async def tool_create_contact(
             "created": True,
             "contact": _simplify_contact(created[0]) if created else {"id": contact_id},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_create_contact_error", error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -1181,6 +1196,8 @@ async def tool_update_contact(
             "success": True,
             "contact": _simplify_contact(updated[0]) if updated else {"id": contact_id},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_update_contact_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1255,6 +1272,8 @@ async def tool_get_activity_timeline(
             "total_tasks": len(tasks_result),
             "total_events": len(events_result),
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_get_activity_timeline_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1524,6 +1543,8 @@ async def tool_create_opportunity(
             "opportunity": _simplify_opportunity(created[0]) if created else {"id": opp_id},
             "link": f"{instance_url}/{opp_id}" if opp_id else "",
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_create_opportunity_error", error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -1561,6 +1582,8 @@ async def tool_create_opportunity_task(
             "task": _simplify_task(task_records[0]) if task_records else {"id": task_id},
             "opportunity_id": opportunity_id,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_create_opportunity_task_error", error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -1626,6 +1649,8 @@ async def tool_update_opportunity(
             "success": True,
             "opportunity": _simplify_opportunity(updated[0]) if updated else {},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_update_opportunity_error", opportunity_id=opportunity_id, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1704,6 +1729,8 @@ async def tool_create_event(
             "created": True,
             "event": _simplify_event(event_records[0]) if event_records else {"id": event_id},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_create_event_error", error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -1769,6 +1796,8 @@ async def tool_update_event(
             "success": True,
             "event": _simplify_event(updated[0]) if updated else {},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_update_event_error", event_id=event_id, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1978,6 +2007,8 @@ async def tool_create_lead(
             "created": True,
             "lead": _simplify_lead(created[0]) if created else {"id": lead_id},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_create_lead_error", error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -2047,6 +2078,8 @@ async def tool_update_lead(
             "success": True,
             "lead": _simplify_lead(updated[0]) if updated else {},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_update_lead_error", lead_id=lead_id, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -2091,6 +2124,8 @@ async def tool_convert_lead(
             "lead_id": lead_id,
             "result": result,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_convert_lead_error", lead_id=lead_id, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -2196,6 +2231,8 @@ async def tool_get_campaign(campaign_id: str, ctx: Optional[Context] = None) -> 
                 "name": m.get("Name"),
                 "first_responded_date": m.get("FirstRespondedDate"),
             })
+    except httpx.HTTPStatusError:
+        raise
     except Exception:  # noqa: BLE001
         LOGGER.debug("campaign_members_fetch_failed")
 
@@ -2249,6 +2286,8 @@ async def tool_add_campaign_member(
                                 "contact_id": contact_id, "lead_id": lead_id,
                                 "status": status},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_add_campaign_member_error", error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -2350,6 +2389,8 @@ async def tool_create_quote(
             "quote": created[0] if created else {"id": quote_id},
             "opportunity_id": opportunity_id,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_create_quote_error", error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -2401,6 +2442,8 @@ async def tool_update_quote(
             "success": True,
             "quote": updated[0] if updated else {},
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_update_quote_error", quote_id=quote_id, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -2579,6 +2622,8 @@ async def tool_run_report(report_id: str, ctx: Optional[Context] = None) -> Dict
             "fact_map": fact_map,
             "extended_metadata": report_extended,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("salesforce_run_report_error", report_id=report_id, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -2835,13 +2880,13 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "by the task widget after the user clicks Submit. To view or edit a task, "
             "use get_task to load the task widget."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "create_task",
         "func": tool_create_task,
         "summary": "Create a standalone Salesforce task. Optionally link to an account/opportunity (what_id) or contact/lead (who_id).",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_approvals",
@@ -2858,7 +2903,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "summary": (
             "Approve or reject a Salesforce approval work item."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_cases",
@@ -2911,7 +2956,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "called automatically by the compliance case form after the user clicks Submit. "
             "To create a case, use show_compliance_case_form instead."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/compliance-case.html",
             "openai/toolInvocation/invoking": "Raising compliance case\u2026",
@@ -2926,7 +2971,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "called automatically by the case widget after the user clicks Submit. "
             "To view or edit a case, use get_case to load the case widget."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/compliance-case.html",
             "openai/toolInvocation/invoking": "Updating compliance case\u2026",
@@ -2953,13 +2998,13 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "create_contact",
         "func": tool_create_contact,
         "summary": "Create a new Salesforce contact. Optionally link to an account.",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "update_contact",
         "func": tool_update_contact,
         "summary": "Update an existing Salesforce contact. Provide the contact_id and any fields to change.",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_activity_timeline",
@@ -3025,7 +3070,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "called automatically by the opportunity form after the user clicks Submit. "
             "To create an opportunity, use show_create_opportunity_form instead."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/crm-opportunity.html",
             "openai/toolInvocation/invoking": "Creating opportunity\u2026",
@@ -3038,7 +3083,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "summary": (
             "Create a Salesforce task linked to an opportunity."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "update_opportunity",
@@ -3047,7 +3092,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "Submit opportunity updates to Salesforce. Widget callback — "
             "called automatically by the opportunity widget after the user clicks Submit."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/crm-opportunity.html",
             "openai/toolInvocation/invoking": "Updating opportunity\u2026",
@@ -3078,7 +3123,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "called automatically by the event form after the user clicks Submit. "
             "To create an event, use show_create_event_form instead."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/crm-event.html",
             "openai/toolInvocation/invoking": "Creating event\u2026",
@@ -3092,7 +3137,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "Submit event updates to Salesforce. Widget callback — "
             "called automatically by the event widget after the user clicks Submit."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/crm-event.html",
             "openai/toolInvocation/invoking": "Updating event\u2026",
@@ -3140,7 +3185,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "called automatically by the lead form after the user clicks Submit. "
             "To create a lead, use show_create_lead_form instead."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/crm-lead.html",
             "openai/toolInvocation/invoking": "Creating lead\u2026",
@@ -3154,7 +3199,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "Submit lead updates to Salesforce. Widget callback — "
             "called automatically by the lead widget after the user clicks Submit."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/crm-lead.html",
             "openai/toolInvocation/invoking": "Updating lead\u2026",
@@ -3168,7 +3213,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "Convert a Salesforce lead to an account, contact, and optionally "
             "an opportunity."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_campaigns",
@@ -3191,7 +3236,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "name": "add_campaign_member",
         "func": tool_add_campaign_member,
         "summary": "Add a contact or lead to a Salesforce campaign. Provide either contact_id or lead_id.",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "show_create_quote_form",
@@ -3217,7 +3262,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "called automatically by the quote form after the user clicks Submit. "
             "To create a quote, use show_create_quote_form instead."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/crm-quote.html",
             "openai/toolInvocation/invoking": "Creating quote\u2026",
@@ -3231,7 +3276,7 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "Submit quote updates to Salesforce. Widget callback — "
             "called automatically by the quote widget after the user clicks Submit."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/crm-quote.html",
             "openai/toolInvocation/invoking": "Updating quote\u2026",

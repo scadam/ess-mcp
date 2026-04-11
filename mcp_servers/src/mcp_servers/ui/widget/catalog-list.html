@@ -153,10 +153,15 @@
       .overlay-panel .item-layout { display: flex; gap: 16px; align-items: flex-start; }
       .overlay-panel .item-main { flex: 1; min-width: 0; }
       .overlay-panel .item-sidebar { flex-shrink: 0; width: 190px; }
-      .overlay-panel .item-hero { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
-      .overlay-panel .item-picture { width: 130px; height: 100px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
+      .overlay-panel .item-hero { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+      .overlay-panel .item-picture { max-width: 180px; max-height: 140px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); }
       .overlay-panel .item-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
-      .overlay-panel .item-desc p { margin: 0; }
+      .overlay-panel .item-desc p { margin: 0 0 4px; font-size: inherit; }
+      .overlay-panel .item-desc h1, .overlay-panel .item-desc h2, .overlay-panel .item-desc h3,
+      .overlay-panel .item-desc h4, .overlay-panel .item-desc h5, .overlay-panel .item-desc h6 { font-size: inherit; font-weight: 600; margin: 0 0 4px; }
+      .overlay-panel .item-desc ul, .overlay-panel .item-desc ol { margin: 0 0 4px; padding-left: 18px; font-size: inherit; }
+      .overlay-panel .item-desc li { font-size: inherit; }
+      .overlay-panel .item-desc * { max-width: 100%; }
       .overlay-panel .breadcrumb { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
       .overlay-panel .item-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
       .overlay-panel .field-wrap { margin-bottom: 12px; overflow: hidden; }
@@ -336,6 +341,7 @@
         }
 
         function applyFilters() {
+          _inlineVisible = _inlinePageSize;
           var q = (searchEl.value || "").toLowerCase().trim();
           var cat = categoryEl.value || "";
           var sort = sortEl.value || "name_asc";
@@ -392,9 +398,12 @@
             '</div>';
         }
 
+        var _inlinePageSize = 8;
+        var _inlineVisible = _inlinePageSize;
+
         function visibleItems() {
           if (_isFullscreen) return viewItems;
-          return viewItems.slice(0, 4);
+          return viewItems.slice(0, _inlineVisible);
         }
 
         function normalizePictureUrl(picture) {
@@ -447,10 +456,11 @@
 
         function renderItems() {
           renderedItems = visibleItems();
-          if (_isFullscreen || viewItems.length <= renderedItems.length) {
+          var remaining = viewItems.length - renderedItems.length;
+          if (remaining <= 0) {
             summaryEl.textContent = renderedItems.length + " item" + (renderedItems.length === 1 ? "" : "s") + " shown";
           } else {
-            summaryEl.textContent = renderedItems.length + " of " + viewItems.length + " items shown (maximize to view all)";
+            summaryEl.textContent = renderedItems.length + " of " + viewItems.length + " items shown";
           }
 
           if (!renderedItems.length) {
@@ -462,7 +472,19 @@
           var html = '<div class="grid">';
           for (var i = 0; i < renderedItems.length; i++) html += itemCard(renderedItems[i], i);
           html += '</div>';
+          if (remaining > 0 && !_isFullscreen) {
+            html += '<div style="text-align:center;padding:12px 0">' +
+              '<button id="showMoreBtn" class="btn" style="min-width:160px">' +
+              'Show more (' + remaining + ' remaining)</button></div>';
+          }
           contentEl.innerHTML = html;
+          var showMoreBtn = document.getElementById("showMoreBtn");
+          if (showMoreBtn) {
+            showMoreBtn.addEventListener("click", function() {
+              _inlineVisible += _inlinePageSize;
+              renderItems();
+            });
+          }
           bindItemActions();
           reportHeight();
           hydrateMissingPictures();
@@ -751,16 +773,27 @@
           var hiddenInp = document.getElementById('var_' + name + '_value');
           var resultsDiv = document.getElementById('ref_results_' + name);
           if (!input || !resultsDiv) return;
+
+          // If refTable wasn't passed, try to read from DOM
+          if (!refTable) {
+            var wrap = input.closest('.ref-wrap');
+            if (wrap) refTable = wrap.getAttribute('data-ref-table') || '';
+          }
+
           input.addEventListener('input', function() {
             var q = input.value.trim();
             hiddenInp.value = '';
             clearTimeout(_refTimers[name]);
-            if (q.length < 2) { resultsDiv.classList.remove('open'); return; }
             _refTimers[name] = setTimeout(function() { doRefSearch(name, refTable, q); }, 300);
           });
           input.addEventListener('focus', function() {
-            if (input.value.trim().length >= 2 && resultsDiv.children.length > 0)
+            if (resultsDiv.children.length > 0 && !resultsDiv.querySelector('.ref-spinner')) {
               resultsDiv.classList.add('open');
+            } else {
+              var q = input.value.trim();
+              clearTimeout(_refTimers[name]);
+              doRefSearch(name, refTable, q);
+            }
           });
           document.addEventListener('click', function(e) {
             if (!e.target.closest || !e.target.closest('.ref-wrap')) resultsDiv.classList.remove('open');
@@ -859,7 +892,7 @@
           html += '<div class="cart-box"><h5>Shopping Cart</h5><div id="cartSummary" class="cart-empty">Empty</div></div>';
           html += '</div>'; /* order-box */
           if (data.link) {
-            html += '<div style="margin-top:8px;text-align:center;"><a href="' + esc(data.link) + '" target="_blank" rel="noopener" style="font-size:11px;color:var(--accent);text-decoration:none;">Open in ServiceNow &rsaquo;</a></div>';
+            html += '<div style="margin-top:8px;text-align:center;"><button data-openurl="' + esc(data.link) + '" style="font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;text-decoration:none;">Open in ServiceNow &rsaquo;</button></div>';
           }
           html += '</div>'; /* item-sidebar */
           html += '</div>'; /* item-layout */
@@ -890,8 +923,8 @@
           if (!_activeItemData || !_activeItemData.variables) return;
           for (var i = 0; i < _activeItemData.variables.length; i++) {
             var v = _activeItemData.variables[i];
-            if ((v.type === TYPE.REFERENCE || v.friendly_type === 'reference') && v.reference) {
-              setupReferenceSearch(v.name, v.reference);
+            if ((v.type === TYPE.REFERENCE || v.friendly_type === 'reference')) {
+              setupReferenceSearch(v.name, v.reference || '');
             }
           }
         }
@@ -900,6 +933,15 @@
           var cartBtn  = document.getElementById('btnAddToCart');
           if (orderBtn) orderBtn.addEventListener('click', function() { doOrder(); });
           if (cartBtn)  cartBtn.addEventListener('click',  function() { doAddToCart(); });
+          // Wire up all data-openurl buttons (Open in ServiceNow)
+          var openBtns = document.querySelectorAll('[data-openurl]');
+          for (var i = 0; i < openBtns.length; i++) {
+            openBtns[i].addEventListener('click', function(e) {
+              e.stopPropagation();
+              var href = this.getAttribute('data-openurl');
+              if (href && window.openai && typeof window.openai.openUrl === 'function') { window.openai.openUrl(href); } else if (href) { window.open(href, '_blank'); }
+            });
+          }
         }
         function getQuantity() {
           var sel = document.getElementById('qtySelect');
@@ -922,7 +964,7 @@
             var result = (output && output.structuredContent) || output || {};
             if (result.success) {
               var linkHtml = result.link
-                ? ' <a href="' + esc(result.link) + '" target="_blank" rel="noopener">View request ' + esc(result.request_number || '') + '</a>'
+                ? ' <button onclick="if(window.openai&&typeof window.openai.openUrl===\'function\')window.openai.openUrl(\'' + esc(result.link) + '\');else window.open(\'' + esc(result.link) + '\',\'_blank\');" style="background:none;border:none;color:var(--accent);cursor:pointer;text-decoration:underline;font-size:inherit;">View request ' + esc(result.request_number || '') + '</button>'
                 : '';
               overlayResultEl.innerHTML = '<div class="result-msg success">Order submitted successfully!' + linkHtml + '</div>';
             } else {
@@ -1070,7 +1112,7 @@
             _isFullscreen = !_isFullscreen;
             _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg;
             _maxBtn.title = _isFullscreen ? "Restore" : "Maximize";
-            reportHeight();
+            applyFilters();
           } catch (e) {}
         }
 

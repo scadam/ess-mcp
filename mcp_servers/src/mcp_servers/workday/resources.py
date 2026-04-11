@@ -98,10 +98,10 @@ WORKDAY_RESOURCES = {
             }
         },
     },
-    "learning-search": {
-        "description": "Learning search/browse widget – discover content with skill and topic filters, view lessons, and enroll.",
+    "learning-catalog": {
+        "description": "Learning catalog widget – browse and filter learning content by skills, view lessons, and enroll.",
         "mime_type": "text/html+skybridge",
-        "content": _read_widget("learning-search.html"),
+        "content": _read_widget("learning-catalog.html"),
         "meta": {
             "openai/widgetCSP": {
                 "connect_domains": [],

@@ -379,14 +379,14 @@
           var ob = document.getElementById("openBtn");
           if (ob && item.contentURL) {
             ob.addEventListener("click", function() {
-              window.open(item.contentURL, "_blank", "noopener,noreferrer");
+              if (window.openai && typeof window.openai.openUrl === "function") { window.openai.openUrl(item.contentURL); } else { window.open(item.contentURL, "_blank", "noopener,noreferrer"); }
             });
           }
 
           var wb = document.getElementById("wdBtn");
           if (wb && item.workdayURL) {
             wb.addEventListener("click", function() {
-              window.open(item.workdayURL, "_blank", "noopener,noreferrer");
+              if (window.openai && typeof window.openai.openUrl === "function") { window.openai.openUrl(item.workdayURL); } else { window.open(item.workdayURL, "_blank", "noopener,noreferrer"); }
             });
           }
 

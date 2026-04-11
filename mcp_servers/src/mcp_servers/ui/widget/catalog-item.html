@@ -77,10 +77,14 @@
       .item-sidebar { flex-shrink: 0; width: 200px; }
 
       /* Image and description */
-      .item-hero { display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start; }
-      .item-picture { width: 160px; height: 120px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
+      .item-hero { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+      .item-picture { max-width: 200px; max-height: 160px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); }
       .item-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
-      .item-desc p { margin: 0; }
+      .item-desc p { margin: 0 0 4px; font-size: inherit; }
+      .item-desc h1, .item-desc h2, .item-desc h3, .item-desc h4, .item-desc h5, .item-desc h6 { font-size: inherit; font-weight: 600; margin: 0 0 4px; }
+      .item-desc ul, .item-desc ol { margin: 0 0 4px; padding-left: 18px; font-size: inherit; }
+      .item-desc li { font-size: inherit; }
+      .item-desc * { max-width: 100%; }
 
       /* Card */
       .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 12px; }
@@ -577,17 +581,27 @@
         var resultsDiv = document.getElementById('ref_results_' + name);
         if (!input || !resultsDiv) return;
 
+        // If refTable wasn't passed, try to read from DOM
+        if (!refTable) {
+          var wrap = input.closest('.ref-wrap');
+          if (wrap) refTable = wrap.getAttribute('data-ref-table') || '';
+        }
+
         input.addEventListener('input', function() {
           var q = input.value.trim();
           hiddenInput.value = ''; // Clear selection when typing
           clearTimeout(_refTimers[name]);
-          if (q.length < 2) { resultsDiv.classList.remove('open'); return; }
           _refTimers[name] = setTimeout(function() { doRefSearch(name, refTable, q); }, 300);
         });
 
         input.addEventListener('focus', function() {
-          if (input.value.trim().length >= 2 && resultsDiv.children.length > 0) {
+          // Show existing results, or load initial results
+          if (resultsDiv.children.length > 0 && !resultsDiv.querySelector('.ref-spinner')) {
             resultsDiv.classList.add('open');
+          } else {
+            var q = input.value.trim();
+            clearTimeout(_refTimers[name]);
+            doRefSearch(name, refTable, q);
           }
         });
 
@@ -732,7 +746,7 @@
 
         // Open in ServiceNow link
         if (data.link) {
-          html += '<div style="margin-top:8px;text-align:center;"><a href="' + esc(data.link) + '" target="_blank" rel="noopener" style="font-size:11px;color:var(--accent);text-decoration:none;">Open in ServiceNow &rsaquo;</a></div>';
+          html += '<div style="margin-top:8px;text-align:center;"><button data-openurl="' + esc(data.link) + '" style="font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;text-decoration:none;">Open in ServiceNow &rsaquo;</button></div>';
         }
 
         html += '</div>'; // item-sidebar
@@ -776,8 +790,8 @@
         if (!_itemData || !_itemData.variables) return;
         for (var i = 0; i < _itemData.variables.length; i++) {
           var v = _itemData.variables[i];
-          if ((v.type === TYPE.REFERENCE || v.friendly_type === 'reference') && v.reference) {
-            setupReferenceSearch(v.name, v.reference);
+          if (v.type === TYPE.REFERENCE || v.friendly_type === 'reference') {
+            setupReferenceSearch(v.name, v.reference || '');
           }
         }
       }
@@ -789,6 +803,16 @@
 
         if (orderBtn) orderBtn.addEventListener('click', function() { doOrder(); });
         if (cartBtn) cartBtn.addEventListener('click', function() { doAddToCart(); });
+
+        // Wire up all data-openurl buttons (Open in ServiceNow)
+        var openBtns = document.querySelectorAll('[data-openurl]');
+        for (var i = 0; i < openBtns.length; i++) {
+          openBtns[i].addEventListener('click', function(e) {
+            e.stopPropagation();
+            var href = this.getAttribute('data-openurl');
+            if (href && window.openai && typeof window.openai.openUrl === 'function') { window.openai.openUrl(href); } else if (href) { window.open(href, '_blank'); }
+          });
+        }
       }
 
       function getQuantity() {
@@ -816,7 +840,7 @@
           });
           var result = (output && output.structuredContent) || output || {};
           if (result.success) {
-            var linkHtml = result.link ? ' <a href="' + esc(result.link) + '" target="_blank">View request ' + esc(result.request_number || '') + '</a>' : '';
+            var linkHtml = result.link ? ' <button onclick="if(window.openai&&typeof window.openai.openUrl===\'function\')window.openai.openUrl(\'' + esc(result.link) + '\');else window.open(\'' + esc(result.link) + '\',\'_blank\');" style="background:none;border:none;color:var(--accent);cursor:pointer;text-decoration:underline;font-size:inherit;">View request ' + esc(result.request_number || '') + '</button>' : '';
             resultArea.innerHTML = '<div class="result-msg success">Order submitted successfully!' + linkHtml + '</div>';
           } else {
             var errMsg = result.error || 'Order failed.';

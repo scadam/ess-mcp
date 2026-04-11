@@ -1,9 +1,11 @@
 
+import hashlib
 import json
 import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+import httpx
 from fastmcp import Context
 
 from ..auth import get_bearer_token, TokenValidationError
@@ -12,6 +14,30 @@ from ..logging import get_logger
 from ..settings import load_servicenow_settings
 
 LOGGER = get_logger(__name__)
+
+# ── Session cookie storage for ServiceNow cart APIs ─────────────────
+# The Service Catalog cart endpoints are session-based (JSESSIONID).
+# Without persistent cookies each tool call gets a new empty cart.
+_cart_cookies: Dict[str, Dict[str, str]] = {}
+
+
+def _cookie_key(token: str) -> str:
+    """Stable cache key derived from the bearer token."""
+    return hashlib.sha256(token.encode()).hexdigest()[:16]
+
+
+def _get_cart_cookies(token: str) -> Dict[str, str]:
+    """Return stored session cookies for cart API calls."""
+    return dict(_cart_cookies.get(_cookie_key(token), {}))
+
+
+def _save_cart_cookies(token: str, resp: httpx.Response) -> None:
+    """Persist session cookies returned by a cart API response."""
+    key = _cookie_key(token)
+    if key not in _cart_cookies:
+        _cart_cookies[key] = {}
+    for name, value in resp.cookies.items():
+        _cart_cookies[key][name] = value
 
 # ── Incident state display mapping ──────────────────────────────────
 _STATE_MAP: Dict[str, str] = {
@@ -308,6 +334,48 @@ async def _fetch_journal(
     return entries
 
 
+async def _resolve_session_user(
+    token: str,
+    instance_url: str,
+) -> Dict[str, str]:
+    """Resolve the current ServiceNow session user from the bearer token.
+
+    Calls the SN UI user endpoint to determine which SN user the OAuth
+    token belongs to.  Returns a dict with sys_id, name, and user_name,
+    or an empty dict on failure.
+    """
+    url = f"{instance_url}/api/now/ui/user"
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+
+    try:
+        async with create_async_client() as client:
+            resp = await client.get(url, headers=headers)
+            if resp.is_error:
+                LOGGER.warning(
+                    "servicenow_session_user_http_error",
+                    status=resp.status_code,
+                )
+                resp.raise_for_status()
+            body = resp.json()
+        result = body.get("result", {})
+        name = (
+            result.get("user_display_name")
+            or result.get("user_name")
+            or ""
+        )
+        if name:
+            return {
+                "sys_id": result.get("user_sys_id", ""),
+                "name": name,
+                "user_name": result.get("user_name", ""),
+            }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:
+        LOGGER.warning("servicenow_session_user_error", error=str(exc))
+    return {}
+
+
 async def _resolve_user(
     name: str,
     token: str,
@@ -526,8 +594,10 @@ async def tool_update_incident(
                     status_code=resp.status_code,
                     body=body_text,
                 )
-                return {"updated": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+                resp.raise_for_status()
             body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_update_incident_error", error=str(exc))
         return {"updated": False, "error": str(exc)}
@@ -653,6 +723,8 @@ async def tool_create_incident(
     except ValueError as exc:
         LOGGER.error("servicenow_create_incident_user_error", caller=caller, error=str(exc))
         return {"created": False, "error": str(exc)}
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_create_incident_error", caller=caller, error=str(exc), exc_info=True)
         return {"created": False, "error": f"Failed to create incident: {exc}"}
@@ -826,8 +898,10 @@ async def tool_update_task(
                     status_code=resp.status_code,
                     body=body_text,
                 )
-                return {"updated": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+                resp.raise_for_status()
             body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_update_task_error", error=str(exc))
         return {"updated": False, "error": str(exc)}
@@ -1006,8 +1080,10 @@ async def tool_approve_reject(
                     status_code=resp.status_code,
                     body=body_text,
                 )
-                return {"success": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+                resp.raise_for_status()
             body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_approve_reject_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1034,6 +1110,7 @@ async def tool_show_create_incident_form(
     category: Optional[str] = None,
     urgency: Optional[str] = None,
     impact: Optional[str] = None,
+    assignment_group: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict:
     """Show the create-incident form widget.
@@ -1045,16 +1122,21 @@ async def tool_show_create_incident_form(
     Args:
         short_description: Optional pre-fill for the issue summary.
         caller: Optional pre-fill for the caller's display name.
+            When omitted the tool auto-resolves the current ServiceNow
+            session user from the bearer token.
         description: Optional detailed description to pre-fill.
         category: Optional category to pre-select.
         urgency: Optional urgency pre-fill (1=High, 2=Medium, 3=Low).
         impact: Optional impact pre-fill (1=High, 2=Medium, 3=Low).
+        assignment_group: Optional assignment group name to pre-fill.
+            The LLM should intelligently route based on issue context.
     """
+    settings = load_servicenow_settings()
+    token = get_bearer_token(ctx)
+
     prefill: Dict[str, Any] = {}
     if short_description:
         prefill["short_description"] = short_description
-    if caller:
-        prefill["caller"] = caller
     if description:
         prefill["description"] = description
     if category:
@@ -1063,6 +1145,49 @@ async def tool_show_create_incident_form(
         prefill["urgency"] = urgency
     if impact:
         prefill["impact"] = impact
+    if assignment_group:
+        prefill["assignment_group"] = assignment_group
+
+    # Resolve caller: explicit arg > session user
+    if caller:
+        prefill["caller"] = caller
+    else:
+        session_user = await _resolve_session_user(token, settings.instance_url)
+        if session_user.get("name"):
+            prefill["caller"] = session_user["name"]
+
+    # Fetch incident categories from sys_choice so the widget can render
+    # a dynamic dropdown instead of hard-coded options.
+    try:
+        cat_url = f"{settings.instance_url}/api/now/table/sys_choice"
+        cat_params: Dict[str, Any] = {
+            "sysparm_query": (
+                "name=incident^element=category"
+                "^inactive=false^ORDERBYsequence"
+            ),
+            "sysparm_fields": "value,label",
+            "sysparm_limit": 100,
+        }
+        async with create_async_client() as client:
+            cat_resp = await client.get(
+                cat_url,
+                params=cat_params,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+            )
+            if not cat_resp.is_error:
+                cat_body = cat_resp.json()
+                categories = [
+                    {"value": r.get("value", ""), "label": r.get("label", r.get("value", ""))}
+                    for r in cat_body.get("result", [])
+                    if r.get("value")
+                ]
+                if categories:
+                    prefill["_categories"] = categories
+    except Exception:
+        pass  # widget falls back to hardcoded categories
 
     return {
         "_widget_hint": "The form is ready. Acknowledge with one short sentence (e.g. 'Here is the incident creation form.').",
@@ -1129,7 +1254,8 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
             "Create a new incident — opens the interactive creation form "
             "for the user to fill in and submit. Use this when the user asks "
             "to report an issue, create an incident, or log a problem. "
-            "Pass any known details to pre-fill fields."
+            "Pass any known details to pre-fill fields including "
+            "assignment_group for intelligent routing."
         ),
         "func": tool_show_create_incident_form,
         "annotations": {"readOnlyHint": True},
@@ -1148,7 +1274,7 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
         ),
         "func": tool_create_incident,
         "annotations": {
-            "readOnlyHint": False,
+            "readOnlyHint": True,
         },
         "meta": {
             "openai/outputTemplate": "ui://widget/create-incident.html",
@@ -1180,6 +1306,7 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
             "show the user an incident's current state and conversation history."
         ),
         "func": tool_get_incident,
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "update_incident",
@@ -1189,6 +1316,7 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
             "To update an incident, use show_update_incident_form instead."
         ),
         "func": tool_update_incident,
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_tasks",
@@ -1201,6 +1329,9 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
         "annotations": {
             "readOnlyHint": True,
         },
+        "meta": {
+            "openai/outputTemplate": "ui://widget/task-list.html",
+        },
     },
     {
         "name": "update_task",
@@ -1210,7 +1341,7 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
             "or add comments/work notes. Only the sys_id is required -- include "
             "only the fields you want to change."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_approvals",
@@ -1245,7 +1376,7 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
         ),
         "func": tool_approve_reject,
         "annotations": {
-            "readOnlyHint": False,
+            "readOnlyHint": True,
         },
     },
 ]
@@ -1711,6 +1842,20 @@ async def tool_list_catalog_categories(
                 "Accept": "application/json",
             },
         )
+        if resp.status_code == 400:
+            # Fallback: query sc_category table directly
+            LOGGER.warning("servicenow_catalog_categories_fallback", catalog=catalog_sys_id)
+            fb_url = f"{settings.instance_url}/api/now/table/sc_category"
+            fb_params: Dict[str, Any] = {
+                "sysparm_limit": safe_limit,
+                "sysparm_fields": "sys_id,title,description",
+                "sysparm_display_value": "true",
+                "sysparm_query": f"sc_catalog={catalog_sys_id}^active=true^ORDERBYtitle",
+            }
+            resp = await client.get(fb_url, params=fb_params, headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            })
         resp.raise_for_status()
         body = resp.json()
 
@@ -1923,8 +2068,10 @@ async def tool_order_catalog_item(
                     status_code=resp.status_code,
                     body=body_text,
                 )
-                return {"success": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+                resp.raise_for_status()
             body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_order_catalog_item_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1989,12 +2136,14 @@ async def tool_add_to_cart(
             resp = await client.post(
                 url,
                 json=payload,
+                cookies=_get_cart_cookies(token),
                 headers={
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
             )
+            _save_cart_cookies(token, resp)
             if not resp.is_success:
                 body_text = resp.text[:500]
                 LOGGER.error(
@@ -2002,8 +2151,10 @@ async def tool_add_to_cart(
                     status_code=resp.status_code,
                     body=body_text,
                 )
-                return {"success": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+                resp.raise_for_status()
             body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_add_to_cart_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -2044,11 +2195,13 @@ async def tool_get_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
     async with create_async_client() as client:
         resp = await client.get(
             url,
+            cookies=_get_cart_cookies(token),
             headers={
                 "Authorization": f"Bearer {token}",
                 "Accept": "application/json",
             },
         )
+        _save_cart_cookies(token, resp)
         resp.raise_for_status()
         body = resp.json()
 
@@ -2096,12 +2249,14 @@ async def tool_checkout_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
             resp = await client.post(
                 url,
                 json={},
+                cookies=_get_cart_cookies(token),
                 headers={
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
             )
+            _save_cart_cookies(token, resp)
             if not resp.is_success:
                 body_text = resp.text[:500]
                 LOGGER.error(
@@ -2109,8 +2264,10 @@ async def tool_checkout_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
                     status_code=resp.status_code,
                     body=body_text,
                 )
-                return {"success": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+                resp.raise_for_status()
             body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_checkout_cart_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -2118,6 +2275,10 @@ async def tool_checkout_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
     result = body.get("result", {})
     request_number = result.get("request_number", "")
     request_id = result.get("request_id", "")
+
+    # Clear cart cookies after successful checkout
+    key = _cookie_key(token)
+    _cart_cookies.pop(key, None)
 
     return {
         "success": True,
@@ -2146,11 +2307,13 @@ async def tool_delete_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
         async with create_async_client(timeout=60.0) as client:
             resp = await client.delete(
                 url,
+                cookies=_get_cart_cookies(token),
                 headers={
                     "Authorization": f"Bearer {token}",
                     "Accept": "application/json",
                 },
             )
+            _save_cart_cookies(token, resp)
             if not resp.is_success:
                 body_text = resp.text[:500]
                 LOGGER.error(
@@ -2158,10 +2321,16 @@ async def tool_delete_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
                     status_code=resp.status_code,
                     body=body_text,
                 )
-                return {"success": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+                resp.raise_for_status()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_delete_cart_error", error=str(exc))
         return {"success": False, "error": str(exc)}
+
+    # Clear cart cookies after emptying
+    key = _cookie_key(token)
+    _cart_cookies.pop(key, None)
 
     return {"success": True, "message": "Cart emptied."}
 
@@ -2196,16 +2365,20 @@ async def tool_remove_cart_item(
     LOGGER.info("servicenow_remove_cart_item", cart_item_id=cart_item_id)
 
     last_error = ""
+    cookies = _get_cart_cookies(token)
     for url in candidate_urls:
         try:
             async with create_async_client(timeout=60.0) as client:
-                resp = await client.delete(url, headers=headers)
+                resp = await client.delete(url, headers=headers, cookies=cookies)
+                _save_cart_cookies(token, resp)
                 if resp.is_success:
                     return {
                         "success": True,
                         "cart_item_id": cart_item_id,
                     }
                 last_error = f"HTTP {resp.status_code}: {resp.text[:300]}"
+        except httpx.HTTPStatusError:
+            raise
         except Exception as exc:
             last_error = str(exc)
 
@@ -2327,7 +2500,7 @@ async def tool_list_my_requests(
 
 async def tool_search_reference_values(
     table: str,
-    search: str,
+    search: str = "",
     limit: int = 20,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
@@ -2336,10 +2509,11 @@ async def tool_search_reference_values(
     Used to look up values for reference-type catalog variables where
     choices come from a table (e.g. cmdb_ci, sys_user, etc.).
     Returns matching records with sys_id and display value.
+    When search is empty, returns the first records alphabetically.
 
     Args:
         table: The ServiceNow table to search (e.g. cmdb_ci, sys_user).
-        search: Search text to match against the table's display field.
+        search: Search text to match against display fields. Empty returns initial results.
         limit: Maximum results to return (default 20, max 50).
     """
     settings = load_servicenow_settings()
@@ -2347,16 +2521,28 @@ async def tool_search_reference_values(
 
     safe_limit = max(1, min(int(limit), 50))
 
-    # Use the display_value endpoint with search
     url = f"{settings.instance_url}/api/now/table/{table}"
+
+    # Build query: empty search returns first records; otherwise search
+    # name and short_description for broader matching.
+    search_text = (search or "").strip()
+    if search_text:
+        query = (
+            f"nameLIKE{search_text}"
+            f"^ORshort_descriptionLIKE{search_text}"
+            f"^ORDERBYname"
+        )
+    else:
+        query = "ORDERBYname"
+
     params: Dict[str, Any] = {
         "sysparm_limit": safe_limit,
         "sysparm_fields": "sys_id,name",
         "sysparm_display_value": "true",
-        "sysparm_query": f"nameLIKE{search}^ORDERBYname",
+        "sysparm_query": query,
     }
 
-    LOGGER.info("servicenow_search_reference", table=table, search=search)
+    LOGGER.info("servicenow_search_reference", table=table, search=search_text)
 
     async with create_async_client() as client:
         resp = await client.get(
@@ -2372,10 +2558,13 @@ async def tool_search_reference_values(
 
     results = []
     for raw in body.get("result", []):
+        display_name = raw.get("name", "")
+        if not display_name:
+            display_name = raw.get("short_description", "") or raw.get("sys_id", "")
         results.append(
             {
                 "sys_id": raw.get("sys_id", ""),
-                "name": raw.get("name", ""),
+                "name": display_name,
             }
         )
 
@@ -2689,6 +2878,8 @@ async def tool_create_change_request(
                 )
                 resp.raise_for_status()
             body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_create_change_request_error", error=str(exc), exc_info=True)
         return {"created": False, "error": f"Failed to create change request: {exc}"}
@@ -2805,7 +2996,7 @@ async def tool_update_change_request(
                     status_code=resp.status_code,
                     body=body_text,
                 )
-                return {"updated": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+                resp.raise_for_status()
 
             # Fetch the updated record
             get_resp = await client.get(
@@ -2819,6 +3010,8 @@ async def tool_update_change_request(
                 body = get_resp.json()
             else:
                 body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_update_change_request_error", error=str(exc))
         return {"updated": False, "error": str(exc)}
@@ -3132,6 +3325,8 @@ async def tool_create_problem(
                 )
                 resp.raise_for_status()
             body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_create_problem_error", error=str(exc), exc_info=True)
         return {"created": False, "error": f"Failed to create problem: {exc}"}
@@ -3235,7 +3430,7 @@ async def tool_update_problem(
                     status_code=resp.status_code,
                     body=body_text,
                 )
-                return {"updated": False, "error": f"HTTP {resp.status_code}: {body_text}"}
+                resp.raise_for_status()
 
             # Fetch the updated record
             get_resp = await client.get(
@@ -3249,6 +3444,8 @@ async def tool_update_problem(
                 body = get_resp.json()
             else:
                 body = resp.json()
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_update_problem_error", error=str(exc))
         return {"updated": False, "error": str(exc)}
@@ -3451,7 +3648,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_order_catalog_item,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
         },
         {
@@ -3463,7 +3660,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_add_to_cart,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
         },
         {
@@ -3490,7 +3687,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_checkout_cart,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
         },
         {
@@ -3501,7 +3698,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_delete_cart,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
         },
         {
@@ -3512,7 +3709,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_remove_cart_item,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
         },
         {
@@ -3597,7 +3794,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_create_change_request,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
             "meta": {
                 "openai/outputTemplate": "ui://widget/create-change-request.html",
@@ -3613,7 +3810,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_update_change_request,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
             "meta": {
                 "openai/outputTemplate": "ui://widget/create-change-request.html",
@@ -3682,7 +3879,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_create_problem,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
             "meta": {
                 "openai/outputTemplate": "ui://widget/create-problem.html",
@@ -3698,7 +3895,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_update_problem,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
             "meta": {
                 "openai/outputTemplate": "ui://widget/create-problem.html",
@@ -3793,6 +3990,7 @@ async def tool_get_team_incidents(
         by_priority: Dict[str, int] = {}
         by_state: Dict[str, int] = {}
         by_assignee: Dict[str, int] = {}
+        by_assignee_priority: Dict[str, Dict[str, int]] = {}
 
         for inc in incidents:
             p = inc.get("priority") or "Unknown"
@@ -3804,7 +4002,9 @@ async def tool_get_team_incidents(
             a = inc.get("assigned_to") or "Unassigned"
             by_assignee[a] = by_assignee.get(a, 0) + 1
 
-        recent_incidents = incidents[:10]
+            if a not in by_assignee_priority:
+                by_assignee_priority[a] = {}
+            by_assignee_priority[a][p] = by_assignee_priority[a].get(p, 0) + 1
 
         return {
             "success": True,
@@ -3812,9 +4012,12 @@ async def tool_get_team_incidents(
             "by_priority": by_priority,
             "by_state": by_state,
             "by_assignee": by_assignee,
-            "recent_incidents": recent_incidents,
+            "by_assignee_priority": by_assignee_priority,
+            "incidents": incidents,
             "_instance_url": settings.instance_url,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_get_team_incidents_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -3913,6 +4116,8 @@ async def tool_get_team_approvals(
             },
             "approvals": approvals,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_get_team_approvals_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -3977,7 +4182,11 @@ async def tool_get_sla_status(
 
         for raw in raw_results:
             _dv = lambda f: (raw.get(f) or {}).get("display_value", "")  # noqa: E731
-            pct = float(_dv("percentage") or 0)
+            pct_str = (_dv("percentage") or "0").replace(",", "")
+            try:
+                pct = float(pct_str)
+            except (ValueError, TypeError):
+                pct = 0.0
             has_breached = _dv("has_breached").lower() == "true"
             if has_breached:
                 breached_count += 1
@@ -4003,6 +4212,8 @@ async def tool_get_sla_status(
             "at_risk": at_risk_count,
             "compliant": len(sla_records) - breached_count - at_risk_count,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_get_sla_status_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -4070,6 +4281,8 @@ async def tool_create_knowledge_article(
             },
             "message": f"Knowledge article '{title}' created as draft.",
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("servicenow_create_knowledge_article_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -4129,7 +4342,7 @@ SERVICENOW_TOOL_SPECS.extend(
             ),
             "func": tool_create_knowledge_article,
             "annotations": {
-                "readOnlyHint": False,
+                "readOnlyHint": True,
             },
         },
     ]

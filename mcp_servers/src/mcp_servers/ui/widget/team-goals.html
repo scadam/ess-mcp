@@ -133,8 +133,8 @@
           teamData.forEach(function(member, mIdx) {
             var goals = member.goals || [];
             html += '<div class="member-section"><div class="member-header" data-m="' + mIdx + '">' +
-              '<div class="avatar">' + esc(initials(member.descriptor || member.name || member.workerName)) + '</div>' +
-              '<div class="info"><div class="name">' + esc(member.descriptor || member.name || member.workerName) + '</div>' +
+              '<div class="avatar">' + esc(initials(member.descriptor || member.worker || member.name || member.workerName)) + '</div>' +
+              '<div class="info"><div class="name">' + esc(member.descriptor || member.worker || member.name || member.workerName) + '</div>' +
               '<div class="role">' + esc(member.businessTitle || member.title || "") + '</div></div>' +
               '<span class="goal-count">' + goals.length + ' goal' + (goals.length !== 1 ? 's' : '') + '</span>' +
               '<span class="chevron" id="chev-' + mIdx + '">&#9654;</span></div>';
@@ -183,12 +183,12 @@
             var toolData = window.openai && window.openai.toolOutput;
             if (toolData) {
               var td = typeof toolData === "string" ? JSON.parse(toolData) : toolData;
-              teamData = td.team || td.members || td.data || [];
+              teamData = td.teamGoals || td.team || td.members || td.data || [];
             }
             if (teamData.length === 0 && window.openai && window.openai.callTool) {
               var out = await window.openai.callTool("get_team_goals", {});
               var d = out && out.structuredContent ? out.structuredContent : out;
-              teamData = (d && (d.team || d.members)) ? (d.team || d.members) : [];
+              teamData = (d && (d.teamGoals || d.team || d.members)) ? (d.teamGoals || d.team || d.members) : [];
             }
             renderAgg();
             render();

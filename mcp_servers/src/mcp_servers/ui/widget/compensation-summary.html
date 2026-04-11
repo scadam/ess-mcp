@@ -18,14 +18,16 @@
       .total-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; text-align: center; }
       .total-value { font-size: 18px; font-weight: 700; color: var(--wd-accent); }
       .total-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
-      .comp-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+      .comp-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; border-radius: 4px; transition: background 0.15s; }
+      .comp-row:hover { background: var(--border); }
       .comp-row:last-child { border-bottom: none; }
       .comp-name { font-size: 12px; font-weight: 600; flex: 1; min-width: 0; }
       .comp-type { font-size: 10px; color: var(--wd-accent); font-weight: 600; text-transform: uppercase; margin: 0 8px; flex-shrink: 0; }
       .comp-amount { font-size: 13px; font-weight: 700; color: var(--pos); flex-shrink: 0; }
       .timeline { position: relative; padding-left: 18px; }
       .timeline::before { content: ''; position: absolute; left: 5px; top: 4px; bottom: 4px; width: 2px; background: var(--border); border-radius: 2px; }
-      .tl-item { position: relative; padding-bottom: 12px; }
+      .tl-item { position: relative; padding-bottom: 12px; cursor: pointer; border-radius: 4px; transition: background 0.15s; }
+      .tl-item:hover { background: var(--border); }
       .tl-item:last-child { padding-bottom: 0; }
       .tl-dot { position: absolute; left: -18px; top: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--wd-accent); border: 2px solid var(--card); }
       .tl-date { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
@@ -67,6 +69,8 @@
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
       function money(n, cur) { var x = Number(n || 0); if (isNaN(x)) return String(n || "\u2014"); var sym = (cur === "EUR" ? "\u20ac" : cur === "GBP" ? "\u00a3" : "$"); return sym + x.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
+      var _components = [], _history = [];
 
       function render(d) {
         if (!d) { document.getElementById("root").innerHTML = '<div class="loading">No compensation data available.</div>'; reportHeight(); return; }
@@ -76,6 +80,7 @@
         var total = d.totalCompensation || d.total_compensation || d.total || (Number(base) + Number(bonus));
         var components = d.components || d.compensationComponents || d.plans || [];
         var history = d.history || d.compensationHistory || d.changes || [];
+        _components = components; _history = history;
 
         var html = '<div class="card"><div class="section-label">Overview</div><div class="totals-grid">';
         html += '<div class="total-cell"><div class="total-value">' + money(base, currency) + '</div><div class="total-label">Base Salary</div></div>';
@@ -93,7 +98,7 @@
             var cName = c.name || c.planName || c.component || c.descriptor || "Component";
             var cType = c.type || c.category || c.frequency || "";
             var cAmt = c.amount || c.value || c.annualAmount || 0;
-            html += '<div class="comp-row"><div class="comp-name">' + esc(cName) + '</div>';
+            html += '<div class="comp-row" data-comp-idx="' + i + '"><div class="comp-name">' + esc(cName) + '</div>';
             if (cType) html += '<div class="comp-type">' + esc(cType) + '</div>';
             html += '<div class="comp-amount">' + money(cAmt, currency) + '</div></div>';
           }
@@ -109,7 +114,7 @@
             var hDate = h.date || h.effectiveDate || h.effective_date || "";
             var hDesc = h.description || h.reason || h.changeReason || h.type || "Compensation Change";
             var hAmt = h.amount || h.newAmount || h.new_amount || "";
-            html += '<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">' + esc(hDate) + '</div><div class="tl-desc">' + esc(hDesc) + '</div>';
+            html += '<div class="tl-item" data-hist-idx="' + j + '"><div class="tl-dot"></div><div class="tl-date">' + esc(hDate) + '</div><div class="tl-desc">' + esc(hDesc) + '</div>';
             if (hAmt) html += '<div class="tl-amount">' + money(hAmt, currency) + '</div>';
             html += '</div>';
           }
@@ -118,6 +123,28 @@
         }
 
         document.getElementById("root").innerHTML = html; reportHeight();
+
+        // Wire up click handlers for comp rows
+        var compRows = document.querySelectorAll('[data-comp-idx]');
+        for (var ci = 0; ci < compRows.length; ci++) {
+          compRows[ci].addEventListener('click', function() {
+            var idx = parseInt(this.getAttribute('data-comp-idx'), 10);
+            var c = _components[idx]; if (!c) return;
+            var cName = c.name || c.planName || c.component || c.descriptor || "Component";
+            _askCopilot('Tell me more about my "' + cName + '" compensation component. What does it include and how is it calculated?');
+          });
+        }
+        // Wire up click handlers for history items
+        var histItems = document.querySelectorAll('[data-hist-idx]');
+        for (var hi = 0; hi < histItems.length; hi++) {
+          histItems[hi].addEventListener('click', function() {
+            var idx = parseInt(this.getAttribute('data-hist-idx'), 10);
+            var h = _history[idx]; if (!h) return;
+            var hDesc = h.description || h.reason || h.changeReason || h.type || "Compensation Change";
+            var hDate = h.date || h.effectiveDate || h.effective_date || "";
+            _askCopilot('Tell me more about my compensation change: "' + hDesc + '"' + (hDate ? ' effective ' + hDate : '') + '. What was the reason and impact?');
+          });
+        }
       }
 
       async function init() {

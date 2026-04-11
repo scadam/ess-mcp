@@ -218,8 +218,7 @@ function notifyHeight(){if(window.openai&&typeof window.openai.notifyIntrinsicHe
 function openLink(url){
   if(!url)return;
   if(window.openai&&typeof window.openai.openUrl==='function'){window.openai.openUrl(url);return;}
-  var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';
-  a.style.display='none';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  window.open(url,'_blank');
 }
 
 function priClass(p){

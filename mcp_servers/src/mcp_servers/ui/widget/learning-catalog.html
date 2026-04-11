@@ -1,0 +1,762 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --input-bg: #0f131a;
+        --btn-bg: #152235; --btn-border: #243145; --btn-hover: #1a2d44;
+        --wd-accent: #f68620; --wd-glow: rgba(246,134,32,.12);
+        --ok: #2bd48f; --warn: #f0b232; --danger: #ff6b6b;
+        --overlay-bg: rgba(0,0,0,.55);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --input-bg: #ffffff;
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0; --btn-hover: #e4e4e4;
+        --wd-accent: #c2670d; --wd-glow: rgba(194,103,13,.08);
+        --ok: #107c10; --warn: #ca5010; --danger: #d13438;
+        --overlay-bg: rgba(0,0,0,.3);
+      }
+      html, body { height: 100%; background: var(--bg); }
+      body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text); }
+      .wrap { padding: 16px; box-sizing: border-box; min-height: 100%; }
+
+      /* Header */
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+      .header-left { display: flex; align-items: center; gap: 10px; }
+      .wd-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--wd-glow); border: 1px solid var(--wd-accent); display: flex; align-items: center; justify-content: center; }
+      .title { font-size: 16px; font-weight: 600; }
+      .subtitle { font-size: 12px; color: var(--muted); }
+      .header-actions { display: flex; gap: 6px; }
+
+      /* Skill filter chips */
+      .filter-section { margin-bottom: 10px; }
+      .filter-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+      .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; max-height: 120px; overflow-y: auto; }
+      .filter-chip {
+        font-size: 11px; border: 1px solid var(--border); border-radius: 999px;
+        padding: 3px 10px; color: var(--muted); cursor: pointer; user-select: none;
+        transition: all .15s;
+      }
+      .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+      .filter-chip.active { background: color-mix(in srgb, var(--accent) 15%, transparent); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+      .filter-chip .usage-badge { font-size: 10px; opacity: .6; margin-left: 2px; }
+      .filter-chip.active .usage-badge { opacity: .8; }
+      .clear-link { font-size: 11px; color: var(--accent); cursor: pointer; margin-left: 6px; text-decoration: underline; }
+      .clear-link:hover { opacity: .8; }
+
+      /* Category select */
+      .category-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+      .category-select {
+        box-sizing: border-box; background: var(--input-bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px;
+        min-width: 180px; max-width: 300px;
+      }
+
+      /* Search bar */
+      .search-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+      .search-row .input { flex: 1; min-width: 160px; }
+      .input {
+        box-sizing: border-box; background: var(--input-bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px;
+      }
+      .btn {
+        background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border);
+        border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer;
+        white-space: nowrap; transition: all .15s;
+      }
+      .btn:hover { background: var(--btn-hover); }
+      .btn-accent { background: color-mix(in srgb, var(--accent) 15%, transparent); border-color: var(--accent); color: var(--accent); }
+      .btn-accent:hover { background: color-mix(in srgb, var(--accent) 25%, transparent); }
+      .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+      .summary { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+
+      /* Tab bar for view toggle */
+      .tab-bar { display: flex; gap: 2px; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
+      .tab {
+        font-size: 12px; padding: 6px 14px; cursor: pointer; color: var(--muted);
+        border-bottom: 2px solid transparent; transition: all .15s; user-select: none;
+      }
+      .tab:hover { color: var(--text); }
+      .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+      /* Content grid */
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+      .card {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 10px; overflow: hidden; cursor: pointer;
+        transition: border-color .2s, box-shadow .2s, transform .15s;
+      }
+      .card:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); box-shadow: 0 4px 16px rgba(0,0,0,.1); transform: translateY(-1px); }
+      :root[data-theme="dark"] .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.3); }
+      .card-img { width: 100%; height: 110px; object-fit: cover; background: var(--input-bg); display: block; }
+      .card-body { padding: 10px 12px 12px; }
+      .card-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .card-type { font-size: 10px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; margin-bottom: 4px; }
+      .card-desc { font-size: 11px; color: var(--muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px; }
+      .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+      .card-chips { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+      .chip { font-size: 9px; border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; color: var(--muted); white-space: nowrap; }
+      .chip-topic { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+      .chip-skill { color: var(--wd-accent); border-color: color-mix(in srgb, var(--wd-accent) 40%, var(--border)); }
+      .card-rating { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--warn); white-space: nowrap; }
+      .card-meta-row { display: flex; gap: 8px; font-size: 10px; color: var(--muted); margin-bottom: 6px; }
+      .meta-badge { display: inline-flex; align-items: center; gap: 3px; }
+      .meta-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+      .dot-open { background: var(--ok); }
+      .dot-closed { background: var(--danger); }
+      .dot-active { background: var(--ok); }
+      .dot-inactive { background: var(--muted); }
+      .card-lessons { font-size: 10px; color: var(--muted); }
+
+      /* List view */
+      .list { display: flex; flex-direction: column; gap: 6px; }
+      .list-item {
+        display: flex; gap: 12px; background: var(--card); border: 1px solid var(--border);
+        border-radius: 10px; padding: 10px 12px; cursor: pointer;
+        transition: border-color .2s, box-shadow .2s;
+      }
+      .list-item:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+      .list-thumb { width: 80px; height: 60px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--input-bg); }
+      .list-body { flex: 1; min-width: 0; }
+      .list-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+      .list-meta { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+      .list-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+
+      /* Overlay / detail panel */
+      .overlay { display: none; position: fixed; inset: 0; z-index: 100; background: var(--overlay-bg); backdrop-filter: blur(3px); }
+      .overlay.open { display: flex; align-items: center; justify-content: center; }
+      .overlay-panel {
+        background: var(--bg); border: 1px solid var(--border); border-radius: 14px;
+        width: 92%; max-width: 620px; max-height: 85vh; overflow-y: auto;
+        box-shadow: 0 12px 48px rgba(0,0,0,.25); padding: 0;
+      }
+      :root[data-theme="dark"] .overlay-panel { box-shadow: 0 12px 48px rgba(0,0,0,.5); }
+      .panel-hero { width: 100%; height: 140px; object-fit: cover; display: block; border-radius: 14px 14px 0 0; background: var(--input-bg); }
+      .panel-content { padding: 16px 20px 20px; }
+      .panel-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+      .panel-title { font-size: 17px; font-weight: 700; flex: 1; }
+      .panel-close { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; color: var(--muted); cursor: pointer; font-size: 13px; flex-shrink: 0; margin-left: 8px; }
+      .panel-close:hover { color: var(--accent); border-color: var(--accent); }
+      .panel-type { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; margin-bottom: 6px; }
+      .panel-desc { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+      .panel-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+      .pm-field .pm-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin: 0; }
+      .pm-field .pm-value { font-size: 12px; font-weight: 500; margin: 2px 0 0; }
+      .panel-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+
+      /* Lessons inside overlay */
+      .lessons-section { border-top: 1px solid var(--border); padding-top: 10px; }
+      .lessons-title {
+        font-size: 13px; font-weight: 600; cursor: pointer; user-select: none;
+        display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+      }
+      .lessons-title .arrow { transition: transform .2s; display: inline-block; font-size: 10px; }
+      .lessons-title.open .arrow { transform: rotate(90deg); }
+      .lessons-body { display: none; }
+      .lessons-body.open { display: block; }
+      .lesson {
+        padding: 8px 10px; border-left: 2px solid var(--border);
+        margin-left: 4px; margin-bottom: 6px; cursor: pointer;
+        transition: border-color .15s;
+      }
+      .lesson:hover { border-left-color: var(--accent); }
+      .lesson-name { font-size: 12px; font-weight: 600; }
+      .lesson-meta { font-size: 10px; color: var(--muted); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+      .lesson-tag { font-size: 9px; border: 1px solid var(--border); border-radius: 999px; padding: 1px 6px; }
+      .lesson-required { color: var(--warn); border-color: var(--warn); }
+      .lesson-optional { color: var(--muted); }
+
+      /* Lesson detail sub-overlay */
+      .lesson-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: var(--overlay-bg); backdrop-filter: blur(2px); }
+      .lesson-overlay.open { display: flex; align-items: center; justify-content: center; }
+      .lesson-panel {
+        background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+        width: 88%; max-width: 480px; max-height: 70vh; overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0,0,0,.2); padding: 16px 20px;
+      }
+      .lp-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+      .lp-title { font-size: 15px; font-weight: 600; flex: 1; }
+      .lp-close { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 3px 7px; color: var(--muted); cursor: pointer; font-size: 12px; margin-left: 8px; }
+      .lp-close:hover { color: var(--accent); border-color: var(--accent); }
+      .lp-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+      .lp-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+      .lp-instructors { font-size: 11px; margin-bottom: 8px; }
+      .lp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+      .panel-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+      .loading, .empty, .error { text-align: center; padding: 24px 0; color: var(--muted); font-size: 13px; }
+      .error { color: var(--danger); }
+
+      .icon-btn {
+        background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px;
+        padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      }
+      .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+      @media (max-width: 480px) {
+        .grid { grid-template-columns: 1fr !important; }
+        .panel-meta, .lp-meta { grid-template-columns: 1fr !important; }
+        .overlay-panel { width: 96%; max-height: 90vh; }
+        .lesson-panel { width: 94%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="header-left">
+          <div class="wd-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--wd-accent)">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="title">Learning Catalog</div>
+            <div class="subtitle" id="subtitleEl">Workday &middot; Courses &amp; Content</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="viewToggle" title="Toggle view">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+          </button>
+          <button class="icon-btn" id="maximizeBtn" title="Maximize">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Category + Skill filter -->
+      <div class="filter-section" id="filterSection" style="display:none">
+        <div class="category-row">
+          <span class="filter-label">Category</span>
+          <select class="category-select" id="categorySelect">
+            <option value="">All Categories</option>
+          </select>
+          <span class="clear-link" id="clearFilters" style="display:none">Clear skills</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="filter-label">Skills</span>
+        </div>
+        <div class="filter-chips" id="skillChips"></div>
+      </div>
+
+      <!-- Search bar -->
+      <div class="search-row">
+        <input id="searchInput" class="input" placeholder="Filter by name or description&hellip;" />
+        <button class="btn btn-accent btn-sm" id="reloadBtn" title="Re-search with selected skills">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="vertical-align:middle;margin-right:3px"><path d="M1 1v5h5"/><path d="M3.51 10a5 5 0 1 0 .49-5.5L1 6"/></svg>
+          Reload
+        </button>
+      </div>
+
+      <div id="summary" class="summary"></div>
+      <div id="contentArea"><div class="loading">Loading learning content&hellip;</div></div>
+    </div>
+
+    <!-- Course detail overlay -->
+    <div class="overlay" id="courseOverlay">
+      <div class="overlay-panel" id="coursePanel"></div>
+    </div>
+
+    <!-- Lesson detail sub-overlay -->
+    <div class="lesson-overlay" id="lessonOverlay">
+      <div class="lesson-panel" id="lessonPanel"></div>
+    </div>
+
+    <script>
+      (function() {
+        "use strict";
+
+        var toolOutput = (window.openai && window.openai.toolOutput) || {};
+        var rawContent = (toolOutput.content) || [];
+        var availableSkills = (toolOutput.availableSkills) || [];
+        var availableCategories = (toolOutput.availableCategories) || [];
+        var selectedCategory = (toolOutput.selectedCategory) || "";
+        var filteredContent = [];
+        var selectedSkillIds = (toolOutput.selectedSkills) || [];
+        var viewMode = "grid"; // grid | list
+        var _isFullscreen = false;
+
+        var subtitleEl = document.getElementById("subtitleEl");
+        var filterSection = document.getElementById("filterSection");
+        var categorySelect = document.getElementById("categorySelect");
+        var skillChipsEl = document.getElementById("skillChips");
+        var clearFiltersEl = document.getElementById("clearFilters");
+        var searchInput = document.getElementById("searchInput");
+        var reloadBtn = document.getElementById("reloadBtn");
+        var summaryEl = document.getElementById("summary");
+        var contentArea = document.getElementById("contentArea");
+        var courseOverlay = document.getElementById("courseOverlay");
+        var coursePanel = document.getElementById("coursePanel");
+        var lessonOverlay = document.getElementById("lessonOverlay");
+        var lessonPanel = document.getElementById("lessonPanel");
+        var viewToggle = document.getElementById("viewToggle");
+        var maxBtn = document.getElementById("maximizeBtn");
+
+        function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+        function stripHtml(s) { if (!s) return ""; return s.replace(/<[^>]*>/g, "").trim(); }
+        function reportHeight() {
+          if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") {
+            window.openai.notifyIntrinsicHeight(document.body.scrollHeight);
+          }
+        }
+
+        // Build category dropdown
+        function renderCategories() {
+          categorySelect.innerHTML = '<option value="">All Categories</option>';
+          for (var i = 0; i < availableCategories.length; i++) {
+            var opt = document.createElement("option");
+            opt.value = availableCategories[i];
+            opt.textContent = availableCategories[i];
+            if (availableCategories[i] === selectedCategory) opt.selected = true;
+            categorySelect.appendChild(opt);
+          }
+        }
+
+        // Get skills visible for the current category
+        function getVisibleSkills() {
+          var cat = categorySelect.value;
+          if (!cat) return availableSkills;
+          return availableSkills.filter(function(s) { return s.category === cat; });
+        }
+
+        // Skill filter chips
+        function renderSkillChips() {
+          var hasAny = availableSkills.length || availableCategories.length;
+          if (!hasAny) { filterSection.style.display = "none"; return; }
+          filterSection.style.display = "block";
+          var visible = getVisibleSkills().slice().sort(function(a, b) {
+            return (b.usageCount || 0) - (a.usageCount || 0) || (a.descriptor || "").localeCompare(b.descriptor || "");
+          });
+          skillChipsEl.innerHTML = "";
+          for (var i = 0; i < visible.length; i++) {
+            var sk = visible[i];
+            var ch = document.createElement("span");
+            ch.className = "filter-chip" + (selectedSkillIds.indexOf(sk.id) >= 0 ? " active" : "");
+            var label = esc(sk.descriptor || sk.id);
+            var count = sk.usageCount || 0;
+            ch.innerHTML = label + (count ? ' <span class="usage-badge">(' + count + ')</span>' : '');
+            ch.setAttribute("data-id", sk.id);
+            ch.addEventListener("click", function() {
+              var id = this.getAttribute("data-id");
+              var idx = selectedSkillIds.indexOf(id);
+              if (idx >= 0) selectedSkillIds.splice(idx, 1); else selectedSkillIds.push(id);
+              renderSkillChips();
+              applyFilters();
+            });
+            skillChipsEl.appendChild(ch);
+          }
+          clearFiltersEl.style.display = selectedSkillIds.length ? "inline" : "none";
+          reportHeight();
+        }
+
+        categorySelect.addEventListener("change", function() {
+          selectedCategory = categorySelect.value;
+          // When switching category, clear skills that don't belong to the new category
+          if (selectedCategory) {
+            var catSkillIds = {};
+            for (var i = 0; i < availableSkills.length; i++) {
+              if (availableSkills[i].category === selectedCategory) catSkillIds[availableSkills[i].id] = true;
+            }
+            selectedSkillIds = selectedSkillIds.filter(function(id) { return catSkillIds[id]; });
+          }
+          renderSkillChips();
+          applyFilters();
+        });
+
+        clearFiltersEl.addEventListener("click", function() {
+          selectedSkillIds = [];
+          renderSkillChips();
+          applyFilters();
+        });
+
+        // Text + chip filtering (client-side)
+        function applyFilters() {
+          var q = (searchInput.value || "").toLowerCase().trim();
+          filteredContent = rawContent.filter(function(item) {
+            // Text filter
+            if (q) {
+              var inName = (item.descriptor || "").toLowerCase().indexOf(q) >= 0;
+              var inDesc = stripHtml(item.description || "").toLowerCase().indexOf(q) >= 0;
+              var inTopics = (item.topics || []).join(" ").toLowerCase().indexOf(q) >= 0;
+              if (!inName && !inDesc && !inTopics) return false;
+            }
+            // Skill chip filter (match if ANY selected skill present in item.skills)
+            if (selectedSkillIds.length) {
+              var itemSkills = item.skills || [];
+              var found = false;
+              for (var i = 0; i < selectedSkillIds.length; i++) {
+                for (var j = 0; j < itemSkills.length; j++) {
+                  if (itemSkills[j].toLowerCase() === (getSkillName(selectedSkillIds[i]) || "").toLowerCase()) { found = true; break; }
+                }
+                if (found) break;
+              }
+              if (!found) return false;
+            }
+            return true;
+          });
+          renderContent();
+        }
+
+        function getSkillName(id) {
+          for (var i = 0; i < availableSkills.length; i++) {
+            if (availableSkills[i].id === id) return availableSkills[i].descriptor || id;
+          }
+          return id;
+        }
+
+        searchInput.addEventListener("input", applyFilters);
+        searchInput.addEventListener("keydown", function(e) { if (e.key === "Enter") applyFilters(); });
+
+        // Reload with selected skill IDs and category via callTool
+        reloadBtn.addEventListener("click", async function() {
+          contentArea.innerHTML = '<div class="loading">Searching with selected skills&hellip;</div>';
+          summaryEl.textContent = "";
+          reportHeight();
+          try {
+            if (!window.openai || typeof window.openai.callTool !== "function") throw new Error("Skybridge not available");
+            var params = {};
+            if (selectedSkillIds.length) params.skills = selectedSkillIds;
+            if (categorySelect.value) params.category = categorySelect.value;
+            var out = await window.openai.callTool("search_learning_content", params);
+            var data = out && out.structuredContent ? out.structuredContent : out;
+            rawContent = (data && data.content) ? data.content : [];
+            if (data && data.availableSkills) availableSkills = data.availableSkills;
+            if (data && data.availableCategories) availableCategories = data.availableCategories;
+            selectedCategory = (data && data.selectedCategory) || "";
+            selectedSkillIds = (data && data.selectedSkills) || [];
+            renderCategories();
+            renderSkillChips();
+            applyFilters();
+          } catch (e) {
+            contentArea.innerHTML = '<div class="error">' + esc(e && e.message ? e.message : "Search failed") + '</div>';
+            reportHeight();
+          }
+        });
+
+        // Stars
+        function starsHtml(rating) {
+          if (!rating) return "";
+          var r = parseFloat(rating); if (isNaN(r)) return "";
+          var html = "";
+          for (var i = 1; i <= 5; i++) html += i <= Math.round(r) ? "★" : "☆";
+          return html + " " + r.toFixed(1);
+        }
+
+        // Render content
+        function renderContent() {
+          summaryEl.textContent = filteredContent.length + " course" + (filteredContent.length === 1 ? "" : "s") +
+            (rawContent.length !== filteredContent.length ? " (of " + rawContent.length + " total)" : "");
+          subtitleEl.textContent = "Workday · " + rawContent.length + " items loaded";
+
+          if (!filteredContent.length) {
+            contentArea.innerHTML = '<div class="empty">No courses match your filters.</div>';
+            reportHeight(); return;
+          }
+          if (viewMode === "list") renderList(); else renderGrid();
+          reportHeight();
+        }
+
+        function renderGrid() {
+          var html = '<div class="grid">';
+          for (var i = 0; i < filteredContent.length; i++) html += gridCard(filteredContent[i], i);
+          html += "</div>";
+          contentArea.innerHTML = html;
+          bindCardClicks();
+        }
+
+        function renderList() {
+          var html = '<div class="list">';
+          for (var i = 0; i < filteredContent.length; i++) html += listItem(filteredContent[i], i);
+          html += "</div>";
+          contentArea.innerHTML = html;
+          bindCardClicks();
+        }
+
+        function gridCard(item, idx) {
+          var desc = stripHtml(item.description || "");
+          var chips = chipHtml(item);
+          var rating = starsHtml(item.averageRating);
+          var status = item.availabilityStatus || "";
+          var dotClass = status.toLowerCase() === "open" ? "dot-open" : "dot-closed";
+          var lessonCount = (item.lessons || []).length;
+
+          var imgTag = item.imageURL
+            ? '<img class="card-img" src="' + esc(item.imageURL) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" /><div style="display:none;width:100%;height:110px;background:var(--input-bg);align-items:center;justify-content:center;color:var(--muted);font-size:28px;">📚</div>'
+            : '<div style="width:100%;height:110px;background:var(--input-bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:28px;border-radius:0;">📚</div>';
+
+          return '<div class="card" data-idx="' + idx + '">' +
+            imgTag +
+            '<div class="card-body">' +
+              '<div class="card-type">' + esc(item.contentType || "Content") + '</div>' +
+              '<div class="card-name">' + esc(item.descriptor || "Untitled") + '</div>' +
+              '<div class="card-meta-row">' +
+                '<span class="meta-badge"><span class="meta-dot ' + dotClass + '"></span> ' + esc(status) + '</span>' +
+                (item.deliveryMode ? '<span>' + esc(item.deliveryMode) + '</span>' : '') +
+                (item.skillLevel ? '<span>' + esc(item.skillLevel) + '</span>' : '') +
+              '</div>' +
+              (desc ? '<div class="card-desc">' + esc(desc) + '</div>' : '') +
+              '<div class="card-footer">' +
+                '<div class="card-chips">' + chips + '</div>' +
+                (rating ? '<div class="card-rating">' + rating + '</div>' : '') +
+              '</div>' +
+              (lessonCount ? '<div class="card-lessons">' + lessonCount + ' lesson' + (lessonCount > 1 ? 's' : '') + '</div>' : '') +
+            '</div></div>';
+        }
+
+        function listItem(item, idx) {
+          var desc = stripHtml(item.description || "");
+          var meta = [item.contentType, item.deliveryMode, item.skillLevel].filter(Boolean).join(" · ");
+          var chips = chipHtml(item);
+          var rating = starsHtml(item.averageRating);
+          var lessonCount = (item.lessons || []).length;
+
+          var thumbTag = item.imageURL
+            ? '<img class="list-thumb" src="' + esc(item.imageURL) + '" onerror="this.outerHTML=\'<div class=list-thumb style=display:flex;align-items:center;justify-content:center;font-size:20px>📚</div>\'" />'
+            : '<div class="list-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;">📚</div>';
+
+          return '<div class="list-item" data-idx="' + idx + '">' +
+            thumbTag +
+            '<div class="list-body">' +
+              '<div class="list-name">' + esc(item.descriptor || "Untitled") +
+                (rating ? ' <span style="font-size:11px;color:var(--warn);">' + rating + '</span>' : '') +
+              '</div>' +
+              '<div class="list-meta">' + esc(meta) +
+                (lessonCount ? ' · ' + lessonCount + ' lessons' : '') +
+              '</div>' +
+              '<div class="list-chips">' + chips + '</div>' +
+            '</div></div>';
+        }
+
+        function chipHtml(item) {
+          var html = "";
+          var topics = item.topics || [];
+          var skills = item.skills || [];
+          for (var j = 0; j < Math.min(topics.length, 3); j++) html += '<span class="chip chip-topic">' + esc(topics[j]) + '</span>';
+          for (var i = 0; i < Math.min(skills.length, 2); i++) html += '<span class="chip chip-skill">' + esc(skills[i]) + '</span>';
+          return html;
+        }
+
+        function bindCardClicks() {
+          var els = contentArea.querySelectorAll(".card, .list-item");
+          for (var i = 0; i < els.length; i++) {
+            els[i].addEventListener("click", function() {
+              var idx = parseInt(this.getAttribute("data-idx"), 10);
+              openCourseDetail(filteredContent[idx]);
+            });
+          }
+        }
+
+        // Course detail overlay
+        function openCourseDetail(item) {
+          if (!item) return;
+
+          var imgTag = item.imageURL
+            ? '<img class="panel-hero" src="' + esc(item.imageURL) + '" onerror="this.style.display=\'none\'" />'
+            : '';
+
+          var desc = stripHtml(item.description || "");
+          var tags = "";
+          var topics = item.topics || []; var skills = item.skills || [];
+          for (var j = 0; j < topics.length; j++) tags += '<span class="chip chip-topic">' + esc(topics[j]) + '</span>';
+          for (var i = 0; i < skills.length; i++) tags += '<span class="chip chip-skill">' + esc(skills[i]) + '</span>';
+          if (item.learningCatalogs) {
+            for (var c = 0; c < item.learningCatalogs.length; c++) tags += '<span class="chip">' + esc(item.learningCatalogs[c]) + '</span>';
+          }
+
+          var rating = starsHtml(item.averageRating);
+          var ratingField = rating ? '<div class="pm-field"><p class="pm-label">Rating</p><p class="pm-value" style="color:var(--warn)">' + rating + (item.ratingCount ? ' (' + item.ratingCount + ')' : '') + '</p></div>' : '';
+
+          var lessons = item.lessons || [];
+          var lessonsHtml = "";
+          if (lessons.length) {
+            lessonsHtml = '<div class="lessons-section">' +
+              '<div class="lessons-title" id="lessonsToggle"><span class="arrow">▶</span> ' + lessons.length + ' Lesson' + (lessons.length > 1 ? 's' : '') + '</div>' +
+              '<div class="lessons-body" id="lessonsBody">';
+            for (var k = 0; k < lessons.length; k++) {
+              var ls = lessons[k];
+              var lmeta = [];
+              if (ls.contentType) lmeta.push(ls.contentType);
+              if (ls.duration) lmeta.push(ls.duration);
+              if (ls.instructors && ls.instructors.length) lmeta.push(ls.instructors.join(", "));
+              lessonsHtml += '<div class="lesson" data-lesson-idx="' + k + '">' +
+                '<div style="display:flex;align-items:center;gap:6px;">' +
+                  '<span class="lesson-tag ' + (ls.required ? 'lesson-required' : 'lesson-optional') + '">' + (ls.required ? 'Required' : 'Optional') + '</span>' +
+                  '<span class="lesson-name">' + esc((ls.order ? ls.order + '. ' : '') + (ls.descriptor || 'Lesson ' + (k+1))) + '</span>' +
+                '</div>' +
+                (lmeta.length ? '<div class="lesson-meta">' + esc(lmeta.join(" · ")) + '</div>' : '') +
+              '</div>';
+            }
+            lessonsHtml += '</div></div>';
+          }
+
+          var contacts = (item.contactPersons || []).join(", ");
+
+          coursePanel.innerHTML = imgTag +
+            '<div class="panel-content">' +
+              '<div class="panel-header">' +
+                '<div class="panel-title">' + esc(item.descriptor || "Course Detail") + '</div>' +
+                '<button class="panel-close" id="closeCourse">✕</button>' +
+              '</div>' +
+              '<div class="panel-type">' + esc(item.contentType || "") + '</div>' +
+              (desc ? '<div class="panel-desc">' + esc(desc) + '</div>' : '') +
+              '<div class="panel-meta">' +
+                pmField("Provider", item.contentProvider) +
+                pmField("Delivery", item.deliveryMode) +
+                pmField("Skill Level", item.skillLevel) +
+                pmField("Access", item.accessType) +
+                pmField("Status", item.lifecycleStatus) +
+                pmField("Availability", item.availabilityStatus) +
+                pmField("Created", item.createdOnDate) +
+                pmField("Course #", item.contentNumber) +
+                ratingField +
+                pmField("Contact", contacts) +
+                pmField("Languages", (item.languages || []).join(", ") || null) +
+              '</div>' +
+              (tags ? '<div class="panel-tags">' + tags + '</div>' : '') +
+              lessonsHtml +
+              '<div class="panel-actions">' +
+                (item.contentURL ? '<button class="btn btn-accent btn-sm" data-openurl="' + esc(item.contentURL) + '">Open in Workday</button>' : '') +
+              '</div>' +
+            '</div>';
+
+          courseOverlay.className = "overlay open";
+
+          document.getElementById("closeCourse").addEventListener("click", closeCourseDetail);
+          courseOverlay.addEventListener("click", function(e) { if (e.target === courseOverlay) closeCourseDetail(); });
+          // Wire up openUrl buttons in course overlay
+          var openBtns = courseOverlay.querySelectorAll('[data-openurl]');
+          for (var ob = 0; ob < openBtns.length; ob++) {
+            openBtns[ob].addEventListener('click', function(e) {
+              e.stopPropagation();
+              var href = this.getAttribute('data-openurl');
+              if (href && window.openai && typeof window.openai.openUrl === 'function') { window.openai.openUrl(href); } else if (href) { window.open(href, '_blank'); }
+            });
+          }
+
+          // Lessons toggle
+          var lt = document.getElementById("lessonsToggle");
+          var lb = document.getElementById("lessonsBody");
+          if (lt && lb) {
+            // Auto-open lessons
+            lt.classList.add("open"); lb.classList.add("open");
+            lt.addEventListener("click", function() { lt.classList.toggle("open"); lb.classList.toggle("open"); });
+            // Lesson click -> sub-overlay
+            var lessonEls = lb.querySelectorAll(".lesson");
+            for (var m = 0; m < lessonEls.length; m++) {
+              lessonEls[m].addEventListener("click", function(ev) {
+                ev.stopPropagation();
+                var li = parseInt(this.getAttribute("data-lesson-idx"), 10);
+                openLessonDetail(lessons[li]);
+              });
+            }
+          }
+          reportHeight();
+        }
+
+        function closeCourseDetail() { courseOverlay.className = "overlay"; reportHeight(); }
+
+        function pmField(label, value) {
+          if (!value) return "";
+          return '<div class="pm-field"><p class="pm-label">' + label + '</p><p class="pm-value">' + esc(String(value)) + '</p></div>';
+        }
+
+        // Lesson detail sub-overlay
+        function openLessonDetail(ls) {
+          if (!ls) return;
+          var desc = stripHtml(ls.description || "");
+          var meta = [];
+          if (ls.contentType) meta.push(ls.contentType);
+          if (ls.duration) meta.push(ls.duration);
+          if (ls.activityType) meta.push(ls.activityType);
+
+          var instructorHtml = "";
+          if (ls.instructors && ls.instructors.length) {
+            instructorHtml = '<div class="lp-instructors"><strong>Instructors:</strong> ' + esc(ls.instructors.join(", ")) + '</div>';
+          }
+
+          var materialsHtml = "";
+          if (ls.materials && ls.materials.length && ls.materials[0]) {
+            materialsHtml = '<div style="font-size:11px;margin-bottom:8px;"><strong>Materials:</strong> ' + esc(ls.materials.join(", ")) + '</div>';
+          }
+
+          lessonPanel.innerHTML =
+            '<div class="lp-header">' +
+              '<div class="lp-title">' + esc((ls.order ? 'Lesson ' + ls.order + ': ' : '') + (ls.descriptor || "Lesson")) + '</div>' +
+              '<button class="lp-close" id="closeLs">✕</button>' +
+            '</div>' +
+            '<div style="margin-bottom:8px;">' +
+              '<span class="lesson-tag ' + (ls.required ? 'lesson-required' : 'lesson-optional') + '">' + (ls.required ? 'Required' : 'Optional') + '</span>' +
+            '</div>' +
+            '<div class="lp-meta">' +
+              pmField("Type", ls.contentType) +
+              pmField("Duration", ls.duration) +
+              pmField("Activity", ls.activityType) +
+              pmField("Attendance", ls.trackAttendance ? "Tracked" : null) +
+              pmField("Grades", ls.trackGrades ? "Tracked" : null) +
+              pmField("Location", ls.location) +
+            '</div>' +
+            (desc ? '<div class="lp-desc">' + esc(desc) + '</div>' : '') +
+            instructorHtml +
+            materialsHtml +
+            '<div class="lp-actions">' +
+              (ls.contentURL ? '<button class="btn btn-accent btn-sm" data-openurl="' + esc(ls.contentURL) + '">Open Content</button>' : '') +
+              (ls.virtualClassroomURL ? '<button class="btn btn-sm" data-openurl="' + esc(ls.virtualClassroomURL) + '">Join Virtual Class</button>' : '') +
+            '</div>';
+
+          lessonOverlay.className = "lesson-overlay open";
+          document.getElementById("closeLs").addEventListener("click", closeLessonDetail);
+          lessonOverlay.addEventListener("click", function(e) { if (e.target === lessonOverlay) closeLessonDetail(); });
+          // Wire up openUrl buttons in lesson overlay
+          var lsBtns = lessonOverlay.querySelectorAll('[data-openurl]');
+          for (var lb2 = 0; lb2 < lsBtns.length; lb2++) {
+            lsBtns[lb2].addEventListener('click', function(e) {
+              e.stopPropagation();
+              var href = this.getAttribute('data-openurl');
+              if (href && window.openai && typeof window.openai.openUrl === 'function') { window.openai.openUrl(href); } else if (href) { window.open(href, '_blank'); }
+            });
+          }
+        }
+
+        function closeLessonDetail() { lessonOverlay.className = "lesson-overlay"; }
+
+        // View toggle
+        var _gridSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>';
+        var _listSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="3" x2="15" y2="3"/><line x1="5" y1="8" x2="15" y2="8"/><line x1="5" y1="13" x2="15" y2="13"/><rect x="1" y="1.5" width="2" height="2" rx=".5"/><rect x="1" y="6.5" width="2" height="2" rx=".5"/><rect x="1" y="11.5" width="2" height="2" rx=".5"/></svg>';
+        viewToggle.addEventListener("click", function() {
+          viewMode = viewMode === "grid" ? "list" : "grid";
+          viewToggle.innerHTML = viewMode === "grid" ? _gridSvg : _listSvg;
+          viewToggle.title = viewMode === "grid" ? "Switch to list" : "Switch to grid";
+          renderContent();
+        });
+
+        // Fullscreen
+        var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
+        var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
+        maxBtn.addEventListener("click", async function() {
+          if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return;
+          try {
+            await window.openai.requestDisplayMode({ mode: _isFullscreen ? "inline" : "fullscreen" });
+            _isFullscreen = !_isFullscreen;
+            maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg;
+            maxBtn.title = _isFullscreen ? "Restore" : "Maximize";
+            reportHeight();
+          } catch (e) {}
+        });
+
+        // Init
+        filteredContent = rawContent.slice();
+        renderCategories();
+        renderSkillChips();
+        renderContent();
+      })();
+    </script>
+  </body>
+</html>

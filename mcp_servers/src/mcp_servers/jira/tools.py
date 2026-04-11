@@ -11,6 +11,7 @@ from ..auth import TokenValidationError, get_bearer_token
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_jira_settings
+import httpx
 
 LOGGER = get_logger(__name__)
 
@@ -296,6 +297,8 @@ async def tool_add_comment(
             "commentId": result.get("id"),
             "issueKey": key,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_add_comment_error", key=key, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -361,6 +364,8 @@ async def tool_transition_issue(
             ),
             "issue": _simplify_issue(updated),
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_transition_error", key=key, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -419,6 +424,8 @@ async def tool_create_project(
                 "self": result.get("self"),
             },
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_create_project_error", name=name, error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -469,6 +476,8 @@ async def tool_update_project(
                 "self": updated.get("self"),
             },
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_update_project_error", key=key, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -535,6 +544,8 @@ async def tool_create_issue(
             "created": True,
             "issue": _simplify_issue(raw),
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_create_issue_error", project=project_key, error=str(exc))
         return {"created": False, "error": str(exc)}
@@ -593,6 +604,8 @@ async def tool_update_issue(
             "issueKey": key,
             "issue": result,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_update_issue_error", key=key, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -628,6 +641,8 @@ async def tool_move_issues_to_sprint(
             "issues_moved": issue_keys,
             "count": len(issue_keys),
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_move_issues_to_sprint_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -670,6 +685,8 @@ async def tool_link_issues(
             "inward_issue": inward_issue_key,
             "outward_issue": outward_issue_key,
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_link_issues_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -903,6 +920,8 @@ async def tool_log_work(
             "timeSpent": result.get("timeSpent", time_spent),
             "author": (result.get("author", {}) or {}).get("displayName"),
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_log_work_error", key=key, error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1039,6 +1058,8 @@ async def tool_create_version(
                 "releaseDate": result.get("releaseDate"),
             },
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_create_version_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1093,6 +1114,8 @@ async def tool_update_version(
                 "releaseDate": result.get("releaseDate"),
             },
         }
+    except httpx.HTTPStatusError:
+        raise
     except Exception as exc:
         LOGGER.error("jira_update_version_error", error=str(exc))
         return {"success": False, "error": str(exc)}
@@ -1458,7 +1481,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "Add a comment to a Jira issue. Also used as a widget callback by "
             "the issue widget when the user submits a comment."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "transition_issue",
@@ -1468,7 +1491,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "first to see available transitions and their IDs. Also used as a "
             "widget callback by the issue widget."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "show_create_project_form",
@@ -1493,7 +1516,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "called automatically by the project form after the user clicks Submit. "
             "To create a project, use show_create_project_form instead."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/create-project.html",
             "openai/toolInvocation/invoking": "Creating Jira project\u2026",
@@ -1504,7 +1527,7 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "update_project",
         "func": tool_update_project,
         "summary": "Submit project updates to Jira. Widget callback — called automatically by the project widget after the user clicks Submit.",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/create-project.html",
             "openai/toolInvocation/invoking": "Updating project\u2026",
@@ -1519,7 +1542,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "called automatically by the issue form after the user clicks Submit. "
             "To create an issue, use show_create_issue_form instead."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/jira-issue.html",
             "openai/toolInvocation/invoking": "Creating Jira issue\u2026",
@@ -1534,7 +1557,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "called automatically by the issue widget after the user clicks Submit. "
             "To view or edit an issue, use get_issue to load the issue widget."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/jira-issue.html",
             "openai/toolInvocation/invoking": "Updating Jira issue\u2026",
@@ -1548,7 +1571,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "Move one or more issues into a sprint. Provide the sprint ID "
             "(from list_sprints) and a list of issue keys."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "link_issues",
@@ -1558,7 +1581,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "'Blocks', 'Cloners', 'Duplicate', 'Relates'. "
             "The inward issue is the one that IS blocked/cloned/etc."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "list_boards",
@@ -1617,7 +1640,7 @@ JIRA_TOOL_SPECS: list[dict] = [
             "Log work (time tracking) on a Jira issue. "
             "Specify time spent in Jira format (e.g. '2h 30m', '1d')."
         ),
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_my_issues",
@@ -1670,12 +1693,12 @@ JIRA_TOOL_SPECS: list[dict] = [
         "name": "create_version",
         "func": tool_create_version,
         "summary": "Create a new version/release in a Jira project with name, description, and planned release date.",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "update_version",
         "func": tool_update_version,
         "summary": "Update a Jira version/release. Use to mark as released, update release date, or archive.",
-        "annotations": {"readOnlyHint": False},
+        "annotations": {"readOnlyHint": True},
     },
 ]

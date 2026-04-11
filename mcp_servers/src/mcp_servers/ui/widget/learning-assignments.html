@@ -277,7 +277,7 @@
               e.stopPropagation();
               var url = this.getAttribute("data-open");
               if (!url) return;
-              window.open(url, "_blank", "noopener,noreferrer");
+              if (window.openai && typeof window.openai.openUrl === "function") { window.openai.openUrl(url); } else { window.open(url, "_blank", "noopener,noreferrer"); }
             });
           }
           var copilotBtns = contentEl.querySelectorAll("[data-copilot-idx]");

@@ -46,6 +46,13 @@ async def build_worker_context_from_bearer(token: str) -> WorkerContext:
         staffing_resp = await client.get(staffing_url, headers=headers)
         if staffing_resp.is_success:
             worker_data = staffing_resp.json()
+            # Merge fields from /workers/me that the staffing API doesn't provide
+            # (isManager, yearsOfService, primaryWorkAddressText, etc.)
+            for key in ("isManager", "yearsOfService", "primaryWorkAddressText",
+                        "primaryWorkEmail", "primarySupervisoryOrganization",
+                        "supervisoryOrganizationsManaged"):
+                if key in me_data and key not in worker_data:
+                    worker_data[key] = me_data[key]
             LOGGER.info("enriched_worker_from_staffing", keys=list(worker_data.keys()))
         else:
             LOGGER.warning(

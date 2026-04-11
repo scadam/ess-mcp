@@ -12,7 +12,9 @@
       .header-left { display: flex; align-items: center; gap: 10px; }
       .sn-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--sn-glow); border: 1px solid var(--sn-accent); display: flex; align-items: center; justify-content: center; }
       .title { font-size: 16px; font-weight: 600; } .subtitle { color: var(--muted); font-size: 12px; }
-      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: border-color .2s, box-shadow .2s; }
+      .card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+      :root[data-theme="dark"] .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.25); }
       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
       .full-width { grid-column: 1 / -1; }
       .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
@@ -20,22 +22,24 @@
       .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
       .field textarea { resize: vertical; }
       .actions { margin-top: 14px; display: flex; gap: 8px; }
-      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; }
+      .btn { background: var(--btn-bg); color: var(--text); border: 1px solid var(--btn-border); border-radius: 8px; padding: 8px 16px; font-size: 12px; cursor: pointer; transition: all .15s ease; }
       .btn-primary { background: var(--btn-primary-bg); border-color: var(--btn-primary-border); font-weight: 600; }
       .btn:disabled { opacity: .5; cursor: default; }
       .success-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--success-glow); border: 1px solid var(--success-border); font-size: 12px; color: var(--pos); }
       .error-msg { margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--error-bg); border: 1px solid var(--error-border); font-size: 12px; color: var(--neg); }
       .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: right; }
-      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+      .maximize-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s ease; }
       .maximize-btn:hover { color: var(--accent); border-color: var(--accent); }
-    
-      /* Enhanced interactivity */
-      .card { transition: border-color .2s, box-shadow .2s; }
-      .card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
-      :root[data-theme="dark"] .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.25); }
-      .btn, .maximize-btn, .hub-expand-btn { transition: all .15s ease; }
-      [class*="-row"]:not(.form-grid):not(.field-row):not(.actions):not(.stats-row):not(.bar-row):not(.type-grid):not(.member-row):not(.funnel-row):not(.opp-row):not(.reports-row) { transition: background .15s; }
-      @media (max-width: 480px) { .form-grid, .grid, .meta-grid, .totals-grid, .stats-row { grid-template-columns: 1fr !important; display: grid !important; flex-direction: column; } .stats-row { flex-wrap: wrap; } .stat-card { min-width: 0; } }
+      .ref-field { position: relative; }
+      .ref-field input { padding-right: 30px; }
+      .ref-field .ref-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 2px; display: none; }
+      .ref-field .ref-clear:hover { color: var(--neg); }
+      .ref-dropdown { position: absolute; left: 0; right: 0; top: 100%; z-index: 100; background: var(--card); border: 1px solid var(--accent); border-radius: 8px; max-height: 180px; overflow-y: auto; margin-top: 2px; display: none; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+      .ref-dropdown .ref-item { padding: 8px 10px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); }
+      .ref-dropdown .ref-item:last-child { border-bottom: none; }
+      .ref-dropdown .ref-item:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+      .ref-dropdown .ref-loading { padding: 8px 10px; font-size: 12px; color: var(--muted); text-align: center; }
+      @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr !important; } }
     </style>
   </head>
   <body>
@@ -58,9 +62,17 @@
         <div class="card">
           <div class="form-grid">
             <div class="field"><label for="caller">Caller *</label><input id="caller" type="text" placeholder="e.g. System Administrator" /></div>
-            <div class="field"><label for="urgency">Urgency</label><select id="urgency"><option value="">-- Default --</option><option value="1">1 - High</option><option value="2">2 - Medium</option><option value="3">3 - Low</option></select></div>
+            <div class="field ref-field">
+              <label for="assignment_group">Assignment Group</label>
+              <input id="assignment_group" type="text" autocomplete="off" placeholder="Search groups&#8230;" />
+              <button class="ref-clear" id="agClear" title="Clear">&times;</button>
+              <input type="hidden" id="assignment_group_id" />
+              <div class="ref-dropdown" id="agDropdown"></div>
+            </div>
             <div class="field"><label for="category">Category</label><select id="category"><option value="">-- None --</option><option value="inquiry">Inquiry / Help</option><option value="software">Software</option><option value="hardware">Hardware</option><option value="network">Network</option><option value="database">Database</option></select></div>
+            <div class="field"><label for="urgency">Urgency</label><select id="urgency"><option value="">-- Default --</option><option value="1">1 - High</option><option value="2">2 - Medium</option><option value="3">3 - Low</option></select></div>
             <div class="field"><label for="impact">Impact</label><select id="impact"><option value="">-- Default --</option><option value="1">1 - High</option><option value="2">2 - Medium</option><option value="3">3 - Low</option></select></div>
+            <div class="field"></div>
             <div class="field full-width"><label for="short_description">Short Description *</label><input id="short_description" type="text" placeholder="Brief summary of the issue" /></div>
             <div class="field full-width"><label for="description">Description</label><textarea id="description" rows="3" placeholder="Provide more detail about the issue"></textarea></div>
             <div class="field full-width"><label for="comments">Comments</label><textarea id="comments" rows="2" placeholder="Initial comment (visible to caller)"></textarea></div>
@@ -79,15 +91,103 @@
       var toolInput = (window.openai && window.openai.toolInput) || {};
       var toolOutput = (window.openai && window.openai.toolOutput) || {};
       function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
-      var callerEl = document.getElementById("caller"), shortDescEl = document.getElementById("short_description"), descEl = document.getElementById("description"), categoryEl = document.getElementById("category"), urgencyEl = document.getElementById("urgency"), impactEl = document.getElementById("impact"), commentsEl = document.getElementById("comments"), submitBtn = document.getElementById("submitBtn"), resetBtn = document.getElementById("resetBtn"), errorMsg = document.getElementById("errorMsg");
+
+      var callerEl = document.getElementById("caller");
+      var shortDescEl = document.getElementById("short_description");
+      var descEl = document.getElementById("description");
+      var categoryEl = document.getElementById("category");
+      var urgencyEl = document.getElementById("urgency");
+      var impactEl = document.getElementById("impact");
+      var commentsEl = document.getElementById("comments");
+      var agInput = document.getElementById("assignment_group");
+      var agHidden = document.getElementById("assignment_group_id");
+      var agDropdown = document.getElementById("agDropdown");
+      var agClear = document.getElementById("agClear");
+      var submitBtn = document.getElementById("submitBtn");
+      var resetBtn = document.getElementById("resetBtn");
+      var errorMsg = document.getElementById("errorMsg");
       var isUpdate = false;
+
       function reportHeight() { if (window.openai && typeof window.openai.notifyIntrinsicHeight === "function") window.openai.notifyIntrinsicHeight(document.body.scrollHeight); }
       function validate() { submitBtn.disabled = !(callerEl.value.trim() && shortDescEl.value.trim()); }
       [callerEl, shortDescEl].forEach(function(el) { el.addEventListener("input", validate); });
+
       function normalizeUrgencyImpact(val) { if (!val) return ""; var s = String(val).trim().toLowerCase(); if (/^1\b/.test(s) || s === "high" || s === "critical") return "1"; if (/^2\b/.test(s) || s === "medium") return "2"; if (/^3\b/.test(s) || s === "low") return "3"; if (/^[123]$/.test(s)) return s; return ""; }
-      function normalizeCategory(val) { if (!val) return ""; var s = String(val).trim().toLowerCase(); var map = {"inquiry":"inquiry","inquiry / help":"inquiry","help":"inquiry","software":"software","hardware":"hardware","network":"network","database":"database"}; if (map[s]) return map[s]; for (var k in map) { if (k.indexOf(s) === 0 || s.indexOf(k) === 0) return map[k]; } return val; }
+      function normalizeCategory(val) { if (!val) return ""; var s = String(val).trim().toLowerCase(); var opts = categoryEl.options; for (var i = 0; i < opts.length; i++) { if (opts[i].value && opts[i].value.toLowerCase() === s) return opts[i].value; } for (var i = 0; i < opts.length; i++) { if (opts[i].value && (opts[i].text.toLowerCase().indexOf(s) >= 0 || s.indexOf(opts[i].value.toLowerCase()) >= 0)) return opts[i].value; } return val; }
       function setSelectValue(el, rawVal, normFn) { if (!rawVal) return; var n = normFn ? normFn(rawVal) : String(rawVal); el.value = n; if (!el.value && n !== String(rawVal)) el.value = String(rawVal); }
-      resetBtn.addEventListener("click", function() { [callerEl, shortDescEl, descEl, commentsEl].forEach(function(el) { el.value = ""; }); [categoryEl, urgencyEl, impactEl].forEach(function(el) { el.value = ""; }); errorMsg.innerHTML = ""; isUpdate = false; submitBtn.textContent = "Create Incident"; document.getElementById("pageTitle").textContent = "Create Incident"; document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 New Ticket"; submitBtn.disabled = true; reportHeight(); });
+
+      /* Dynamic categories from tool output */
+      var inp = (toolOutput && (toolOutput.number || toolOutput.sys_id))
+        ? Object.assign({}, toolOutput, toolInput)
+        : toolInput;
+      if (inp._categories && inp._categories.length) {
+        categoryEl.innerHTML = '<option value="">-- None --</option>';
+        inp._categories.forEach(function(c) {
+          var opt = document.createElement("option");
+          opt.value = c.value;
+          opt.textContent = c.label || c.value;
+          categoryEl.appendChild(opt);
+        });
+      }
+
+      /* Assignment Group reference search */
+      var _agDebounce = null, _agSelectedName = "";
+      function agShowDropdown(items) {
+        if (!items || !items.length) { agDropdown.style.display = "none"; reportHeight(); return; }
+        agDropdown.innerHTML = "";
+        items.forEach(function(item) {
+          var div = document.createElement("div");
+          div.className = "ref-item";
+          div.textContent = item.name;
+          div.addEventListener("click", function() {
+            agInput.value = item.name; agHidden.value = item.name;
+            _agSelectedName = item.name; agClear.style.display = "block";
+            agDropdown.style.display = "none"; reportHeight();
+          });
+          agDropdown.appendChild(div);
+        });
+        agDropdown.style.display = "block"; reportHeight();
+      }
+      function agSearch(query) {
+        if (!window.openai || typeof window.openai.callTool !== "function") return;
+        agDropdown.innerHTML = '<div class="ref-loading">Searching\u2026</div>';
+        agDropdown.style.display = "block";
+        window.openai.callTool("search_reference_values", { table: "sys_user_group", search: query || "", limit: 15 })
+          .then(function(out) { var d = out && out.structuredContent ? out.structuredContent : out; agShowDropdown((d && d.results) || []); })
+          .catch(function() { agDropdown.style.display = "none"; });
+      }
+      agInput.addEventListener("input", function() {
+        _agSelectedName = ""; agHidden.value = "";
+        agClear.style.display = agInput.value ? "block" : "none";
+        clearTimeout(_agDebounce);
+        _agDebounce = setTimeout(function() { agSearch(agInput.value); }, 250);
+      });
+      agInput.addEventListener("focus", function() { if (!_agSelectedName && !agInput.value) agSearch(""); });
+      agClear.addEventListener("click", function() {
+        agInput.value = ""; agHidden.value = ""; _agSelectedName = "";
+        agClear.style.display = "none"; agDropdown.style.display = "none"; agInput.focus();
+      });
+      document.addEventListener("click", function(e) {
+        if (!agInput.contains(e.target) && !agDropdown.contains(e.target) && !agClear.contains(e.target)) {
+          agDropdown.style.display = "none";
+          if (_agSelectedName) agInput.value = _agSelectedName;
+          else if (!agInput.value) agHidden.value = "";
+        }
+      });
+
+      /* Reset */
+      resetBtn.addEventListener("click", function() {
+        [callerEl, shortDescEl, descEl, commentsEl, agInput].forEach(function(el) { el.value = ""; });
+        agHidden.value = ""; _agSelectedName = ""; agClear.style.display = "none";
+        [categoryEl, urgencyEl, impactEl].forEach(function(el) { el.value = ""; });
+        errorMsg.innerHTML = ""; isUpdate = false;
+        submitBtn.textContent = "Create Incident";
+        document.getElementById("pageTitle").textContent = "Create Incident";
+        document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 New Ticket";
+        submitBtn.disabled = true; reportHeight();
+      });
+
+      /* Submit */
       submitBtn.addEventListener("click", async function() {
         if (!window.openai || typeof window.openai.callTool !== "function") return;
         submitBtn.disabled = true; submitBtn.textContent = "Submitting\u2026"; errorMsg.innerHTML = "";
@@ -97,6 +197,8 @@
         if (urgencyEl.value) args.urgency = urgencyEl.value;
         if (impactEl.value) args.impact = impactEl.value;
         if (commentsEl.value.trim()) args.comments = commentsEl.value.trim();
+        var agName = _agSelectedName || agInput.value.trim();
+        if (agName) args.assignment_group = agName;
         try {
           var output = await window.openai.callTool("create_incident", args);
           var data = output && output.structuredContent ? output.structuredContent : output;
@@ -108,14 +210,17 @@
         } catch (err) { errorMsg.innerHTML = '<div class="error-msg">' + esc(err.message || "Failed to create incident") + '</div>'; }
         finally { submitBtn.textContent = isUpdate ? "Update Incident" : "Create Incident"; validate(); reportHeight(); }
       });
+
+      /* Fullscreen */
       var _expandSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5"/></svg>';
       var _collapseSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 6h-4V2M2 10h4v4M10 6l4.5-4.5M6 10L1.5 14.5"/></svg>';
       var _isFullscreen = false, _maxBtn = document.getElementById("maximizeBtn");
       async function toggleFullscreen() { if (!window.openai || typeof window.openai.requestDisplayMode !== "function") return; var mode = _isFullscreen ? "inline" : "fullscreen"; try { await window.openai.requestDisplayMode({mode:mode}); _isFullscreen = !_isFullscreen; _maxBtn.innerHTML = _isFullscreen ? _collapseSvg : _expandSvg; _maxBtn.title = _isFullscreen ? "Restore" : "Maximize"; reportHeight(); } catch(e){} }
       if (_maxBtn) { if (window.openai && typeof window.openai.requestDisplayMode === "function") _maxBtn.addEventListener("click", toggleFullscreen); else _maxBtn.style.display = "none"; }
+
+      /* Pre-populate */
       isUpdate = !!(toolOutput && (toolOutput.number || toolOutput.sys_id));
       if (isUpdate) { submitBtn.textContent = "Update Incident"; document.getElementById("pageTitle").textContent = "Update Incident"; document.getElementById("pageSubtitle").textContent = "ServiceNow \u00b7 " + (toolOutput.number || "Existing Ticket"); }
-      var inp = isUpdate ? Object.assign({}, toolOutput, toolInput) : toolInput;
       if (inp.caller) callerEl.value = inp.caller;
       if (inp.short_description) shortDescEl.value = inp.short_description;
       if (inp.description) descEl.value = inp.description;
@@ -123,7 +228,7 @@
       if (inp.urgency) setSelectValue(urgencyEl, inp.urgency, normalizeUrgencyImpact);
       if (inp.impact) setSelectValue(impactEl, inp.impact, normalizeUrgencyImpact);
       if (inp.comments) commentsEl.value = inp.comments;
-      if (!callerEl.value.trim() && window.openai && window.openai.userInfo && window.openai.userInfo.name) callerEl.value = window.openai.userInfo.name;
+      if (inp.assignment_group) { agInput.value = inp.assignment_group; agHidden.value = inp.assignment_group; _agSelectedName = inp.assignment_group; agClear.style.display = "block"; }
       validate();
     </script>
   </body>

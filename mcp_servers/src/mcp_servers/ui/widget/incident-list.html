@@ -267,7 +267,7 @@
         if (inc.opened_at) meta.push('<span>' + esc(inc.opened_at) + '</span>');
 
         var snLink = (inc.sys_id && _instanceUrl)
-          ? '<a class="sn-link" href="' + esc(_instanceUrl) + '/nav_to.do?uri=incident.do?sys_id=' + esc(inc.sys_id) + '" target="_blank" onclick="event.stopPropagation()">&#8599; Open in ServiceNow</a>'
+          ? '<button class="sn-link" onclick="event.stopPropagation();var u=\'' + esc(_instanceUrl) + '/nav_to.do?uri=incident.do?sys_id=' + esc(inc.sys_id) + '\';if(window.openai&&typeof window.openai.openUrl===\'function\')window.openai.openUrl(u);else window.open(u,\'_blank\');">&#8599; Open in ServiceNow</button>'
           : '';
         var detail = '<div class="card-detail" id="detail-' + idx + '">' +
           '<div class="detail-grid">' +

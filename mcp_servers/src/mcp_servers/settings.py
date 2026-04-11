@@ -16,6 +16,8 @@ class WorkdaySettings(BaseEnvSettings):
     """Settings for Workday API access."""
     base_url: str = Field(..., alias="WORKDAY_BASE_URL")
     tenant: str = Field(..., alias="WORKDAY_TENANT")
+    skills_report: str = Field("svasireddy/ESSMCPSkills", alias="WORKDAY_SKILLS_REPORT")
+    learning_report: str = Field("svasireddy/Required_Learning", alias="WORKDAY_LEARNING_REPORT")
     openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
 
 
