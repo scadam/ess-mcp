@@ -2,7 +2,6 @@
 from __future__ import annotations
 import argparse
 import asyncio
-import json as _json
 from contextlib import asynccontextmanager
 from typing import Dict, List
 import uvicorn
@@ -24,44 +23,55 @@ LOGGER = get_logger(__name__)
 # M365 Copilot declarative agents rely on the *HTTP status code* to
 # trigger OAuth re-authentication.  FastMCP always returns HTTP 200 for
 # MCP protocol responses, even when a tool encounters a backend 401.
-# This middleware inspects JSON-RPC response bodies and, when a backend
-# 401/403 is detected inside an MCP tool error, rewrites the HTTP status
-# so the agent's token service initiates a token refresh.
+#
+# MCP streamable-HTTP often delivers tool results inside SSE events
+# (Content-Type: text/event-stream), NOT plain JSON.  The previous
+# version of this middleware skipped SSE entirely, so the 401 was never
+# detected.
+#
+# This rewrite buffers ALL response bodies (JSON or SSE), scans for
+# httpx-style "Client error '401 Unauthorized'" strings, and rewrites
+# the HTTP status code so M365 Copilot triggers the OAuth auth-code
+# flow.  See:
+# https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api-plugin-authentication
 
 
 def _detect_auth_error_status(body: bytes) -> int:
-    """Return 401 or 403 if the JSON-RPC body signals a backend auth failure."""
+    """Return 401 or 403 if the response body contains a backend auth error.
+
+    Works for both application/json and text/event-stream bodies by
+    doing a simple byte-string search for the httpx error message
+    pattern: ``Client error '401 Unauthorized'``.
+    """
     try:
-        data = _json.loads(body)
-    except (ValueError, UnicodeDecodeError):
+        text = body.decode("utf-8", errors="replace")
+    except Exception:
         return 0
 
-    # Path 1 – JSON-RPC error object
-    error = data.get("error") if isinstance(data, dict) else None
-    if isinstance(error, dict):
-        msg = str(error.get("message", ""))
-        if "401" in msg and "nauthorized" in msg:
-            return 401
-        if "403" in msg and "orbidden" in msg:
-            return 403
+    # httpx.HTTPStatusError message format:
+    #   "Client error '401 Unauthorized' for url '...'"
+    if "Client error '401 Unauthorized'" in text:
+        return 401
+    if "Client error '403 Forbidden'" in text:
+        return 403
 
-    # Path 2 – MCP CallToolResult with isError
-    result = data.get("result") if isinstance(data, dict) else None
-    if isinstance(result, dict) and result.get("isError"):
-        for item in result.get("content", []):
-            if not isinstance(item, dict):
-                continue
-            text = str(item.get("text", ""))
-            if "401 Unauthorized" in text:
-                return 401
-            if "403 Forbidden" in text:
-                return 403
+    # Fallback: MCP isError body that mentions 401/403
+    if "isError" in text:
+        if "401 Unauthorized" in text:
+            return 401
+        if "403 Forbidden" in text:
+            return 403
 
     return 0
 
 
 class AuthErrorPassthroughMiddleware:
-    """ASGI middleware that rewrites HTTP 200 → 401/403 for MCP auth errors."""
+    """ASGI middleware that rewrites HTTP 200 → 401/403 for MCP auth errors.
+
+    Buffers the complete response (including SSE streams) and, when a
+    backend authentication failure is detected, replaces the HTTP status
+    code so that M365 Copilot's token service triggers re-authentication.
+    """
 
     def __init__(self, app):
         self.app = app
@@ -73,55 +83,50 @@ class AuthErrorPassthroughMiddleware:
 
         start_message = None
         body_chunks: list[bytes] = []
-        is_sse = False
 
         async def buffered_send(message):
-            nonlocal start_message, is_sse
+            nonlocal start_message
 
             if message["type"] == "http.response.start":
+                # Always buffer the start message; don't send yet.
                 start_message = message
-                # Detect SSE (streaming) – pass through immediately
-                for key, val in message.get("headers", []):
-                    if key in (b"content-type", "content-type"):
-                        val_str = val if isinstance(val, str) else val.decode("latin-1")
-                        if "text/event-stream" in val_str:
-                            is_sse = True
-                            break
-                if is_sse:
-                    await send(message)
                 return
 
             if message["type"] == "http.response.body":
-                if is_sse:
-                    await send(message)
-                    return
-
                 body = message.get("body", b"")
                 more_body = message.get("more_body", False)
                 body_chunks.append(body)
 
                 if not more_body:
+                    # End of response – inspect and (possibly) rewrite.
                     full_body = b"".join(body_chunks)
-                    status = start_message.get("status", 200) if start_message else 200
+                    status = (
+                        start_message.get("status", 200)
+                        if start_message
+                        else 200
+                    )
 
                     if status == 200:
                         auth_status = _detect_auth_error_status(full_body)
                         if auth_status:
+                            LOGGER.warning(
+                                "auth_error_passthrough",
+                                original_status=status,
+                                rewritten_status=auth_status,
+                                body_len=len(full_body),
+                            )
                             status = auth_status
 
-                    # Forward (possibly rewritten) start + body
                     out_start = dict(start_message) if start_message else {
-                        "type": "http.response.start", "headers": [],
+                        "type": "http.response.start",
+                        "headers": [],
                     }
                     out_start["status"] = status
                     await send(out_start)
-                    await send({"type": "http.response.body", "body": full_body})
-                else:
-                    # Chunked non-SSE – unlikely for MCP, forward as-is
-                    if start_message:
-                        await send(start_message)
-                        start_message = None
-                    await send(message)
+                    await send({
+                        "type": "http.response.body",
+                        "body": full_body,
+                    })
 
         await self.app(scope, receive, buffered_send)
 
