@@ -635,7 +635,7 @@
               (tags ? '<div class="panel-tags">' + tags + '</div>' : '') +
               lessonsHtml +
               '<div class="panel-actions">' +
-                (item.contentURL ? '<button class="btn btn-accent btn-sm" data-openurl="' + esc(item.contentURL) + '">Open in Workday</button>' : '') +
+                (item.contentURL ? '<a class="btn btn-accent btn-sm" href="' + esc(item.contentURL) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-block">Open in Workday</a>' : '') +
               '</div>' +
             '</div>';
 
@@ -643,15 +643,6 @@
 
           document.getElementById("closeCourse").addEventListener("click", closeCourseDetail);
           courseOverlay.addEventListener("click", function(e) { if (e.target === courseOverlay) closeCourseDetail(); });
-          // Wire up openUrl buttons in course overlay
-          var openBtns = courseOverlay.querySelectorAll('[data-openurl]');
-          for (var ob = 0; ob < openBtns.length; ob++) {
-            openBtns[ob].addEventListener('click', function(e) {
-              e.stopPropagation();
-              var href = this.getAttribute('data-openurl');
-              if (href && window.openai && typeof window.openai.openUrl === 'function') { window.openai.openUrl(href); } else if (href) { window.open(href, '_blank'); }
-            });
-          }
 
           // Lessons toggle
           var lt = document.getElementById("lessonsToggle");
@@ -719,22 +710,13 @@
             instructorHtml +
             materialsHtml +
             '<div class="lp-actions">' +
-              (ls.contentURL ? '<button class="btn btn-accent btn-sm" data-openurl="' + esc(ls.contentURL) + '">Open Content</button>' : '') +
-              (ls.virtualClassroomURL ? '<button class="btn btn-sm" data-openurl="' + esc(ls.virtualClassroomURL) + '">Join Virtual Class</button>' : '') +
+              (ls.contentURL ? '<a class="btn btn-accent btn-sm" href="' + esc(ls.contentURL) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-block">Open Content</a>' : '') +
+              (ls.virtualClassroomURL ? '<a class="btn btn-sm" href="' + esc(ls.virtualClassroomURL) + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-block">Join Virtual Class</a>' : '') +
             '</div>';
 
           lessonOverlay.className = "lesson-overlay open";
           document.getElementById("closeLs").addEventListener("click", closeLessonDetail);
           lessonOverlay.addEventListener("click", function(e) { if (e.target === lessonOverlay) closeLessonDetail(); });
-          // Wire up openUrl buttons in lesson overlay
-          var lsBtns = lessonOverlay.querySelectorAll('[data-openurl]');
-          for (var lb2 = 0; lb2 < lsBtns.length; lb2++) {
-            lsBtns[lb2].addEventListener('click', function(e) {
-              e.stopPropagation();
-              var href = this.getAttribute('data-openurl');
-              if (href && window.openai && typeof window.openai.openUrl === 'function') { window.openai.openUrl(href); } else if (href) { window.open(href, '_blank'); }
-            });
-          }
         }
 
         function closeLessonDetail() { lessonOverlay.className = "lesson-overlay"; }
