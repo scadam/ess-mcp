@@ -208,7 +208,8 @@
       widgets: [
         "worker-profile", "org-chart", "leave-booking",
         "team-calendar", "team-dashboard", "change-business-title",
-        "learning-assignments", "learning-search", "inbox-tasks",
+        "compensation-summary", "learning-assignments", "learning-catalog",
+        "learning-search", "inbox-tasks",
         "give-feedback", "goals-dashboard", "create-check-in-form",
         "development-items", "team-goals"
       ]
@@ -258,6 +259,7 @@
     "lead-pipeline":   560,
     "crm-pipeline":    580,
     "learning-assignments": 560,
+    "learning-catalog": 580,
     "learning-search":  620,
     "inbox-tasks":     620,
     "give-feedback":   580,
@@ -265,7 +267,8 @@
     "create-check-in-form": 560,
     "development-items": 580,
     "team-goals":      620,
-    "catalog-item":    560
+    "catalog-item":    560,
+    "compensation-summary": 560
   };
 
   /* Build a flat lookup: widget-name → platform key */
@@ -282,7 +285,7 @@
 
   /* ── Build sidebar ────────────────────────────────── */
   var sidebarEl = document.getElementById("sidebar");
-  var sidebarHtml = '<div class="sidebar-header"><h1>ESS-MCP Widget Gallery</h1><p>40 enterprise widgets</p></div>';
+  var sidebarHtml = '<div class="sidebar-header"><h1>ESS-MCP Widget Gallery</h1><p>42 enterprise widgets</p></div>';
 
   PLATFORMS.forEach(function (p) {
     sidebarHtml += '<div class="sidebar-group"><div class="sidebar-group-title">' + p.name + "</div>";

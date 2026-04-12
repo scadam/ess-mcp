@@ -19,12 +19,12 @@
 
 | Server | Platform | Tools | Widgets | Key Actions |
 |--------|----------|-------|---------|-------------|
-| **Workday** | HR / HCM | 33 | 14 | Book leave, change title, approve/deny inbox tasks, browse learning, give feedback, track goals, create check-ins, view development items, org charts, **team dashboard**, **team goals** |
+| **Workday** | HR / HCM | 33 | 16 | Book leave, change title, approve/deny inbox tasks, browse learning catalog, give feedback, track goals, create check-ins, view development items, compensation, org charts, **team dashboard**, **team goals** |
 | **ServiceNow** | ITSM | 39 | 12 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, create KB articles, track SLAs, **team incidents** |
 | **Salesforce** | CRM | 44 | 9 | Create/update opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, activity timeline, **team pipeline** |
 | **Jira** | Project Management | 26 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, manage releases/versions, **team workload** |
 
-> **143 tools total** — 11 open interactive form widgets for user-driven creation (form tools), 34 are widget callbacks that execute when the user submits a form, and the rest provide rich read access and direct actions. 40 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
+> **142 tools total** — 11 open interactive form widgets for user-driven creation (form tools), 34 are widget callbacks that execute when the user submits a form, and the rest provide rich read access and direct actions. 42 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -32,9 +32,9 @@ Servers can be deployed **individually**, in **any combination**, or **all toget
 
 ## 🖼️ Widget Screenshots
 
-ESS-MCP includes 40 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 5 manager-specific team dashboards. Every widget supports dark/light mode, fullscreen expansion, and cross-widget navigation via `sendFollowUpMessage`.
+ESS-MCP includes 42 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 5 manager-specific team dashboards. Every widget supports dark/light mode, fullscreen expansion, and cross-widget navigation via `sendFollowUpMessage`.
 
-### Workday – HR Widgets (14)
+### Workday – HR Widgets (16)
 
 <table>
   <tr>
@@ -62,11 +62,19 @@ ESS-MCP includes 40 interactive HTML+Skybridge widgets that render directly in A
     <td><img src="docs/images/widget-change-business-title.png" width="400" alt="Change Business Title Widget"/></td>
   </tr>
   <tr>
+    <td align="center"><strong>Compensation Summary</strong></td>
     <td align="center"><strong>Learning Assignments</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-compensation-summary.png" width="400" alt="Compensation Summary Widget"/></td>
+    <td><img src="docs/images/widget-learning-assignments.png" width="400" alt="Learning Assignments Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Learning Catalog</strong></td>
     <td align="center"><strong>Learning Search</strong></td>
   </tr>
   <tr>
-    <td><img src="docs/images/widget-learning-assignments.png" width="400" alt="Learning Assignments Widget"/></td>
+    <td><img src="docs/images/widget-learning-catalog.png" width="400" alt="Learning Catalog Widget"/></td>
     <td><img src="docs/images/widget-learning-search.png" width="400" alt="Learning Search Widget"/></td>
   </tr>
   <tr>
@@ -341,16 +349,16 @@ Deploy to **Azure Container Apps** with a single command. The script provisions 
 
 ```bash
 # Deploy ALL servers (default)
-./deploy/deploy.sh
+./deploy.sh
 
 # Deploy a single server
-./deploy/deploy.sh --servers workday
+./deploy.sh --servers workday
 
 # Deploy specific servers
-./deploy/deploy.sh --servers workday,jira
+./deploy.sh --servers workday,jira
 
 # Deploy with custom settings
-./deploy/deploy.sh \
+./deploy.sh \
   --servers workday,servicenow \
   --location westeurope \
   --name myessmcp \
@@ -385,7 +393,7 @@ cp deploy/.env.example deploy/.env
 nano deploy/.env
 
 # Deploy with configuration
-./deploy/deploy.sh --servers workday,jira --env-file deploy/.env
+./deploy.sh --servers workday,jira --env-file deploy/.env
 ```
 
 ### Post-Deployment
@@ -1295,10 +1303,16 @@ When asked about "team compensation" or "salary review":
 ```
 ess-mcp/
 ├── README.md
+├── deploy.sh                       # Root-level deploy wrapper
 ├── deploy/                         # Azure deployment
 │   ├── deploy.sh                   # Single-click deploy script
 │   ├── main.bicep                  # Azure Bicep IaC template
 │   └── .env.example                # Configuration template
+├── capture-screenshots.py          # Playwright screenshot capture
+├── start-widget-preview.py         # Widget preview gallery server
+├── widget-preview/                 # Widget gallery assets
+│   ├── index.html                  # Gallery page
+│   └── sample-data.js              # Sample data for all widgets
 ├── docs/
 │   └── images/                     # Widget screenshots
 └── mcp_servers/
@@ -1319,7 +1333,7 @@ ess-mcp/
         ├── servicenow/             # ServiceNow MCP server
         ├── salesforce/             # Salesforce MCP server
         ├── jira/                   # Jira MCP server
-        └── ui/widget/              # 34 HTML+Skybridge widgets
+        └── ui/widget/              # 42 HTML+Skybridge widgets
 ```
 
 ---

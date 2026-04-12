@@ -1,6 +1,5 @@
 
 import hashlib
-import json
 import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -8,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 from fastmcp import Context
 
-from ..auth import get_bearer_token, TokenValidationError
+from ..auth import get_bearer_token
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_servicenow_settings
@@ -446,6 +445,7 @@ async def tool_get_incident(
     sys_id = raw.get("sys_id")
     if isinstance(sys_id, dict):
         sys_id = sys_id.get("value", sys_id.get("display_value"))
+    sys_id = str(sys_id) if sys_id else ""
 
     journal = await _fetch_journal(sys_id, token, settings.instance_url)
 
@@ -523,6 +523,7 @@ async def tool_update_incident(
     sys_id = raw.get("sys_id")
     if isinstance(sys_id, dict):
         sys_id = sys_id.get("value", sys_id.get("display_value"))
+    sys_id = str(sys_id) if sys_id else ""
 
     # Build PATCH payload -- only include fields that were explicitly provided
     payload: Dict[str, Any] = {}
@@ -899,7 +900,7 @@ async def tool_update_task(
                     body=body_text,
                 )
                 resp.raise_for_status()
-            body = resp.json()
+            resp.json()  # Validate JSON response body
     except httpx.HTTPStatusError:
         raise
     except Exception as exc:
@@ -4151,7 +4152,7 @@ async def tool_get_sla_status(
             query_parts.append("has_breached=true")
         query_parts.append("ORDERBYDESCsys_updated_on")
 
-        params = {
+        params: Dict[str, Any] = {
             "sysparm_query": "^".join(query_parts),
             "sysparm_limit": safe_limit,
             "sysparm_display_value": "all",

@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from fastmcp import Context
 
-from ..auth import get_bearer_token, TokenValidationError
+from ..auth import get_bearer_token
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_salesforce_settings
@@ -2583,7 +2583,8 @@ async def tool_list_reports(limit: int = 20, ctx: Optional[Context] = None) -> D
     result = await _salesforce_get("/analytics/reports", ctx)
 
     reports: List[Dict[str, Any]] = []
-    for r in (result if isinstance(result, list) else []):
+    items: Any = result if isinstance(result, list) else []
+    for r in items:
         reports.append({
             "id": r.get("id"),
             "name": r.get("name"),

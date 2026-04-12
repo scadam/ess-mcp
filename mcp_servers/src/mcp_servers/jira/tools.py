@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from fastmcp import Context
 
-from ..auth import TokenValidationError, get_bearer_token
+from ..auth import get_bearer_token
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_jira_settings

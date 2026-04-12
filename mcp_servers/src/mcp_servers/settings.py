@@ -65,22 +65,26 @@ def _resolve_env_file(explicit: Optional[str] = None, prefix: str = "workday") -
 
 @lru_cache(maxsize=1)
 def load_workday_settings(env_file: Optional[str] = None) -> WorkdaySettings:
-    return WorkdaySettings(_env_file=_resolve_env_file(env_file, "workday"))
+    resolved = _resolve_env_file(env_file, "workday")
+    return WorkdaySettings(_env_file=resolved)  # type: ignore[call-arg]
 
 
 @lru_cache(maxsize=1)
 def load_servicenow_settings(env_file: Optional[str] = None) -> ServiceNowSettings:
-    return ServiceNowSettings(_env_file=_resolve_env_file(env_file, "servicenow"))
+    resolved = _resolve_env_file(env_file, "servicenow")
+    return ServiceNowSettings(_env_file=resolved)  # type: ignore[call-arg]
 
 
 @lru_cache(maxsize=1)
 def load_salesforce_settings(env_file: Optional[str] = None) -> SalesforceSettings:
-    return SalesforceSettings(_env_file=_resolve_env_file(env_file, "salesforce"))
+    resolved = _resolve_env_file(env_file, "salesforce")
+    return SalesforceSettings(_env_file=resolved)  # type: ignore[call-arg]
 
 
 @lru_cache(maxsize=1)
 def load_jira_settings(env_file: Optional[str] = None) -> JiraSettings:
-    return JiraSettings(_env_file=_resolve_env_file(env_file, "jira"))
+    resolved = _resolve_env_file(env_file, "jira")
+    return JiraSettings(_env_file=resolved)  # type: ignore[call-arg]
 
 
 def reset_settings_cache() -> None:

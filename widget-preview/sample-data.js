@@ -532,6 +532,40 @@ const SAMPLE_DATA = {
       { assignee: "James Wilson", total: 4, overloaded: true, byStatusCategory: { "todo": 1, "in_progress": 2, "done": 1 }, byPriority: { "High": 2, "Medium": 1, "Low": 1 } },
       { assignee: "Priya Sharma", total: 2, overloaded: false, byStatusCategory: { "todo": 0, "in_progress": 0, "done": 2 }, byPriority: { "Medium": 1, "Low": 1 } }
     ]
+  },
+
+  "learning-catalog": {
+    content: [
+      { id: "lc1", descriptor: "Cloud Architecture Fundamentals", description: "Master cloud design patterns, scalability strategies, and multi-region deployment.", contentType: "Course", deliveryMode: "Online", contentProvider: "AWS Training", skillLevel: "Intermediate", averageRating: 4.7, ratingCount: 342, popularity: 92, skills: ["Cloud Computing", "Architecture", "AWS"], topics: ["Technical Skills"] },
+      { id: "lc2", descriptor: "Leadership in Tech Teams", description: "Develop leadership skills for managing high-performing engineering teams.", contentType: "Course", deliveryMode: "Blended", contentProvider: "LinkedIn Learning", skillLevel: "Advanced", averageRating: 4.5, ratingCount: 189, popularity: 85, skills: ["Leadership", "Management"], topics: ["Career Development", "Management"] },
+      { id: "lc3", descriptor: "Data Analysis with Python", description: "Learn to analyze data using pandas, matplotlib, and Jupyter notebooks.", contentType: "Course", deliveryMode: "Online", contentProvider: "Coursera", skillLevel: "Beginner", averageRating: 4.8, ratingCount: 567, popularity: 95, skills: ["Data Analysis", "Python"], topics: ["Technical Skills"] },
+      { id: "lc4", descriptor: "Machine Learning Foundations", description: "Introduction to supervised and unsupervised learning algorithms.", contentType: "Learning Path", deliveryMode: "Online", contentProvider: "Internal", skillLevel: "Intermediate", averageRating: 4.3, ratingCount: 124, popularity: 78, skills: ["Machine Learning", "Data Analysis"], topics: ["Technical Skills"] }
+    ],
+    availableSkills: [
+      { id: "skill_001", descriptor: "Project Management" },
+      { id: "skill_002", descriptor: "Cloud Computing" },
+      { id: "skill_003", descriptor: "Data Analysis" },
+      { id: "skill_004", descriptor: "Leadership" }
+    ],
+    availableCategories: ["Course", "Learning Path", "Video", "Lab"]
+  },
+
+  "compensation-summary": {
+    baseSalary: 165000,
+    bonus: 24750,
+    totalCompensation: 218750,
+    currency: "USD",
+    components: [
+      { name: "Base Salary", type: "Fixed", amount: 165000, frequency: "Annual" },
+      { name: "Annual Bonus", type: "Variable", amount: 24750, frequency: "Annual" },
+      { name: "Stock Options (RSU)", type: "Equity", amount: 25000, frequency: "Annual" },
+      { name: "401(k) Match", type: "Benefit", amount: 4000, frequency: "Annual" }
+    ],
+    history: [
+      { date: "2026-01-01", type: "Merit Increase", description: "Annual performance review", amount: 165000 },
+      { date: "2025-01-01", type: "Promotion", description: "Promoted to Senior Engineer", amount: 150000 },
+      { date: "2024-01-01", type: "Merit Increase", description: "Annual performance review", amount: 135000 }
+    ]
   }
 };
 
