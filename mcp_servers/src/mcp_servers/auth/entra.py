@@ -23,7 +23,7 @@ def get_bearer_token(ctx: Optional[Context]) -> str:
     if ctx is None:
         raise TokenValidationError("HTTP context not available; provide Authorization header")
     try:
-        request = ctx.request_context.request
+        request = ctx.request_context.request  # type: ignore[union-attr]
     except (ValueError, AttributeError) as exc:
         raise TokenValidationError("Authorization header unavailable for this request") from exc
 

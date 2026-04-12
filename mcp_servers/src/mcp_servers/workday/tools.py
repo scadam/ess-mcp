@@ -1,12 +1,11 @@
 
 import asyncio
-import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional
 
 from fastmcp import Context
 
-from ..auth import get_bearer_token, TokenValidationError
+from ..auth import get_bearer_token
 from ..http import create_async_client
 from ..logging import get_logger
 from .config import get_endpoints
@@ -479,9 +478,9 @@ def _create_days_array(start_date: str, end_date: str, quantity: str, unit: str,
 
 async def tool_book_leave(
     ctx: Optional[Context] = None,
-    startDate: str = None,
-    endDate: str = None,
-    timeOffTypeId: str = None,
+    startDate: Optional[str] = None,
+    endDate: Optional[str] = None,
+    timeOffTypeId: Optional[str] = None,
     quantity: str = "8",
     unit: str = "Hours",
     reason: str = "Time off request",
@@ -533,7 +532,7 @@ async def tool_book_leave(
     ).get("descriptor")
     days_booked = len(parsed_body.get("days", days))
     total_quantity = sum(float(day.get("dailyQuantity", 0)) for day in days)
-    payload = {
+    result: Dict[str, Any] = {
         "success": True,
         "message": "Time off request submitted successfully",
         "bookingDetails": {
@@ -545,7 +544,7 @@ async def tool_book_leave(
         },
         "workdayResponse": parsed_body,
     }
-    return _tool_response("Submit a leave request to Workday for the current worker.", payload)
+    return _tool_response("Submit a leave request to Workday for the current worker.", result)
 
 
 async def tool_prepare_change_business_title(ctx: Optional[Context] = None) -> Dict:
@@ -565,7 +564,7 @@ async def tool_prepare_change_business_title(ctx: Optional[Context] = None) -> D
 
 
 async def tool_change_business_title(
-    ctx: Optional[Context] = None, proposedBusinessTitle: str = None
+    ctx: Optional[Context] = None, proposedBusinessTitle: Optional[str] = None
 ) -> Dict:
     if not proposedBusinessTitle:
         return {"success": False, "error": "proposedBusinessTitle is required"}
@@ -614,7 +613,11 @@ async def _search_learning_content(access_token: str, skills: Iterable[str], top
     for topic in topics:
         params.append(("topics", str(topic)))
     async with create_async_client() as client:
-        response = await client.get(url, params=params, headers={"Authorization": f"Bearer {access_token}"})
+        response = await client.get(
+            url,
+            params=params,  # type: ignore[arg-type]
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
         response.raise_for_status()
         return response.json()
 

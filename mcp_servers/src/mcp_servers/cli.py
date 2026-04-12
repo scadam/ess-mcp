@@ -1,9 +1,8 @@
 """CLI entry point for running MCP servers."""
 from __future__ import annotations
 import argparse
-import asyncio
 from contextlib import asynccontextmanager
-from typing import Dict, List
+from typing import Callable, Dict, List
 import uvicorn
 from fastmcp import FastMCP
 from starlette.applications import Starlette
@@ -133,7 +132,7 @@ class AuthErrorPassthroughMiddleware:
 
 # ── Server registry ─────────────────────────────────────────────────
 
-SERVER_BUILDERS: Dict[str, callable] = {
+SERVER_BUILDERS: Dict[str, Callable[[], FastMCP]] = {
     "workday": build_workday_server,
     "servicenow": build_servicenow_server,
     "salesforce": build_salesforce_server,
