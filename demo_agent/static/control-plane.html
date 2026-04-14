@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Plane — ESS-MCP</title>
+<style>
+  :root {
+    --bg: #0a0e17; --surface: #111827; --surface-2: #1a2332;
+    --border: #1e293b; --border-light: #334155;
+    --text: #e2e8f0; --muted: #94a3b8; --dim: #64748b;
+    --accent: #3b82f6; --accent-glow: rgba(59,130,246,.15);
+    --green: #22c55e; --green-bg: rgba(34,197,94,.12);
+    --orange: #f59e0b; --orange-bg: rgba(245,158,11,.12);
+    --red: #ef4444; --red-bg: rgba(239,68,68,.12);
+    --purple: #a855f7; --purple-bg: rgba(168,85,247,.12);
+    --radius: 8px; --radius-lg: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; flex-shrink: 0; display: flex; flex-direction: column; }
+  .sidebar-brand { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .sidebar-brand h2 { font-size: 15px; font-weight: 700; color: var(--accent); }
+  .sidebar-brand .subtitle { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .sidebar-nav { flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; font-size: 13px; color: var(--muted); cursor: pointer; border-left: 3px solid transparent; transition: all .15s; }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-glow); }
+  .nav-item .icon { width: 18px; text-align: center; }
+  .nav-item .badge { margin-left: auto; font-size: 10px; padding: 1px 7px; border-radius: 10px; background: var(--accent-glow); color: var(--accent); font-weight: 600; }
+  .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--dim); }
+  .sidebar-footer a { color: var(--accent); text-decoration: none; }
+  .sidebar-footer a:hover { text-decoration: underline; }
+
+  /* ── Main ── */
+  .main { flex: 1; overflow-y: auto; }
+  .topbar { padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; background: var(--surface); }
+  .topbar h3 { font-size: 15px; font-weight: 600; }
+  .topbar .spacer { flex: 1; }
+  .server-dots { display: flex; gap: 8px; align-items: center; }
+  .server-dot { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); padding: 4px 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+  .server-dot .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .server-dot .dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .server-dot .dot.off { background: var(--dim); }
+  .content { padding: 28px; }
+
+  /* ── Dashboard KPIs ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .kpi .value { font-size: 32px; font-weight: 700; }
+  .kpi .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+  .kpi .sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  .kpi.accent .value { color: var(--accent); }
+  .kpi.green .value { color: var(--green); }
+  .kpi.orange .value { color: var(--orange); }
+  .kpi.purple .value { color: var(--purple); }
+
+  /* ── Section headers ── */
+  .section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-title .count { font-size: 12px; color: var(--muted); font-weight: 400; }
+
+  /* ── Server cards ── */
+  .server-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .server-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .server-card .server-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .server-card .server-icon { font-size: 22px; }
+  .server-card .server-name { font-size: 14px; font-weight: 600; text-transform: capitalize; }
+  .server-card .server-status { margin-left: auto; font-size: 10px; padding: 3px 8px; border-radius: 10px; font-weight: 600; }
+  .server-card .server-status.connected { background: var(--green-bg); color: var(--green); }
+  .server-card .server-status.disconnected { background: var(--surface-2); color: var(--dim); }
+  .server-card .tool-count { font-size: 24px; font-weight: 700; color: var(--accent); }
+  .server-card .tool-label { font-size: 11px; color: var(--muted); }
+  .server-card .tool-types { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--dim); }
+
+  /* ── Scenario cards ── */
+  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .scenario-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden; }
+  .scenario-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+  .scenario-card.running { border-color: var(--orange); }
+  .scenario-card .scenario-icon { font-size: 28px; margin-bottom: 12px; }
+  .scenario-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .scenario-card .scenario-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+  .scenario-card .scenario-servers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .scenario-card .server-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--surface-2); color: var(--dim); border: 1px solid var(--border); }
+  .scenario-card .run-btn { width: 100%; padding: 10px; border-radius: var(--radius); border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .scenario-card .run-btn:hover { opacity: .9; }
+  .scenario-card .run-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Run view ── */
+  .run-view { display: none; }
+  .run-view.active { display: block; }
+  .dashboard-view { display: block; }
+  .dashboard-view.hidden { display: none; }
+
+  .run-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .run-header .back-link { font-size: 12px; color: var(--accent); cursor: pointer; padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); transition: all .15s; }
+  .run-header .back-link:hover { background: var(--surface-2); }
+  .run-header h2 { font-size: 20px; font-weight: 700; }
+  .run-header .run-status { font-size: 12px; padding: 4px 12px; border-radius: 12px; font-weight: 600; margin-left: auto; }
+  .run-header .run-status.running { background: var(--orange-bg); color: var(--orange); }
+  .run-header .run-status.complete { background: var(--green-bg); color: var(--green); }
+
+  .run-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+  @media (max-width: 1000px) { .run-grid { grid-template-columns: 1fr; } }
+
+  /* ── Tool call timeline ── */
+  .timeline-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; }
+  .timeline-panel h4 { font-size: 13px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .timeline-panel h4 .count { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .timeline-empty { font-size: 13px; color: var(--dim); text-align: center; padding: 20px; }
+
+  .tool-timeline { list-style: none; }
+  .tool-entry { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start; cursor: pointer; transition: background .15s; border-radius: 4px; padding-left: 8px; margin: 0 -8px; }
+  .tool-entry:hover { background: var(--surface-2); }
+  .tool-entry:last-child { border-bottom: none; }
+  .tool-entry .entry-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .tool-entry .entry-dot.pending { background: var(--orange); animation: pulse 1.2s ease-in-out infinite; }
+  .tool-entry .entry-dot.done { background: var(--green); }
+  .tool-entry .entry-dot.error { background: var(--red); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  .tool-entry .entry-body { flex: 1; min-width: 0; }
+  .tool-entry .entry-header { display: flex; align-items: center; gap: 8px; }
+  .tool-entry .entry-server { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: .3px; }
+  .tool-entry .entry-tool { font-size: 13px; font-weight: 500; }
+  .tool-entry .entry-index { font-size: 10px; color: var(--dim); margin-left: auto; font-family: monospace; }
+  .tool-entry .entry-preview { font-size: 11px; color: var(--dim); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── Result panel ── */
+  .result-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; }
+  .result-panel h4 { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .result-content { font-size: 13px; line-height: 1.7; color: var(--muted); white-space: pre-wrap; word-break: break-word; max-height: 500px; overflow-y: auto; }
+
+  /* ── Stats bar ── */
+  .stats-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
+  .stats-panel h4 { font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+  .stat-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+  .stat-row .label { color: var(--muted); }
+  .stat-row .value { font-weight: 600; }
+
+  /* ── Server breakdown (right sidebar in run view) ── */
+  .servers-used-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
+  .servers-used-panel h4 { font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+  .server-used-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .server-used-item:last-child { border-bottom: none; }
+  .server-used-item .su-icon { font-size: 18px; }
+  .server-used-item .su-name { font-size: 13px; flex: 1; text-transform: capitalize; }
+  .server-used-item .su-count { font-size: 12px; font-weight: 700; color: var(--accent); }
+
+  /* ── Running indicator ── */
+  .running-bar { background: var(--surface-2); border: 1px solid var(--orange); border-radius: 30px; padding: 12px 24px; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; font-size: 13px; color: var(--orange); }
+  .running-bar .spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .running-bar.hidden { display: none; }
+
+  /* ── Tool detail overlay ── */
+  .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 200; justify-content: center; align-items: center; }
+  .detail-overlay.visible { display: flex; }
+  .detail-modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; }
+  .detail-modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .detail-modal .close-btn { margin-left: auto; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; }
+  .detail-modal .section-label { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; margin: 14px 0 6px; }
+  .detail-modal pre { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <h2>⚡ Control Plane</h2>
+    <div class="subtitle">ESS-MCP Agent</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" onclick="showDashboard()"><span class="icon">📊</span> Dashboard <span class="badge" id="navToolCount">—</span></div>
+    <div class="nav-item" id="navRunItem" onclick="showDashboard()" style="display:none"><span class="icon">▶️</span> Active Run</div>
+  </div>
+  <div class="sidebar-footer">
+    <a href="/">← Back to Agent UI</a>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <h3 id="topbarTitle">Dashboard</h3>
+    <div class="spacer"></div>
+    <div class="server-dots" id="serverDots"></div>
+  </div>
+
+  <!-- ═══ Dashboard View ═══ -->
+  <div class="content dashboard-view" id="dashboardView">
+
+    <!-- KPIs -->
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi accent"><div class="value" id="kpiServers">—</div><div class="label">MCP Servers</div><div class="sub" id="kpiServersDetail">connecting…</div></div>
+      <div class="kpi green"><div class="value" id="kpiTools">—</div><div class="label">Tools Available</div><div class="sub">across all servers</div></div>
+      <div class="kpi orange"><div class="value" id="kpiScenarios">—</div><div class="label">Scenarios</div><div class="sub">ready to execute</div></div>
+      <div class="kpi purple"><div class="value" id="kpiResources">40</div><div class="label">Widget Resources</div><div class="sub">UI components registered</div></div>
+    </div>
+
+    <!-- Server status -->
+    <div class="section-title">🔌 Connected MCP Servers</div>
+    <div class="server-grid" id="serverGrid">
+      <div class="server-card"><div style="text-align:center;padding:20px;color:var(--dim)">Loading servers…</div></div>
+    </div>
+
+    <!-- Scenarios -->
+    <div class="section-title">🚀 Agent Scenarios <span class="count" id="scenarioCount"></span></div>
+    <div class="scenario-grid" id="scenarioGrid">
+      <div class="scenario-card"><div style="text-align:center;padding:20px;color:var(--dim)">Loading scenarios…</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ Run View ═══ -->
+  <div class="content run-view" id="runView">
+    <div class="run-header">
+      <button class="back-link" onclick="showDashboard()">← Back</button>
+      <h2 id="runTitle">—</h2>
+      <span class="run-status running" id="runStatus">Running</span>
+    </div>
+
+    <div class="running-bar" id="runningBar">
+      <span class="spinner"></span>
+      <span id="runningText">Starting agent…</span>
+    </div>
+
+    <div class="run-grid">
+      <div>
+        <!-- Tool call timeline -->
+        <div class="timeline-panel">
+          <h4>🔧 Tool Calls <span class="count" id="runToolCount">0</span></h4>
+          <div id="toolTimeline">
+            <div class="timeline-empty">Waiting for agent to start calling tools…</div>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="result-panel" id="resultPanel" style="display:none">
+          <h4>📋 Agent Result</h4>
+          <div class="result-content" id="runResultContent"></div>
+        </div>
+      </div>
+
+      <div>
+        <!-- Stats -->
+        <div class="stats-panel" id="statsPanel" style="display:none">
+          <h4>📊 Run Statistics</h4>
+          <div class="stat-row"><span class="label">Duration</span><span class="value" id="runStatDuration">—</span></div>
+          <div class="stat-row"><span class="label">Turns</span><span class="value" id="runStatTurns">—</span></div>
+          <div class="stat-row"><span class="label">Tool Calls</span><span class="value" id="runStatCalls">—</span></div>
+          <div class="stat-row"><span class="label">Prompt Tokens</span><span class="value" id="runStatPrompt">—</span></div>
+          <div class="stat-row"><span class="label">Completion Tokens</span><span class="value" id="runStatComp">—</span></div>
+          <div class="stat-row"><span class="label">Model</span><span class="value" id="runStatModel">—</span></div>
+        </div>
+
+        <!-- Servers used -->
+        <div class="servers-used-panel">
+          <h4>🔌 Servers Used</h4>
+          <div id="serversUsed">
+            <div style="font-size:12px;color:var(--dim);padding:8px 0">No tool calls yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tool detail overlay -->
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-modal">
+    <h3><span id="detailTitle"></span><button class="close-btn" onclick="closeDetail()">✕</button></h3>
+    <div class="section-label">Input</div>
+    <pre id="detailInput"></pre>
+    <div class="section-label">Output</div>
+    <pre id="detailOutput"></pre>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let servers = [];
+let skills = [];
+let toolData = {};  // id -> {server, tool, arguments, result}
+let running = false;
+let serverCallCounts = {};
+
+const SCENARIO_META = {
+  'incident-triage': { icon: '🚨', desc: 'Cross-reference ServiceNow incidents with Jira engineering work. Identifies critical escalations, SLA breaches, and gaps without Jira coverage.', tags: ['servicenow', 'jira'] },
+  'team-review': { icon: '📊', desc: 'Executive-level team status report covering HR headcount, IT incident workload, sales pipeline, and engineering sprint progress.', tags: ['workday', 'servicenow', 'salesforce', 'jira'] },
+  'onboarding-audit': { icon: '✅', desc: 'Audit new-hire onboarding readiness across all enterprise systems — HR profile, IT access, CRM setup, and project assignments.', tags: ['workday', 'servicenow', 'salesforce', 'jira'] },
+  'sprint-readiness': { icon: '🏃', desc: 'Check sprint readiness by cross-referencing Jira sprint data with team availability and IT health blockers.', tags: ['jira', 'workday', 'servicenow'] },
+  'hiring-pipeline': { icon: '🧑‍💼', desc: 'End-to-end recruitment pipeline status — requisitions, compliance checks, CRM conflict screening, and project alignment.', tags: ['workday', 'servicenow', 'salesforce', 'jira'] },
+};
+
+const SERVER_ICONS = { workday: '👥', servicenow: '🔧', salesforce: '💼', jira: '📋' };
+const SERVER_DESCS = {
+  workday: 'HR, payroll, learning, performance, org structure',
+  servicenow: 'Incidents, changes, problems, catalog, approvals',
+  salesforce: 'Accounts, opportunities, leads, campaigns, cases',
+  jira: 'Issues, sprints, boards, epics, project management',
+};
+
+// ── Init ──
+async function init() {
+  const [skillRes, serverRes] = await Promise.all([
+    fetch('/api/skills').then(r => r.json()).catch(() => []),
+    fetch('/api/servers').then(r => r.json()).catch(() => []),
+  ]);
+
+  skills = skillRes;
+  servers = serverRes;
+  renderDashboard();
+}
+
+function renderDashboard() {
+  const totalTools = servers.reduce((n, s) => n + s.tools, 0);
+
+  // KPIs
+  document.getElementById('kpiServers').textContent = servers.length || '0';
+  document.getElementById('kpiServersDetail').textContent = servers.length
+    ? servers.map(s => s.name).join(', ')
+    : 'no servers connected';
+  document.getElementById('kpiTools').textContent = totalTools || '0';
+  document.getElementById('kpiScenarios').textContent = skills.length || '0';
+  document.getElementById('navToolCount').textContent = totalTools || '—';
+
+  // Server dots in topbar
+  const allNames = ['workday', 'servicenow', 'salesforce', 'jira'];
+  const connectedNames = new Set(servers.map(s => s.name));
+  document.getElementById('serverDots').innerHTML = allNames.map(name => {
+    const on = connectedNames.has(name);
+    return `<span class="server-dot"><span class="dot ${on ? 'on' : 'off'}"></span>${name}</span>`;
+  }).join('');
+
+  // Server cards
+  document.getElementById('serverGrid').innerHTML = allNames.map(name => {
+    const srv = servers.find(s => s.name === name);
+    const icon = SERVER_ICONS[name] || '🔌';
+    const desc = SERVER_DESCS[name] || '';
+    if (srv) {
+      return `
+        <div class="server-card">
+          <div class="server-header">
+            <span class="server-icon">${icon}</span>
+            <span class="server-name">${name}</span>
+            <span class="server-status connected">Connected</span>
+          </div>
+          <div class="tool-count">${srv.tools}</div>
+          <div class="tool-label">tools available</div>
+          <div class="tool-types">${desc}</div>
+        </div>`;
+    }
+    return `
+      <div class="server-card">
+        <div class="server-header">
+          <span class="server-icon">${icon}</span>
+          <span class="server-name">${name}</span>
+          <span class="server-status disconnected">Not connected</span>
+        </div>
+        <div class="tool-count" style="color:var(--dim)">—</div>
+        <div class="tool-label">configure ESS_${name.toUpperCase()}_MCP_URL</div>
+        <div class="tool-types">${desc}</div>
+      </div>`;
+  }).join('');
+
+  // Scenario cards
+  const scenarioCount = skills.length;
+  document.getElementById('scenarioCount').textContent = `(${scenarioCount})`;
+  document.getElementById('scenarioGrid').innerHTML = skills.map((s, i) => {
+    const meta = SCENARIO_META[s.name] || { icon: '🤖', desc: 'Run this skill against connected MCP servers.', tags: [] };
+    const title = s.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const tags = meta.tags.map(t => {
+      const connected = servers.some(srv => srv.name === t);
+      return `<span class="server-tag" style="${connected ? '' : 'opacity:.4'}">${SERVER_ICONS[t] || ''} ${t}</span>`;
+    }).join('');
+    return `
+      <div class="scenario-card" id="scenario-${i}">
+        <div class="scenario-icon">${meta.icon}</div>
+        <h3>${title}</h3>
+        <div class="scenario-desc">${meta.desc}</div>
+        <div class="scenario-servers">${tags}</div>
+        <button class="run-btn" onclick="event.stopPropagation();runScenario(${i})">▶ Run Scenario</button>
+      </div>`;
+  }).join('');
+}
+
+// ── Run scenario ──
+async function runScenario(index) {
+  if (running) return;
+  const skill = skills[index];
+  if (!skill) return;
+
+  running = true;
+  toolData = {};
+  serverCallCounts = {};
+  let toolIndex = 0;
+
+  // Switch to run view
+  const title = skill.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  document.getElementById('runTitle').textContent = title;
+  document.getElementById('runStatus').textContent = 'Running';
+  document.getElementById('runStatus').className = 'run-status running';
+  document.getElementById('runningBar').classList.remove('hidden');
+  document.getElementById('runningText').textContent = 'Starting agent…';
+  document.getElementById('toolTimeline').innerHTML = '<div class="timeline-empty">Waiting for agent to start calling tools…</div>';
+  document.getElementById('runToolCount').textContent = '0';
+  document.getElementById('resultPanel').style.display = 'none';
+  document.getElementById('statsPanel').style.display = 'none';
+  document.getElementById('serversUsed').innerHTML = '<div style="font-size:12px;color:var(--dim);padding:8px 0">No tool calls yet</div>';
+  document.getElementById('navRunItem').style.display = '';
+  document.getElementById('topbarTitle').textContent = title;
+
+  document.getElementById('dashboardView').classList.add('hidden');
+  document.getElementById('runView').classList.add('active');
+
+  // Disable all run buttons
+  document.querySelectorAll('.run-btn').forEach(b => b.disabled = true);
+
+  try {
+    const response = await fetch('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: skill.prompt }),
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      let eventType = null;
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          eventType = line.slice(7).trim();
+        } else if (line.startsWith('data: ') && eventType) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            handleRunEvent(eventType, data);
+          } catch (e) { /* ignore */ }
+          eventType = null;
+        }
+      }
+    }
+  } catch (e) {
+    document.getElementById('runningText').textContent = '❌ Error: ' + e.message;
+  }
+
+  running = false;
+  document.querySelectorAll('.run-btn').forEach(b => b.disabled = false);
+}
+
+function handleRunEvent(type, data) {
+  switch (type) {
+    case 'status':
+      document.getElementById('runningText').textContent = data.message;
+      break;
+
+    case 'tool_call': {
+      // Remove empty state
+      const timeline = document.getElementById('toolTimeline');
+      const empty = timeline.querySelector('.timeline-empty');
+      if (empty) empty.remove();
+
+      toolData[data.id] = { server: data.server, tool: data.tool, arguments: data.arguments, result: null };
+
+      // Track server usage
+      serverCallCounts[data.server] = (serverCallCounts[data.server] || 0) + 1;
+      updateServersUsed();
+
+      // Add timeline entry
+      const entry = document.createElement('div');
+      entry.className = 'tool-entry';
+      entry.id = 'entry-' + data.id;
+      entry.onclick = () => showToolDetail(data.id);
+      const argsPreview = JSON.stringify(data.arguments).slice(0, 80);
+      entry.innerHTML = `
+        <span class="entry-dot pending"></span>
+        <div class="entry-body">
+          <div class="entry-header">
+            <span class="entry-server">${data.server}</span>
+            <span class="entry-tool">${data.tool}</span>
+            <span class="entry-index">#${data.index}</span>
+          </div>
+          <div class="entry-preview">${argsPreview}</div>
+        </div>`;
+      timeline.appendChild(entry);
+
+      document.getElementById('runToolCount').textContent = data.index;
+      document.getElementById('runningText').textContent = `Calling ${data.server}/${data.tool}…`;
+      break;
+    }
+
+    case 'tool_result': {
+      if (toolData[data.id]) {
+        toolData[data.id].result = data.result;
+      }
+      const dot = document.querySelector(`#entry-${data.id} .entry-dot`);
+      if (dot) {
+        dot.classList.remove('pending');
+        dot.classList.add('done');
+      }
+      break;
+    }
+
+    case 'result':
+      document.getElementById('runningBar').classList.add('hidden');
+      document.getElementById('runStatus').textContent = 'Complete';
+      document.getElementById('runStatus').className = 'run-status complete';
+      document.getElementById('resultPanel').style.display = '';
+      document.getElementById('runResultContent').textContent = data.content;
+      break;
+
+    case 'stats':
+      document.getElementById('statsPanel').style.display = '';
+      document.getElementById('runStatDuration').textContent = data.duration + 's';
+      document.getElementById('runStatTurns').textContent = data.turns;
+      document.getElementById('runStatCalls').textContent = data.tool_calls;
+      document.getElementById('runStatPrompt').textContent = (data.prompt_tokens || 0).toLocaleString();
+      document.getElementById('runStatComp').textContent = (data.completion_tokens || 0).toLocaleString();
+      document.getElementById('runStatModel').textContent = data.model;
+      break;
+
+    case 'error':
+      document.getElementById('runningText').textContent = '❌ ' + data.message;
+      document.getElementById('runStatus').textContent = 'Error';
+      document.getElementById('runStatus').className = 'run-status running';
+      break;
+
+    case 'done':
+      document.getElementById('runningBar').classList.add('hidden');
+      break;
+  }
+}
+
+function updateServersUsed() {
+  const el = document.getElementById('serversUsed');
+  const entries = Object.entries(serverCallCounts).sort((a, b) => b[1] - a[1]);
+  el.innerHTML = entries.map(([name, count]) => `
+    <div class="server-used-item">
+      <span class="su-icon">${SERVER_ICONS[name] || '🔌'}</span>
+      <span class="su-name">${name}</span>
+      <span class="su-count">${count} call${count !== 1 ? 's' : ''}</span>
+    </div>`).join('');
+}
+
+// ── Tool detail modal ──
+function showToolDetail(id) {
+  const d = toolData[id];
+  if (!d) return;
+  document.getElementById('detailTitle').textContent = `${d.server} / ${d.tool}`;
+  document.getElementById('detailInput').textContent = JSON.stringify(d.arguments, null, 2);
+  document.getElementById('detailOutput').textContent = d.result || '(pending…)';
+  document.getElementById('detailOverlay').classList.add('visible');
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('visible');
+}
+
+// ── Navigation ──
+function showDashboard() {
+  document.getElementById('dashboardView').classList.remove('hidden');
+  document.getElementById('runView').classList.remove('active');
+  document.getElementById('topbarTitle').textContent = 'Dashboard';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[0].classList.add('active');
+}
+
+function showRunView() {
+  document.getElementById('dashboardView').classList.add('hidden');
+  document.getElementById('runView').classList.add('active');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+// ── Boot ──
+init();
+</script>
+</body>
+</html>
