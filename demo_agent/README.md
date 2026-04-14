@@ -137,25 +137,38 @@ The web UI lets you:
 python -m demo_agent.agent team-review     # run a skill from the command line
 ```
 
-### Hiring Control Plane
+### Control Plane
 
 ```bash
-python -m demo_agent.web          # open http://localhost:8091/hiring
+python -m demo_agent.web          # open http://localhost:8091/control-plane
 ```
 
-The hiring control plane is a dedicated UI at `/hiring` that demonstrates
-an **agentic hiring workflow** with human-in-the-loop orchestration:
+The control plane is an operations dashboard at `/control-plane` that connects
+to the **real MCP servers** and runs agent scenarios against them:
 
-- **Dashboard overview** — KPIs (active hires, autonomous runs, exceptions, SLA health), exception cards with severity indicators, fleet economics, and policy thresholds
-- **Workflow drill-down** — click any hire to see the full pipeline (Request Filed → Job Design → Sourcing → Budget Approval → Screening → Interview → Offer) with stage-by-stage status
-- **Human escalation points** — intervention modals for budget re-routing, compliance overrides, ethics reviews, document requests, and more. Each intervention includes pre-filled context, justification fields, and audit trails
-- **Agent activity log** — real-time view of MCP tool calls made by each agent in the fleet (Sourcing Agent, Budget Agent, Compliance Agent, etc.)
-- **Fleet assignment** — which agents are active, blocked, or on standby for each hire
-- **Bulk approval queue** — batch approve routine items (interview schedules, offer letters)
+- **Server status** — live connection indicators for each MCP server (Workday, ServiceNow, Salesforce, Jira) with tool counts
+- **KPI overview** — connected servers, available tools, scenarios, and widget resources at a glance
+- **Scenario cards** — click **▶ Run Scenario** on any skill to execute the agent against live MCP servers
+- **Real-time tool timeline** — watch every MCP tool call as it happens with server, tool name, and arguments
+- **Tool detail inspector** — click any tool call to see its full input and output
+- **Run statistics** — duration, turns, tool calls, token usage, and model used
+- **Server usage breakdown** — which MCP servers were called and how many times
 
-The control plane uses **synthetic data** in `data/hiring-scenarios.json` with
-5 active hires (3 with exceptions requiring human attention) to demonstrate
-the concept without requiring live MCP server connections.
+Unlike the basic agent UI, the control plane presents scenario execution in an
+operations-style layout — ideal for demos showing how an autonomous agent
+orchestrates across enterprise systems.
+
+#### Dashboard — server status and scenario cards
+
+![Control Plane — Dashboard](docs/images/control-plane-dashboard.png)
+
+#### Dashboard with MCP servers connected
+
+![Control Plane — Connected](docs/images/control-plane-connected.png)
+
+#### Completed run — tool timeline, result, and statistics
+
+![Control Plane — Run](docs/images/control-plane-run.png)
 
 ---
 
