@@ -197,7 +197,7 @@
       <div class="kpi accent"><div class="value" id="kpiServers">—</div><div class="label">MCP Servers</div><div class="sub" id="kpiServersDetail">connecting…</div></div>
       <div class="kpi green"><div class="value" id="kpiTools">—</div><div class="label">Tools Available</div><div class="sub">across all servers</div></div>
       <div class="kpi orange"><div class="value" id="kpiScenarios">—</div><div class="label">Scenarios</div><div class="sub">ready to execute</div></div>
-      <div class="kpi purple"><div class="value" id="kpiResources">40</div><div class="label">Widget Resources</div><div class="sub">UI components registered</div></div>
+      <div class="kpi purple"><div class="value" id="kpiResources">—</div><div class="label">Widget Resources</div><div class="sub" id="kpiResourcesDetail">per-server UI components</div></div>
     </div>
 
     <!-- Server status -->
@@ -326,9 +326,17 @@ function renderDashboard() {
   document.getElementById('kpiScenarios').textContent = skills.length || '0';
   document.getElementById('navToolCount').textContent = totalTools || '—';
 
+  // Widget resource count — known per-server resource counts
+  const RESOURCE_COUNTS = { workday: 14, servicenow: 12, salesforce: 9, jira: 5 };
+  const connectedNames = new Set(servers.map(s => s.name));
+  const totalResources = servers.reduce((n, s) => n + (RESOURCE_COUNTS[s.name] || 0), 0);
+  document.getElementById('kpiResources').textContent = totalResources || '—';
+  document.getElementById('kpiResourcesDetail').textContent = totalResources
+    ? `across ${servers.length} server${servers.length !== 1 ? 's' : ''}`
+    : 'connect servers to see resources';
+
   // Server dots in topbar
   const allNames = ['workday', 'servicenow', 'salesforce', 'jira'];
-  const connectedNames = new Set(servers.map(s => s.name));
   document.getElementById('serverDots').innerHTML = allNames.map(name => {
     const on = connectedNames.has(name);
     return `<span class="server-dot"><span class="dot ${on ? 'on' : 'off'}"></span>${name}</span>`;
