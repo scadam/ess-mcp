@@ -381,7 +381,7 @@ async function loadData() {
     const res = await fetch('/api/hiring-data');
     DATA = await res.json();
   } catch (e) {
-    // Fallback: inline data for static use
+    console.warn('Could not load hiring data from API — ensure the server is running.', e);
     DATA = null;
   }
   if (DATA) render();
@@ -470,13 +470,20 @@ function showDetail(id) {
   const stageOrder = ['request_filed','job_design','sourcing_started','budget_approval','screening','interview','offer'];
   const stageLabels = ['Request Filed','Job Design','Sourcing Started','Budget Approval','Screening','Interview','Offer'];
   const stageIcons = ['📝','🎯','🔍','💰','📋','🎤','📨'];
+
+  function stageIcon(stage, defaultIcon) {
+    if (stage.status === 'complete') return '✓';
+    if (stage.exception) return '⚠';
+    return defaultIcon;
+  }
+
   let pipelineHTML = '';
   stageOrder.forEach((key, i) => {
     const s = hire.stages[key];
     const statusClass = s.status;
     pipelineHTML += `
       <div class="stage-node">
-        <div class="stage-icon ${statusClass}">${s.status === 'complete' ? '✓' : (s.status === 'pending' ? stageIcons[i] : (s.exception ? '⚠' : stageIcons[i]))}</div>
+        <div class="stage-icon ${statusClass}">${stageIcon(s, stageIcons[i])}</div>
         <div class="stage-label ${statusClass}">${stageLabels[i]}</div>
       </div>`;
     if (i < stageOrder.length - 1) {
@@ -692,7 +699,7 @@ let currentToast = '';
 
 function handleIntervention(hireId, action) {
   const config = INTERVENTION_MODALS[action];
-  if (!config) { toast('Action: ' + action); return; }
+  if (!config) { console.warn('Unknown intervention action:', action); return; }
 
   document.getElementById('modalTitle').textContent = config.title;
   document.getElementById('modalBody').innerHTML = config.body;

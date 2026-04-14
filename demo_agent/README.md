@@ -137,6 +137,26 @@ The web UI lets you:
 python -m demo_agent.agent team-review     # run a skill from the command line
 ```
 
+### Hiring Control Plane
+
+```bash
+python -m demo_agent.web          # open http://localhost:8091/hiring
+```
+
+The hiring control plane is a dedicated UI at `/hiring` that demonstrates
+an **agentic hiring workflow** with human-in-the-loop orchestration:
+
+- **Dashboard overview** — KPIs (active hires, autonomous runs, exceptions, SLA health), exception cards with severity indicators, fleet economics, and policy thresholds
+- **Workflow drill-down** — click any hire to see the full pipeline (Request Filed → Job Design → Sourcing → Budget Approval → Screening → Interview → Offer) with stage-by-stage status
+- **Human escalation points** — intervention modals for budget re-routing, compliance overrides, ethics reviews, document requests, and more. Each intervention includes pre-filled context, justification fields, and audit trails
+- **Agent activity log** — real-time view of MCP tool calls made by each agent in the fleet (Sourcing Agent, Budget Agent, Compliance Agent, etc.)
+- **Fleet assignment** — which agents are active, blocked, or on standby for each hire
+- **Bulk approval queue** — batch approve routine items (interview schedules, offer letters)
+
+The control plane uses **synthetic data** in `data/hiring-scenarios.json` with
+5 active hires (3 with exceptions requiring human attention) to demonstrate
+the concept without requiring live MCP server connections.
+
 ---
 
 ## Available Skills
@@ -147,6 +167,7 @@ python -m demo_agent.agent team-review     # run a skill from the command line
 | `incident-triage` | `skills/incident-triage.md` | ServiceNow + Jira |
 | `onboarding-audit` | `skills/onboarding-audit.md` | Workday + ServiceNow + Salesforce + Jira |
 | `sprint-readiness` | `skills/sprint-readiness.md` | Jira + Workday + ServiceNow |
+| `hiring-pipeline` | `skills/hiring-pipeline.md` | Workday + ServiceNow + Salesforce + Jira |
 
 ---
 

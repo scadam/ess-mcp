@@ -42,7 +42,7 @@
         "api_calls": 847,
         "tokens_used": "234k",
         "simulations": 5,
-        "sla_timer": "#FFB22"
+        "sla_timer": "#FFB022"
       },
       "fleet": [
         { "role": "Sourcing Agent", "status": "idle", "icon": "🔍" },
