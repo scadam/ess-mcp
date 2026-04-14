@@ -180,8 +180,8 @@ async def handle_run(request: web.Request) -> web.StreamResponse:
         await send_event("stats", stats)
         await send_event("done", {})
 
-    except Exception as exc:
-        await send_event("error", {"message": str(exc)})
+    except Exception:
+        await send_event("error", {"message": "An internal error occurred while running the agent."})
         await send_event("done", {})
 
     return resp
@@ -240,15 +240,20 @@ def main() -> None:
         site = web.TCPSite(runner, "127.0.0.1", port)
         await site.start()
         print()
-        print("  ╭─────────────────────────────────────────────╮")
-        print("  │                                             │")
-        print("  │   ESS-MCP Demo Agent — Web UI               │")
-        print("  │                                             │")
-        print(f"  │   → http://localhost:{str(port):<24s}│")
-        print("  │                                             │")
-        print("  │   Press Ctrl+C to stop                      │")
-        print("  │                                             │")
-        print("  ╰─────────────────────────────────────────────╯")
+        url = f"http://localhost:{port}"
+        inner_w = max(len("ESS-MCP Demo Agent — Web UI"), len(f"→ {url}"), len("Press Ctrl+C to stop")) + 6
+
+        def pad(s: str) -> str:
+            return s + " " * (inner_w - len(s))
+        print(f"  ╭{'─' * inner_w}╮")
+        print(f"  │{' ' * inner_w}│")
+        print(f"  │{pad('   ESS-MCP Demo Agent — Web UI')}│")
+        print(f"  │{' ' * inner_w}│")
+        print(f"  │{pad(f'   → {url}')}│")
+        print(f"  │{' ' * inner_w}│")
+        print(f"  │{pad('   Press Ctrl+C to stop')}│")
+        print(f"  │{' ' * inner_w}│")
+        print(f"  ╰{'─' * inner_w}╯")
         print()
         # Keep running
         try:
