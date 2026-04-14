@@ -123,6 +123,14 @@ The web UI lets you:
 - See the **final result** rendered below
 - Review **statistics** — duration, turns, tool calls, token usage, model
 
+#### Choose a skill and connect to MCP servers
+
+![Demo Agent — Start](docs/images/demo-agent-start.png)
+
+#### Completed run with tool calls, result, and statistics
+
+![Demo Agent — Result](docs/images/demo-agent-result.png)
+
 ### CLI
 
 ```bash
