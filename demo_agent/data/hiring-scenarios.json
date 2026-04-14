@@ -1,0 +1,281 @@
+{
+  "hires": [
+    {
+      "id": "WF-HR-2025-0012",
+      "title": "Creative Director",
+      "location": "Ogilvy London",
+      "department": "Creative Services",
+      "hiring_manager": "Sarah Chen",
+      "status": "Budget approval pending 48h",
+      "sla_health": "24h remaining",
+      "risk_factor": "MEDIUM",
+      "stage": "budget_approval",
+      "stages": {
+        "request_filed": { "status": "complete", "date": "2025-03-01", "agent": "Intake Agent" },
+        "job_design": { "status": "complete", "date": "2025-03-03", "agent": "Job Design Agent" },
+        "sourcing_started": { "status": "complete", "date": "2025-03-05", "agent": "Sourcing Agent" },
+        "budget_approval": { "status": "stalled", "date": "2025-03-10", "agent": "Budget Agent", "exception": true },
+        "screening": { "status": "pending", "date": null, "agent": "Screening Agent" },
+        "interview": { "status": "pending", "date": null, "agent": "Interview Agent" },
+        "offer": { "status": "pending", "date": null, "agent": "Offer Agent" }
+      },
+      "exception": {
+        "type": "WORKFLOW STALLED",
+        "severity": "high",
+        "title": "Exception Analysis: Budget Stall",
+        "detail": "Budget Controller 'Raj Patel' hasn't responded to the 48h automated reconciliation request. The request exceeds the auto-approval threshold of £120k for Creative roles in London (currently £163k total package).",
+        "agent_tried": [
+          "Sent urgent Slack notification to Raj Patel (Tue 9:00)",
+          "Attempted lateral escalation to Finance Desk (Wed 09:01)",
+          "Submitted interim authorization via Workday API (rejected — over threshold)"
+        ],
+        "recommendation": "Re-route approval to Anita Shah (SVP Creative Services). Anita has delegated authority for budget overrides up to £250k and is currently online.",
+        "interventions": [
+          { "label": "Re-route to Anita Shah", "type": "primary", "action": "reroute_approval" },
+          { "label": "Send urgent nudge to Raj", "type": "secondary", "action": "nudge_approver" },
+          { "label": "HR BP approves directly", "type": "secondary", "action": "hr_override" },
+          { "label": "Cancel this hiring workflow", "type": "danger", "action": "cancel_workflow" }
+        ]
+      },
+      "economics": {
+        "compute_cost": "£12.40",
+        "api_calls": 847,
+        "tokens_used": "234k",
+        "simulations": 5,
+        "sla_timer": "#FFB22"
+      },
+      "fleet": [
+        { "role": "Sourcing Agent", "status": "idle", "icon": "🔍" },
+        { "role": "Budget Agent", "status": "blocked", "icon": "💰" },
+        { "role": "Screening Agent", "status": "standby", "icon": "📋" }
+      ],
+      "activity": [
+        { "time": "14:32", "agent": "Budget Agent", "action": "Approval request escalated to Finance Desk. Await response.", "tool": "workday__action_inbox_task" },
+        { "time": "14:30", "agent": "Budget Agent", "action": "Auto-approval rejected — package exceeds £120k threshold.", "tool": "workday__get_inbox_task_detail" },
+        { "time": "09:01", "agent": "Sourcing Agent", "action": "Submitted alternative sourcing strategy via ServiceNow.", "tool": "servicenow__create_incident" },
+        { "time": "08:45", "agent": "Intake Agent", "action": "Requisition matched to 3 internal candidates.", "tool": "workday__get_team_overview" }
+      ],
+      "candidates": [
+        { "name": "Alex Morgan", "source": "Internal referral", "stage": "Sourced", "score": 92 },
+        { "name": "Jamie Lee", "source": "LinkedIn", "stage": "Sourced", "score": 87 },
+        { "name": "Priya Sharma", "source": "Agency — WPP Talent", "stage": "Pre-screen", "score": 85 }
+      ]
+    },
+    {
+      "id": "WF-HR-2025-0007",
+      "title": "Senior Data Engineer",
+      "location": "GroupM New York",
+      "department": "Data & Analytics",
+      "hiring_manager": "Marcus Johnson",
+      "status": "Right-to-work check failed",
+      "sla_health": "SLA BREACHED",
+      "risk_factor": "CRITICAL",
+      "stage": "screening",
+      "stages": {
+        "request_filed": { "status": "complete", "date": "2025-02-15", "agent": "Intake Agent" },
+        "job_design": { "status": "complete", "date": "2025-02-17", "agent": "Job Design Agent" },
+        "sourcing_started": { "status": "complete", "date": "2025-02-20", "agent": "Sourcing Agent" },
+        "budget_approval": { "status": "complete", "date": "2025-02-22", "agent": "Budget Agent" },
+        "screening": { "status": "exception", "date": "2025-03-01", "agent": "Compliance Agent", "exception": true },
+        "interview": { "status": "pending", "date": null, "agent": "Interview Agent" },
+        "offer": { "status": "pending", "date": null, "agent": "Offer Agent" }
+      },
+      "exception": {
+        "type": "CRITICAL FAILURE",
+        "severity": "critical",
+        "title": "Right-to-Work Verification Failed",
+        "detail": "Right-to-work check failed (passport expired). Screening paused by Compliance Agent. Candidate notified — awaiting updated documentation within 72h window.",
+        "agent_tried": [
+          "Automated passport verification via gov.uk API (failed — expired)",
+          "Sent candidate notification with document upload link",
+          "Flagged to compliance dashboard for manual review"
+        ],
+        "recommendation": "Request updated documentation from candidate. If not received within 72h, escalate to HR Legal for alternative verification pathway.",
+        "interventions": [
+          { "label": "Request Docs", "type": "primary", "action": "request_documents" },
+          { "label": "Override", "type": "secondary", "action": "compliance_override" },
+          { "label": "Extend deadline", "type": "secondary", "action": "extend_deadline" },
+          { "label": "Cancel screening", "type": "danger", "action": "cancel_screening" }
+        ]
+      },
+      "economics": {
+        "compute_cost": "£8.70",
+        "api_calls": 623,
+        "tokens_used": "189k",
+        "simulations": 3,
+        "sla_timer": "BREACHED"
+      },
+      "fleet": [
+        { "role": "Compliance Agent", "status": "blocked", "icon": "⚖️" },
+        { "role": "Screening Agent", "status": "paused", "icon": "📋" },
+        { "role": "Interview Agent", "status": "standby", "icon": "🎤" }
+      ],
+      "activity": [
+        { "time": "11:15", "agent": "Compliance Agent", "action": "Right-to-work verification failed. Passport expired 2024-11-30.", "tool": "servicenow__search_incidents" },
+        { "time": "11:10", "agent": "Compliance Agent", "action": "Document verification initiated via ServiceNow.", "tool": "servicenow__create_incident" },
+        { "time": "10:45", "agent": "Screening Agent", "action": "Background check cleared. Moving to compliance.", "tool": "workday__get_worker" },
+        { "time": "09:30", "agent": "Sourcing Agent", "action": "Candidate pipeline finalized — 5 qualified candidates.", "tool": "workday__get_direct_reports" }
+      ],
+      "candidates": [
+        { "name": "Daniel Kim", "source": "Recruiter", "stage": "Compliance hold", "score": 94 },
+        { "name": "Sara Okafor", "source": "Internal", "stage": "Screened", "score": 91 },
+        { "name": "Tom Reeves", "source": "LinkedIn", "stage": "Screened", "score": 88 },
+        { "name": "Li Wei", "source": "Agency", "stage": "Pre-screen", "score": 84 },
+        { "name": "Rachel Adams", "source": "Referral", "stage": "Pre-screen", "score": 82 }
+      ]
+    },
+    {
+      "id": "WF-HR-2025-0015",
+      "title": "UX Lead",
+      "location": "VMLY&R London",
+      "department": "Design",
+      "hiring_manager": "Emily Rodriguez",
+      "status": "Conflict of interest detected",
+      "sla_health": "12h remaining",
+      "risk_factor": "HIGH",
+      "stage": "screening",
+      "stages": {
+        "request_filed": { "status": "complete", "date": "2025-02-28", "agent": "Intake Agent" },
+        "job_design": { "status": "complete", "date": "2025-03-01", "agent": "Job Design Agent" },
+        "sourcing_started": { "status": "complete", "date": "2025-03-04", "agent": "Sourcing Agent" },
+        "budget_approval": { "status": "complete", "date": "2025-03-06", "agent": "Budget Agent" },
+        "screening": { "status": "exception", "date": "2025-03-10", "agent": "Compliance Agent", "exception": true },
+        "interview": { "status": "pending", "date": null, "agent": "Interview Agent" },
+        "offer": { "status": "pending", "date": null, "agent": "Offer Agent" }
+      },
+      "exception": {
+        "type": "COMPLIANCE ISSUE",
+        "severity": "high",
+        "title": "Conflict of Interest Detected",
+        "detail": "Conflict of interest detected — candidate previously worked for client competition. Trigger manual ethics review before proceeding.",
+        "agent_tried": [
+          "Automated conflict check flagged match with competitor client",
+          "Cross-referenced Salesforce account data for client conflicts",
+          "Generated preliminary ethics review document"
+        ],
+        "recommendation": "Trigger manual ethics board review. Expected turnaround 48h. If cleared, resume screening pipeline.",
+        "interventions": [
+          { "label": "Review Case", "type": "primary", "action": "ethics_review" },
+          { "label": "Request more info", "type": "secondary", "action": "request_info" },
+          { "label": "Clear conflict", "type": "secondary", "action": "clear_conflict" },
+          { "label": "Disqualify candidate", "type": "danger", "action": "disqualify" }
+        ]
+      },
+      "economics": {
+        "compute_cost": "£6.20",
+        "api_calls": 412,
+        "tokens_used": "156k",
+        "simulations": 2,
+        "sla_timer": "#FF6B6B"
+      },
+      "fleet": [
+        { "role": "Compliance Agent", "status": "awaiting-human", "icon": "⚖️" },
+        { "role": "Screening Agent", "status": "paused", "icon": "📋" }
+      ],
+      "activity": [
+        { "time": "16:02", "agent": "Compliance Agent", "action": "Conflict of interest flagged. Ethics review required.", "tool": "salesforce__search_accounts" },
+        { "time": "15:50", "agent": "Compliance Agent", "action": "Cross-referencing candidate history with CRM data.", "tool": "salesforce__get_account_360" },
+        { "time": "15:30", "agent": "Screening Agent", "action": "Pre-screening complete. Forwarded to compliance.", "tool": "workday__get_worker" }
+      ],
+      "candidates": [
+        { "name": "Jordan Blake", "source": "Agency — Robert Half", "stage": "Compliance hold", "score": 89 },
+        { "name": "Nina Patel", "source": "Internal", "stage": "Screened", "score": 86 }
+      ]
+    },
+    {
+      "id": "WF-HR-2025-0018",
+      "title": "Product Manager",
+      "location": "Wunderman Thompson Singapore",
+      "department": "Product",
+      "hiring_manager": "David Park",
+      "status": "On track",
+      "sla_health": "All green",
+      "risk_factor": "LOW",
+      "stage": "interview",
+      "stages": {
+        "request_filed": { "status": "complete", "date": "2025-02-10", "agent": "Intake Agent" },
+        "job_design": { "status": "complete", "date": "2025-02-12", "agent": "Job Design Agent" },
+        "sourcing_started": { "status": "complete", "date": "2025-02-15", "agent": "Sourcing Agent" },
+        "budget_approval": { "status": "complete", "date": "2025-02-17", "agent": "Budget Agent" },
+        "screening": { "status": "complete", "date": "2025-02-25", "agent": "Screening Agent" },
+        "interview": { "status": "active", "date": "2025-03-08", "agent": "Interview Agent" },
+        "offer": { "status": "pending", "date": null, "agent": "Offer Agent" }
+      },
+      "exception": null,
+      "economics": {
+        "compute_cost": "£15.80",
+        "api_calls": 1203,
+        "tokens_used": "312k",
+        "simulations": 8,
+        "sla_timer": "OK"
+      },
+      "fleet": [
+        { "role": "Interview Agent", "status": "active", "icon": "🎤" },
+        { "role": "Offer Agent", "status": "standby", "icon": "📝" }
+      ],
+      "activity": [
+        { "time": "10:00", "agent": "Interview Agent", "action": "Panel interview scheduled for 3 finalists.", "tool": "workday__get_team_calendar" },
+        { "time": "09:30", "agent": "Screening Agent", "action": "All 3 candidates passed screening. Ready for interview.", "tool": "workday__get_worker" },
+        { "time": "09:00", "agent": "Interview Agent", "action": "Interview panel assembled from Jira project team.", "tool": "jira__get_project_summary" }
+      ],
+      "candidates": [
+        { "name": "Michelle Tang", "source": "Referral", "stage": "Final interview", "score": 95 },
+        { "name": "Robert Chen", "source": "Internal", "stage": "Panel interview", "score": 91 },
+        { "name": "Aisha Obi", "source": "LinkedIn", "stage": "Panel interview", "score": 89 }
+      ]
+    },
+    {
+      "id": "WF-HR-2025-0022",
+      "title": "DevOps Engineer",
+      "location": "Hogarth Worldwide Madrid",
+      "department": "Engineering",
+      "hiring_manager": "Carlos Mendez",
+      "status": "On track",
+      "sla_health": "All green",
+      "risk_factor": "LOW",
+      "stage": "offer",
+      "stages": {
+        "request_filed": { "status": "complete", "date": "2025-01-20", "agent": "Intake Agent" },
+        "job_design": { "status": "complete", "date": "2025-01-22", "agent": "Job Design Agent" },
+        "sourcing_started": { "status": "complete", "date": "2025-01-25", "agent": "Sourcing Agent" },
+        "budget_approval": { "status": "complete", "date": "2025-01-27", "agent": "Budget Agent" },
+        "screening": { "status": "complete", "date": "2025-02-05", "agent": "Screening Agent" },
+        "interview": { "status": "complete", "date": "2025-02-20", "agent": "Interview Agent" },
+        "offer": { "status": "active", "date": "2025-03-10", "agent": "Offer Agent" }
+      },
+      "exception": null,
+      "economics": {
+        "compute_cost": "£22.10",
+        "api_calls": 1847,
+        "tokens_used": "456k",
+        "simulations": 12,
+        "sla_timer": "OK"
+      },
+      "fleet": [
+        { "role": "Offer Agent", "status": "active", "icon": "📝" }
+      ],
+      "activity": [
+        { "time": "13:00", "agent": "Offer Agent", "action": "Offer letter generated. Awaiting hiring manager sign-off.", "tool": "workday__get_inbox_tasks" },
+        { "time": "12:30", "agent": "Offer Agent", "action": "Compensation benchmarking complete — within band.", "tool": "workday__get_worker" },
+        { "time": "12:00", "agent": "Interview Agent", "action": "Final interview debrief complete. Unanimous hire decision.", "tool": "jira__search_issues" }
+      ],
+      "candidates": [
+        { "name": "Elena Vasquez", "source": "Agency — Hays", "stage": "Offer pending", "score": 96 }
+      ]
+    }
+  ],
+  "summary": {
+    "active": 18,
+    "autonomous": 15,
+    "exceptions": 3,
+    "resolved_mtd": 6,
+    "sla_at_risk": 1,
+    "avg_cost_per_hire": "£847",
+    "avg_time_to_hire": "23 days",
+    "completion_rate": "94%",
+    "compute_efficiency": "87%",
+    "auto_shortlist_threshold": "85%",
+    "auto_reject_threshold": "40%",
+    "active_policy": "13 ACTIVE"
+  }
+}
