@@ -24,6 +24,7 @@ from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolPara
 
 STATIC_DIR = Path(__file__).parent / "static"
 SKILLS_DIR = Path(__file__).parent / "skills"
+DATA_DIR = Path(__file__).parent / "data"
 SERVER_NAMES = ("workday", "servicenow", "salesforce", "jira")
 
 # ── GitHub Models endpoint ─────────────────────────────────────────
@@ -213,14 +214,32 @@ async def handle_index(request: web.Request) -> web.FileResponse:
     return web.FileResponse(STATIC_DIR / "index.html")
 
 
+async def handle_hiring(request: web.Request) -> web.FileResponse:
+    """Serve the hiring control plane UI."""
+    return web.FileResponse(STATIC_DIR / "hiring.html")
+
+
+async def handle_hiring_data(request: web.Request) -> web.Response:
+    """Return synthetic hiring scenario data."""
+    data_file = DATA_DIR / "hiring-scenarios.json"
+    if not data_file.exists():
+        return web.json_response({"error": "hiring data not found"}, status=404)
+    return web.Response(
+        text=data_file.read_text(),
+        content_type="application/json",
+    )
+
+
 # ── App setup ──────────────────────────────────────────────────────
 
 
 def create_app() -> web.Application:
     app = web.Application()
     app.router.add_get("/", handle_index)
+    app.router.add_get("/hiring", handle_hiring)
     app.router.add_get("/api/skills", handle_skills)
     app.router.add_get("/api/servers", handle_servers)
+    app.router.add_get("/api/hiring-data", handle_hiring_data)
     app.router.add_post("/api/run", handle_run)
     return app
 
