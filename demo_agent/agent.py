@@ -63,7 +63,7 @@ async def run(
     llm = AsyncOpenAI()
     messages: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": skill},
-        {"role": "user", "content": skill},
+        {"role": "user", "content": "Execute the task described above."},
     ]
 
     for _turn in range(int(os.getenv("ESS_MAX_TURNS", "25"))):
