@@ -7,9 +7,27 @@ markdown prompts that tell the LLM what to do.
 ## Quick start
 
 ```bash
-pip install fastmcp openai python-dotenv   # already in mcp_servers deps
-cp .env.example .env                       # add your keys + tokens
-python -m demo_agent.agent team-review     # run a skill
+pip install fastmcp openai python-dotenv aiohttp   # already in mcp_servers deps
+cp .env.example .env                                # add your keys + tokens
+```
+
+### Web UI (recommended for demos)
+
+```bash
+python -m demo_agent.web          # open http://localhost:8091
+```
+
+The web UI lets you:
+- Pick a **skill** from clickable pills (or type a custom prompt)
+- Watch **tool calls** appear as pills in real time
+- Click any tool pill to inspect its **input** and **output**
+- See the **final result** rendered below
+- Review **statistics** — duration, turns, tool calls, token usage, model
+
+### CLI
+
+```bash
+python -m demo_agent.agent team-review     # run a skill from the command line
 ```
 
 ## Available skills
