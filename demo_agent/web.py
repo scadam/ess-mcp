@@ -1,6 +1,7 @@
 """Web UI for the ESS-MCP demo agent.
 
 Streams tool-call progress to the browser via Server-Sent Events (SSE).
+Uses the **GitHub Models** inference endpoint for model access.
 Run with:  python -m demo_agent.web
 """
 
@@ -9,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -23,6 +25,23 @@ from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolPara
 STATIC_DIR = Path(__file__).parent / "static"
 SKILLS_DIR = Path(__file__).parent / "skills"
 SERVER_NAMES = ("workday", "servicenow", "salesforce", "jira")
+
+# ── GitHub Models endpoint ─────────────────────────────────────────
+
+GITHUB_MODELS_URL = "https://models.inference.ai.azure.com"
+
+
+def _create_llm_client() -> AsyncOpenAI:
+    """Create an OpenAI-compatible client pointed at GitHub Models."""
+    token = os.getenv("GITHUB_TOKEN", "")
+    if not token:
+        sys.exit(
+            "GITHUB_TOKEN is required.\n"
+            "Create a Personal Access Token at https://github.com/settings/tokens\n"
+            "and set it in your .env file."
+        )
+    return AsyncOpenAI(base_url=GITHUB_MODELS_URL, api_key=token)
+
 
 # ── MCP connections (module-level, populated on startup) ───────────
 
@@ -96,7 +115,7 @@ async def handle_run(request: web.Request) -> web.StreamResponse:
 
     model = os.getenv("ESS_MODEL", "gpt-4.1")
     max_turns = int(os.getenv("ESS_MAX_TURNS", "25"))
-    llm = AsyncOpenAI()
+    llm = _create_llm_client()
 
     messages: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": prompt},

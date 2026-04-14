@@ -1,16 +1,29 @@
-"""Minimal agentic loop: FastMCP client + OpenAI tool-calling.
+"""Minimal agentic loop using **GitHub Models** + **MCP**.
 
-The entire loop is ~12 lines.  Skills are plain-text prompt files in
-``skills/`` that tell the LLM what to do with the MCP tools.
+This demo shows how to build an autonomous agent that:
+1. Connects to one or more MCP servers (ESS-MCP) via FastMCP
+2. Sends the discovered tools + a skill prompt to a model via the
+   **GitHub Models** inference API
+3. Executes tool calls in a loop until the model produces a final answer
 
-Auth note
----------
+The entire agentic loop is ~15 lines.  Skills are plain-text markdown
+prompts in ``skills/`` that tell the model what to do with the MCP tools.
+
+GitHub Models
+-------------
+Instead of calling the OpenAI API directly, this agent uses the
+**GitHub Models** inference endpoint (``https://models.inference.ai.azure.com``).
+Authentication is via a **GitHub Personal Access Token** (``GITHUB_TOKEN``).
+This means model usage is billed through your **GitHub Copilot** subscription
+— no separate OpenAI key is needed.
+
+See the README for full details on how the agent runs and pricing.
+
+MCP auth note
+-------------
 Each MCP server needs its own Bearer token (Workday, ServiceNow, …).
 Tokens are passed via ``ESS_<SERVER>_TOKEN`` env vars and injected as
 HTTP headers when connecting.  See ``.env.example`` for the full list.
-For production, swap static tokens for a client-credentials or OBO
-token provider — the only thing that changes is how you populate the
-``headers`` dict below.
 """
 
 from __future__ import annotations
@@ -27,6 +40,23 @@ from fastmcp import Client
 from fastmcp.client.transports import StreamableHttpTransport
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
+
+# ── GitHub Models endpoint ─────────────────────────────────────────
+
+GITHUB_MODELS_URL = "https://models.inference.ai.azure.com"
+
+
+def _create_llm_client() -> AsyncOpenAI:
+    """Create an OpenAI-compatible client pointed at GitHub Models."""
+    token = os.getenv("GITHUB_TOKEN", "")
+    if not token:
+        sys.exit(
+            "GITHUB_TOKEN is required.\n"
+            "Create a Personal Access Token at https://github.com/settings/tokens\n"
+            "and set it in your .env file."
+        )
+    return AsyncOpenAI(base_url=GITHUB_MODELS_URL, api_key=token)
+
 
 # ── connect to one MCP server ──────────────────────────────────────
 
@@ -59,8 +89,8 @@ async def run(
     tools: list[ChatCompletionToolParam],
     model: str,
 ) -> str:
-    """Run the agentic loop until the LLM produces a final answer."""
-    llm = AsyncOpenAI()
+    """Run the agentic loop until the model produces a final answer."""
+    llm = _create_llm_client()
     messages: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": skill},
         {"role": "user", "content": "Execute the task described above."},
