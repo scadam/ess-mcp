@@ -2,6 +2,7 @@
 import asyncio
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional
+from urllib.parse import urlencode
 
 from fastmcp import Context
 
@@ -91,8 +92,7 @@ async def _fetch_json_with_params(
 ) -> Dict[str, Any]:
     """Fetch JSON from a Workday API endpoint with optional query parameters."""
     if params:
-        qs = "&".join(f"{k}={v}" for k, v in params.items())
-        url = f"{url}?{qs}"
+        url = f"{url}?{urlencode(params)}"
     return await _fetch_json(url, access_token)
 
 
