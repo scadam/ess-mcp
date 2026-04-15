@@ -29,9 +29,12 @@ Before running, the hiring manager should provide:
 - Call `get_supervisory_org_members` on the target org to review internal
   candidates already in the organization.
 - Call `get_org_chart` to understand reporting lines.
-- For internal moves, identify the candidate's current worker_id.
-- For new hires, the hiring manager provides the candidate's worker_id after
-  the external recruiting process completes outside this pipeline.
+- For internal moves, identify the candidate's current worker_id from the
+  org members list.
+- For new external hires, the candidate must first be created as a pre-hire
+  worker in Workday through the standard recruiting process (outside this
+  pipeline). The hiring manager provides the resulting worker_id once the
+  pre-hire record exists. 🧑‍💼 **Escalate** if no worker_id is available.
 
 ### 4. Initiate the Hire (Workday)
 - Call `create_job_change` with the candidate's worker_id, the reason_id
@@ -84,7 +87,10 @@ Escalate to a human when:
 - **Candidate withdrawal**: immediate manager notification required
 - **Offer negotiation**: counter-offers require hiring manager input
 - **No matching requisition**: if `get_job_requisitions` returns no match,
-  the hiring manager must create one in Workday before proceeding
+  the hiring manager must create a requisition manually in Workday (requisition
+  creation is not available via the REST API) before the pipeline can proceed
+- **No pre-hire worker record**: for external candidates, the hiring manager
+  must complete the recruiting workflow in Workday first to produce a worker_id
 
 ## Output
 

@@ -86,6 +86,16 @@ def _tool_response(summary: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     return payload
 
 
+async def _fetch_json_with_params(
+    url: str, access_token: str, params: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Fetch JSON from a Workday API endpoint with optional query parameters."""
+    if params:
+        qs = "&".join(f"{k}={v}" for k, v in params.items())
+        url = f"{url}?{qs}"
+    return await _fetch_json(url, access_token)
+
+
 async def tool_get_worker(ctx: Optional[Context] = None) -> Dict:
     """Get the current Workday worker profile using the provided OAuth 2.0 bearer token."""
     worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
@@ -1927,7 +1937,7 @@ async def tool_get_job_profiles(
         params: Dict[str, Any] = {"limit": min(limit, 100)}
         if search:
             params["search"] = search
-        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        data = await _fetch_json_with_params(url, wctx.workday_access_token, params)
         profiles = []
         for item in data.get("data", []):
             profiles.append({
@@ -1997,7 +2007,7 @@ async def tool_get_job_families(
         params: Dict[str, Any] = {"limit": min(limit, 100)}
         if search:
             params["search"] = search
-        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        data = await _fetch_json_with_params(url, wctx.workday_access_token, params)
         families = []
         for item in data.get("data", []):
             families.append({
@@ -2031,7 +2041,7 @@ async def tool_get_jobs(
         params: Dict[str, Any] = {"limit": min(limit, 100)}
         if search:
             params["search"] = search
-        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        data = await _fetch_json_with_params(url, wctx.workday_access_token, params)
         jobs = []
         for item in data.get("data", []):
             jobs.append({
@@ -2063,7 +2073,7 @@ async def tool_get_job_requisitions(
         params: Dict[str, Any] = {"limit": min(limit, 100)}
         if search:
             params["search"] = search
-        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        data = await _fetch_json_with_params(url, wctx.workday_access_token, params)
         requisitions = []
         for item in data.get("data", []):
             requisitions.append({
@@ -2095,7 +2105,7 @@ async def tool_get_supervisory_orgs(
         params: Dict[str, Any] = {"limit": min(limit, 100)}
         if search:
             params["search"] = search
-        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        data = await _fetch_json_with_params(url, wctx.workday_access_token, params)
         orgs = []
         for item in data.get("data", []):
             orgs.append({
@@ -2129,7 +2139,7 @@ async def tool_get_supervisory_org_members(
             "/ccx/api/staffing/v6/{tenant}/supervisoryOrganizations/{org_id}/members",
             org_id=org_id,
         )
-        data = await _fetch_json(f"{url}?limit={min(limit, 100)}", wctx.workday_access_token)
+        data = await _fetch_json_with_params(url, wctx.workday_access_token, {"limit": min(limit, 100)})
         members = []
         for item in data.get("data", []):
             members.append({
@@ -2169,7 +2179,7 @@ async def tool_create_job_change(
     if not worker_id:
         raise ValueError("worker_id is required")
     if not reason_id:
-        raise ValueError("reason_id is required — use get_job_change_reasons to look up valid values")
+        raise ValueError("reason_id is required. Use get_job_change_reasons to look up valid values.")
     try:
         wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
         endpoints = get_endpoints()
@@ -2293,7 +2303,7 @@ async def tool_get_job_change_reasons(
         params: Dict[str, Any] = {"limit": min(limit, 100)}
         if search:
             params["search"] = search
-        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        data = await _fetch_json_with_params(url, wctx.workday_access_token, params)
         reasons = []
         for item in data.get("data", []):
             reasons.append({
