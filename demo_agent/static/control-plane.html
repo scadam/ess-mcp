@@ -292,6 +292,7 @@ const SCENARIO_META = {
   'onboarding-audit': { icon: '✅', desc: 'Audit new-hire onboarding readiness across all enterprise systems — HR profile, IT access, CRM setup, and project assignments.', tags: ['workday', 'servicenow', 'salesforce', 'jira'] },
   'sprint-readiness': { icon: '🏃', desc: 'Check sprint readiness by cross-referencing Jira sprint data with team availability and IT health blockers.', tags: ['jira', 'workday', 'servicenow'] },
   'hiring-pipeline': { icon: '🧑‍💼', desc: 'End-to-end recruitment pipeline status — requisitions, compliance checks, CRM conflict screening, and project alignment.', tags: ['workday', 'servicenow', 'salesforce', 'jira'] },
+  'cross-system-overview': { icon: '🔗', desc: 'Employee self-service overview — pull your Workday HR profile, compensation, and time-off balances alongside open ServiceNow incidents and pending tasks.', tags: ['workday', 'servicenow'] },
 };
 
 const SERVER_ICONS = { workday: '👥', servicenow: '🔧', salesforce: '💼', jira: '📋' };
@@ -427,10 +428,14 @@ async function runScenario(index) {
   document.querySelectorAll('.run-btn').forEach(b => b.disabled = true);
 
   try {
+    const meta = SCENARIO_META[skill.name];
+    const payload = { prompt: skill.prompt };
+    if (meta && meta.tags && meta.tags.length) payload.servers = meta.tags;
+
     const response = await fetch('/api/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: skill.prompt }),
+      body: JSON.stringify(payload),
     });
 
     const reader = response.body.getReader();
@@ -544,7 +549,13 @@ function handleRunEvent(type, data) {
       break;
 
     case 'done':
-      document.getElementById('runningBar').classList.add('hidden');
+      // Keep the running bar visible if it's showing an error
+      const runText = document.getElementById('runningText').textContent;
+      if (!runText.startsWith('❌')) {
+        document.getElementById('runningBar').classList.add('hidden');
+      }
+      document.getElementById('runStatus').textContent = runText.startsWith('❌') ? 'Error' : 'Done';
+      document.getElementById('runStatus').className = 'run-status';
       break;
   }
 }

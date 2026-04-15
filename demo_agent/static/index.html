@@ -382,7 +382,11 @@ function handleEvent(type, data) {
       break;
 
     case 'done':
-      hideStatus();
+      // Don't hide status if it's showing an error
+      const statusEl = document.getElementById('statusBar');
+      if (statusEl && !statusEl.textContent.startsWith('❌')) {
+        hideStatus();
+      }
       break;
   }
 }
