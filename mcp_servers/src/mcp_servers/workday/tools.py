@@ -1911,6 +1911,501 @@ async def tool_prepare_create_check_in(ctx: Optional[Context] = None) -> Dict:
         return {"success": False, "error": str(exc)}
 
 
+# ── Staffing / Hiring tools ─────────────────────────────────────────
+
+
+async def tool_get_job_profiles(
+    ctx: Optional[Context] = None,
+    search: Optional[str] = None,
+    limit: int = 20,
+) -> Dict:
+    """List Workday job profiles. Uses Staffing REST API GET /jobProfiles."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/jobProfiles")
+        params: Dict[str, Any] = {"limit": min(limit, 100)}
+        if search:
+            params["search"] = search
+        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        profiles = []
+        for item in data.get("data", []):
+            profiles.append({
+                "id": item.get("id"),
+                "descriptor": item.get("descriptor"),
+                "name": item.get("name"),
+                "isActive": item.get("isActive"),
+                "isPublic": item.get("isPublic"),
+                "jobFamily": item.get("jobFamily", {}).get("descriptor") if item.get("jobFamily") else None,
+                "managementLevel": item.get("managementLevel", {}).get("descriptor") if item.get("managementLevel") else None,
+            })
+        return {
+            "success": True,
+            "total": data.get("total", len(profiles)),
+            "profiles": profiles,
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_job_profiles_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_job_profile(
+    ctx: Optional[Context] = None,
+    job_profile_id: str = "",
+) -> Dict:
+    """Get details of a single Workday job profile. Uses Staffing REST API GET /jobProfiles/{ID}."""
+    if not job_profile_id:
+        raise ValueError("job_profile_id is required")
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v6/{tenant}/jobProfiles/{job_profile_id}",
+            job_profile_id=job_profile_id,
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        profile = {
+            "id": data.get("id"),
+            "descriptor": data.get("descriptor"),
+            "name": data.get("name"),
+            "isActive": data.get("isActive"),
+            "isPublic": data.get("isPublic"),
+            "jobFamily": data.get("jobFamily", {}).get("descriptor") if data.get("jobFamily") else None,
+            "managementLevel": data.get("managementLevel", {}).get("descriptor") if data.get("managementLevel") else None,
+            "jobCategory": data.get("jobCategory", {}).get("descriptor") if data.get("jobCategory") else None,
+        }
+        return {"success": True, "profile": profile}
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_job_profile_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_job_families(
+    ctx: Optional[Context] = None,
+    search: Optional[str] = None,
+    limit: int = 20,
+) -> Dict:
+    """List Workday job families. Uses Staffing REST API GET /jobFamilies."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/jobFamilies")
+        params: Dict[str, Any] = {"limit": min(limit, 100)}
+        if search:
+            params["search"] = search
+        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        families = []
+        for item in data.get("data", []):
+            families.append({
+                "id": item.get("id"),
+                "descriptor": item.get("descriptor"),
+                "isActive": item.get("isActive"),
+                "summary": item.get("summary"),
+            })
+        return {
+            "success": True,
+            "total": data.get("total", len(families)),
+            "families": families,
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_job_families_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_jobs(
+    ctx: Optional[Context] = None,
+    search: Optional[str] = None,
+    limit: int = 20,
+) -> Dict:
+    """List Workday jobs. Uses Staffing REST API GET /jobs."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/jobs")
+        params: Dict[str, Any] = {"limit": min(limit, 100)}
+        if search:
+            params["search"] = search
+        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        jobs = []
+        for item in data.get("data", []):
+            jobs.append({
+                "id": item.get("id"),
+                "descriptor": item.get("descriptor"),
+            })
+        return {
+            "success": True,
+            "total": data.get("total", len(jobs)),
+            "jobs": jobs,
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_jobs_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_job_requisitions(
+    ctx: Optional[Context] = None,
+    search: Optional[str] = None,
+    limit: int = 20,
+) -> Dict:
+    """List open job requisitions. Uses Staffing REST API GET /values/jobChangesGroup/jobRequisitions."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/values/jobChangesGroup/jobRequisitions")
+        params: Dict[str, Any] = {"limit": min(limit, 100)}
+        if search:
+            params["search"] = search
+        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        requisitions = []
+        for item in data.get("data", []):
+            requisitions.append({
+                "id": item.get("id"),
+                "descriptor": item.get("descriptor"),
+            })
+        return {
+            "success": True,
+            "total": data.get("total", len(requisitions)),
+            "requisitions": requisitions,
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_job_requisitions_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_supervisory_orgs(
+    ctx: Optional[Context] = None,
+    search: Optional[str] = None,
+    limit: int = 20,
+) -> Dict:
+    """List supervisory organizations. Uses Staffing REST API GET /supervisoryOrganizations."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/supervisoryOrganizations")
+        params: Dict[str, Any] = {"limit": min(limit, 100)}
+        if search:
+            params["search"] = search
+        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        orgs = []
+        for item in data.get("data", []):
+            orgs.append({
+                "id": item.get("id"),
+                "descriptor": item.get("descriptor"),
+            })
+        return {
+            "success": True,
+            "total": data.get("total", len(orgs)),
+            "organizations": orgs,
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_supervisory_orgs_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_supervisory_org_members(
+    ctx: Optional[Context] = None,
+    org_id: str = "",
+    limit: int = 50,
+) -> Dict:
+    """List members of a supervisory organization. Uses Staffing REST API GET /supervisoryOrganizations/{ID}/members."""
+    if not org_id:
+        raise ValueError("org_id is required")
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v6/{tenant}/supervisoryOrganizations/{org_id}/members",
+            org_id=org_id,
+        )
+        data = await _fetch_json(f"{url}?limit={min(limit, 100)}", wctx.workday_access_token)
+        members = []
+        for item in data.get("data", []):
+            members.append({
+                "id": item.get("id"),
+                "descriptor": item.get("descriptor"),
+            })
+        return {
+            "success": True,
+            "total": data.get("total", len(members)),
+            "organizationId": org_id,
+            "members": members,
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_supervisory_org_members_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_create_job_change(
+    ctx: Optional[Context] = None,
+    worker_id: str = "",
+    reason_id: str = "",
+    job_profile_id: Optional[str] = None,
+    supervisory_org_id: Optional[str] = None,
+    position_id: Optional[str] = None,
+    job_requisition_id: Optional[str] = None,
+) -> Dict:
+    """Initiate a job change for a worker. Uses Staffing REST API POST /workers/{ID}/jobChanges.
+
+    This is the Workday mechanism for hiring, promoting, or transferring a worker
+    into a new position. Provide the worker_id, a change reason, and optionally
+    a target job profile, supervisory org, position, or job requisition.
+    Returns the job change event ID which can be further configured and then
+    submitted with submit_job_change.
+    """
+    if not worker_id:
+        raise ValueError("worker_id is required")
+    if not reason_id:
+        raise ValueError("reason_id is required — use get_job_change_reasons to look up valid values")
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v6/{tenant}/workers/{worker_id}/jobChanges",
+            worker_id=worker_id,
+        )
+        body: Dict[str, Any] = {
+            "reason": {"id": reason_id},
+        }
+        if job_profile_id:
+            body["jobProfile"] = {"id": job_profile_id}
+        if supervisory_org_id:
+            body["supervisoryOrganization"] = {"id": supervisory_org_id}
+        if position_id:
+            body["position"] = {"id": position_id}
+        if job_requisition_id:
+            body["jobRequisition"] = {"id": job_requisition_id}
+        headers = {
+            "Authorization": f"Bearer {wctx.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        async with create_async_client() as client:
+            response = await client.post(url, json=body, headers=headers)
+            if response.is_error:
+                error_body = response.text[:500]
+                LOGGER.error("workday_create_job_change_error", status=response.status_code, body=error_body)
+                response.raise_for_status()
+            result = response.json()
+        return {
+            "success": True,
+            "jobChangeId": result.get("id"),
+            "descriptor": result.get("descriptor"),
+            "message": "Job change initiated. Configure further details then call submit_job_change.",
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_create_job_change_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_job_change(
+    ctx: Optional[Context] = None,
+    job_change_id: str = "",
+) -> Dict:
+    """Get details of a job change event. Uses Staffing REST API GET /jobChanges/{ID}."""
+    if not job_change_id:
+        raise ValueError("job_change_id is required")
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v6/{tenant}/jobChanges/{job_change_id}",
+            job_change_id=job_change_id,
+        )
+        data = await _fetch_json(url, wctx.workday_access_token)
+        return {
+            "success": True,
+            "id": data.get("id"),
+            "descriptor": data.get("descriptor"),
+            "worker": data.get("worker", {}).get("descriptor"),
+            "reason": data.get("reason", {}).get("descriptor"),
+            "status": data.get("status", {}).get("descriptor") if data.get("status") else None,
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_job_change_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_submit_job_change(
+    ctx: Optional[Context] = None,
+    job_change_id: str = "",
+) -> Dict:
+    """Submit a job change for processing. Uses Staffing REST API POST /jobChanges/{ID}/submit."""
+    if not job_change_id:
+        raise ValueError("job_change_id is required")
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v6/{tenant}/jobChanges/{job_change_id}/submit",
+            job_change_id=job_change_id,
+        )
+        headers = {
+            "Authorization": f"Bearer {wctx.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        async with create_async_client() as client:
+            response = await client.post(url, json={}, headers=headers)
+            if response.is_error:
+                error_body = response.text[:500]
+                LOGGER.error("workday_submit_job_change_error", status=response.status_code, body=error_body)
+                response.raise_for_status()
+            result = response.json()
+        return {
+            "success": True,
+            "jobChangeId": job_change_id,
+            "descriptor": result.get("descriptor"),
+            "message": "Job change submitted for approval.",
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_submit_job_change_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_get_job_change_reasons(
+    ctx: Optional[Context] = None,
+    search: Optional[str] = None,
+    limit: int = 20,
+) -> Dict:
+    """List valid job change reasons (e.g. New Hire, Promotion, Transfer). Uses Staffing REST API GET /values/jobChangesGroup/reason."""
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/values/jobChangesGroup/reason")
+        params: Dict[str, Any] = {"limit": min(limit, 100)}
+        if search:
+            params["search"] = search
+        data = await _fetch_json(f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}", wctx.workday_access_token)
+        reasons = []
+        for item in data.get("data", []):
+            reasons.append({
+                "id": item.get("id"),
+                "descriptor": item.get("descriptor"),
+            })
+        return {
+            "success": True,
+            "total": data.get("total", len(reasons)),
+            "reasons": reasons,
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_get_job_change_reasons_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_create_org_assignment_change(
+    ctx: Optional[Context] = None,
+    worker_id: str = "",
+    company_id: Optional[str] = None,
+    cost_center_id: Optional[str] = None,
+    region_id: Optional[str] = None,
+    business_unit_id: Optional[str] = None,
+) -> Dict:
+    """Initiate an organization assignment change for a worker. Uses Staffing REST API POST /workers/{ID}/organizationAssignmentChanges.
+
+    Assigns the worker to organizational entities such as company, cost center,
+    region, or business unit. Returns the change event ID for further
+    configuration and submission.
+    """
+    if not worker_id:
+        raise ValueError("worker_id is required")
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v6/{tenant}/workers/{worker_id}/organizationAssignmentChanges",
+            worker_id=worker_id,
+        )
+        body: Dict[str, Any] = {}
+        if company_id:
+            body["company"] = {"id": company_id}
+        if cost_center_id:
+            body["costCenter"] = {"id": cost_center_id}
+        if region_id:
+            body["region"] = {"id": region_id}
+        if business_unit_id:
+            body["businessUnit"] = {"id": business_unit_id}
+        headers = {
+            "Authorization": f"Bearer {wctx.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        async with create_async_client() as client:
+            response = await client.post(url, json=body, headers=headers)
+            if response.is_error:
+                error_body = response.text[:500]
+                LOGGER.error("workday_create_org_assignment_change_error", status=response.status_code, body=error_body)
+                response.raise_for_status()
+            result = response.json()
+        return {
+            "success": True,
+            "changeId": result.get("id"),
+            "descriptor": result.get("descriptor"),
+            "message": "Organization assignment change initiated. Call submit_org_assignment_change to finalize.",
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_create_org_assignment_change_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
+async def tool_submit_org_assignment_change(
+    ctx: Optional[Context] = None,
+    change_id: str = "",
+) -> Dict:
+    """Submit an organization assignment change for processing. Uses Staffing REST API POST /organizationAssignmentChanges/{ID}/submit."""
+    if not change_id:
+        raise ValueError("change_id is required")
+    try:
+        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        endpoints = get_endpoints()
+        url = endpoints.full_url(
+            "/ccx/api/staffing/v6/{tenant}/organizationAssignmentChanges/{change_id}/submit",
+            change_id=change_id,
+        )
+        headers = {
+            "Authorization": f"Bearer {wctx.workday_access_token}",
+            "Content-Type": "application/json",
+        }
+        async with create_async_client() as client:
+            response = await client.post(url, json={}, headers=headers)
+            if response.is_error:
+                error_body = response.text[:500]
+                LOGGER.error("workday_submit_org_assignment_change_error", status=response.status_code, body=error_body)
+                response.raise_for_status()
+            result = response.json()
+        return {
+            "success": True,
+            "changeId": change_id,
+            "descriptor": result.get("descriptor"),
+            "message": "Organization assignment change submitted for approval.",
+        }
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.error("workday_submit_org_assignment_change_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+
+
 WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
     {
         "name": "get_worker",
@@ -2165,5 +2660,88 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "openai/toolInvocation/invoking": "Loading check-in form\u2026",
             "openai/toolInvocation/invoked": "Check-in form ready.",
         },
+    },
+    # ── Staffing / Hiring ──
+    {
+        "name": "get_job_profiles",
+        "func": tool_get_job_profiles,
+        "summary": "List Workday job profiles with optional search filter. Use to find the right job profile for a hire.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_job_profile",
+        "func": tool_get_job_profile,
+        "summary": "Get details of a single Workday job profile by ID including job family and management level.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_job_families",
+        "func": tool_get_job_families,
+        "summary": "List Workday job families with optional search filter. Job families group related job profiles.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_jobs",
+        "func": tool_get_jobs,
+        "summary": "List Workday jobs (filled positions) with optional search filter.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_job_requisitions",
+        "func": tool_get_job_requisitions,
+        "summary": "List open job requisitions. Use to find requisitions available for hiring into.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_supervisory_orgs",
+        "func": tool_get_supervisory_orgs,
+        "summary": "List supervisory organizations with optional search filter. Use to find the target org for a hire.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_supervisory_org_members",
+        "func": tool_get_supervisory_org_members,
+        "summary": "List members of a supervisory organization by org_id. Use to review current team composition or find internal candidates.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "get_job_change_reasons",
+        "func": tool_get_job_change_reasons,
+        "summary": "List valid job change reasons (e.g. New Hire, Promotion, Transfer). Use to get a reason_id for create_job_change.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "create_job_change",
+        "func": tool_create_job_change,
+        "summary": (
+            "Initiate a job change for a worker (hire, promote, or transfer). "
+            "Provide worker_id and reason_id (from get_job_change_reasons). Optionally provide "
+            "job_profile_id, supervisory_org_id, position_id, or job_requisition_id. "
+            "Returns a job change event ID for submit_job_change."
+        ),
+    },
+    {
+        "name": "get_job_change",
+        "func": tool_get_job_change,
+        "summary": "Get details and status of a job change event by its ID.",
+        "annotations": {"readOnlyHint": True},
+    },
+    {
+        "name": "submit_job_change",
+        "func": tool_submit_job_change,
+        "summary": "Submit a job change event for approval. Provide the job_change_id from create_job_change.",
+    },
+    {
+        "name": "create_org_assignment_change",
+        "func": tool_create_org_assignment_change,
+        "summary": (
+            "Initiate an organization assignment change for a worker. Assign company, "
+            "cost center, region, or business unit. Returns a change ID for submit_org_assignment_change."
+        ),
+    },
+    {
+        "name": "submit_org_assignment_change",
+        "func": tool_submit_org_assignment_change,
+        "summary": "Submit an organization assignment change for approval. Provide the change_id from create_org_assignment_change.",
     },
 ]
