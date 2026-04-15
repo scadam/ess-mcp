@@ -1,5 +1,4 @@
 
-import hashlib
 import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -13,30 +12,6 @@ from ..logging import get_logger
 from ..settings import load_servicenow_settings
 
 LOGGER = get_logger(__name__)
-
-# ── Session cookie storage for ServiceNow cart APIs ─────────────────
-# The Service Catalog cart endpoints are session-based (JSESSIONID).
-# Without persistent cookies each tool call gets a new empty cart.
-_cart_cookies: Dict[str, Dict[str, str]] = {}
-
-
-def _cookie_key(token: str) -> str:
-    """Stable cache key derived from the bearer token."""
-    return hashlib.sha256(token.encode()).hexdigest()[:16]
-
-
-def _get_cart_cookies(token: str) -> Dict[str, str]:
-    """Return stored session cookies for cart API calls."""
-    return dict(_cart_cookies.get(_cookie_key(token), {}))
-
-
-def _save_cart_cookies(token: str, resp: httpx.Response) -> None:
-    """Persist session cookies returned by a cart API response."""
-    key = _cookie_key(token)
-    if key not in _cart_cookies:
-        _cart_cookies[key] = {}
-    for name, value in resp.cookies.items():
-        _cart_cookies[key][name] = value
 
 # ── Incident state display mapping ──────────────────────────────────
 _STATE_MAP: Dict[str, str] = {
@@ -2137,14 +2112,12 @@ async def tool_add_to_cart(
             resp = await client.post(
                 url,
                 json=payload,
-                cookies=_get_cart_cookies(token),
                 headers={
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
             )
-            _save_cart_cookies(token, resp)
             if not resp.is_success:
                 body_text = resp.text[:500]
                 LOGGER.error(
@@ -2196,13 +2169,11 @@ async def tool_get_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
     async with create_async_client() as client:
         resp = await client.get(
             url,
-            cookies=_get_cart_cookies(token),
             headers={
                 "Authorization": f"Bearer {token}",
                 "Accept": "application/json",
             },
         )
-        _save_cart_cookies(token, resp)
         resp.raise_for_status()
         body = resp.json()
 
@@ -2214,10 +2185,17 @@ async def tool_get_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
     if isinstance(result, list):
         raw_items = result
     for raw in raw_items:
+        # ServiceNow uses "item_name" (not "name") for the cart item display name
+        name = (
+            raw.get("item_name")
+            or raw.get("name")
+            or raw.get("short_description")
+            or ""
+        )
         items.append(
             {
                 "cart_item_id": raw.get("cart_item_id", ""),
-                "name": raw.get("name", ""),
+                "name": name,
                 "quantity": raw.get("quantity", 1),
                 "price": raw.get("price", ""),
                 "recurring_price": raw.get("recurring_price", ""),
@@ -2250,14 +2228,12 @@ async def tool_checkout_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
             resp = await client.post(
                 url,
                 json={},
-                cookies=_get_cart_cookies(token),
                 headers={
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
             )
-            _save_cart_cookies(token, resp)
             if not resp.is_success:
                 body_text = resp.text[:500]
                 LOGGER.error(
@@ -2276,10 +2252,6 @@ async def tool_checkout_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
     result = body.get("result", {})
     request_number = result.get("request_number", "")
     request_id = result.get("request_id", "")
-
-    # Clear cart cookies after successful checkout
-    key = _cookie_key(token)
-    _cart_cookies.pop(key, None)
 
     return {
         "success": True,
@@ -2308,13 +2280,11 @@ async def tool_delete_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
         async with create_async_client(timeout=60.0) as client:
             resp = await client.delete(
                 url,
-                cookies=_get_cart_cookies(token),
                 headers={
                     "Authorization": f"Bearer {token}",
                     "Accept": "application/json",
                 },
             )
-            _save_cart_cookies(token, resp)
             if not resp.is_success:
                 body_text = resp.text[:500]
                 LOGGER.error(
@@ -2328,10 +2298,6 @@ async def tool_delete_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
     except Exception as exc:
         LOGGER.error("servicenow_delete_cart_error", error=str(exc))
         return {"success": False, "error": str(exc)}
-
-    # Clear cart cookies after emptying
-    key = _cookie_key(token)
-    _cart_cookies.pop(key, None)
 
     return {"success": True, "message": "Cart emptied."}
 
@@ -2366,12 +2332,10 @@ async def tool_remove_cart_item(
     LOGGER.info("servicenow_remove_cart_item", cart_item_id=cart_item_id)
 
     last_error = ""
-    cookies = _get_cart_cookies(token)
     for url in candidate_urls:
         try:
             async with create_async_client(timeout=60.0) as client:
-                resp = await client.delete(url, headers=headers, cookies=cookies)
-                _save_cart_cookies(token, resp)
+                resp = await client.delete(url, headers=headers)
                 if resp.is_success:
                     return {
                         "success": True,
