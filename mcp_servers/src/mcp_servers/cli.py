@@ -15,6 +15,9 @@ from .logging import configure_logging, get_logger
 from .salesforce import build_salesforce_server
 from .servicenow import build_servicenow_server
 from .workday import build_workday_server
+from .sap_sf import build_sap_sf_server
+from .ariba import build_ariba_server
+from .coupa import build_coupa_server
 
 LOGGER = get_logger(__name__)
 
@@ -137,6 +140,9 @@ SERVER_BUILDERS: Dict[str, Callable[[], FastMCP]] = {
     "servicenow": build_servicenow_server,
     "salesforce": build_salesforce_server,
     "jira": build_jira_server,
+    "sap_sf": build_sap_sf_server,
+    "ariba": build_ariba_server,
+    "coupa": build_coupa_server,
 }
 
 

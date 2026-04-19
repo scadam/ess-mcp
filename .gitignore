@@ -36,6 +36,10 @@ MANIFEST
 *.rest
 *.txt
 test_*.py
+*token*.py
+
+#Other files to ignore
+*.xlsx
 
 # Installer logs
 pip-log.txt

@@ -42,6 +42,24 @@ PLATFORMS = [
         "jira-issue", "sprint-board", "create-issue-jira",
         "create-project", "team-sprint-health",
     ]),
+    ("SAP SuccessFactors", [
+        "sf-employee-profile", "sf-leave-balance", "sf-time-off-history",
+        "sf-leave-booking", "sf-personal-data-form", "sf-org-chart",
+        "sf-payslip-list", "sf-payslip-detail", "sf-move-employee",
+        "sf-document-list",
+    ]),
+    ("SAP Ariba", [
+        "ariba-invoice-status", "ariba-po-status", "ariba-confirm-action",
+        "ariba-receipt-list", "ariba-create-receipt", "ariba-requisition-list",
+        "ariba-create-requisition", "ariba-catalog-search", "ariba-supplier-list",
+        "ariba-supplier-profile", "ariba-supplier-registration", "ariba-approval-list",
+    ]),
+    ("Coupa", [
+        "coupa-invoice-status", "coupa-po-status", "coupa-confirm-action",
+        "coupa-receipt-list", "coupa-create-receipt", "coupa-requisition-list",
+        "coupa-create-requisition", "coupa-catalog-search", "coupa-supplier-list",
+        "coupa-supplier-profile", "coupa-supplier-registration", "coupa-approval-list",
+    ]),
 ]
 
 VIEWPORT_WIDTH = 520

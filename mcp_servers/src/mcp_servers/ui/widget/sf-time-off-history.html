@@ -1,0 +1,98 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(240,171,0,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --sf-accent: #f0ab00; --sf-glow: rgba(240,171,0,.14);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(212,152,0,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --sf-accent: #d49800; --sf-glow: rgba(212,152,0,.08);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 620px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { color: var(--sf-accent); font-size: 20px; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px var(--card-shadow), 0 0 0 1px var(--card-glow); }
+      table { width: 100%; border-collapse: collapse; }
+      th { text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 600; }
+      td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+      tr:last-child td { border-bottom: none; }
+      .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+      .pill-approved { background: rgba(46,160,67,.15); color: #3fb950; }
+      .pill-pending { background: rgba(210,153,34,.15); color: #d29922; }
+      .pill-rejected { background: rgba(248,81,73,.15); color: #f85149; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--sf-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+      .empty { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        entries: [
+          { type: "Annual Leave", startDate: "2026-03-10", endDate: "2026-03-14", days: 5, status: "approved" },
+          { type: "Sick Leave", startDate: "2026-02-20", endDate: "2026-02-21", days: 2, status: "approved" },
+          { type: "Personal Leave", startDate: "2026-04-25", endDate: "2026-04-25", days: 1, status: "pending" },
+          { type: "Annual Leave", startDate: "2026-01-02", endDate: "2026-01-03", days: 2, status: "rejected" }
+        ]
+      };
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const entries = data.entries || [];
+          if (!entries.length) {
+            root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Time-Off History</h1></div><div class="empty">No time-off records found.</div>`;
+            return;
+          }
+
+          function pillClass(s) {
+            const v = (s || '').toLowerCase();
+            if (v === 'approved') return 'pill-approved';
+            if (v === 'pending') return 'pill-pending';
+            return 'pill-rejected';
+          }
+
+          root.innerHTML = `
+            <div class="header"><span class="icon">◆</span><h1>Time-Off History</h1></div>
+            <div class="card">
+              <table>
+                <thead><tr><th>Type</th><th>Start</th><th>End</th><th>Days</th><th>Status</th></tr></thead>
+                <tbody>
+                  ${entries.map(e => `<tr>
+                    <td>${e.type || '—'}</td>
+                    <td>${e.startDate || '—'}</td>
+                    <td>${e.endDate || '—'}</td>
+                    <td>${e.days ?? '—'}</td>
+                    <td><span class="pill ${pillClass(e.status)}">${e.status || '—'}</span></td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>`;
+        } catch (e) {
+          root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Time-Off History</h1></div><div class="card"><div class="error">Unable to load time-off history.</div></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,119 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(0,180,216,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --ariba-accent: #00b4d8; --ariba-glow: rgba(0,180,216,.14);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(0,150,180,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --ariba-accent: #0096b4; --ariba-glow: rgba(0,150,180,.08);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 520px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { width: 28px; height: 28px; border-radius: 50%; background: var(--ariba-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px var(--card-shadow), 0 0 0 1px var(--ariba-glow); }
+      .profile-top { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
+      .avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--ariba-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; flex-shrink: 0; }
+      .profile-name { font-size: 18px; font-weight: 600; }
+      .status-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+      .status-active { background: rgba(46,160,67,.15); color: #3fb950; }
+      .status-pending { background: rgba(210,153,0,.15); color: #d29900; }
+      .status-inactive { background: rgba(248,81,73,.15); color: #f85149; }
+      .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+      .section-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; font-weight: 600; }
+      .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+      .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+      .field span { font-size: 14px; }
+      .field.full { grid-column: 1 / -1; }
+      .actions { display: flex; gap: 8px; margin-top: 16px; }
+      .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--ariba-accent); font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+      .btn:hover { opacity: .85; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--ariba-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        id: "SUP-001",
+        name: "Acme Industrial Supply Co.",
+        status: "active",
+        address: { street: "1200 Commerce Blvd", city: "Seattle", state: "WA", zip: "98101", country: "United States" },
+        contact: { name: "Sarah Johnson", email: "sarah.j@acmesupply.com", phone: "+1 (206) 555-0198" },
+        taxId: "91-1234567",
+        bankInfo: "Chase Bank •••• 4821"
+      };
+
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const d = data;
+          const st = (d.status || '').toLowerCase();
+          const statusClass = st === 'active' ? 'status-active' : st === 'inactive' ? 'status-inactive' : 'status-pending';
+          const statusLabel = st.charAt(0).toUpperCase() + st.slice(1) || '—';
+          const initial = (d.name || 'A')[0].toUpperCase();
+          const addr = d.address || {};
+          const addrStr = [addr.street, addr.city, addr.state, addr.zip, addr.country].filter(Boolean).join(', ');
+          const con = d.contact || {};
+
+          root.innerHTML = `
+            <div class="header"><div class="icon">A</div><h1>Supplier Profile</h1></div>
+            <div class="card">
+              <div class="profile-top">
+                <div class="avatar">${initial}</div>
+                <div>
+                  <div class="profile-name">${d.name || '—'}</div>
+                  <span class="status-pill ${statusClass}">${statusLabel}</span>
+                </div>
+              </div>
+              <hr class="divider" />
+              <div class="section-title">Address</div>
+              <div class="fields">
+                <div class="field full"><label>Full Address</label><span>${addrStr || '—'}</span></div>
+              </div>
+              <div class="section-title">Contact</div>
+              <div class="fields">
+                <div class="field"><label>Contact Name</label><span>${con.name || '—'}</span></div>
+                <div class="field"><label>Email</label><span>${con.email || '—'}</span></div>
+                <div class="field"><label>Phone</label><span>${con.phone || '—'}</span></div>
+              </div>
+              <div class="section-title">Financial</div>
+              <div class="fields">
+                <div class="field"><label>Tax ID</label><span>${d.taxId || '—'}</span></div>
+                <div class="field"><label>Bank Info</label><span>${d.bankInfo || '—'}</span></div>
+              </div>
+              <div class="actions">
+                <button class="btn" onclick="_askCopilot('Update address for supplier ${d.id || d.name || ''}')">📍 Update Address</button>
+                <button class="btn" onclick="_askCopilot('Update bank info for supplier ${d.id || d.name || ''}')">🏦 Update Bank</button>
+              </div>
+            </div>`;
+        } catch (e) {
+          root.innerHTML = `<div class="header"><div class="icon">A</div><h1>Supplier Profile</h1></div><div class="card"><div class="error">Unable to load supplier profile.</div></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

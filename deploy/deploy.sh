@@ -33,7 +33,7 @@ DEFAULT_MEMORY="1Gi"
 DEFAULT_MIN_REPLICAS=0
 DEFAULT_MAX_REPLICAS=3
 
-VALID_SERVERS=("workday" "servicenow" "salesforce" "jira")
+VALID_SERVERS=("workday" "servicenow" "salesforce" "jira" "sap-sf" "ariba" "coupa")
 
 # ---------------------------------------------------------------------------
 # Colours

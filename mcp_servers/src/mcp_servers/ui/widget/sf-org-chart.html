@@ -1,0 +1,112 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(240,171,0,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --sf-accent: #f0ab00; --sf-glow: rgba(240,171,0,.14);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(212,152,0,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --sf-accent: #d49800; --sf-glow: rgba(212,152,0,.08);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 600px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { color: var(--sf-accent); font-size: 20px; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .tree { display: flex; flex-direction: column; align-items: center; gap: 0; }
+      .node { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px 20px; box-shadow: 0 2px 8px var(--card-shadow); text-align: center; min-width: 180px; }
+      .node.current { border-color: var(--sf-accent); box-shadow: 0 0 0 2px var(--sf-glow), 0 2px 8px var(--card-shadow); }
+      .node-name { font-weight: 600; font-size: 14px; }
+      .node-title { color: var(--muted); font-size: 12px; margin-top: 2px; }
+      .node-label { font-size: 10px; color: var(--sf-accent); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; font-weight: 600; }
+      .connector { width: 2px; height: 24px; background: var(--border); }
+      .reports-section { margin-top: 0; }
+      .reports-label { text-align: center; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+      .reports-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+      .reports-grid .node { min-width: 150px; padding: 12px 16px; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--sf-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        manager: { name: "Jordan Kim", title: "VP of Engineering" },
+        employee: { name: "Alex Chen", title: "Senior Software Engineer" },
+        directReports: [
+          { name: "Sam Rivera", title: "Software Engineer" },
+          { name: "Priya Patel", title: "Software Engineer" },
+          { name: "Lee Torres", title: "Junior Developer" }
+        ]
+      };
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const mgr = data.manager;
+          const emp = data.employee;
+          const reports = data.directReports || [];
+
+          let html = `<div class="header"><span class="icon">◆</span><h1>Organization Chart</h1></div><div class="tree">`;
+
+          if (mgr) {
+            html += `
+              <div class="node">
+                <div class="node-label">Manager</div>
+                <div class="node-name">${mgr.name || '—'}</div>
+                <div class="node-title">${mgr.title || ''}</div>
+              </div>
+              <div class="connector"></div>`;
+          }
+
+          if (emp) {
+            html += `
+              <div class="node current">
+                <div class="node-name">${emp.name || '—'}</div>
+                <div class="node-title">${emp.title || ''}</div>
+              </div>`;
+          }
+
+          if (reports.length) {
+            html += `<div class="connector"></div>
+              <div class="reports-section">
+                <div class="reports-label">Direct Reports (${reports.length})</div>
+                <div class="reports-grid">
+                  ${reports.map(r => `
+                    <div class="node">
+                      <div class="node-name">${r.name || '—'}</div>
+                      <div class="node-title">${r.title || ''}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>`;
+          }
+
+          html += `</div>`;
+          root.innerHTML = html;
+        } catch (e) {
+          root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Organization Chart</h1></div><div class="error">Unable to load org chart.</div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

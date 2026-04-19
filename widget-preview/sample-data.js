@@ -566,6 +566,319 @@ const SAMPLE_DATA = {
       { date: "2025-01-01", type: "Promotion", description: "Promoted to Senior Engineer", amount: 150000 },
       { date: "2024-01-01", type: "Merit Increase", description: "Annual performance review", amount: 135000 }
     ]
+  },
+
+  /* ── SAP SuccessFactors ────────────────────────────── */
+
+  "sf-employee-profile": {
+    firstName: "Alex",
+    lastName: "Chen",
+    title: "Senior Software Engineer",
+    department: "Engineering",
+    division: "Cloud Platform",
+    location: "Seattle, WA",
+    email: "alex.chen@example.com",
+    phone: "+1 (425) 555-0142",
+    hireDate: "2021-03-15",
+    status: "active",
+    employeeId: "EMP-10042",
+    manager: "Jordan Kim"
+  },
+
+  "sf-leave-balance": {
+    balances: [
+      { plan: "Annual Leave", balance: 12, unit: "days" },
+      { plan: "Sick Leave", balance: 3, unit: "days" },
+      { plan: "Personal Leave", balance: 2, unit: "days" },
+      { plan: "Comp Time", balance: 1.5, unit: "days" }
+    ]
+  },
+
+  "sf-time-off-history": {
+    entries: [
+      { type: "Annual Leave", startDate: "2026-03-10", endDate: "2026-03-14", days: 5, status: "approved" },
+      { type: "Sick Leave", startDate: "2026-02-20", endDate: "2026-02-20", days: 1, status: "approved" },
+      { type: "Personal Leave", startDate: "2026-01-15", endDate: "2026-01-15", days: 1, status: "approved" },
+      { type: "Annual Leave", startDate: "2025-12-22", endDate: "2025-12-31", days: 7, status: "approved" }
+    ]
+  },
+
+  "sf-leave-booking": {
+    balances: [
+      { plan: "Annual Leave", balance: 12, unit: "days" },
+      { plan: "Sick Leave", balance: 3, unit: "days" },
+      { plan: "Personal Leave", balance: 2, unit: "days" }
+    ],
+    leaveTypes: ["Annual Leave", "Sick Leave", "Personal Leave", "Comp Time"]
+  },
+
+  "sf-personal-data-form": {
+    email: "alex.chen@example.com",
+    phone: "+1 (425) 555-0142",
+    addressLine1: "123 Main Street",
+    addressLine2: "Apt 4B",
+    city: "Seattle",
+    postcode: "98101",
+    country: "United States"
+  },
+
+  "sf-org-chart": {
+    manager: { name: "Jordan Kim", title: "VP of Engineering" },
+    employee: { name: "Alex Chen", title: "Senior Software Engineer" },
+    directReports: [
+      { name: "Sam Rivera", title: "Software Engineer" },
+      { name: "Priya Patel", title: "Software Engineer" },
+      { name: "Marcus Lee", title: "Junior Developer" }
+    ]
+  },
+
+  "sf-payslip-list": {
+    payslips: [
+      { id: "PS-2026-04", payDate: "2026-04-15", gross: "8,500.00", net: "6,120.00", currency: "USD" },
+      { id: "PS-2026-03", payDate: "2026-03-15", gross: "8,500.00", net: "6,120.00", currency: "USD" },
+      { id: "PS-2026-02", payDate: "2026-02-15", gross: "8,500.00", net: "6,120.00", currency: "USD" },
+      { id: "PS-2026-01", payDate: "2026-01-15", gross: "8,500.00", net: "6,120.00", currency: "USD" }
+    ]
+  },
+
+  "sf-payslip-detail": {
+    payDate: "2026-04-15",
+    period: "April 1 – April 30, 2026",
+    currency: "USD",
+    gross: "8,500.00",
+    net: "6,120.00",
+    earnings: [
+      { label: "Base Salary", amount: "7,500.00" },
+      { label: "Overtime", amount: "500.00" },
+      { label: "On-Call Allowance", amount: "500.00" }
+    ],
+    deductions: [
+      { label: "Federal Tax", amount: "1,275.00" },
+      { label: "Social Security", amount: "527.00" },
+      { label: "Medicare", amount: "123.25" },
+      { label: "401(k)", amount: "454.75" }
+    ]
+  },
+
+  "sf-move-employee": {
+    employeeName: "Alex Chen",
+    employeeId: "EMP-10042",
+    currentPosition: "Senior Software Engineer",
+    currentDepartment: "Engineering",
+    currentLocation: "Seattle, WA"
+  },
+
+  "sf-document-list": {
+    documents: [
+      { fileName: "Employment_Contract.pdf", documentType: "Contract", createdDate: "2021-03-15", mimeType: "application/pdf" },
+      { fileName: "NDA_2021.pdf", documentType: "Legal", createdDate: "2021-03-15", mimeType: "application/pdf" },
+      { fileName: "Performance_Review_2025.pdf", documentType: "Review", createdDate: "2025-12-20", mimeType: "application/pdf" },
+      { fileName: "Tax_W4_2026.pdf", documentType: "Tax", createdDate: "2026-01-05", mimeType: "application/pdf" }
+    ]
+  },
+
+  /* ── SAP Ariba ─────────────────────────────────────── */
+
+  "ariba-invoice-status": {
+    invoiceNumber: "INV-2026-00487",
+    status: "pending",
+    total: 12450.00,
+    currency: "USD",
+    supplierName: "Acme Industrial Supply Co.",
+    invoiceDate: "2026-04-10",
+    dueDate: "2026-05-10",
+    poReference: "PO-2026-01234",
+    paymentStatus: "Awaiting Approval"
+  },
+
+  "ariba-po-status": {
+    poNumber: "PO-2026-01234",
+    status: "open",
+    total: 28750.00,
+    currency: "USD",
+    supplier: "Acme Industrial Supply Co.",
+    orderDate: "2026-03-20",
+    deliveryDate: "2026-04-20",
+    shipTo: "Seattle Distribution Center",
+    lineCount: 5
+  },
+
+  "ariba-confirm-action": {
+    action: "Reject Invoice",
+    status: "success",
+    message: "Invoice INV-2026-00487 has been rejected successfully."
+  },
+
+  "ariba-receipt-list": {
+    receipts: [
+      { receiptDate: "2026-04-15", poNumber: "PO-2026-01234", status: "received", receivedBy: "Jane Doe", lineItems: [{ description: "Office Chairs", quantity: 10, unit: "EA" }] },
+      { receiptDate: "2026-04-10", poNumber: "PO-2026-01198", status: "received", receivedBy: "Alex Chen", lineItems: [{ description: "Monitor Arms", quantity: 25, unit: "EA" }] },
+      { receiptDate: "2026-04-02", poNumber: "PO-2026-01150", status: "partial", receivedBy: "Jane Doe", lineItems: [{ description: "Standing Desks", quantity: 5, unit: "EA" }] }
+    ]
+  },
+
+  "ariba-create-receipt": {
+    poNumber: "PO-2026-01234",
+    supplier: "Acme Industrial Supply Co.",
+    orderDate: "2026-03-20",
+    lineItems: [
+      { lineNumber: 1, description: "Office Chairs", quantity: 10, unit: "EA" },
+      { lineNumber: 2, description: "Monitor Arms", quantity: 25, unit: "EA" },
+      { lineNumber: 3, description: "Cable Management Kits", quantity: 25, unit: "EA" }
+    ]
+  },
+
+  "ariba-requisition-list": {
+    requisitions: [
+      { id: "REQ-2026-00310", title: "Q2 Office Supplies", status: "submitted", requester: "Alex Chen", date: "2026-04-10", total: 3240.00, currency: "USD" },
+      { id: "REQ-2026-00298", title: "Lab Equipment Refresh", status: "approved", requester: "Priya Sharma", date: "2026-04-05", total: 18500.00, currency: "USD" },
+      { id: "REQ-2026-00285", title: "Marketing Printed Materials", status: "pending", requester: "Maya Johnson", date: "2026-03-28", total: 1200.00, currency: "USD" }
+    ]
+  },
+
+  "ariba-create-requisition": {
+    title: ""
+  },
+
+  "ariba-catalog-search": {
+    items: [
+      { id: "CAT-001", name: "Ergonomic Office Chair", category: "Furniture", unitPrice: 549.00, currency: "USD", supplier: "ErgoWorks Inc." },
+      { id: "CAT-002", name: "Standing Desk 60x30", category: "Furniture", unitPrice: 899.00, currency: "USD", supplier: "FlexDesk Corp." },
+      { id: "CAT-003", name: "27\" 4K USB-C Monitor", category: "Electronics", unitPrice: 449.99, currency: "USD", supplier: "TechVision Ltd." },
+      { id: "CAT-004", name: "Wireless Keyboard & Mouse", category: "Accessories", unitPrice: 129.00, currency: "USD", supplier: "PeripheralPro" },
+      { id: "CAT-005", name: "Noise-Cancelling Headset", category: "Accessories", unitPrice: 299.00, currency: "USD", supplier: "AudioMax" }
+    ]
+  },
+
+  "ariba-supplier-list": {
+    suppliers: [
+      { id: "SUP-001", name: "Acme Industrial Supply Co.", status: "active", city: "Seattle", country: "United States" },
+      { id: "SUP-002", name: "ErgoWorks Inc.", status: "active", city: "Portland", country: "United States" },
+      { id: "SUP-003", name: "TechVision Ltd.", status: "active", city: "San Jose", country: "United States" },
+      { id: "SUP-004", name: "GlobalParts GmbH", status: "pending", city: "Munich", country: "Germany" }
+    ]
+  },
+
+  "ariba-supplier-profile": {
+    id: "SUP-001",
+    name: "Acme Industrial Supply Co.",
+    status: "active",
+    address: { street: "1200 Commerce Blvd", city: "Seattle", state: "WA", zip: "98101", country: "United States" },
+    contact: { name: "Sarah Johnson", email: "sarah.j@acmesupply.com", phone: "+1 (206) 555-0198" },
+    taxId: "91-1234567",
+    bankInfo: "Chase Bank •••• 4821"
+  },
+
+  "ariba-supplier-registration": {},
+
+  "ariba-approval-list": {
+    approvals: [
+      { id: "APR-001", type: "Requisition", title: "Q2 Office Supplies", requester: "Alex Chen", total: 3240.00, currency: "USD", submittedDate: "2026-04-10" },
+      { id: "APR-002", type: "Invoice", title: "INV-2026-00487 – Acme Industrial", requester: "Accounts Payable", total: 12450.00, currency: "USD", submittedDate: "2026-04-12" },
+      { id: "APR-003", type: "Purchase Order", title: "PO-2026-01280 – TechVision", requester: "Priya Sharma", total: 8750.00, currency: "USD", submittedDate: "2026-04-08" }
+    ]
+  },
+
+  /* ── Coupa ──────────────────────────────────────────── */
+
+  "coupa-invoice-status": {
+    "invoice-number": "INV-2026-00487",
+    "status": "pending",
+    "total": 12450.00,
+    "currency": "USD",
+    "supplier-name": "Acme Industrial Supply Co.",
+    "invoice-date": "2026-04-10",
+    "due-date": "2026-05-10",
+    "po-reference": "PO-2026-01234",
+    "payment-status": "Awaiting Approval"
+  },
+
+  "coupa-po-status": {
+    "po-number": "PO-2026-01234",
+    "status": "open",
+    "total": 28750.00,
+    "currency": "USD",
+    "supplier": "Acme Industrial Supply Co.",
+    "order-date": "2026-03-20",
+    "delivery-date": "2026-04-20",
+    "ship-to": "Seattle Distribution Center",
+    "line-count": 5
+  },
+
+  "coupa-confirm-action": {
+    action: "Reject Invoice",
+    status: "success",
+    message: "Invoice INV-2026-00487 has been rejected successfully."
+  },
+
+  "coupa-receipt-list": {
+    receipts: [
+      { "receipt-date": "2026-04-15", "po-number": "PO-2026-01234", status: "received", "received-by": "Jane Doe", "line-items": [{ description: "Office Chairs", quantity: 10, unit: "EA" }] },
+      { "receipt-date": "2026-04-10", "po-number": "PO-2026-01198", status: "received", "received-by": "Alex Chen", "line-items": [{ description: "Monitor Arms", quantity: 25, unit: "EA" }] },
+      { "receipt-date": "2026-04-02", "po-number": "PO-2026-01150", status: "partial", "received-by": "Jane Doe", "line-items": [{ description: "Standing Desks", quantity: 5, unit: "EA" }] }
+    ]
+  },
+
+  "coupa-create-receipt": {
+    "po-number": "PO-2026-01234",
+    "supplier": "Acme Industrial Supply Co.",
+    "order-date": "2026-03-20",
+    "line-items": [
+      { "line-number": 1, description: "Office Chairs", quantity: 10, unit: "EA" },
+      { "line-number": 2, description: "Monitor Arms", quantity: 25, unit: "EA" },
+      { "line-number": 3, description: "Cable Management Kits", quantity: 25, unit: "EA" }
+    ]
+  },
+
+  "coupa-requisition-list": {
+    requisitions: [
+      { id: "REQ-2026-00310", title: "Q2 Office Supplies", status: "submitted", requester: "Alex Chen", date: "2026-04-10", total: 3240.00, currency: "USD" },
+      { id: "REQ-2026-00298", title: "Lab Equipment Refresh", status: "approved", requester: "Priya Sharma", date: "2026-04-05", total: 18500.00, currency: "USD" },
+      { id: "REQ-2026-00285", title: "Marketing Printed Materials", status: "pending", requester: "Maya Johnson", date: "2026-03-28", total: 1200.00, currency: "USD" }
+    ]
+  },
+
+  "coupa-create-requisition": {
+    title: ""
+  },
+
+  "coupa-catalog-search": {
+    items: [
+      { id: "CAT-001", name: "Ergonomic Office Chair", category: "Furniture", "unit-price": 549.00, currency: "USD", supplier: "ErgoWorks Inc." },
+      { id: "CAT-002", name: "Standing Desk 60x30", category: "Furniture", "unit-price": 899.00, currency: "USD", supplier: "FlexDesk Corp." },
+      { id: "CAT-003", name: "27\" 4K USB-C Monitor", category: "Electronics", "unit-price": 449.99, currency: "USD", supplier: "TechVision Ltd." },
+      { id: "CAT-004", name: "Wireless Keyboard & Mouse", category: "Accessories", "unit-price": 129.00, currency: "USD", supplier: "PeripheralPro" },
+      { id: "CAT-005", name: "Noise-Cancelling Headset", category: "Accessories", "unit-price": 299.00, currency: "USD", supplier: "AudioMax" }
+    ]
+  },
+
+  "coupa-supplier-list": {
+    suppliers: [
+      { id: "SUP-001", name: "Acme Industrial Supply Co.", status: "active", city: "Seattle", country: "United States" },
+      { id: "SUP-002", name: "ErgoWorks Inc.", status: "active", city: "Portland", country: "United States" },
+      { id: "SUP-003", name: "TechVision Ltd.", status: "active", city: "San Jose", country: "United States" },
+      { id: "SUP-004", name: "GlobalParts GmbH", status: "pending", city: "Munich", country: "Germany" }
+    ]
+  },
+
+  "coupa-supplier-profile": {
+    id: "SUP-001",
+    name: "Acme Industrial Supply Co.",
+    status: "active",
+    address: { street: "1200 Commerce Blvd", city: "Seattle", state: "WA", zip: "98101", country: "United States" },
+    contact: { name: "Sarah Johnson", email: "sarah.j@acmesupply.com", phone: "+1 (206) 555-0198" },
+    "tax-id": "91-1234567",
+    "bank-info": "Chase Bank •••• 4821"
+  },
+
+  "coupa-supplier-registration": {},
+
+  "coupa-approval-list": {
+    approvals: [
+      { id: "APR-001", type: "Requisition", title: "Q2 Office Supplies", requester: "Alex Chen", total: 3240.00, currency: "USD", "submitted-date": "2026-04-10" },
+      { id: "APR-002", type: "Invoice", title: "INV-2026-00487 – Acme Industrial", requester: "Accounts Payable", total: 12450.00, currency: "USD", "submitted-date": "2026-04-12" },
+      { id: "APR-003", type: "Purchase Order", title: "PO-2026-01280 – TechVision", requester: "Priya Sharma", total: 8750.00, currency: "USD", "submitted-date": "2026-04-08" }
+    ]
   }
 };
 

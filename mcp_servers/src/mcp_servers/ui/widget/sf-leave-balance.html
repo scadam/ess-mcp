@@ -1,0 +1,90 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(240,171,0,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --sf-accent: #f0ab00; --sf-glow: rgba(240,171,0,.14);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(212,152,0,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --sf-accent: #d49800; --sf-glow: rgba(212,152,0,.08);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 560px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { color: var(--sf-accent); font-size: 20px; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .chips { display: flex; flex-wrap: wrap; gap: 12px; }
+      .chip { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px 20px; box-shadow: 0 2px 8px var(--card-shadow); min-width: 150px; flex: 1 1 calc(50% - 6px); }
+      .chip-name { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+      .chip-balance { font-size: 28px; font-weight: 700; }
+      .chip-unit { font-size: 12px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+      .balance-green { color: #3fb950; }
+      .balance-amber { color: #d29922; }
+      .balance-red { color: #f85149; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--sf-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+      .empty { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        balances: [
+          { plan: "Annual Leave", balance: 12, unit: "days" },
+          { plan: "Sick Leave", balance: 3, unit: "days" },
+          { plan: "Personal Leave", balance: 0, unit: "days" },
+          { plan: "Comp Time", balance: 8, unit: "hours" }
+        ]
+      };
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const balances = data.balances || [];
+          if (!balances.length) {
+            root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Leave Balance</h1></div><div class="empty">No leave balances found.</div>`;
+            return;
+          }
+
+          function colorClass(val) {
+            if (val > 5) return 'balance-green';
+            if (val >= 1) return 'balance-amber';
+            return 'balance-red';
+          }
+
+          root.innerHTML = `
+            <div class="header"><span class="icon">◆</span><h1>Leave Balance</h1></div>
+            <div class="chips">
+              ${balances.map(b => `
+                <div class="chip">
+                  <div class="chip-name">${b.plan || 'Leave'}</div>
+                  <div class="chip-balance ${colorClass(b.balance || 0)}">${b.balance ?? 0}<span class="chip-unit">${b.unit || 'days'}</span></div>
+                </div>
+              `).join('')}
+            </div>`;
+        } catch (e) {
+          root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Leave Balance</h1></div><div class="card"><div class="error">Unable to load leave balances.</div></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

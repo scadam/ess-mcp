@@ -1,0 +1,97 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(240,171,0,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --sf-accent: #f0ab00; --sf-glow: rgba(240,171,0,.14);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(212,152,0,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --sf-accent: #d49800; --sf-glow: rgba(212,152,0,.08);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 620px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { color: var(--sf-accent); font-size: 20px; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px var(--card-shadow), 0 0 0 1px var(--card-glow); }
+      table { width: 100%; border-collapse: collapse; }
+      th { text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 600; }
+      td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+      tr:last-child td { border-bottom: none; }
+      .file-icon { display: inline-flex; align-items: center; gap: 8px; }
+      .file-icon svg { width: 16px; height: 16px; fill: var(--muted); flex-shrink: 0; }
+      .dl-btn { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; }
+      .dl-btn:hover { background: var(--btn-bg); }
+      .dl-btn svg { width: 18px; height: 18px; fill: var(--sf-accent); }
+      .mime { color: var(--muted); font-size: 12px; font-family: 'Cascadia Code', 'Consolas', monospace; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--sf-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+      .empty { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        documents: [
+          { fileName: "Employment_Contract.pdf", documentType: "Contract", createdDate: "2021-03-15", mimeType: "application/pdf" },
+          { fileName: "NDA_Agreement.pdf", documentType: "Legal", createdDate: "2021-03-15", mimeType: "application/pdf" },
+          { fileName: "Tax_Form_W4.pdf", documentType: "Tax", createdDate: "2026-01-10", mimeType: "application/pdf" },
+          { fileName: "Performance_Review_2025.docx", documentType: "Review", createdDate: "2025-12-20", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+          { fileName: "ID_Copy.png", documentType: "Identity", createdDate: "2021-03-14", mimeType: "image/png" }
+        ]
+      };
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const docs = data.documents || [];
+          if (!docs.length) {
+            root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Documents</h1></div><div class="empty">No documents found.</div>`;
+            return;
+          }
+
+          const fileIcon = `<svg viewBox="0 0 16 16"><path d="M3 1h7l4 4v9a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1zm6.5 0v4H14"/></svg>`;
+          const dlIcon = `<svg viewBox="0 0 16 16"><path d="M8 1v10M4 8l4 4 4-4M2 14h12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+          root.innerHTML = `
+            <div class="header"><span class="icon">◆</span><h1>Documents</h1></div>
+            <div class="card">
+              <table>
+                <thead><tr><th>File Name</th><th>Type</th><th>Created</th><th>MIME</th><th></th></tr></thead>
+                <tbody>
+                  ${docs.map(d => `<tr>
+                    <td><span class="file-icon">${fileIcon} ${d.fileName || '—'}</span></td>
+                    <td>${d.documentType || '—'}</td>
+                    <td>${d.createdDate || '—'}</td>
+                    <td><span class="mime">${d.mimeType || '—'}</span></td>
+                    <td><button class="dl-btn" title="Download">${dlIcon}</button></td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>`;
+        } catch (e) {
+          root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Documents</h1></div><div class="card"><div class="error">Unable to load documents.</div></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

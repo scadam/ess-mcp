@@ -1,0 +1,90 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(0,102,204,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --coupa-accent: #0066cc; --coupa-glow: rgba(0,102,204,.14);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(0,77,153,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --coupa-accent: #004d99; --coupa-glow: rgba(0,77,153,.08);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 600px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { width: 28px; height: 28px; border-radius: 50%; background: var(--coupa-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .item-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px var(--card-shadow), 0 0 0 1px var(--coupa-glow); display: flex; flex-direction: column; }
+      .item-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+      .item-category { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+      .item-price { font-size: 16px; font-weight: 700; color: var(--coupa-accent); margin-bottom: 4px; }
+      .item-supplier { font-size: 12px; color: var(--muted); margin-bottom: 12px; flex: 1; }
+      .btn-order { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--coupa-accent); font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; text-align: center; }
+      .btn-order:hover { opacity: .85; }
+      .empty { text-align: center; padding: 24px; color: var(--muted); grid-column: 1 / -1; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--coupa-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        items: [
+          { id: "CAT-001", name: "Ergonomic Office Chair", category: "Furniture", "unit-price": 549.00, currency: "USD", supplier: "ErgoWorks Inc." },
+          { id: "CAT-002", name: "27\" 4K Monitor", category: "IT Equipment", "unit-price": 389.00, currency: "USD", supplier: "TechVision Ltd." },
+          { id: "CAT-003", name: "Standing Desk Converter", category: "Furniture", "unit-price": 299.00, currency: "USD", supplier: "ErgoWorks Inc." },
+          { id: "CAT-004", name: "Wireless Keyboard & Mouse", category: "IT Peripherals", "unit-price": 79.00, currency: "USD", supplier: "TechVision Ltd." },
+          { id: "CAT-005", name: "Noise-Canceling Headset", category: "IT Peripherals", "unit-price": 199.00, currency: "USD", supplier: "AudioPro Corp." },
+          { id: "CAT-006", name: "Laptop Docking Station", category: "IT Equipment", "unit-price": 185.00, currency: "USD", supplier: "TechVision Ltd." }
+        ]
+      };
+
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const list = data.items || data.results || [];
+          if (!list.length) {
+            root.innerHTML = `<div class="header"><div class="icon">C</div><h1>Catalog Search</h1></div><div class="grid"><div class="empty">No catalog items found.</div></div>`;
+            return;
+          }
+
+          const fmt = (v, c) => v != null ? new Intl.NumberFormat('en-US', { style: 'currency', currency: c || 'USD' }).format(v) : '—';
+
+          const cards = list.map(item => `
+            <div class="item-card">
+              <div class="item-name">${item.name || '—'}</div>
+              <div class="item-category">${item.category || ''}</div>
+              <div class="item-price">${fmt(item["unit-price"] || item.unitPrice, item.currency)}</div>
+              <div class="item-supplier">${item.supplier || ''}</div>
+              <button class="btn-order" onclick="_askCopilot('Order catalog item ${item.id || ''}')">Add to Requisition</button>
+            </div>`).join('');
+
+          root.innerHTML = `<div class="header"><div class="icon">C</div><h1>Catalog Search</h1></div><div class="grid">${cards}</div>`;
+        } catch (e) {
+          root.innerHTML = `<div class="header"><div class="icon">C</div><h1>Catalog Search</h1></div><div class="grid"><div class="empty error">Unable to load catalog items.</div></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

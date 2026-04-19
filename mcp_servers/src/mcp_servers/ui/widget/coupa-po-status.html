@@ -1,0 +1,106 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(0,102,204,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --coupa-accent: #0066cc; --coupa-glow: rgba(0,102,204,.14);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(0,77,153,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --coupa-accent: #004d99; --coupa-glow: rgba(0,77,153,.08);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 520px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { width: 28px; height: 28px; border-radius: 50%; background: var(--coupa-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px var(--card-shadow), 0 0 0 1px var(--coupa-glow); }
+      .top-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+      .po-number { font-size: 18px; font-weight: 600; }
+      .po-total { font-size: 18px; font-weight: 700; color: var(--coupa-accent); }
+      .status-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+      .status-open { background: rgba(46,160,67,.15); color: #3fb950; }
+      .status-closed { background: rgba(139,148,158,.15); color: #8b949e; }
+      .status-pending { background: rgba(210,153,0,.15); color: #d29900; }
+      .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+      .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+      .field span { font-size: 14px; }
+      .field.full { grid-column: 1 / -1; }
+      .btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--coupa-accent); font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+      .btn:hover { opacity: .85; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--coupa-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        "po-number": "PO-2026-01234",
+        "status": "open",
+        "total": 28750.00,
+        "currency": "USD",
+        "supplier": "Acme Industrial Supply Co.",
+        "order-date": "2026-03-20",
+        "delivery-date": "2026-04-20",
+        "ship-to": "Seattle Distribution Center",
+        "line-count": 5
+      };
+
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const d = data;
+          const st = (d.status || '').toLowerCase();
+          const statusClass = st === 'open' ? 'status-open' : st === 'closed' ? 'status-closed' : 'status-pending';
+          const statusLabel = st.charAt(0).toUpperCase() + st.slice(1) || 'Pending';
+          const fmt = (v, c) => v != null ? new Intl.NumberFormat('en-US', { style: 'currency', currency: c || 'USD' }).format(v) : '—';
+          const poNum = d["po-number"] || d.poNumber || '—';
+
+          root.innerHTML = `
+            <div class="header"><div class="icon">C</div><h1>Purchase Order</h1></div>
+            <div class="card">
+              <div class="top-row">
+                <div>
+                  <div class="po-number">${poNum}</div>
+                  <span class="status-pill ${statusClass}">${statusLabel}</span>
+                </div>
+                <div class="po-total">${fmt(d.total, d.currency)}</div>
+              </div>
+              <hr class="divider" />
+              <div class="fields">
+                <div class="field full"><label>Supplier</label><span>${d.supplier || '—'}</span></div>
+                <div class="field"><label>Order Date</label><span>${d["order-date"] || d.orderDate || '—'}</span></div>
+                <div class="field"><label>Delivery Date</label><span>${d["delivery-date"] || d.deliveryDate || '—'}</span></div>
+                <div class="field"><label>Ship To</label><span>${d["ship-to"] || d.shipTo || '—'}</span></div>
+                <div class="field"><label>Line Items</label><span>${d["line-count"] != null ? d["line-count"] : d.lineCount != null ? d.lineCount : '—'}</span></div>
+              </div>
+              <button class="btn" onclick="_askCopilot('Show receipts for PO ${poNum}')">📦 View Receipts</button>
+            </div>`;
+        } catch (e) {
+          root.innerHTML = `<div class="header"><div class="icon">C</div><h1>Purchase Order</h1></div><div class="card"><div class="error">Unable to load purchase order details.</div></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

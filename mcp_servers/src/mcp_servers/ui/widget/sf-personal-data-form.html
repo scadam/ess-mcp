@@ -1,0 +1,110 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(240,171,0,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --sf-accent: #f0ab00; --sf-glow: rgba(240,171,0,.14);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(212,152,0,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --sf-accent: #d49800; --sf-glow: rgba(212,152,0,.08);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 520px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { color: var(--sf-accent); font-size: 20px; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px var(--card-shadow), 0 0 0 1px var(--card-glow); }
+      .form-group { margin-bottom: 16px; }
+      .form-group label { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+      .form-group input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--btn-bg); color: var(--text); font-size: 14px; font-family: inherit; outline: none; }
+      .form-group input:focus { border-color: var(--sf-accent); box-shadow: 0 0 0 2px var(--sf-glow); }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: 8px; border: none; background: var(--sf-accent); color: #000; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+      .btn:hover { opacity: .9; }
+      .btn:disabled { opacity: .5; cursor: not-allowed; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--sf-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        email: "alex.chen@example.com", phone: "+1 (425) 555-0142",
+        addressLine1: "123 Main Street", addressLine2: "Apt 4B",
+        city: "Seattle", postcode: "98101", country: "United States"
+      };
+
+      function sendFollowUpMessage(msg) {
+        if (window.openai && window.openai.sendFollowUpMessage) {
+          window.openai.sendFollowUpMessage(msg);
+        } else {
+          console.log('Follow-up:', msg);
+        }
+      }
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const d = data;
+          root.innerHTML = `
+            <div class="header"><span class="icon">◆</span><h1>Personal Data</h1></div>
+            <div class="card">
+              <form id="personalForm">
+                <div class="row">
+                  <div class="form-group"><label>Email</label><input type="email" id="f_email" value="${d.email || ''}" /></div>
+                  <div class="form-group"><label>Phone</label><input type="tel" id="f_phone" value="${d.phone || ''}" /></div>
+                </div>
+                <div class="form-group"><label>Address Line 1</label><input type="text" id="f_addr1" value="${d.addressLine1 || ''}" /></div>
+                <div class="form-group"><label>Address Line 2</label><input type="text" id="f_addr2" value="${d.addressLine2 || ''}" /></div>
+                <div class="row">
+                  <div class="form-group"><label>City</label><input type="text" id="f_city" value="${d.city || ''}" /></div>
+                  <div class="form-group"><label>Postcode</label><input type="text" id="f_post" value="${d.postcode || ''}" /></div>
+                </div>
+                <div class="form-group"><label>Country</label><input type="text" id="f_country" value="${d.country || ''}" /></div>
+                <button type="submit" class="btn">Save Changes</button>
+              </form>
+            </div>`;
+
+          document.getElementById('personalForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const fields = {
+              email: document.getElementById('f_email').value,
+              phone: document.getElementById('f_phone').value,
+              addressLine1: document.getElementById('f_addr1').value,
+              addressLine2: document.getElementById('f_addr2').value,
+              city: document.getElementById('f_city').value,
+              postcode: document.getElementById('f_post').value,
+              country: document.getElementById('f_country').value
+            };
+            const parts = Object.entries(fields)
+              .filter(([_, v]) => v)
+              .map(([k, v]) => `${k}=${v}`)
+              .join(', ');
+            sendFollowUpMessage(`Change personal data: ${parts}`);
+          });
+        } catch (e) {
+          root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Personal Data</h1></div><div class="card"><div class="error">Unable to load personal data form.</div></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

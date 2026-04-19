@@ -1,0 +1,109 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(0,102,204,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --coupa-accent: #0066cc; --coupa-glow: rgba(0,102,204,.14);
+        --input-bg: #1a2030; --input-border: #2a3442;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(0,77,153,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --coupa-accent: #004d99; --coupa-glow: rgba(0,77,153,.08);
+        --input-bg: #fff; --input-border: #d0d0d0;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 520px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { width: 28px; height: 28px; border-radius: 50%; background: var(--coupa-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px var(--card-shadow), 0 0 0 1px var(--coupa-glow); }
+      .form-group { margin-bottom: 14px; }
+      .form-group label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+      input[type="text"], input[type="email"], input[type="tel"] { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text); font-size: 14px; font-family: inherit; }
+      .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+      .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+      .section-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; font-weight: 600; }
+      .btn-submit { display: block; width: 100%; margin-top: 16px; padding: 10px; border-radius: 8px; border: none; background: var(--coupa-accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+      .btn-submit:hover { opacity: .85; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--coupa-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {};
+
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
+
+      function submitRegistration() {
+        const g = id => (document.getElementById(id)?.value || '').trim();
+        const name = g('sup-name');
+        const street = g('sup-street');
+        const city = g('sup-city');
+        const state = g('sup-state');
+        const zip = g('sup-zip');
+        const country = g('sup-country');
+        const contact = g('sup-contact');
+        const email = g('sup-email');
+        const phone = g('sup-phone');
+        const taxId = g('sup-tax');
+        if (!name) { alert('Supplier name is required.'); return; }
+        _askCopilot('Register new supplier: name="' + name + '", address="' + [street, city, state, zip, country].filter(Boolean).join(', ') + '", contact="' + contact + '", email="' + email + '", phone="' + phone + '", taxId="' + taxId + '"');
+      }
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          root.innerHTML = `
+            <div class="header"><div class="icon">C</div><h1>Supplier Registration</h1></div>
+            <div class="card">
+              <div class="form-group">
+                <label>Supplier Name</label>
+                <input type="text" id="sup-name" placeholder="Company name" />
+              </div>
+              <hr class="divider" />
+              <div class="section-title">Address</div>
+              <div class="form-group"><label>Street</label><input type="text" id="sup-street" placeholder="Street address" /></div>
+              <div class="row-3">
+                <div class="form-group"><label>City</label><input type="text" id="sup-city" placeholder="City" /></div>
+                <div class="form-group"><label>State</label><input type="text" id="sup-state" placeholder="State" /></div>
+                <div class="form-group"><label>Zip</label><input type="text" id="sup-zip" placeholder="Zip code" /></div>
+              </div>
+              <div class="form-group"><label>Country</label><input type="text" id="sup-country" placeholder="Country" /></div>
+              <hr class="divider" />
+              <div class="section-title">Contact</div>
+              <div class="form-group"><label>Contact Name</label><input type="text" id="sup-contact" placeholder="Full name" /></div>
+              <div class="row-2">
+                <div class="form-group"><label>Email</label><input type="email" id="sup-email" placeholder="email@example.com" /></div>
+                <div class="form-group"><label>Phone</label><input type="tel" id="sup-phone" placeholder="+1 (555) 000-0000" /></div>
+              </div>
+              <hr class="divider" />
+              <div class="form-group"><label>Tax ID</label><input type="text" id="sup-tax" placeholder="e.g. 91-1234567" /></div>
+              <button class="btn-submit" onclick="submitRegistration()">Submit Registration</button>
+            </div>`;
+        } catch (e) {
+          root.innerHTML = `<div class="header"><div class="icon">C</div><h1>Supplier Registration</h1></div><div class="card"><div class="error">Unable to load registration form.</div></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

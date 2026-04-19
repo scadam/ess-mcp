@@ -85,6 +85,9 @@
     .platform-servicenow { background: #10b981; }
     .platform-salesforce  { background: #3b82f6; }
     .platform-jira       { background: #8b5cf6; }
+    .platform-sap_sf     { background: #f0ab00; }
+    .platform-ariba      { background: #00b4d8; }
+    .platform-coupa      { background: #0066cc; }
 
     .badge {
       display: inline-block;
@@ -100,6 +103,9 @@
     .badge-servicenow { background: #d1fae5; color: #065f46; }
     .badge-salesforce  { background: #dbeafe; color: #1e40af; }
     .badge-jira       { background: #ede9fe; color: #5b21b6; }
+    .badge-sap_sf     { background: #fef3c7; color: #92400e; }
+    .badge-ariba      { background: #ccf2f8; color: #006480; }
+    .badge-coupa      { background: #d0e4ff; color: #003d80; }
 
     /* ── Main Content ────────────────────────────────── */
     .main {
@@ -190,7 +196,7 @@
 <main class="main" id="main">
   <div class="main-header">
     <h2>ESS-MCP Widget Gallery</h2>
-    <p>Preview of all 40 enterprise service widgets with realistic sample data</p>
+    <p>Preview of all 76 enterprise service widgets with realistic sample data</p>
   </div>
   <div class="widget-grid" id="widgetGrid"></div>
 </main>
@@ -240,6 +246,36 @@
         "jira-issue", "sprint-board", "create-issue-jira",
         "create-project", "team-sprint-health"
       ]
+    },
+    {
+      name: "SAP SuccessFactors",
+      key: "sap_sf",
+      widgets: [
+        "sf-employee-profile", "sf-leave-balance", "sf-time-off-history",
+        "sf-leave-booking", "sf-personal-data-form", "sf-org-chart",
+        "sf-payslip-list", "sf-payslip-detail", "sf-move-employee",
+        "sf-document-list"
+      ]
+    },
+    {
+      name: "SAP Ariba",
+      key: "ariba",
+      widgets: [
+        "ariba-invoice-status", "ariba-po-status", "ariba-confirm-action",
+        "ariba-receipt-list", "ariba-create-receipt", "ariba-requisition-list",
+        "ariba-create-requisition", "ariba-catalog-search", "ariba-supplier-list",
+        "ariba-supplier-profile", "ariba-supplier-registration", "ariba-approval-list"
+      ]
+    },
+    {
+      name: "Coupa",
+      key: "coupa",
+      widgets: [
+        "coupa-invoice-status", "coupa-po-status", "coupa-confirm-action",
+        "coupa-receipt-list", "coupa-create-receipt", "coupa-requisition-list",
+        "coupa-create-requisition", "coupa-catalog-search", "coupa-supplier-list",
+        "coupa-supplier-profile", "coupa-supplier-registration", "coupa-approval-list"
+      ]
     }
   ];
 
@@ -268,7 +304,41 @@
     "development-items": 580,
     "team-goals":      620,
     "catalog-item":    560,
-    "compensation-summary": 560
+    "compensation-summary": 560,
+    "sf-employee-profile": 480,
+    "sf-leave-balance": 400,
+    "sf-time-off-history": 480,
+    "sf-leave-booking": 560,
+    "sf-personal-data-form": 520,
+    "sf-org-chart": 520,
+    "sf-payslip-list": 480,
+    "sf-payslip-detail": 560,
+    "sf-move-employee": 480,
+    "sf-document-list": 480,
+    "ariba-invoice-status": 460,
+    "ariba-po-status": 460,
+    "ariba-confirm-action": 320,
+    "ariba-receipt-list": 520,
+    "ariba-create-receipt": 520,
+    "ariba-requisition-list": 480,
+    "ariba-create-requisition": 480,
+    "ariba-catalog-search": 560,
+    "ariba-supplier-list": 480,
+    "ariba-supplier-profile": 560,
+    "ariba-supplier-registration": 520,
+    "ariba-approval-list": 480,
+    "coupa-invoice-status": 460,
+    "coupa-po-status": 460,
+    "coupa-confirm-action": 320,
+    "coupa-receipt-list": 520,
+    "coupa-create-receipt": 520,
+    "coupa-requisition-list": 480,
+    "coupa-create-requisition": 480,
+    "coupa-catalog-search": 560,
+    "coupa-supplier-list": 480,
+    "coupa-supplier-profile": 560,
+    "coupa-supplier-registration": 520,
+    "coupa-approval-list": 480
   };
 
   /* Build a flat lookup: widget-name → platform key */
@@ -285,7 +355,7 @@
 
   /* ── Build sidebar ────────────────────────────────── */
   var sidebarEl = document.getElementById("sidebar");
-  var sidebarHtml = '<div class="sidebar-header"><h1>ESS-MCP Widget Gallery</h1><p>42 enterprise widgets</p></div>';
+  var sidebarHtml = '<div class="sidebar-header"><h1>ESS-MCP Widget Gallery</h1><p>76 enterprise widgets</p></div>';
 
   PLATFORMS.forEach(function (p) {
     sidebarHtml += '<div class="sidebar-group"><div class="sidebar-group-title">' + p.name + "</div>";

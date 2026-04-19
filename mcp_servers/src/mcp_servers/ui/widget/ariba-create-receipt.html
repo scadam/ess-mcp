@@ -1,0 +1,114 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(0,180,216,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --ariba-accent: #00b4d8; --ariba-glow: rgba(0,180,216,.14);
+        --input-bg: #1a2030; --input-border: #2a3442;
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(0,150,180,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --ariba-accent: #0096b4; --ariba-glow: rgba(0,150,180,.08);
+        --input-bg: #fff; --input-border: #d0d0d0;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 560px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { width: 28px; height: 28px; border-radius: 50%; background: var(--ariba-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px var(--card-shadow), 0 0 0 1px var(--ariba-glow); }
+      .po-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+      .po-info label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+      .po-info span { font-size: 14px; display: block; }
+      .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+      .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+      .line-row { display: grid; grid-template-columns: 1fr 80px 60px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+      .line-row:last-of-type { border-bottom: none; }
+      .line-desc { font-size: 13px; }
+      .line-unit { font-size: 12px; color: var(--muted); }
+      input[type="number"], input[type="date"] { width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text); font-size: 13px; font-family: inherit; }
+      .date-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+      .date-row label { font-size: 13px; white-space: nowrap; }
+      .btn-submit { display: block; width: 100%; margin-top: 16px; padding: 10px; border-radius: 8px; border: none; background: var(--ariba-accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+      .btn-submit:hover { opacity: .85; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--ariba-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        poNumber: "PO-2026-01234",
+        supplier: "Acme Industrial Supply Co.",
+        orderDate: "2026-03-20",
+        lineItems: [
+          { lineNumber: 1, description: "Office Chairs (Ergonomic)", quantity: 10, unit: "EA" },
+          { lineNumber: 2, description: "Standing Desks", quantity: 5, unit: "EA" },
+          { lineNumber: 3, description: "Monitor Arms", quantity: 15, unit: "EA" }
+        ]
+      };
+
+      function _askCopilot(msg) { if (window.openai && typeof window.openai.sendFollowUpMessage === "function") window.openai.sendFollowUpMessage({ prompt: msg }); }
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const d = data;
+          const today = new Date().toISOString().slice(0, 10);
+          const lines = (d.lineItems || []).map((l, i) => `
+            <div class="line-row">
+              <div><div class="line-desc">${l.description || 'Item ' + (i+1)}</div><div class="line-unit">${l.unit || 'EA'}</div></div>
+              <input type="number" id="qty-${i}" value="${l.quantity || 0}" min="0" />
+              <span style="font-size:12px;color:var(--muted)">of ${l.quantity || 0}</span>
+            </div>`).join('');
+
+          root.innerHTML = `
+            <div class="header"><div class="icon">A</div><h1>Create Goods Receipt</h1></div>
+            <div class="card">
+              <div class="po-info">
+                <div><label>PO Number</label><span>${d.poNumber || '—'}</span></div>
+                <div><label>Supplier</label><span>${d.supplier || '—'}</span></div>
+              </div>
+              <hr class="divider" />
+              <div class="section-title">Line Items to Receive</div>
+              ${lines}
+              <div class="date-row">
+                <label>Receipt Date:</label>
+                <input type="date" id="receipt-date" value="${today}" />
+              </div>
+              <button class="btn-submit" id="submit-btn">Submit Goods Receipt</button>
+            </div>`;
+
+          document.getElementById('submit-btn').addEventListener('click', () => {
+            const items = (d.lineItems || []).map((l, i) => {
+              const q = document.getElementById('qty-' + i).value;
+              return l.description + ': ' + q;
+            }).join(', ');
+            const dt = document.getElementById('receipt-date').value;
+            _askCopilot('Create goods receipt for PO ' + (d.poNumber || '') + ' with date ' + dt + ' and quantities: ' + items);
+          });
+        } catch (e) {
+          root.innerHTML = `<div class="header"><div class="icon">A</div><h1>Create Goods Receipt</h1></div><div class="card"><div class="error">Unable to load PO details for receipt.</div></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -2,12 +2,12 @@
   <h1 align="center">🏢 ESS-MCP</h1>
   <p align="center">
     <strong>Enterprise Self-Service MCP Servers</strong><br/>
-    Modular <a href="https://modelcontextprotocol.io/">Model Context Protocol</a> servers for Workday, ServiceNow, Salesforce, and Jira
+    Modular <a href="https://modelcontextprotocol.io/">Model Context Protocol</a> servers for Workday, ServiceNow, Salesforce, Jira, SAP SuccessFactors, SAP Ariba, and Coupa
   </p>
   <p align="center">
     <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-blue?style=for-the-badge" alt="Quick Start"/></a>
     <a href="#%EF%B8%8F-azure-deployment"><img src="https://img.shields.io/badge/Deploy_to_Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white" alt="Deploy to Azure"/></a>
-    <a href="#-mcp-servers"><img src="https://img.shields.io/badge/MCP_Servers-4-green?style=for-the-badge" alt="MCP Servers"/></a>
+    <a href="#-mcp-servers"><img src="https://img.shields.io/badge/MCP_Servers-7-green?style=for-the-badge" alt="MCP Servers"/></a>
   </p>
 </p>
 
@@ -23,8 +23,11 @@
 | **ServiceNow** | ITSM | 39 | 12 | Create/update incidents & tasks, approve/reject requests, order catalog items, manage change requests, create KB articles, track SLAs, **team incidents** |
 | **Salesforce** | CRM | 44 | 9 | Create/update opportunities/leads/contacts/quotes/tasks, approve/reject, convert leads, add campaign members, run reports, activity timeline, **team pipeline** |
 | **Jira** | Project Management | 26 | 5 | Create/update issues, transition workflows, log work, move issues to sprints, link issues, manage releases/versions, **team workload** |
+| **SAP SuccessFactors** | HR / HCM | 20 | 10 | Employee profiles, leave booking, pay stubs, org charts, personal data changes, employee moves, document management, background checks, employment verification |
+| **SAP Ariba** | Procurement | 21 | 12 | Invoice/PO status, receipts, requisitions, catalog search, supplier management, approvals, supplier registration |
+| **Coupa** | Procurement | 21 | 12 | Invoice/PO status, receipts, requisitions, catalog search, supplier management, approvals *(fully mocked — no sandbox available)* |
 
-> **142 tools total** — 11 open interactive form widgets for user-driven creation (form tools), 34 are widget callbacks that execute when the user submits a form, and the rest provide rich read access and direct actions. 42 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
+> **204 tools total** — interactive form widgets for user-driven creation, widget callbacks that execute when the user submits a form, and rich read access / direct actions. 76 interactive HTML+Skybridge widgets. Designed for AI agents that **can act**, not just answer questions.
 
 Servers can be deployed **individually**, in **any combination**, or **all together** — both locally and on Azure Container Apps with a single command.
 
@@ -32,7 +35,7 @@ Servers can be deployed **individually**, in **any combination**, or **all toget
 
 ## 🖼️ Widget Screenshots
 
-ESS-MCP includes 42 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 5 manager-specific team dashboards. Every widget supports dark/light mode, fullscreen expansion, and cross-widget navigation via `sendFollowUpMessage`.
+ESS-MCP includes 76 interactive HTML+Skybridge widgets that render directly in AI assistant UIs, including 5 manager-specific team dashboards. Every widget supports dark/light mode, fullscreen expansion, and cross-widget navigation via `sendFollowUpMessage`.
 
 ### Workday – HR Widgets (16)
 
@@ -226,33 +229,185 @@ ESS-MCP includes 42 interactive HTML+Skybridge widgets that render directly in A
   </tr>
 </table>
 
+### SAP SuccessFactors – HR Widgets (10)
+
+<table>
+  <tr>
+    <td align="center"><strong>Employee Profile</strong></td>
+    <td align="center"><strong>Leave Balance</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-sf-employee-profile.png" width="400" alt="SF Employee Profile Widget"/></td>
+    <td><img src="docs/images/widget-sf-leave-balance.png" width="400" alt="SF Leave Balance Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Time Off History</strong></td>
+    <td align="center"><strong>Leave Booking</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-sf-time-off-history.png" width="400" alt="SF Time Off History Widget"/></td>
+    <td><img src="docs/images/widget-sf-leave-booking.png" width="400" alt="SF Leave Booking Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Personal Data Form</strong></td>
+    <td align="center"><strong>Org Chart</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-sf-personal-data-form.png" width="400" alt="SF Personal Data Form Widget"/></td>
+    <td><img src="docs/images/widget-sf-org-chart.png" width="400" alt="SF Org Chart Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Payslip List</strong></td>
+    <td align="center"><strong>Payslip Detail</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-sf-payslip-list.png" width="400" alt="SF Payslip List Widget"/></td>
+    <td><img src="docs/images/widget-sf-payslip-detail.png" width="400" alt="SF Payslip Detail Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Move Employee</strong></td>
+    <td align="center"><strong>Document List</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-sf-move-employee.png" width="400" alt="SF Move Employee Widget"/></td>
+    <td><img src="docs/images/widget-sf-document-list.png" width="400" alt="SF Document List Widget"/></td>
+  </tr>
+</table>
+
+### SAP Ariba – Procurement Widgets (12)
+
+<table>
+  <tr>
+    <td align="center"><strong>Invoice Status</strong></td>
+    <td align="center"><strong>PO Status</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-ariba-invoice-status.png" width="400" alt="Ariba Invoice Status Widget"/></td>
+    <td><img src="docs/images/widget-ariba-po-status.png" width="400" alt="Ariba PO Status Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Confirm Action</strong></td>
+    <td align="center"><strong>Receipt List</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-ariba-confirm-action.png" width="400" alt="Ariba Confirm Action Widget"/></td>
+    <td><img src="docs/images/widget-ariba-receipt-list.png" width="400" alt="Ariba Receipt List Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Create Receipt</strong></td>
+    <td align="center"><strong>Requisition List</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-ariba-create-receipt.png" width="400" alt="Ariba Create Receipt Widget"/></td>
+    <td><img src="docs/images/widget-ariba-requisition-list.png" width="400" alt="Ariba Requisition List Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Create Requisition</strong></td>
+    <td align="center"><strong>Catalog Search</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-ariba-create-requisition.png" width="400" alt="Ariba Create Requisition Widget"/></td>
+    <td><img src="docs/images/widget-ariba-catalog-search.png" width="400" alt="Ariba Catalog Search Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Supplier List</strong></td>
+    <td align="center"><strong>Supplier Profile</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-ariba-supplier-list.png" width="400" alt="Ariba Supplier List Widget"/></td>
+    <td><img src="docs/images/widget-ariba-supplier-profile.png" width="400" alt="Ariba Supplier Profile Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Supplier Registration</strong></td>
+    <td align="center"><strong>Approval List</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-ariba-supplier-registration.png" width="400" alt="Ariba Supplier Registration Widget"/></td>
+    <td><img src="docs/images/widget-ariba-approval-list.png" width="400" alt="Ariba Approval List Widget"/></td>
+  </tr>
+</table>
+
+### Coupa – Procurement Widgets (12)
+
+<table>
+  <tr>
+    <td align="center"><strong>Invoice Status</strong></td>
+    <td align="center"><strong>PO Status</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-coupa-invoice-status.png" width="400" alt="Coupa Invoice Status Widget"/></td>
+    <td><img src="docs/images/widget-coupa-po-status.png" width="400" alt="Coupa PO Status Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Confirm Action</strong></td>
+    <td align="center"><strong>Receipt List</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-coupa-confirm-action.png" width="400" alt="Coupa Confirm Action Widget"/></td>
+    <td><img src="docs/images/widget-coupa-receipt-list.png" width="400" alt="Coupa Receipt List Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Create Receipt</strong></td>
+    <td align="center"><strong>Requisition List</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-coupa-create-receipt.png" width="400" alt="Coupa Create Receipt Widget"/></td>
+    <td><img src="docs/images/widget-coupa-requisition-list.png" width="400" alt="Coupa Requisition List Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Create Requisition</strong></td>
+    <td align="center"><strong>Catalog Search</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-coupa-create-requisition.png" width="400" alt="Coupa Create Requisition Widget"/></td>
+    <td><img src="docs/images/widget-coupa-catalog-search.png" width="400" alt="Coupa Catalog Search Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Supplier List</strong></td>
+    <td align="center"><strong>Supplier Profile</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-coupa-supplier-list.png" width="400" alt="Coupa Supplier List Widget"/></td>
+    <td><img src="docs/images/widget-coupa-supplier-profile.png" width="400" alt="Coupa Supplier Profile Widget"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Supplier Registration</strong></td>
+    <td align="center"><strong>Approval List</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/widget-coupa-supplier-registration.png" width="400" alt="Coupa Supplier Registration Widget"/></td>
+    <td><img src="docs/images/widget-coupa-approval-list.png" width="400" alt="Coupa Approval List Widget"/></td>
+  </tr>
+</table>
+
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      AI Assistant / Client                  │
-│               (ChatGPT, Copilot, Claude, etc.)              │
-└──────────────┬──────────────────────────────────┬───────────┘
-               │  MCP (SSE / Streamable HTTP)     │
-               ▼                                  ▼
-┌──────────────────────────────────────────────────────────────┐
-│                    ESS-MCP Gateway (:8080)                   │
-│                                                              │
-│  /workday/mcp   /servicenow/mcp  /salesforce/mcp  /jira/mcp │
-│  /workday/sse   /servicenow/sse  /salesforce/sse  /jira/sse │
-│  /healthz                                                    │
-│                                                              │
-│  ┌───────────┐ ┌──────────────┐ ┌────────────┐ ┌──────────┐ │
-│  │  Workday  │ │  ServiceNow  │ │ Salesforce  │ │   Jira   │ │
-│  │  Server   │ │   Server     │ │   Server    │ │  Server  │ │
-│  └─────┬─────┘ └──────┬───────┘ └──────┬─────┘ └────┬─────┘ │
-│        │               │                │            │        │
-│        │         Bearer Token Passthrough             │        │
-└────────┼───────────────┼────────────────┼────────────┼───────┘
-         ▼               ▼                ▼            ▼
-   Workday API    ServiceNow API   Salesforce API  Jira Cloud API
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            AI Assistant / Client                               │
+│                     (ChatGPT, Copilot, Claude, etc.)                           │
+└──────────────┬──────────────────────────────────────────────────┬──────────────┘
+               │  MCP (SSE / Streamable HTTP)                     │
+               ▼                                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          ESS-MCP Gateway (:8080)                               │
+│                                                                                 │
+│  /workday/mcp  /servicenow/mcp  /salesforce/mcp  /jira/mcp                     │
+│  /sap_sf/mcp   /ariba/mcp       /coupa/mcp                                     │
+│  /healthz                                                                       │
+│                                                                                 │
+│  ┌─────────┐ ┌───────────┐ ┌──────────┐ ┌──────┐ ┌───────┐ ┌─────┐ ┌─────┐   │
+│  │ Workday │ │ServiceNow │ │Salesforce│ │ Jira │ │SAP SF │ │Ariba│ │Coupa│   │
+│  │ Server  │ │  Server   │ │  Server  │ │Server│ │Server │ │Srvr │ │Srvr │   │
+│  └────┬────┘ └─────┬─────┘ └────┬─────┘ └──┬───┘ └───┬───┘ └──┬──┘ └──┬──┘   │
+│       │             │            │           │         │        │       │       │
+│       │        Bearer Token Passthrough / Token Exchange        │  (Mocked)    │
+└───────┼─────────────┼────────────┼───────────┼─────────┼────────┼───────┼──────┘
+        ▼             ▼            ▼           ▼         ▼        ▼       ▼
+  Workday API  ServiceNow API Salesforce API Jira API  SAP SF   Ariba  (Local
+                                                       OData   Sandbox  Mock)
 ```
 
 Each MCP server:
@@ -285,6 +440,9 @@ cp env/workday.example.env env/workday.env
 cp env/servicenow.example.env env/servicenow.env
 cp env/salesforce.example.env env/salesforce.env
 cp env/jira.example.env env/jira.env
+cp env/sap_sf.example.env env/sap_sf.env
+cp env/ariba.example.env env/ariba.env
+cp env/coupa.example.env env/coupa.env
 # Edit each .env file with your service URLs
 
 # Run a single server (stdio – for direct MCP client connection)
@@ -369,7 +527,7 @@ Deploy to **Azure Container Apps** with a single command. The script provisions 
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `-s, --servers` | `all` | Comma-separated: `workday`, `servicenow`, `salesforce`, `jira`, or `all` |
+| `-s, --servers` | `all` | Comma-separated: `workday`, `servicenow`, `salesforce`, `jira`, `sap_sf`, `ariba`, `coupa`, or `all` |
 | `-l, --location` | `eastus` | Azure region |
 | `-n, --name` | `essmcp` | Base name for resources (3–16 chars) |
 | `-t, --tag` | `latest` | Container image tag |
@@ -624,6 +782,111 @@ SALESFORCE_DOMAIN=yourorg.my.salesforce.com
 ```env
 JIRA_BASE_URL=https://yourorg.atlassian.net
 JIRA_PROJECT_KEY=PROJ  # Optional
+```
+
+---
+
+### SAP SuccessFactors – HR / Employee Self-Service
+
+> *Employee profiles, leave management, pay stubs, org charts, personal data changes, employee transfers, document management, background checks, and employment verification.*
+
+**Auth:** Entra ID → SAP SuccessFactors token exchange (OAuth 2.0 client_credentials for demo environments).
+
+**Tools (20):**
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `get_employee_profile` | 📖 Read | Fetch employee profile from SF |
+| `get_leave_balances` | 📖 Read | View time-off balances by plan |
+| `get_time_off_history` | 📖 Read | Historical leave entries |
+| `prepare_book_leave` | 🖼️ Widget | **Book leave** — interactive booking form |
+| `book_leave` | ⚙️ Callback | Widget callback: submits leave booking |
+| `prepare_change_personal_data` | 🖼️ Widget | **Change personal data** — address/phone/email form |
+| `change_personal_data` | ⚙️ Callback | Widget callback: submits personal data changes |
+| `get_org_chart` | 📖 Read | Organization hierarchy |
+| `get_pay_stubs` | 📖 Read | List pay stubs |
+| `get_pay_stub_detail` | 📖 Read | Pay stub detail with earnings/deductions |
+| `prepare_move_employee` | 🖼️ Widget | **Move employee** — transfer form |
+| `move_employee` | ⚙️ Callback | Widget callback: submits employee move |
+| `update_hierarchy` | ✏️ **Update** | Update reporting hierarchy |
+| `trigger_background_check` | ⚡ **Action** | Initiate background check |
+| `get_background_check_status` | 📖 Read | Check background check status |
+| `manage_position` | ✏️ **Update** | Create or update position |
+| `request_leave_carryover` | ⚡ **Action** | Request leave carryover |
+| `get_employee_documents` | 📖 Read | List employee documents |
+| `generate_employment_verification` | ⚡ **Action** | Generate employment verification letter |
+| `generate_employment_reference` | ⚡ **Action** | Generate employment reference |
+
+**Widgets:** `sf-employee-profile`, `sf-leave-balance`, `sf-time-off-history`, `sf-leave-booking`, `sf-personal-data-form`, `sf-org-chart`, `sf-payslip-list`, `sf-payslip-detail`, `sf-move-employee`, `sf-document-list`
+
+**Configuration** (`env/sap_sf.env`):
+```env
+SAP_SF_ODATA_URL=https://api15.sapsf.com/odata/v2
+SAP_SF_TOKEN_URL=https://api15.sapsf.com/oauth/token
+SAP_SF_COMPANY_ID=yourCompanyId
+SAP_SF_CLIENT_ID=yourOAuthClientId
+SAP_SF_RESOURCE_URI=https://api15.sapsf.com
+```
+
+---
+
+### SAP Ariba – Procurement
+
+> *Invoices, purchase orders, receipts, requisitions, catalog items, supplier management, and approvals.*
+
+**Auth:** Static API key header (`apikey`) against SAP Ariba sandbox (`sandbox.api.sap.com`).
+
+**Tools (21):**
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `get_invoice_status` | 📖 Read | Invoice detail and status |
+| `get_po_status` | 📖 Read | Purchase order detail and status |
+| `reject_invoice` | ⚡ **Action** | Reject an invoice |
+| `close_purchase_order` | ⚡ **Action** | Close a purchase order |
+| `list_receipts` | 📖 Read | List goods receipts |
+| `prepare_create_receipt` | 🖼️ Widget | **Create receipt** — interactive form |
+| `create_receipt` | ⚙️ Callback | Widget callback: submits receipt |
+| `list_requisitions` | 📖 Read | List purchase requisitions |
+| `prepare_create_requisition` | 🖼️ Widget | **Create requisition** — interactive form |
+| `create_requisition` | ⚙️ Callback | Widget callback: submits requisition |
+| `update_requisition` | ✏️ **Update** | Update existing requisition |
+| `list_catalog_items` | 📖 Read | Search product catalog |
+| `order_catalog_item` | ⚡ **Action** | Order from catalog |
+| `list_suppliers` | 📖 Read | List suppliers |
+| `get_supplier` | 📖 Read | Supplier profile detail |
+| `update_supplier_address` | ✏️ **Update** | Update supplier address |
+| `update_supplier_bank` | ✏️ **Update** | Update supplier bank info |
+| `register_supplier` | ✏️ **Create** | Register new supplier |
+| `transfer_purchase_order` | ⚡ **Action** | Transfer PO to another supplier |
+| `list_approvals` | 📖 Read | List pending approvals |
+| `approve_reject` | ⚡ **Action** | Approve or reject |
+
+**Widgets:** `ariba-invoice-status`, `ariba-po-status`, `ariba-confirm-action`, `ariba-receipt-list`, `ariba-create-receipt`, `ariba-requisition-list`, `ariba-create-requisition`, `ariba-catalog-search`, `ariba-supplier-list`, `ariba-supplier-profile`, `ariba-supplier-registration`, `ariba-approval-list`
+
+**Configuration** (`env/ariba.env`):
+```env
+ARIBA_API_URL=https://sandbox.api.sap.com/ariba/api
+ARIBA_API_KEY=your_api_key
+ARIBA_REALM=yourRealm
+```
+
+---
+
+### Coupa – Procurement (Mocked)
+
+> *Invoices, purchase orders, receipts, requisitions, catalog items, supplier management, and approvals. All tools return mocked data — Coupa does not offer a public sandbox.*
+
+**Auth:** None required (all responses are locally mocked).
+
+**Tools (21):** Mirror the Ariba tool set exactly (`get_invoice_status`, `get_po_status`, `reject_invoice`, `close_purchase_order`, `list_receipts`, `prepare_create_receipt`, `create_receipt`, `list_requisitions`, `prepare_create_requisition`, `create_requisition`, `update_requisition`, `list_catalog_items`, `order_catalog_item`, `list_suppliers`, `get_supplier`, `update_supplier_address`, `update_supplier_bank`, `register_supplier`, `transfer_purchase_order`, `list_approvals`, `approve_reject`).
+
+**Widgets:** `coupa-invoice-status`, `coupa-po-status`, `coupa-confirm-action`, `coupa-receipt-list`, `coupa-create-receipt`, `coupa-requisition-list`, `coupa-create-requisition`, `coupa-catalog-search`, `coupa-supplier-list`, `coupa-supplier-profile`, `coupa-supplier-registration`, `coupa-approval-list`
+
+**Configuration** (`env/coupa.env`):
+```env
+COUPA_INSTANCE_URL=https://yourinstance.coupahost.com
+COUPA_MOCK=true
 ```
 
 ---

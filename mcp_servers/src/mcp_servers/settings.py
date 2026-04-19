@@ -40,6 +40,31 @@ class JiraSettings(BaseEnvSettings):
     openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
 
 
+class SapSfSettings(BaseEnvSettings):
+    """Settings for SAP SuccessFactors API access."""
+    odata_url: str = Field(..., alias="SAP_SF_ODATA_URL")
+    token_url: str = Field(..., alias="SAP_SF_TOKEN_URL")
+    company_id: str = Field(..., alias="SAP_SF_COMPANY_ID")
+    client_id: str = Field(..., alias="SAP_SF_CLIENT_ID")
+    resource_uri: str = Field("", alias="SAP_SF_RESOURCE_URI")
+    openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
+
+
+class AribaSettings(BaseEnvSettings):
+    """Settings for SAP Ariba Sandbox API access."""
+    api_url: str = Field(..., alias="ARIBA_API_URL")
+    api_key: str = Field(..., alias="ARIBA_API_KEY")
+    realm: str = Field(..., alias="ARIBA_REALM")
+    openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
+
+
+class CoupaSettings(BaseEnvSettings):
+    """Settings for Coupa (mocked — no real instance)."""
+    instance_url: str = Field("https://mock.coupahost.com", alias="COUPA_INSTANCE_URL")
+    mock: bool = Field(True, alias="COUPA_MOCK")
+    openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
+
+
 def _resolve_env_file(explicit: Optional[str] = None, prefix: str = "workday") -> Optional[str]:
     candidates: list[Path] = []
     if explicit:
@@ -87,8 +112,29 @@ def load_jira_settings(env_file: Optional[str] = None) -> JiraSettings:
     return JiraSettings(_env_file=resolved)  # type: ignore[call-arg]
 
 
+@lru_cache(maxsize=1)
+def load_sap_sf_settings(env_file: Optional[str] = None) -> SapSfSettings:
+    resolved = _resolve_env_file(env_file, "sap_sf")
+    return SapSfSettings(_env_file=resolved)  # type: ignore[call-arg]
+
+
+@lru_cache(maxsize=1)
+def load_ariba_settings(env_file: Optional[str] = None) -> AribaSettings:
+    resolved = _resolve_env_file(env_file, "ariba")
+    return AribaSettings(_env_file=resolved)  # type: ignore[call-arg]
+
+
+@lru_cache(maxsize=1)
+def load_coupa_settings(env_file: Optional[str] = None) -> CoupaSettings:
+    resolved = _resolve_env_file(env_file, "coupa")
+    return CoupaSettings(_env_file=resolved)  # type: ignore[call-arg]
+
+
 def reset_settings_cache() -> None:
     load_workday_settings.cache_clear()
     load_servicenow_settings.cache_clear()
     load_salesforce_settings.cache_clear()
     load_jira_settings.cache_clear()
+    load_sap_sf_settings.cache_clear()
+    load_ariba_settings.cache_clear()
+    load_coupa_settings.cache_clear()

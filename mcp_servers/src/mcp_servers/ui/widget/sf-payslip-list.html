@@ -1,0 +1,109 @@
+<html>
+  <script>(function(){var d=document.documentElement,m=matchMedia('(prefers-color-scheme:dark)'),a=!d.hasAttribute('data-theme');function s(){d.setAttribute('data-theme',m.matches?'dark':'light')}if(a)s();m.addEventListener('change',function(){if(a)s()});new MutationObserver(function(){a=false}).observe(d,{attributes:true,attributeFilter:['data-theme']})})()</script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14; --card: #151a21; --muted: #a9b1bd; --text: #e6edf3;
+        --accent: #4cc2ff; --border: #1f2630; --card-border: #2a3442;
+        --card-shadow: rgba(0,0,0,.3); --card-glow: rgba(240,171,0,.16);
+        --btn-bg: #152235; --btn-border: #243145;
+        --sf-accent: #f0ab00; --sf-glow: rgba(240,171,0,.14);
+      }
+      :root[data-theme="light"] {
+        --bg: #f5f5f5; --card: #ffffff; --muted: #65707d; --text: #1e1e1e;
+        --accent: #0078d4; --border: #e0e0e0; --card-border: #d0d0d0;
+        --card-shadow: rgba(0,0,0,.08); --card-glow: rgba(212,152,0,.08);
+        --btn-bg: #f0f0f0; --btn-border: #d0d0d0;
+        --sf-accent: #d49800; --sf-glow: rgba(212,152,0,.08);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); padding: 16px; }
+      .wrap { max-width: 520px; margin: 0 auto; }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .header .icon { color: var(--sf-accent); font-size: 20px; }
+      .header h1 { font-size: 16px; font-weight: 600; }
+      .list { display: flex; flex-direction: column; gap: 10px; }
+      .slip-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px 20px; box-shadow: 0 2px 8px var(--card-shadow); cursor: pointer; transition: border-color .15s, box-shadow .15s; display: flex; justify-content: space-between; align-items: center; }
+      .slip-card:hover { border-color: var(--sf-accent); box-shadow: 0 0 0 2px var(--sf-glow), 0 2px 8px var(--card-shadow); }
+      .slip-date { font-weight: 600; font-size: 14px; }
+      .slip-period { color: var(--muted); font-size: 12px; margin-top: 2px; }
+      .slip-amounts { text-align: right; }
+      .slip-gross { font-size: 12px; color: var(--muted); }
+      .slip-net { font-size: 18px; font-weight: 700; color: var(--sf-accent); }
+      .slip-currency { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 2px; }
+      .chevron { color: var(--muted); font-size: 18px; margin-left: 12px; }
+      .spinner { display: flex; justify-content: center; padding: 48px 0; }
+      .spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--sf-accent); border-radius: 50%; animation: spin .6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .error { text-align: center; padding: 32px; color: var(--muted); }
+      .empty { text-align: center; padding: 32px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="root"><div class="spinner"></div></div>
+    <script>
+      const SAMPLE_DATA = {
+        payslips: [
+          { id: "PS-2026-04", payDate: "2026-04-15", gross: "8,500.00", net: "6,120.00", currency: "USD" },
+          { id: "PS-2026-03", payDate: "2026-03-15", gross: "8,500.00", net: "6,120.00", currency: "USD" },
+          { id: "PS-2026-02", payDate: "2026-02-15", gross: "8,500.00", net: "6,080.00", currency: "USD" },
+          { id: "PS-2026-01", payDate: "2026-01-15", gross: "8,500.00", net: "6,080.00", currency: "USD" }
+        ]
+      };
+
+      function sendFollowUpMessage(msg) {
+        if (window.openai && window.openai.sendFollowUpMessage) {
+          window.openai.sendFollowUpMessage(msg);
+        } else {
+          console.log('Follow-up:', msg);
+        }
+      }
+
+      (async () => {
+        const root = document.getElementById('root');
+        try {
+          const data = typeof window.openai !== 'undefined'
+            ? await window.openai.toolOutput
+            : SAMPLE_DATA;
+
+          const slips = data.payslips || [];
+          if (!slips.length) {
+            root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Payslips</h1></div><div class="empty">No payslips found.</div>`;
+            return;
+          }
+
+          root.innerHTML = `
+            <div class="header"><span class="icon">◆</span><h1>Payslips</h1></div>
+            <div class="list">
+              ${slips.map(s => `
+                <div class="slip-card" data-id="${s.id || ''}">
+                  <div>
+                    <div class="slip-date">${s.payDate || '—'}</div>
+                  </div>
+                  <div style="display:flex;align-items:center;">
+                    <div class="slip-amounts">
+                      <div class="slip-gross">Gross: ${s.gross || '—'}</div>
+                      <div class="slip-net">${s.net || '—'}<span class="slip-currency">${s.currency || ''}</span></div>
+                    </div>
+                    <span class="chevron">›</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>`;
+
+          root.querySelectorAll('.slip-card').forEach(card => {
+            card.addEventListener('click', () => {
+              const id = card.getAttribute('data-id');
+              sendFollowUpMessage(`Show payslip detail for ${id}`);
+            });
+          });
+        } catch (e) {
+          root.innerHTML = `<div class="header"><span class="icon">◆</span><h1>Payslips</h1></div><div class="error">Unable to load payslips.</div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

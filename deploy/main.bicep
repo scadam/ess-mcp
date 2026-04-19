@@ -42,8 +42,19 @@ var logAnalyticsName = '${baseName}-logs-${suffix}'
 var envName = '${baseName}-env-${suffix}'
 var imageName = '${acrName}.azurecr.io/ess-mcp:${imageTag}'
 
-var allServers = ['workday', 'servicenow', 'salesforce', 'jira']
+var allServers = ['workday', 'servicenow', 'salesforce', 'jira', 'sap-sf', 'ariba', 'coupa']
 var selectedServers = servers == 'all' ? allServers : split(servers, ',')
+
+// Map container-app-safe names (dashes) to CLI argument names (underscores)
+var cliNameMap = {
+  workday: 'workday'
+  servicenow: 'servicenow'
+  salesforce: 'salesforce'
+  jira: 'jira'
+  'sap-sf': 'sap_sf'
+  ariba: 'ariba'
+  coupa: 'coupa'
+}
 
 // ---------------------------------------------------------------------------
 // Log Analytics workspace (required by Container App Environment)
@@ -126,7 +137,7 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [
               'python'
               '-m'
               'mcp_servers.cli'
-              server
+              cliNameMap[server]
               '--transport'
               'both'
               '--host'
@@ -167,8 +178,8 @@ output containerAppFqdns array = [
   for (server, i) in selectedServers: {
     server: server
     fqdn: containerApps[i].properties.configuration.ingress.fqdn
-    mcpEndpoint: 'https://${containerApps[i].properties.configuration.ingress.fqdn}/${server}/mcp'
-    sseEndpoint: 'https://${containerApps[i].properties.configuration.ingress.fqdn}/${server}/sse'
+    mcpEndpoint: 'https://${containerApps[i].properties.configuration.ingress.fqdn}/${cliNameMap[server]}/mcp'
+    sseEndpoint: 'https://${containerApps[i].properties.configuration.ingress.fqdn}/${cliNameMap[server]}/sse'
     healthEndpoint: 'https://${containerApps[i].properties.configuration.ingress.fqdn}/healthz'
   }
 ]
