@@ -1,0 +1,261 @@
+id: /subscriptions/35b71905-e334-430e-bee1-1575c104c487/resourceGroups/essmcp-rg/providers/Microsoft.App/containerapps/ess-demo-agent
+identity:
+  principalId: 92983f30-a70d-4c86-8228-3d0b7f82488f
+  tenantId: 8030d928-e557-4a4c-ae1e-95c1c4125eaa
+  type: SystemAssigned
+location: East US
+name: ess-demo-agent
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    identitySettings: []
+    ingress:
+      additionalPortMappings: null
+      allowInsecure: false
+      clientCertificateMode: null
+      corsPolicy: null
+      customDomains: null
+      exposedPort: 0
+      external: true
+      fqdn: ess-demo-agent.wittysand-460bf1d9.eastus.azurecontainerapps.io
+      ipSecurityRestrictions: null
+      stickySessions: null
+      targetPort: 8091
+      targetPortHttpScheme: null
+      traffic:
+      - latestRevision: true
+        weight: 100
+      transport: Auto
+    maxInactiveRevisions: null
+    registries:
+    - identity: system
+      passwordSecretRef: ''
+      server: essmcpacrjtm2en5dvzfhw.azurecr.io
+      username: ''
+    revisionTransitionThreshold: null
+    runtime: null
+    secrets:
+    - name: bot-app-password
+    - name: github-token
+    - name: servicenow-oauth-client-secret
+    - name: workday-oauth-client-secret
+    - name: workday-oauth-refresh-token
+    - name: blueprint-client-secret
+    - name: bot-host-secret
+    service: null
+    targetLabel: ''
+  customDomainVerificationId: 82D3F974B03C5685F6B984071C2982AC8665524569C2D8859EA794BFDEC8639E
+  delegatedIdentities: []
+  environmentId: /subscriptions/35b71905-e334-430e-bee1-1575c104c487/resourceGroups/essmcp-rg/providers/Microsoft.App/managedEnvironments/essmcp-env-jtm2en5dvzfhw
+  eventStreamEndpoint: https://eastus.azurecontainerapps.dev/subscriptions/35b71905-e334-430e-bee1-1575c104c487/resourceGroups/essmcp-rg/containerApps/ess-demo-agent/eventstream
+  latestReadyRevisionName: ess-demo-agent--grafromtm05211950
+  latestRevisionFqdn: ess-demo-agent--grafromtm05211950.wittysand-460bf1d9.eastus.azurecontainerapps.io
+  latestRevisionName: ess-demo-agent--grafromtm05211950
+  managedEnvironmentId: /subscriptions/35b71905-e334-430e-bee1-1575c104c487/resourceGroups/essmcp-rg/providers/Microsoft.App/managedEnvironments/essmcp-env-jtm2en5dvzfhw
+  outboundIpAddresses:
+  - 57.151.13.145
+  patchingMode: Automatic
+  provisioningState: Succeeded
+  runningStatus: Running
+  template:
+    containers:
+    - env:
+      - name: ESS_WEB_HOST
+        value: 0.0.0.0
+      - name: ESS_WEB_PORT
+        value: '8091'
+      - name: AZURE_OPENAI_ENDPOINT
+        value: https://essmcp-openai.openai.azure.com/
+      - name: ESS_MODEL
+        value: gpt-5.4-1
+      - name: GITHUB_TOKEN
+        secretRef: github-token
+      - name: ESS_WORKDAY_MCP_URL
+        value: https://essmcp-workday.wittysand-460bf1d9.eastus.azurecontainerapps.io/workday/mcp
+      - name: ESS_SERVICENOW_MCP_URL
+        value: https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp
+      - name: ESS_COUPA_MCP_URL
+        value: https://essmcp-coupa.wittysand-460bf1d9.eastus.azurecontainerapps.io/coupa/mcp
+      - name: ESS_WORKDAY_OAUTH_TOKEN_URL
+        value: https://wd2-impl-services1.workday.com/ccx/oauth2/microsoft_dpt6/token
+      - name: ESS_WORKDAY_OAUTH_CLIENT_ID
+        value: NzA4Y2RhYzAtYjRlZS00MzBjLWE1MmMtNjYyMTkxYzI4ZDg4
+      - name: ESS_WORKDAY_OAUTH_CLIENT_SECRET
+        secretRef: workday-oauth-client-secret
+      - name: ESS_WORKDAY_OAUTH_SCOPE
+        value: ''
+      - name: ESS_WORKDAY_OAUTH_GRANT_TYPE
+        value: refresh_token
+      - name: ESS_WORKDAY_OAUTH_REFRESH_TOKEN
+        secretRef: workday-oauth-refresh-token
+      - name: ESS_SERVICENOW_OAUTH_TOKEN_URL
+        value: https://dev364815.service-now.com/oauth_token.do
+      - name: ESS_SERVICENOW_OAUTH_CLIENT_ID
+        value: 285931599f9047d49d5227e1b00be211
+      - name: ESS_SERVICENOW_OAUTH_CLIENT_SECRET
+        secretRef: servicenow-oauth-client-secret
+      - name: ESS_SERVICENOW_OAUTH_SCOPE
+        value: useraccount
+      - name: ESS_SERVICENOW_OAUTH_GRANT_TYPE
+        value: client_credentials
+      - name: ESS_SERVICENOW_OAUTH_AUTH_METHOD
+        value: client_secret_post
+      - name: AZURE_TENANT_ID
+        value: 8030d928-e557-4a4c-ae1e-95c1c4125eaa
+      - name: ENTRA_AGENT_BLUEPRINT_CLIENT_ID
+        value: 3f028e66-44cf-4cee-81ee-03ade7717884
+      - name: ENTRA_AGENT_BLUEPRINT_OBJECT_ID
+        value: 3f028e66-44cf-4cee-81ee-03ade7717884
+      - name: ENTRA_AGENT_BLUEPRINT_PRINCIPAL_ID
+        value: 612885df-960e-4900-b065-cc3ff00287bf
+      - name: ENTRA_AGENT_IDENTITY_OBJECT_ID
+        value: ed4046aa-a3ef-4685-a73d-ecda5a4f01da
+      - name: ENTRA_AGENT_IDENTITY_CLIENT_ID
+        value: ed4046aa-a3ef-4685-a73d-ecda5a4f01da
+      - name: ESS_AGENT_DISPLAY_NAME
+        value: ESS Workday ServiceNow Hosted Demo Agent
+      - name: ESS_AI_GATEWAY_BASE_URL
+        value: https://essmcp-gw-8030d928.azure-api.net/ess-mcp
+      - name: ESS_WORKDAY_AI_GATEWAY_MCP_URL
+        value: https://essmcp-gw-8030d928.azure-api.net/ess-mcp/workday/mcp
+      - name: ESS_SERVICENOW_AI_GATEWAY_MCP_URL
+        value: https://essmcp-gw-8030d928.azure-api.net/ess-mcp/servicenow/mcp
+      - name: OTEL_SERVICE_NAME
+        value: ess-demo-agent
+      - name: ESS_OBSERVE_TOOL_PAYLOADS
+        value: 'true'
+      - name: ESS_OBSERVE_TOOL_PAYLOAD_MAX_CHARS
+        value: '0'
+      - name: ESS_MCP_CONNECT_RETRIES
+        value: '5'
+      - name: ESS_MCP_CONNECT_TIMEOUT
+        value: '45'
+      - name: ESS_LOG_LEVEL
+        value: INFO
+      - name: ENABLE_OBSERVABILITY
+        value: 'true'
+      - name: ENABLE_A365_OBSERVABILITY
+        value: 'true'
+      - name: ENABLE_A365_OBSERVABILITY_EXPORTER
+        value: 'true'
+      - name: A365_OBSERVABILITY_CLUSTER_CATEGORY
+        value: prod
+      - name: ESS_AGENT_VERSION
+        value: a365-s2s-inheritable-observability-20260507-2132
+      - name: A365_OBSERVABILITY_TOKEN_SOURCE
+        value: agent_identity_sidecar
+      - name: A365_OBSERVABILITY_USE_S2S_ENDPOINT
+        value: 'true'
+      - name: A365_OBSERVABILITY_TOKEN_SCOPE
+        value: api://9b975845-388f-4429-889e-eab1ef63949c/.default
+      - name: A365_SIDECAR_URL
+        value: http://localhost:5000
+      - name: A365_SIDECAR_DOWNSTREAM_API
+        value: a365
+      - name: A365_AGENT_APP_ID
+        value: ed4046aa-a3ef-4685-a73d-ecda5a4f01da
+      - name: A365_CAPTURE_PROMPTS
+        value: 'true'
+      - name: A365_SUPPRESS_INVOKE_AGENT_INPUT
+        value: 'false'
+      - name: PURVIEW_ENABLED
+        value: 'true'
+      - name: PURVIEW_GRAPH_TOKEN_SOURCE
+        value: managed_identity
+      - name: CONNECTIONS__SERVICE_CONNECTION__SETTINGS__CLIENTID
+        value: 3f028e66-44cf-4cee-81ee-03ade7717884
+      - name: CONNECTIONS__SERVICE_CONNECTION__SETTINGS__CLIENTSECRET
+        secretRef: blueprint-client-secret
+      - name: CONNECTIONS__SERVICE_CONNECTION__SETTINGS__TENANTID
+        value: 8030d928-e557-4a4c-ae1e-95c1c4125eaa
+      - name: CONNECTIONS__SERVICE_CONNECTION__SETTINGS__SCOPES
+        value: 5a807f24-c9de-44ee-a3a7-329e88a00ffc/.default
+      - name: CONNECTIONS__SERVICE_CONNECTION__SETTINGS__AUTHORITY
+        value: https://login.microsoftonline.com/8030d928-e557-4a4c-ae1e-95c1c4125eaa
+      - name: AGENTAPPLICATION__USERAUTHORIZATION__HANDLERS__AGENTIC__SETTINGS__TYPE
+        value: AgenticUserAuthorization
+      - name: AGENTAPPLICATION__USERAUTHORIZATION__HANDLERS__AGENTIC__SETTINGS__SCOPES
+        value: https://graph.microsoft.com/.default
+      - name: AUTH_HANDLER_NAME
+        value: AGENTIC
+      - name: AGENT_ID
+        value: 3f028e66-44cf-4cee-81ee-03ade7717884
+      - name: AGENTAPPLICATION__USERAUTHORIZATION__HANDLERS__AGENTIC__SETTINGS__ALT_BLUEPRINT_NAME
+        value: SERVICE_CONNECTION
+      - name: CONNECTIONSMAP__0__SERVICEURL
+        value: '*'
+      - name: CONNECTIONSMAP__0__CONNECTION
+        value: SERVICE_CONNECTION
+      - name: ESS_PUBLIC_BASE_URL
+        value: https://ess-demo-agent.wittysand-460bf1d9.eastus.azurecontainerapps.io
+      - name: TEAMS_REFS_PATH
+        value: /data/ess-teams-refs.json
+      image: essmcpacrjtm2en5dvzfhw.azurecr.io/demo-agent:graphchat-fromteammate-05211950
+      imageType: ContainerImage
+      name: ess-demo-agent
+      probes: []
+      resources:
+        cpu: 1.0
+        ephemeralStorage: 4Gi
+        memory: 2Gi
+      volumeMounts:
+      - volumeName: teams-refs-vol
+        mountPath: /data
+    - env:
+      - name: ASPNETCORE_URLS
+        value: http://+:5000
+      - name: AzureAd__Instance
+        value: https://login.microsoftonline.com/
+      - name: AzureAd__TenantId
+        value: 8030d928-e557-4a4c-ae1e-95c1c4125eaa
+      - name: AzureAd__ClientId
+        value: 3f028e66-44cf-4cee-81ee-03ade7717884
+      - name: AzureAd__ClientCredentials__0__SourceType
+        value: SignedAssertionFromManagedIdentity
+      - name: DownstreamApis__a365__BaseUrl
+        value: https://agent365.svc.cloud.microsoft
+      - name: DownstreamApis__a365__Scopes__0
+        value: api://9b975845-388f-4429-889e-eab1ef63949c/.default
+      - name: DownstreamApis__a365__RequestAppToken
+        value: 'true'
+      - name: Logging__LogLevel__Default
+        value: Information
+      - name: DownstreamApis__workiq_teams__BaseUrl
+        value: https://agent365.svc.cloud.microsoft
+      - name: DownstreamApis__workiq_teams__Scopes__0
+        value: api://ea9ffc3e-8a23-4a7d-836d-234d7c7565c1/.default
+      - name: DownstreamApis__workiq_teams__RequestAppToken
+        value: 'true'
+      image: mcr.microsoft.com/entra-sdk/auth-sidecar:1.0.0-azurelinux3.0-distroless
+      imageType: ContainerImage
+      name: auth-sidecar
+      probes: []
+      resources:
+        cpu: 0.25
+        ephemeralStorage: 1Gi
+        memory: 0.5Gi
+    initContainers: null
+    revisionSuffix: volumemount05212010
+    scale:
+      cooldownPeriod: 300
+      maxReplicas: 1
+      minReplicas: 1
+      pollingInterval: 30
+      rules: null
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes:
+    - name: teams-refs-vol
+      storageName: teams-refs-storage
+      storageType: AzureFile
+  workloadProfileName: null
+resourceGroup: essmcp-rg
+systemData:
+  createdAt: '2026-05-06T17:10:35.3772612'
+  createdBy: svasireddy@M365CPI81302533.onmicrosoft.com
+  createdByType: User
+  lastModifiedAt: '2026-05-21T17:08:58.4924205'
+  lastModifiedBy: svasireddy@M365CPI81302533.onmicrosoft.com
+  lastModifiedByType: User
+type: Microsoft.App/containerApps

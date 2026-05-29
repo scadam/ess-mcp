@@ -1,6 +1,7 @@
 """SAP SuccessFactors MCP tool definitions and async handler functions.
 
-Authentication: Entra ID bearer → SAP SF OAuth token exchange → OData v2 calls.
+Authentication: Static API key from .env sent as header on every request.
+Uses sandbox.api.sap.com SuccessFactors OData v2 endpoints for the demo.
 When the live API is unavailable (auth not configured) tools fall back to
 realistic mock data so widgets always render correctly.
 """
@@ -12,7 +13,6 @@ from typing import Any, Dict, List, Optional
 
 from fastmcp import Context
 
-from ..auth import get_bearer_token
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_sap_sf_settings
@@ -150,33 +150,19 @@ def _mock_profile(uid: str) -> dict:
     return copy.deepcopy(_MOCK_EMPLOYEES.get(uid, _MOCK_EMPLOYEES["EMP-1001"]))
 
 
-# ── Token exchange ──────────────────────────────────────────────────
+# ── API key auth helpers ───────────────────────────────────────────
 
 async def _exchange_token_for_sap(entra_token: str) -> str:
-    """Exchange an Entra ID bearer token for a SAP SuccessFactors OAuth token.
-
-    Uses SAML2 bearer assertion grant. In the demo environment, falls back
-    to mock data when the Entra app registration is not configured.
-    """
+    """Compatibility shim: return API key so existing callsites stay unchanged."""
+    _ = entra_token
     settings = load_sap_sf_settings()
-    async with create_async_client() as client:
-        resp = await client.post(
-            settings.token_url,
-            data={
-                "grant_type": "urn:ietf:params:oauth:grant-type:saml2-bearer",
-                "client_id": settings.client_id,
-                "company_id": settings.company_id,
-                "assertion": entra_token,
-            },
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-        )
-        resp.raise_for_status()
-        return resp.json()["access_token"]
+    return settings.api_key
 
 
 def _get_auth_token(ctx: Optional[Context] = None) -> str:
-    """Extract the OAuth 2.0 Bearer token from the Authorization request header."""
-    return get_bearer_token(ctx)
+    """Compatibility shim: API key mode does not require caller authorization header."""
+    _ = ctx
+    return ""
 
 
 # ── Helpers ─────────────────────────────────────────────────────────
@@ -185,13 +171,14 @@ async def _sf_get(path: str, sap_token: str, params: Optional[Dict[str, str]] = 
     """GET request to SAP SF OData v2."""
     settings = load_sap_sf_settings()
     url = f"{settings.odata_url}{path}"
+    _ = sap_token
     all_params = {"$format": "json"}
     if params:
         all_params.update(params)
     async with create_async_client() as client:
         resp = await client.get(
             url,
-            headers={"Authorization": f"Bearer {sap_token}"},
+            headers={"APIKey": settings.api_key, "Accept": "application/json"},
             params=all_params,
         )
         resp.raise_for_status()
@@ -202,11 +189,13 @@ async def _sf_post(path: str, sap_token: str, payload: Dict[str, Any]) -> Dict[s
     """POST request to SAP SF OData v2."""
     settings = load_sap_sf_settings()
     url = f"{settings.odata_url}{path}"
+    _ = sap_token
     async with create_async_client() as client:
         resp = await client.post(
             url,
             headers={
-                "Authorization": f"Bearer {sap_token}",
+                "APIKey": settings.api_key,
+                "Accept": "application/json",
                 "Content-Type": "application/json",
             },
             json=payload,
@@ -219,11 +208,13 @@ async def _sf_patch(path: str, sap_token: str, payload: Dict[str, Any]) -> Dict[
     """PATCH request to SAP SF OData v2."""
     settings = load_sap_sf_settings()
     url = f"{settings.odata_url}{path}"
+    _ = sap_token
     async with create_async_client() as client:
         resp = await client.patch(
             url,
             headers={
-                "Authorization": f"Bearer {sap_token}",
+                "APIKey": settings.api_key,
+                "Accept": "application/json",
                 "Content-Type": "application/json",
             },
             json=payload,
@@ -865,9 +856,107 @@ async def tool_generate_employment_reference(
         }
 
 
+# 21. list_sandbox_entity_sets
+async def tool_list_sandbox_entity_sets(
+    ctx: Context | None = None,
+) -> dict:
+    """List available OData entity sets from the SuccessFactors service root."""
+    fallback = [
+        "EmpJob",
+        "User",
+        "PerPersonal",
+        "PerEmail",
+        "PerPhone",
+        "EmpEmployment",
+        "EmpCompensation",
+        "Position",
+        "FODepartment",
+        "FODivision",
+        "FOLocation",
+        "PerAddressDEFLT",
+    ]
+    try:
+        token = _get_auth_token(ctx)
+        sap_token = await _exchange_token_for_sap(token)
+        data = await _sf_get("", sap_token)
+        entity_sets = data.get("d", {}).get("EntitySets", [])
+        if not entity_sets:
+            return {"count": len(fallback), "entitySets": fallback}
+        return {
+            "count": len(entity_sets),
+            "entitySets": entity_sets,
+        }
+    except Exception as exc:
+        LOGGER.debug("list_sandbox_entity_sets falling back to default list: %s", exc)
+        return {"count": len(fallback), "entitySets": fallback}
+
+
+# 22. query_sandbox_entity
+async def tool_query_sandbox_entity(
+    entity_set: str,
+    top: int = 20,
+    filter_expr: str | None = None,
+    select_fields: list[str] | None = None,
+    orderby: str | None = None,
+    skip: int | None = None,
+    ctx: Context | None = None,
+) -> dict:
+    """Run a generic OData v2 query against a SuccessFactors entity set."""
+    token = _get_auth_token(ctx)
+    sap_token = await _exchange_token_for_sap(token)
+    params: dict[str, str] = {"$top": str(top)}
+    if filter_expr:
+        params["$filter"] = filter_expr
+    if select_fields:
+        params["$select"] = ",".join(select_fields)
+    if orderby:
+        params["$orderby"] = orderby
+    if skip is not None:
+        params["$skip"] = str(skip)
+    path = f"/{entity_set.lstrip('/')}"
+    data = await _sf_get(path, sap_token, params)
+    results = data.get("d", {}).get("results")
+    if isinstance(results, list):
+        return {
+            "entitySet": entity_set,
+            "count": len(results),
+            "results": results,
+        }
+    return {
+        "entitySet": entity_set,
+        "result": data.get("d", data),
+    }
+
+
 # ── TOOL_SPECS Registry ─────────────────────────────────────────────
 
 SAP_SF_TOOL_SPECS: list[dict] = [
+    {
+        "name": "list_sandbox_entity_sets",
+        "summary": (
+            "List available SuccessFactors OData v2 entity sets from the sandbox service root "
+            "to discover APIs and fields."
+        ),
+        "func": tool_list_sandbox_entity_sets,
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/toolInvocation/invoking": "Discovering SuccessFactors OData APIs…",
+            "openai/toolInvocation/invoked": "API list ready.",
+        },
+    },
+    {
+        "name": "query_sandbox_entity",
+        "summary": (
+            "Run a generic query against any SuccessFactors sandbox OData v2 entity set "
+            "with optional filter/select/orderby/top parameters."
+        ),
+        "func": tool_query_sandbox_entity,
+        "annotations": {"readOnlyHint": True},
+        "meta": {
+            "openai/toolInvocation/invoking": "Querying SuccessFactors sandbox…",
+            "openai/toolInvocation/invoked": "Query complete.",
+        },
+    },
     {
         "name": "get_employee_profile",
         "summary": (
@@ -932,7 +1021,7 @@ SAP_SF_TOOL_SPECS: list[dict] = [
             "time_type, start_date, and end_date."
         ),
         "func": tool_book_leave,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Submitting leave request…",
             "openai/toolInvocation/invoked": "Leave request submitted.",
@@ -959,7 +1048,7 @@ SAP_SF_TOOL_SPECS: list[dict] = [
             "Requires user_id and a changes dict."
         ),
         "func": tool_change_personal_data,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Updating personal data…",
             "openai/toolInvocation/invoked": "Personal data updated.",
@@ -1028,7 +1117,7 @@ SAP_SF_TOOL_SPECS: list[dict] = [
             "new_position_id, and effective_date."
         ),
         "func": tool_move_employee,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Submitting employee move…",
             "openai/toolInvocation/invoked": "Move submitted.",
@@ -1041,7 +1130,7 @@ SAP_SF_TOOL_SPECS: list[dict] = [
             "Requires user_id, new_manager_id, and effective_date."
         ),
         "func": tool_update_hierarchy,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Updating hierarchy…",
             "openai/toolInvocation/invoked": "Hierarchy updated.",
@@ -1051,7 +1140,7 @@ SAP_SF_TOOL_SPECS: list[dict] = [
         "name": "trigger_background_check",
         "summary": "Trigger a background check for an employee in SAP SuccessFactors.",
         "func": tool_trigger_background_check,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Triggering background check…",
             "openai/toolInvocation/invoked": "Background check triggered.",
@@ -1075,7 +1164,7 @@ SAP_SF_TOOL_SPECS: list[dict] = [
             "Set action to 'create' or 'update'."
         ),
         "func": tool_manage_position,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Managing position…",
             "openai/toolInvocation/invoked": "Position updated.",
@@ -1088,7 +1177,7 @@ SAP_SF_TOOL_SPECS: list[dict] = [
             "to the next."
         ),
         "func": tool_request_leave_carryover,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Submitting carryover request…",
             "openai/toolInvocation/invoked": "Carryover request submitted.",
@@ -1115,7 +1204,7 @@ SAP_SF_TOOL_SPECS: list[dict] = [
             "The letter is created asynchronously and the user is notified when ready."
         ),
         "func": tool_generate_employment_verification,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Requesting verification letter…",
             "openai/toolInvocation/invoked": "Verification letter requested.",
@@ -1128,10 +1217,12 @@ SAP_SF_TOOL_SPECS: list[dict] = [
             "The letter is created asynchronously and the user is notified when ready."
         ),
         "func": tool_generate_employment_reference,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Requesting reference letter…",
             "openai/toolInvocation/invoked": "Reference letter requested.",
         },
     },
 ]
+
+

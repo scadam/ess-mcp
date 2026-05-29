@@ -10,12 +10,13 @@ RUN pip install --upgrade pip && pip install --no-cache-dir .
 FROM mcr.microsoft.com/devcontainers/python:3.11 AS runtime
 
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
 WORKDIR /app
 
 # Copy installed dependencies and source code
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY src ./src
-COPY env ./src/env
+COPY env ./env
 
 ENTRYPOINT ["python", "-m", "mcp_servers.cli", "all", "--transport", "both", "--host", "0.0.0.0", "--port", "8080"]

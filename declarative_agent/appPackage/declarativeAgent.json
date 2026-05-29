@@ -1,0 +1,98 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.6/schema.json",
+    "version": "v1.6",
+    "name": "Employee Self Service ${{AGENT_VERSION}}",
+    "description": "Employee Self Service with Microsoft Copilot using MCP and MCP Apps for Workday, ServiceNow, Jira and Salesforce",
+    "instructions": "$[file('instruction.txt')]",
+    "behavior_overrides": {
+        "special_instructions": {
+            "discourage_model_knowledge": true
+        }
+    },
+    "disclaimer": {
+        "text": "${{AGENT_VERSION}}"
+    },
+    "capabilities": [
+        {
+            "name": "OneDriveAndSharePoint"
+        },
+        {
+            "name": "GraphConnectors",
+            "connections": [
+                {
+                    "connection_id": "ServiceNowKB1"
+                },
+                {
+                    "connection_id": "ServiceNowKB2511172205"
+                },
+                {
+                    "connection_id": "ServiceNowKB2511172214"
+                }
+            ]
+        }
+    ],
+    "conversation_starters": [
+        {
+            "title": "Show My Org Chart",
+            "text": "Show my Workday org chart and summarize my manager, team structure, and direct reports."
+        },
+        {
+            "title": "Open Team Dashboard",
+            "text": "Open the Workday team overview dashboard and highlight headcount, role mix, locations, and anything that needs manager attention."
+        },
+        {
+            "title": "Review Team Goals",
+            "text": "Show the Workday team goals dashboard for my direct reports and call out goals that are overdue, at risk, or missing updates."
+        },
+        {
+            "title": "Book Vacation",
+            "text": "Check my Workday leave balances, show the team time-off calendar, and help me book vacation for next Friday."
+        },
+        {
+            "title": "Get IT Help",
+            "text": "I need IT help with a laptop issue. Show me relevant ServiceNow help options, then open the incident form with the details prefilled."
+        },
+        {
+            "title": "Order A New Laptop",
+            "text": "Find laptop options in the ServiceNow catalog, recommend the best fit for a developer, and open the ServiceNow order form for confirmation."
+        },
+        {
+            "title": "Track Hardware Orders",
+            "text": "Show the Coupa IT hardware order list for ServiceNow-originated requests and highlight delayed, partially received, and high-value purchase orders."
+        },
+        {
+            "title": "Procurement Manager View",
+            "text": "Open the Coupa category manager dashboard for IT hardware and summarize spend, open order value, delivery risk, demand, and supplier performance."
+        },
+        {
+            "title": "Supplier Performance",
+            "text": "Show Coupa supplier performance for IT hardware suppliers and compare on-time delivery, open order value, risk, and recent purchase order activity."
+        },
+        {
+            "title": "Demand And Stock",
+            "text": "Show Coupa item demand and stock coverage for phones, laptops, monitors, docks, and accessories, then identify the items most at risk."
+        },
+        {
+            "title": "Trace Request Flow",
+            "text": "Trace ServiceNow hardware requests through Coupa requisitions, purchase orders, receipts, and invoices, and show where each request is currently blocked."
+        },
+        {
+            "title": "Resolve Invoice Mismatch",
+            "text": "Look up a Coupa invoice with a mismatch, compare it to the related purchase order and receipts, then prepare the rejection if the billed amount is wrong."
+        }
+    ],
+    "actions": [
+        {
+            "file": "servicenow-mcp-plugin.json",
+            "id": "servicenow-mcp-plugin-${{AGENT_VERSION}}"
+        },
+        {
+            "file": "coupa-mcp-plugin.json",
+            "id": "coupa-mcp-plugin-${{AGENT_VERSION}}"
+        },
+        {
+            "file": "workday-mcp-plugin.json",
+            "id": "workday-mcp-plugin-${{AGENT_VERSION}}"
+        }
+    ]
+}

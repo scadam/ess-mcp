@@ -1,0 +1,49 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.0.0",
+  "id": "8a1c5a37-2e61-4c3a-8c2f-0a5d3f0d11a1",
+  "packageName": "com.essmcp.servicenow.it-operations",
+  "developer": {
+    "name": "ESS MCP Demo",
+    "websiteUrl": "https://www.microsoft.com",
+    "privacyUrl": "https://www.microsoft.com/privacy",
+    "termsOfUseUrl": "https://www.microsoft.com/termsofuse"
+  },
+  "name": {
+    "short": "ServiceNow IT Ops",
+    "full": "ServiceNow IT Operations Command Center for Copilot Cowork"
+  },
+  "description": {
+    "short": "IT operations dashboards built from live ServiceNow data",
+    "full": "Generates manager-grade IT operations assets from a ServiceNow MCP server: morning IT pulse HTML dashboards, weekly incident-trend PowerPoint reviews, Change Advisory Board packs, team-workload Adaptive Cards for Teams, and knowledge-gap reports identifying repeat incidents lacking KB coverage."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#62D84E",
+  "agentSkills": [
+    { "folder": "./skills/morning-it-pulse-dashboard" },
+    { "folder": "./skills/weekly-incident-trend-deck" },
+    { "folder": "./skills/change-advisory-board-pack" },
+    { "folder": "./skills/team-workload-card" },
+    { "folder": "./skills/knowledge-gap-report" }
+  ],
+  "agentConnectors": [
+    {
+      "id": "servicenow-mcp-demo",
+      "displayName": "ServiceNow MCP Demo Server",
+      "description": "ServiceNow IT service management connector covering incidents, problems, change requests, approvals, SLAs, knowledge articles, CMDB, service catalog and team manager dashboards.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp",
+          "authorization": {
+            "type": "OAuthPluginVault",
+            "referenceId": "ODAzMGQ5MjgtZTU1Ny00YTRjLWFlMWUtOTVjMWM0MTI1ZWFhIyM3MjM4MDYwNC1lZTZjLTQyYjktOTM5MC0zYTYxZGQ1MGVkY2Q="
+          }
+        }
+      }
+    }
+  ]
+}

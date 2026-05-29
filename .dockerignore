@@ -1,0 +1,9 @@
+.git
+.venv
+**/__pycache__
+**/*.pyc
+demo_agent/.env
+demo_agent/appPackage/.env.*
+demo_agent/appPackage/build
+mcp_servers/env/*.env
+declarative_agent/env

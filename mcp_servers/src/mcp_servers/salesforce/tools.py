@@ -1,5 +1,13 @@
 """Provides task listing, approval management, and CRUD operations against
-the Salesforce REST API using OAuth bearer token passthrough.
+the Salesforce REST API.
+
+Authentication (see ``mcp_servers.auth.salesforce``):
+  * If the inbound request carries ``Authorization: Bearer <token>``, that
+    token is forwarded to Salesforce (OAuth pass-through).
+  * Otherwise the server falls back to the Salesforce OAuth 2.0 Client
+    Credentials flow using ``SF_CLIENT_ID`` / ``SF_CLIENT_SECRET``.
+Behaviour is governed by ``SF_AUTH_MODE`` (``auto`` | ``oauth_bearer`` |
+``client_credentials``).
 """
 
 import asyncio
@@ -8,7 +16,7 @@ from typing import Any, Dict, List, Optional
 
 from fastmcp import Context
 
-from ..auth import get_bearer_token
+from ..auth import resolve_salesforce_token
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_salesforce_settings
@@ -16,13 +24,20 @@ import httpx
 
 LOGGER = get_logger(__name__)
 
-_API_VERSION = "v59.0"
+
+def _api_version() -> str:
+    return load_salesforce_settings().api_version or "v59.0"
 
 
 def _get_instance_url() -> str:
-    """Derive the Salesforce instance URL from settings."""
-    settings = load_salesforce_settings()
-    domain = settings.domain
+    """Derive a display-friendly Salesforce instance URL from settings.
+
+    Used only for building hyperlinks to records; runtime API calls use the
+    instance URL returned by :func:`resolve_salesforce_token`.
+    """
+    domain = load_salesforce_settings().domain
+    if domain.startswith("http://") or domain.startswith("https://"):
+        return domain.rstrip("/")
     if ".my.salesforce.com" in domain or ".salesforce.com" in domain:
         return f"https://{domain}"
     return f"https://{domain}.my.salesforce.com"
@@ -30,16 +45,15 @@ def _get_instance_url() -> str:
 
 async def _soql_query(query: str, ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """Execute a SOQL query and return all records."""
-    token = get_bearer_token(ctx)
-    instance_url = _get_instance_url()
-    url = f"{instance_url}/services/data/{_API_VERSION}/query"
+    sf_token = await resolve_salesforce_token(ctx)
+    url = f"{sf_token.instance_url}/services/data/{_api_version()}/query"
 
     async with create_async_client() as client:
         resp = await client.get(
             url,
             params={"q": query},
             headers={
-                "Authorization": f"Bearer {token}",
+                "Authorization": f"Bearer {sf_token.access_token}",
                 "Accept": "application/json",
             },
         )
@@ -51,16 +65,15 @@ async def _soql_query(query: str, ctx: Optional[Context] = None) -> List[Dict[st
 
 async def _salesforce_post(path: str, body: Dict[str, Any], ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Make an authenticated POST request to Salesforce REST API."""
-    token = get_bearer_token(ctx)
-    instance_url = _get_instance_url()
-    url = f"{instance_url}/services/data/{_API_VERSION}{path}"
+    sf_token = await resolve_salesforce_token(ctx)
+    url = f"{sf_token.instance_url}/services/data/{_api_version()}{path}"
 
     async with create_async_client() as client:
         resp = await client.post(
             url,
             json=body,
             headers={
-                "Authorization": f"Bearer {token}",
+                "Authorization": f"Bearer {sf_token.access_token}",
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
@@ -74,16 +87,15 @@ async def _salesforce_post(path: str, body: Dict[str, Any], ctx: Optional[Contex
 
 async def _salesforce_patch(path: str, body: Dict[str, Any], ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Make an authenticated PATCH request to Salesforce REST API."""
-    token = get_bearer_token(ctx)
-    instance_url = _get_instance_url()
-    url = f"{instance_url}/services/data/{_API_VERSION}{path}"
+    sf_token = await resolve_salesforce_token(ctx)
+    url = f"{sf_token.instance_url}/services/data/{_api_version()}{path}"
 
     async with create_async_client() as client:
         resp = await client.patch(
             url,
             json=body,
             headers={
-                "Authorization": f"Bearer {token}",
+                "Authorization": f"Bearer {sf_token.access_token}",
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
@@ -97,15 +109,14 @@ async def _salesforce_patch(path: str, body: Dict[str, Any], ctx: Optional[Conte
 
 async def _salesforce_get(path: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Make an authenticated GET request to Salesforce REST API."""
-    token = get_bearer_token(ctx)
-    instance_url = _get_instance_url()
-    url = f"{instance_url}/services/data/{_API_VERSION}{path}"
+    sf_token = await resolve_salesforce_token(ctx)
+    url = f"{sf_token.instance_url}/services/data/{_api_version()}{path}"
 
     async with create_async_client() as client:
         resp = await client.get(
             url,
             headers={
-                "Authorization": f"Bearer {token}",
+                "Authorization": f"Bearer {sf_token.access_token}",
                 "Accept": "application/json",
             },
         )
@@ -3342,3 +3353,5 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
         "annotations": {"readOnlyHint": True},
     },
 ]
+
+

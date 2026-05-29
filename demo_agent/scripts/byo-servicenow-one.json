@@ -1,0 +1,16 @@
+{
+  "serverName": "ext_ESSServiceNow",
+  "serverUrl": "https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp",
+  "authType": "NoAuth",
+  "description": "ServiceNow IT service: incidents, changes, problems, knowledge, catalog.",
+  "publisherName": "Project ESS",
+  "tools": [
+    {
+      "name": "get_incident",
+      "description": "Retrieve full details and comment/work-note history for a single ServiceNow incident by its number (e.g. INC0010006). Use this to show the user an incident's current state and conversation history."
+    }
+  ],
+  "remoteScopes": null,
+  "externalOAuth": null,
+  "apiKey": null
+}

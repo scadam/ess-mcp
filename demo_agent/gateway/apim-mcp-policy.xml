@@ -1,0 +1,45 @@
+<!--
+  APIM AI Gateway policy template for ESS-MCP Workday/ServiceNow endpoints.
+
+  Attach this at the API or operation level for routes such as:
+    /ess-mcp/workday/mcp
+    /ess-mcp/servicenow/mcp
+
+  Replace named values before use:
+    {{ess-mcp-backend-url}}      https://<container-app-host>
+    {{gateway-subscription-key}} Optional APIM subscription key setting
+-->
+<policies>
+  <inbound>
+    <base />
+
+    <choose>
+      <when condition="@(context.Request.Headers.GetValueOrDefault(&quot;Authorization&quot;, &quot;&quot;).StartsWith(&quot;Bearer &quot;))" />
+      <otherwise>
+        <return-response>
+          <set-status code="401" reason="Authorization bearer token is required" />
+        </return-response>
+      </otherwise>
+    </choose>
+
+    <check-header name="X-Agent-Identity-Id" failed-check-httpcode="400" failed-check-error-message="X-Agent-Identity-Id is required" ignore-case="true" />
+    <check-header name="X-Agent-Blueprint-Client-Id" failed-check-httpcode="400" failed-check-error-message="X-Agent-Blueprint-Client-Id is required" ignore-case="true" />
+
+    <!-- Add rate-limit-by-key/quota-by-key here when using a non-Consumption APIM SKU. -->
+
+    <set-header name="X-Gateway-Policy" exists-action="override">
+      <value>ess-mcp-workday-servicenow</value>
+    </set-header>
+
+    <set-backend-service base-url="{{ess-mcp-backend-url}}" />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>

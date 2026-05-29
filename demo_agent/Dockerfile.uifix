@@ -1,0 +1,9 @@
+FROM essmcpacrjtm2en5dvzfhw.azurecr.io/demo-agent:hitl-id-fix-05191638
+
+COPY demo_agent/static/control-plane.html /app/demo_agent/static/control-plane.html
+COPY demo_agent/web.py /app/demo_agent/web.py
+COPY demo_agent/agent.py /app/demo_agent/agent.py
+COPY demo_agent/oauth.py /app/demo_agent/oauth.py
+COPY demo_agent/graph_chat.py /app/demo_agent/graph_chat.py
+COPY demo_agent/skills/procurement-to-invoice.md /app/demo_agent/skills/procurement-to-invoice.md
+COPY demo_agent/skills/requisition-approval-triage.md /app/demo_agent/skills/requisition-approval-triage.md

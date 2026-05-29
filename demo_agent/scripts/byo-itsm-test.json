@@ -1,0 +1,16 @@
+{
+  "serverName": "ext_ESSITSM",
+  "serverUrl": "https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp",
+  "authType": "NoAuth",
+  "description": "ServiceNow IT service: incidents, changes, problems, knowledge, catalog.",
+  "publisherName": "Project ESS",
+  "tools": [
+    {
+      "name": "list_incidents",
+      "description": "Search and list ServiceNow incidents. Supports filtering by free-text search, incident number, category, state, priority, assigned user, and active status. Returns up to 100 incidents per call. Results are rendered as an interactive widget."
+    }
+  ],
+  "remoteScopes": null,
+  "externalOAuth": null,
+  "apiKey": null
+}

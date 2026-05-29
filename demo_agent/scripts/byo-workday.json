@@ -1,0 +1,196 @@
+{
+  "serverName": "ext_ESSWorkday",
+  "serverUrl": "https://essmcp-workday.wittysand-460bf1d9.eastus.azurecontainerapps.io/workday/mcp",
+  "authType": "NoAuth",
+  "description": "Workday HR self-service: leave, payroll, learning, org, performance, jobs.",
+  "publisherName": "Project ESS",
+  "tools": [
+    {
+      "name": "get_worker",
+      "description": "Get the current Workday worker profile. Result is rendered as an interactive widget."
+    },
+    {
+      "name": "get_leave_balances",
+      "description": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave."
+    },
+    {
+      "name": "get_direct_reports",
+      "description": "List direct reports for the current worker."
+    },
+    {
+      "name": "get_inbox_tasks",
+      "description": "List Workday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny."
+    },
+    {
+      "name": "get_learning_assignments",
+      "description": "Retrieve required learning assignments. Result is rendered as an interactive widget."
+    },
+    {
+      "name": "get_pay_slips",
+      "description": "List recent Workday pay slips."
+    },
+    {
+      "name": "get_time_off_entries",
+      "description": "List time off entries for the current worker."
+    },
+    {
+      "name": "prepare_request_leave",
+      "description": "Book time off — opens the interactive leave booking form for the user to review and confirm. Use this when the user asks to book leave, request PTO, or take time off. Pass startDate, endDate, quantity, unit, and timeOffTypeId (from get_leave_balances). The user confirms and submi"
+    },
+    {
+      "name": "book_leave",
+      "description": "Submit leave request to Workday. Widget callback — called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."
+    },
+    {
+      "name": "prepare_change_business_title",
+      "description": "Change business title — opens the interactive title change form for the user to enter a new title and submit. Use this when the user asks to change their business title."
+    },
+    {
+      "name": "change_business_title",
+      "description": "Submit business title change to Workday. Widget callback — called automatically by the title change form after the user clicks Submit. To change a business title, use prepare_change_business_title instead."
+    },
+    {
+      "name": "search_learning_content",
+      "description": "Search Workday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Workday IDs automatically; invalid values are dropped."
+    },
+    {
+      "name": "get_org_chart",
+      "description": "Get the organizational chart for the current worker's supervisory organization."
+    },
+    {
+      "name": "get_team_calendar",
+      "description": "Get the team time-off calendar showing who is out in the current worker's team."
+    },
+    {
+      "name": "get_team_overview",
+      "description": "Get a team overview dashboard for managers showing headcount, role breakdown, and team member details."
+    },
+    {
+      "name": "get_team_performance_summary",
+      "description": "Get team performance review status for managers including pending inbox items and team absence overview."
+    },
+    {
+      "name": "action_inbox_task",
+      "description": "Approve or reject a Workday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment."
+    },
+    {
+      "name": "get_inbox_task_detail",
+      "description": "Get detailed information about a specific Workday inbox task by its task_id."
+    },
+    {
+      "name": "get_goals",
+      "description": "Get your performance goals including status, due dates, and categories. Result is rendered as an interactive dashboard."
+    },
+    {
+      "name": "get_feedback",
+      "description": "Get anytime feedback you've received from colleagues and managers."
+    },
+    {
+      "name": "give_feedback",
+      "description": "Give anytime feedback to a colleague. Provide worker_id, comment, and optional badge ID (from get_feedback_badges)."
+    },
+    {
+      "name": "get_feedback_badges",
+      "description": "List available feedback badges that can be used when giving anytime feedback."
+    },
+    {
+      "name": "get_development_items",
+      "description": "Get your individual development plan items including skills, dates, and status. Result is rendered as an interactive widget."
+    },
+    {
+      "name": "request_feedback_on_self",
+      "description": "Request feedback on yourself from peers and managers. Optionally include a message."
+    },
+    {
+      "name": "get_learning_records",
+      "description": "Get your learning history with completion status, grades, scores, and expiration dates."
+    },
+    {
+      "name": "get_check_ins",
+      "description": "Get 1:1 check-in records with topics and notes."
+    },
+    {
+      "name": "create_check_in",
+      "description": "Create a 1:1 check-in record. Provide description, date, participant_id, and optional topic_ids."
+    },
+    {
+      "name": "get_check_in_topics",
+      "description": "List check-in topics available for creating check-ins."
+    },
+    {
+      "name": "get_worker_skills",
+      "description": "Get skills listed on your Workday profile."
+    },
+    {
+      "name": "get_team_goals",
+      "description": "Get performance goals for all direct reports showing goal status and due dates (manager tool). Result is rendered as an interactive widget."
+    },
+    {
+      "name": "request_feedback_on_worker",
+      "description": "Request feedback on a specific direct report. Provide worker_id and optional comment (manager tool)."
+    },
+    {
+      "name": "prepare_give_feedback",
+      "description": "Open the give feedback widget — select a colleague, pick a badge, and write feedback. Use when the user wants to recognize or give feedback to someone."
+    },
+    {
+      "name": "prepare_create_check_in",
+      "description": "Open the check-in creation widget — select a team member, choose topics, set a date, and create a 1:1 check-in. Use when a manager wants to schedule or create a check-in."
+    },
+    {
+      "name": "get_job_profiles",
+      "description": "List Workday job profiles with optional search filter. Use to find the right job profile for a hire."
+    },
+    {
+      "name": "get_job_profile",
+      "description": "Get details of a single Workday job profile by ID including job family and management level."
+    },
+    {
+      "name": "get_job_families",
+      "description": "List Workday job families with optional search filter. Job families group related job profiles."
+    },
+    {
+      "name": "get_jobs",
+      "description": "List Workday jobs (filled positions) with optional search filter."
+    },
+    {
+      "name": "get_job_requisitions",
+      "description": "List open job requisitions. Use to find requisitions available for hiring into."
+    },
+    {
+      "name": "get_supervisory_orgs",
+      "description": "List supervisory organizations with optional search filter. Use to find the target org for a hire."
+    },
+    {
+      "name": "get_supervisory_org_members",
+      "description": "List members of a supervisory organization by org_id. Use to review current team composition or find internal candidates."
+    },
+    {
+      "name": "get_job_change_reasons",
+      "description": "List valid job change reasons (e.g. New Hire, Promotion, Transfer). Use to get a reason_id for create_job_change."
+    },
+    {
+      "name": "create_job_change",
+      "description": "Initiate a job change for a worker (hire, promote, or transfer). Provide worker_id and reason_id (from get_job_change_reasons). Optionally provide job_profile_id, supervisory_org_id, position_id, or job_requisition_id. Returns a job change event ID for submit_job_change."
+    },
+    {
+      "name": "get_job_change",
+      "description": "Get details and status of a job change event by its ID."
+    },
+    {
+      "name": "submit_job_change",
+      "description": "Submit a job change event for approval. Provide the job_change_id from create_job_change."
+    },
+    {
+      "name": "create_org_assignment_change",
+      "description": "Initiate an organization assignment change for a worker. Assign company, cost center, region, or business unit. Returns a change ID for submit_org_assignment_change."
+    },
+    {
+      "name": "submit_org_assignment_change",
+      "description": "Submit an organization assignment change for approval. Provide the change_id from create_org_assignment_change."
+    }
+  ],
+  "remoteScopes": null,
+  "externalOAuth": null,
+  "apiKey": null
+}

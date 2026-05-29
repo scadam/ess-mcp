@@ -1,0 +1,48 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.0.0",
+  "id": "f3a87d12-91c4-4f7e-bd2d-2a8e8e5d22b4",
+  "packageName": "com.essmcp.workday.people-leader",
+  "developer": {
+    "name": "ESS MCP Demo",
+    "websiteUrl": "https://www.microsoft.com",
+    "privacyUrl": "https://www.microsoft.com/privacy",
+    "termsOfUseUrl": "https://www.microsoft.com/termsofuse"
+  },
+  "name": {
+    "short": "Workday People Leader",
+    "full": "Workday People Leader Toolkit for Copilot Cowork"
+  },
+  "description": {
+    "short": "People-manager tools from Workday",
+    "full": "Helps people leaders run their team using Workday MCP data. Generates a morning People Pulse HTML dashboard, performance review PowerPoint packs, weekly team update Adaptive Cards for Teams, headcount and org-brief decks for skip-level reviews, and a learning compliance HTML report."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#F38B00",
+  "agentSkills": [
+    { "folder": "./skills/morning-people-pulse-dashboard" },
+    { "folder": "./skills/team-performance-review-pack" },
+    { "folder": "./skills/weekly-team-update-card" },
+    { "folder": "./skills/headcount-and-org-brief" },
+    { "folder": "./skills/learning-compliance-report" }
+  ],
+  "agentConnectors": [
+    {
+      "id": "workday-mcp-demo",
+      "displayName": "Workday MCP Demo Server",
+      "description": "Workday HR connector covering worker profile, direct reports, inbox tasks, leave balances, time off, learning, goals, feedback, check-ins, org chart and team manager dashboards.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://essmcp-workday.wittysand-460bf1d9.eastus.azurecontainerapps.io/workday/mcp",
+          "authorization": {
+            "type": "None"
+          }
+        }
+      }
+    }
+  ]
+}

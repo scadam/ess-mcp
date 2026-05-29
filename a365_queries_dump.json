@@ -1,0 +1,224 @@
+[
+  {
+    "id": "agent-id",
+    "name": "Entra Agent ID",
+    "queries": [
+      {
+        "portal": "defender-hunting",
+        "label": "Defender \u00b7 Recent sign-ins by this agent",
+        "code": "// ===== ESS Agent 365 \u00b7 Recent sign-ins by this agent =====\nAADSpnSignInEventsBeta\n| where AppId == \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\"\n| where Timestamp > ago(24h)\n| project-reorder Timestamp, AppDisplayName, ResourceDisplayName, IPAddress, ErrorCode\n| sort by Timestamp desc"
+      }
+    ]
+  },
+  {
+    "id": "governance",
+    "name": "Agent Identity Governance (Access Packages)",
+    "queries": [
+      {
+        "portal": "graph-explorer",
+        "label": "Graph \u00b7 List access reviews touching this agent",
+        "code": "Connect-MgGraph -Scopes 'AccessReview.Read.All'\nGet-MgIdentityGovernanceAccessReviewDefinition |\n  Where-Object { $_.Scope.Query -match 'ed4046aa-a3ef-4685-a73d-ecda5a4f01da' }"
+      }
+    ]
+  },
+  {
+    "id": "ca",
+    "name": "Conditional Access (agent-distinguishable)",
+    "queries": [
+      {
+        "portal": "defender-hunting",
+        "label": "Defender \u00b7 CA decisions for this agent",
+        "code": "AADSpnSignInEventsBeta\n| where AppId == \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\" and Timestamp > ago(7d)\n| extend CAStatus = tostring(parse_json(AdditionalFields).ConditionalAccessStatus)\n| summarize count() by CAStatus, ErrorCode, ResourceDisplayName\n| sort by count_ desc"
+      }
+    ]
+  },
+  {
+    "id": "idp",
+    "name": "Identity Protection (agent-distinguishable)",
+    "queries": [
+      {
+        "portal": "defender-hunting",
+        "label": "Defender \u00b7 Risky users served by this agent",
+        "code": "AADUserRiskEvents\n| where TimeGenerated > ago(7d)\n| join kind=inner (\n    CloudAppEvents\n    | where AccountObjectId == \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\"\n    | distinct UserId = tostring(parse_json(RawEventData).TargetUserId)\n  ) on $left.UserId == $right.UserId\n| project TimeGenerated, UserPrincipalName, RiskLevel, RiskState"
+      }
+    ]
+  },
+  {
+    "id": "sase",
+    "name": "SASE for Agents (Global Secure Access)",
+    "queries": []
+  },
+  {
+    "id": "lifecycle-mgmt",
+    "name": "Lifecycle Management for Agents",
+    "queries": []
+  },
+  {
+    "id": "dspm",
+    "name": "DSPM for Agents",
+    "queries": [
+      {
+        "portal": "purview-audit",
+        "label": "Purview \u00b7 Audit search (M365 UAL)",
+        "code": "Connect-IPPSSession\nSearch-UnifiedAuditLog -StartDate (Get-Date).AddDays(-1) -EndDate (Get-Date) `\n  -RecordType AIAppInteraction `\n  -ObjectIds 'ed4046aa-a3ef-4685-a73d-ecda5a4f01da' -ResultSize 50 |\n  Select-Object CreationDate, Operations, UserIds, AuditData"
+      }
+    ]
+  },
+  {
+    "id": "irm",
+    "name": "IRM for Agents",
+    "queries": []
+  },
+  {
+    "id": "label-hon",
+    "name": "Label Honouring",
+    "queries": [
+      {
+        "portal": "purview-activity",
+        "label": "Purview \u00b7 Activity Explorer filter URL",
+        "code": "https://purview.microsoft.com/informationprotection/activityexplorer?app=ed4046aa-a3ef-4685-a73d-ecda5a4f01da"
+      }
+    ]
+  },
+  {
+    "id": "label-inh",
+    "name": "Label Inheritance",
+    "queries": []
+  },
+  {
+    "id": "dlp-ground",
+    "name": "DLP for Grounding",
+    "queries": [
+      {
+        "portal": "purview-audit",
+        "label": "Purview \u00b7 DLP rule matches on this agent",
+        "code": "Connect-IPPSSession\nSearch-UnifiedAuditLog -StartDate (Get-Date).AddDays(-1) -EndDate (Get-Date) `\n  -Operations 'DLPRuleMatch' `\n  -FreeText 'ed4046aa-a3ef-4685-a73d-ecda5a4f01da' -ResultSize 50"
+      }
+    ]
+  },
+  {
+    "id": "audit",
+    "name": "Agent-Action Audit",
+    "queries": [
+      {
+        "portal": "purview-audit",
+        "label": "Purview \u00b7 UAL search for this agent (24h)",
+        "code": "Connect-IPPSSession\nSearch-UnifiedAuditLog -StartDate (Get-Date).AddHours(-24) -EndDate (Get-Date) `\n  -RecordType AIAppInteraction `\n  -FreeText 'ed4046aa-a3ef-4685-a73d-ecda5a4f01da' -ResultSize 100 |\n  Select-Object CreationDate, Operations, UserIds, AuditData |\n  Format-Table -AutoSize"
+      },
+      {
+        "portal": "defender-hunting",
+        "label": "Defender \u00b7 Cross-correlate audit + sign-ins",
+        "code": "CloudAppEvents\n| where AccountObjectId == \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\" and Timestamp > ago(24h)\n| project Timestamp, ActionType, ObjectName, AccountUpn, IPAddress\n| sort by Timestamp desc"
+      }
+    ]
+  },
+  {
+    "id": "comp-mgr",
+    "name": "Compliance Manager (agent templates)",
+    "queries": []
+  },
+  {
+    "id": "sec-posture",
+    "name": "Agent Security Posture Management (ASPM for AI)",
+    "queries": []
+  },
+  {
+    "id": "threat-det",
+    "name": "Threat Detection",
+    "queries": [
+      {
+        "portal": "defender-hunting",
+        "label": "Defender \u00b7 Is the agent registered?",
+        "code": "// ===== ESS Agent 365 \u00b7 Is the agent registered? =====\nAIAgentsInfo\n| where AIAgentId == \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\"\n    or AIAgentName has \"ESS\"\n    or CreatorAccountUpn has \"svasireddy\"\n| project-reorder Timestamp, AIAgentId, AIAgentName, AgentStatus, CreatorAccountUpn\n| sort by Timestamp desc"
+      },
+      {
+        "portal": "defender-hunting",
+        "label": "Defender \u00b7 Behavior anomalies",
+        "code": "// ===== ESS Agent 365 \u00b7 Behavior anomalies =====\nBehaviorEntities\n| where EntityType == \"AIAgent\"\n| where EntityId == \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\" or EntityName startswith \"ESS\"\n| join kind=inner (BehaviorInfo) on BehaviorId\n| project-reorder Timestamp, EntityName, ActionType, Severity, Description, Categories\n| sort by Timestamp desc"
+      }
+    ]
+  },
+  {
+    "id": "rt-protect",
+    "name": "Real-time Threat Protection",
+    "queries": [
+      {
+        "portal": "defender-hunting",
+        "label": "Defender \u00b7 Detection rule template (destructive tool block)",
+        "code": "// ===== ESS Agent 365 \u00b7 Detection rule template (destructive tool block) =====\nCloudAppEvents\n| where AccountObjectId == \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\"\n| where ActionType == \"AgentToolDenied\"\n| project-reorder Timestamp, AccountUpn, ObjectName, RawEventData\n| sort by Timestamp desc"
+      }
+    ]
+  },
+  {
+    "id": "hunting",
+    "name": "Threat Hunting & Investigation",
+    "queries": [
+      {
+        "portal": "defender-hunting",
+        "label": "Defender \u00b7 7-day activity summary",
+        "code": "// ===== ESS Agent 365 \u00b7 7-day activity summary =====\nCloudAppEvents\n| where Timestamp > ago(7d)\n| where AccountObjectId == \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\" or AccountDisplayName has \"ESS\"\n| summarize count() by ActionType, AccountDisplayName\n| sort by count_ desc"
+      },
+      {
+        "portal": "defender-hunting",
+        "label": "Defender \u00b7 Alerts referencing this agent",
+        "code": "// ===== ESS Agent 365 \u00b7 Alerts referencing this agent =====\nAlertEvidence\n| where Timestamp > ago(30d)\n| where AccountObjectId == \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\" or AdditionalFields has \"ed4046aa-a3ef-4685-a73d-ecda5a4f01da\"\n| join kind=inner (AlertInfo) on AlertId\n| project-reorder Timestamp, Title, Severity, Category, AttackTechniques, ServiceSource\n| sort by Timestamp desc"
+      }
+    ]
+  },
+  {
+    "id": "a365-sdk",
+    "name": "Agent 365 SDK",
+    "queries": []
+  },
+  {
+    "id": "agent-registry",
+    "name": "Agent Registry",
+    "queries": []
+  },
+  {
+    "id": "agent-map",
+    "name": "Agent Map",
+    "queries": []
+  },
+  {
+    "id": "registry-sync",
+    "name": "Registry Sync",
+    "queries": []
+  },
+  {
+    "id": "graph-api",
+    "name": "Graph API for Agent Management",
+    "queries": [
+      {
+        "portal": "graph-explorer",
+        "label": "Graph Explorer \u00b7 Get parent agent app",
+        "code": "https://developer.microsoft.com/graph/graph-explorer?request=applications(appId='ed4046aa-a3ef-4685-a73d-ecda5a4f01da')&method=GET&version=v1.0"
+      }
+    ]
+  },
+  {
+    "id": "tool-ctrl",
+    "name": "Tool Controls",
+    "queries": []
+  },
+  {
+    "id": "policy-tpl",
+    "name": "Policy Templates",
+    "queries": []
+  },
+  {
+    "id": "admin-actions",
+    "name": "Admin Agent Governance Actions",
+    "queries": []
+  },
+  {
+    "id": "rbac",
+    "name": "AI Admin / AI Reader RBAC",
+    "queries": []
+  },
+  {
+    "id": "agent-runtime-policy",
+    "name": "Policy-Controlled Agent Runtime (W365 for Agents)",
+    "queries": []
+  }
+]

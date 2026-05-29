@@ -1702,3 +1702,5 @@ JIRA_TOOL_SPECS: list[dict] = [
         "annotations": {"readOnlyHint": True},
     },
 ]
+
+

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import copy
 from datetime import date, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from fastmcp import Context
 
@@ -402,9 +402,12 @@ async def tool_list_catalog_items(
     # Use the real sandbox catalog endpoint
     data = await _ariba_get("/catalog/v1/sandbox/items", params, fallback=_MOCK_CATALOG)
     # If we got live catalog data, extract the items list
-    if isinstance(data, list) and data and "catalogItems" in data[0]:
-        items = data[0].get("catalogItems", [])
-        return {"results": items}
+    if isinstance(data, list) and data:
+        rows = cast(list[Any], data)
+        first = rows[0]
+        if isinstance(first, dict) and "catalogItems" in first:
+            items = first.get("catalogItems", [])
+            return {"results": items}
     return data
 
 
@@ -539,7 +542,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "reject_invoice",
         "summary": "Reject an invoice in SAP Ariba.",
         "func": tool_reject_invoice,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/ariba-confirm-action.html",
             "openai/toolInvocation/invoking": "Rejecting invoice…",
@@ -550,7 +553,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "close_purchase_order",
         "summary": "Close a purchase order in SAP Ariba.",
         "func": tool_close_purchase_order,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/ariba-confirm-action.html",
             "openai/toolInvocation/invoking": "Closing PO…",
@@ -583,7 +586,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "create_receipt",
         "summary": "Post a goods receipt against a purchase order in SAP Ariba.",
         "func": tool_create_receipt,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Creating goods receipt…",
             "openai/toolInvocation/invoked": "Receipt created.",
@@ -615,7 +618,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "create_requisition",
         "summary": "Submit a new purchase requisition in SAP Ariba.",
         "func": tool_create_requisition,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Creating requisition…",
             "openai/toolInvocation/invoked": "Requisition created.",
@@ -625,7 +628,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "update_requisition",
         "summary": "Update an existing purchase requisition in SAP Ariba.",
         "func": tool_update_requisition,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Updating requisition…",
             "openai/toolInvocation/invoked": "Requisition updated.",
@@ -646,7 +649,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "order_catalog_item",
         "summary": "Create a purchase requisition from a catalog item in SAP Ariba.",
         "func": tool_order_catalog_item,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Ordering catalog item…",
             "openai/toolInvocation/invoked": "Item ordered.",
@@ -678,7 +681,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "update_supplier_address",
         "summary": "Update a supplier's address in SAP Ariba.",
         "func": tool_update_supplier_address,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Updating supplier address…",
             "openai/toolInvocation/invoked": "Address updated.",
@@ -688,7 +691,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "update_supplier_bank",
         "summary": "Update a supplier's bank details in SAP Ariba.",
         "func": tool_update_supplier_bank,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Updating bank details…",
             "openai/toolInvocation/invoked": "Bank details updated.",
@@ -698,7 +701,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "register_supplier",
         "summary": "Register and onboard a new supplier in SAP Ariba.",
         "func": tool_register_supplier,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/ariba-supplier-registration.html",
             "openai/toolInvocation/invoking": "Registering supplier…",
@@ -709,7 +712,7 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "transfer_purchase_order",
         "summary": "Transfer a purchase order to a new owner in SAP Ariba.",
         "func": tool_transfer_purchase_order,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Transferring PO…",
             "openai/toolInvocation/invoked": "PO transferred.",
@@ -730,10 +733,12 @@ ARIBA_TOOL_SPECS: list[dict] = [
         "name": "approve_reject",
         "summary": "Approve or reject a pending approval in SAP Ariba. Set action to 'approve' or 'reject'.",
         "func": tool_approve_reject,
-        "annotations": {"readOnlyHint": False},
+       "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/toolInvocation/invoking": "Processing approval…",
             "openai/toolInvocation/invoked": "Approval processed.",
         },
     },
 ]
+
+

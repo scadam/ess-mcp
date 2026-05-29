@@ -1,0 +1,79 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "Jira MCP Server",
+    "description_for_human": "Jira MCP Server provides access to Jira project and issue workflows.",
+    "description_for_model": "Use for Jira issue tracking, project planning, boards, sprints, and versions.",
+    "contact_email": "scadam@microsoft.com",
+    "namespace": "mcpjira",
+    "functions": [
+        { "name": "list_issues", "description": "Execute Jira tool: list_issues." },
+        { "name": "get_issue", "description": "Execute Jira tool: get_issue." },
+        { "name": "show_create_issue_form", "description": "Execute Jira tool: show_create_issue_form." },
+        { "name": "add_comment", "description": "Execute Jira tool: add_comment." },
+        { "name": "transition_issue", "description": "Execute Jira tool: transition_issue." },
+        { "name": "show_create_project_form", "description": "Execute Jira tool: show_create_project_form." },
+        { "name": "create_project", "description": "Execute Jira tool: create_project." },
+        { "name": "update_project", "description": "Execute Jira tool: update_project." },
+        { "name": "create_issue", "description": "Execute Jira tool: create_issue." },
+        { "name": "update_issue", "description": "Execute Jira tool: update_issue." },
+        { "name": "move_issues_to_sprint", "description": "Execute Jira tool: move_issues_to_sprint." },
+        { "name": "link_issues", "description": "Execute Jira tool: link_issues." },
+        { "name": "list_boards", "description": "Execute Jira tool: list_boards." },
+        { "name": "get_board", "description": "Execute Jira tool: get_board." },
+        { "name": "list_sprints", "description": "Execute Jira tool: list_sprints." },
+        { "name": "get_sprint", "description": "Execute Jira tool: get_sprint." },
+        { "name": "get_backlog", "description": "Execute Jira tool: get_backlog." },
+        { "name": "list_epics", "description": "Execute Jira tool: list_epics." },
+        { "name": "log_work", "description": "Execute Jira tool: log_work." },
+        { "name": "get_my_issues", "description": "Execute Jira tool: get_my_issues." },
+        { "name": "list_projects", "description": "Execute Jira tool: list_projects." },
+        { "name": "get_team_workload", "description": "Execute Jira tool: get_team_workload." },
+        { "name": "get_team_sprint_health", "description": "Execute Jira tool: get_team_sprint_health." },
+        { "name": "list_versions", "description": "Execute Jira tool: list_versions." },
+        { "name": "create_version", "description": "Execute Jira tool: create_version." },
+        { "name": "update_version", "description": "Execute Jira tool: update_version." }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "auth": {
+                "type": "None"
+            },
+            "run_for_functions": [
+                "list_issues",
+                "get_issue",
+                "show_create_issue_form",
+                "add_comment",
+                "transition_issue",
+                "show_create_project_form",
+                "create_project",
+                "update_project",
+                "create_issue",
+                "update_issue",
+                "move_issues_to_sprint",
+                "link_issues",
+                "list_boards",
+                "get_board",
+                "list_sprints",
+                "get_sprint",
+                "get_backlog",
+                "list_epics",
+                "log_work",
+                "get_my_issues",
+                "list_projects",
+                "get_team_workload",
+                "get_team_sprint_health",
+                "list_versions",
+                "create_version",
+                "update_version"
+            ],
+            "spec": {
+                "url": "https://essmcp-jira.wittysand-460bf1d9.eastus.azurecontainerapps.io/jira/mcp",
+                "mcp_tool_description": {
+                    "tools": []
+                }
+            }
+        }
+    ]
+}

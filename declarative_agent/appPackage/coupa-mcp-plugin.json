@@ -1,0 +1,1061 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "Coupa MCP Server",
+    "description_for_human": "Coupa MCP Server provides access to procurement workflows.",
+    "description_for_model": "Use for Coupa downstream procurement workflows after a request exists, including invoices, purchase orders, requisitions, receipts, suppliers, approvals, category manager dashboards, supplier performance, item demand, stock coverage, and ServiceNow-to-Coupa request flow tracing. Do not use Coupa for employee laptop ordering, IT service catalog browsing, or the initial employee order form; those belong in ServiceNow.",
+    "contact_email": "scadam@microsoft.com",
+    "namespace": "mcpcoupa",
+    "functions": [
+        {
+            "name": "get_invoice_status",
+            "description": "Get invoice payment status from Coupa by invoice number (mocked)."
+        },
+        {
+            "name": "get_po_status",
+            "description": "Get purchase order status from Coupa by PO number (mocked)."
+        },
+        {
+            "name": "reject_invoice",
+            "description": "Reject an invoice in Coupa (mocked)."
+        },
+        {
+            "name": "close_purchase_order",
+            "description": "Close a purchase order in Coupa (mocked)."
+        },
+        {
+            "name": "list_receipts",
+            "description": "List goods receipts from Coupa, optionally filtered by PO (mocked)."
+        },
+        {
+            "name": "prepare_create_receipt",
+            "description": "Show the goods receipt creation form for a PO (mocked)."
+        },
+        {
+            "name": "create_receipt",
+            "description": "Post a goods receipt in Coupa (mocked)."
+        },
+        {
+            "name": "list_requisitions",
+            "description": "List purchase requisitions from Coupa (mocked)."
+        },
+        {
+            "name": "prepare_create_requisition",
+            "description": "Show the purchase requisition creation form (mocked)."
+        },
+        {
+            "name": "create_requisition",
+            "description": "Submit a new purchase requisition in Coupa (mocked)."
+        },
+        {
+            "name": "update_requisition",
+            "description": "Update an existing purchase requisition in Coupa (mocked)."
+        },
+        {
+            "name": "list_suppliers",
+            "description": "Search IT hardware suppliers in Coupa with performance rollups (mocked)."
+        },
+        {
+            "name": "get_supplier",
+            "description": "Get supplier details and open order performance from Coupa (mocked)."
+        },
+        {
+            "name": "update_supplier_address",
+            "description": "Update a supplier's address in Coupa (mocked)."
+        },
+        {
+            "name": "update_supplier_bank",
+            "description": "Update a supplier's bank details in Coupa (mocked)."
+        },
+        {
+            "name": "register_supplier",
+            "description": "Register and onboard a new IT hardware supplier in Coupa (mocked)."
+        },
+        {
+            "name": "transfer_purchase_order",
+            "description": "Transfer a purchase order to a new owner in Coupa (mocked)."
+        },
+        {
+            "name": "list_approvals",
+            "description": "List pending approval items in Coupa (mocked)."
+        },
+        {
+            "name": "approve_reject",
+            "description": "Approve or reject a pending approval in Coupa (mocked). Set action to 'approve' or 'reject'."
+        },
+        {
+            "name": "get_category_manager_dashboard",
+            "description": "Category manager dashboard for ServiceNow-sourced IT hardware orders in Coupa (mocked)."
+        },
+        {
+            "name": "list_it_hardware_orders",
+            "description": "List ServiceNow-originated IT hardware purchase orders in Coupa with category, supplier, and delivery filters (mocked)."
+        },
+        {
+            "name": "get_supplier_performance",
+            "description": "Supplier performance dashboard for Coupa IT hardware suppliers (mocked)."
+        },
+        {
+            "name": "get_item_demand",
+            "description": "Item demand and stock coverage for phones, laptops, accessories, and office equipment in Coupa (mocked)."
+        },
+        {
+            "name": "get_servicenow_coupa_flow",
+            "description": "Trace ServiceNow employee requests through Coupa requisitions, POs, receipts, and invoices (mocked)."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "auth": {
+                "type": "None"
+            },
+            "run_for_functions": [
+                "get_invoice_status",
+                "get_po_status",
+                "reject_invoice",
+                "close_purchase_order",
+                "list_receipts",
+                "prepare_create_receipt",
+                "create_receipt",
+                "list_requisitions",
+                "prepare_create_requisition",
+                "create_requisition",
+                "update_requisition",
+                "list_suppliers",
+                "get_supplier",
+                "update_supplier_address",
+                "update_supplier_bank",
+                "register_supplier",
+                "transfer_purchase_order",
+                "list_approvals",
+                "approve_reject",
+                "get_category_manager_dashboard",
+                "list_it_hardware_orders",
+                "get_supplier_performance",
+                "get_item_demand",
+                "get_servicenow_coupa_flow"
+            ],
+            "spec": {
+                "url": "https://essmcp-coupa.wittysand-460bf1d9.eastus.azurecontainerapps.io/coupa/mcp",
+                "mcp_tool_description": {
+                    "tools": [
+                        {
+                            "name": "get_invoice_status",
+                            "description": "Get invoice payment status from Coupa by invoice number (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "invoice_number": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "invoice_number"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-invoice-status.html",
+                                "openai/toolInvocation/invoking": "Checking invoice status...",
+                                "openai/toolInvocation/invoked": "Invoice status ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "get_po_status",
+                            "description": "Get purchase order status from Coupa by PO number (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "po_number": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "po_number"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-po-status.html",
+                                "openai/toolInvocation/invoking": "Checking PO status...",
+                                "openai/toolInvocation/invoked": "PO status ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "reject_invoice",
+                            "description": "Reject an invoice in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "invoice_id": {
+                                        "type": "string"
+                                    },
+                                    "reason": {
+                                        "default": "",
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "invoice_id"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-confirm-action.html",
+                                "openai/toolInvocation/invoking": "Rejecting invoice...",
+                                "openai/toolInvocation/invoked": "Invoice rejected.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "close_purchase_order",
+                            "description": "Close a purchase order in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "po_id": {
+                                        "type": "string"
+                                    },
+                                    "reason": {
+                                        "default": "",
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "po_id"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-confirm-action.html",
+                                "openai/toolInvocation/invoking": "Closing PO...",
+                                "openai/toolInvocation/invoked": "PO closed.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "list_receipts",
+                            "description": "List goods receipts from Coupa, optionally filtered by PO (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "po_number": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-receipt-list.html",
+                                "openai/toolInvocation/invoking": "Loading receipts...",
+                                "openai/toolInvocation/invoked": "Receipts loaded.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "prepare_create_receipt",
+                            "description": "Show the goods receipt creation form for a PO (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "po_number": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "po_number"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-create-receipt.html",
+                                "openai/toolInvocation/invoking": "Preparing receipt form...",
+                                "openai/toolInvocation/invoked": "Form ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "create_receipt",
+                            "description": "Post a goods receipt in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "po_number": {
+                                        "type": "string"
+                                    },
+                                    "line_items": {
+                                        "items": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "receipt_date": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "po_number",
+                                    "line_items",
+                                    "receipt_date"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/toolInvocation/invoking": "Creating goods receipt...",
+                                "openai/toolInvocation/invoked": "Receipt created.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "list_requisitions",
+                            "description": "List purchase requisitions from Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "status": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-requisition-list.html",
+                                "openai/toolInvocation/invoking": "Loading requisitions...",
+                                "openai/toolInvocation/invoked": "Requisitions loaded.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "prepare_create_requisition",
+                            "description": "Show the purchase requisition creation form (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {},
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-create-requisition.html",
+                                "openai/toolInvocation/invoking": "Preparing requisition form...",
+                                "openai/toolInvocation/invoked": "Form ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "create_requisition",
+                            "description": "Submit a new purchase requisition in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "line_items": {
+                                        "items": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "requester": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "line_items"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/toolInvocation/invoking": "Creating requisition...",
+                                "openai/toolInvocation/invoked": "Requisition created.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "update_requisition",
+                            "description": "Update an existing purchase requisition in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "requisition_id": {
+                                        "type": "string"
+                                    },
+                                    "updates": {
+                                        "additionalProperties": true,
+                                        "type": "object"
+                                    }
+                                },
+                                "required": [
+                                    "requisition_id",
+                                    "updates"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/toolInvocation/invoking": "Updating requisition...",
+                                "openai/toolInvocation/invoked": "Requisition updated.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "list_suppliers",
+                            "description": "Search IT hardware suppliers in Coupa with performance rollups (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "query": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-supplier-list.html",
+                                "openai/toolInvocation/invoking": "Searching suppliers...",
+                                "openai/toolInvocation/invoked": "Suppliers loaded.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "get_supplier",
+                            "description": "Get supplier details and open order performance from Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "supplier_id": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "supplier_id"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-supplier-profile.html",
+                                "openai/toolInvocation/invoking": "Loading supplier profile...",
+                                "openai/toolInvocation/invoked": "Supplier profile ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "update_supplier_address",
+                            "description": "Update a supplier's address in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "supplier_id": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "additionalProperties": true,
+                                        "type": "object"
+                                    }
+                                },
+                                "required": [
+                                    "supplier_id",
+                                    "address"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/toolInvocation/invoking": "Updating supplier address...",
+                                "openai/toolInvocation/invoked": "Address updated.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "update_supplier_bank",
+                            "description": "Update a supplier's bank details in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "supplier_id": {
+                                        "type": "string"
+                                    },
+                                    "bank_details": {
+                                        "additionalProperties": true,
+                                        "type": "object"
+                                    }
+                                },
+                                "required": [
+                                    "supplier_id",
+                                    "bank_details"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/toolInvocation/invoking": "Updating bank details...",
+                                "openai/toolInvocation/invoked": "Bank details updated.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "register_supplier",
+                            "description": "Register and onboard a new IT hardware supplier in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "additionalProperties": true,
+                                        "type": "object"
+                                    },
+                                    "contact": {
+                                        "additionalProperties": true,
+                                        "type": "object"
+                                    },
+                                    "tax_id": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "address",
+                                    "contact"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-supplier-registration.html",
+                                "openai/toolInvocation/invoking": "Registering supplier...",
+                                "openai/toolInvocation/invoked": "Supplier registered.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "transfer_purchase_order",
+                            "description": "Transfer a purchase order to a new owner in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "po_id": {
+                                        "type": "string"
+                                    },
+                                    "new_owner": {
+                                        "type": "string"
+                                    },
+                                    "reason": {
+                                        "default": "",
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "po_id",
+                                    "new_owner"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/toolInvocation/invoking": "Transferring PO...",
+                                "openai/toolInvocation/invoked": "PO transferred.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "list_approvals",
+                            "description": "List pending approval items in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {},
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-approval-list.html",
+                                "openai/toolInvocation/invoking": "Loading approvals...",
+                                "openai/toolInvocation/invoked": "Approvals loaded.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "approve_reject",
+                            "description": "Approve or reject a pending approval in Coupa (mocked). Set action to 'approve' or 'reject'.",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "approvable_id": {
+                                        "type": "string"
+                                    },
+                                    "action": {
+                                        "type": "string"
+                                    },
+                                    "comment": {
+                                        "default": "",
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "approvable_id",
+                                    "action"
+                                ],
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": false
+                            },
+                            "_meta": {
+                                "openai/toolInvocation/invoking": "Processing approval...",
+                                "openai/toolInvocation/invoked": "Approval processed.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "get_category_manager_dashboard",
+                            "description": "Category manager dashboard for ServiceNow-sourced IT hardware orders in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "category": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    },
+                                    "supplier_id": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-category-dashboard.html",
+                                "openai/toolInvocation/invoking": "Building category dashboard...",
+                                "openai/toolInvocation/invoked": "Dashboard ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "list_it_hardware_orders",
+                            "description": "List ServiceNow-originated IT hardware purchase orders in Coupa with category, supplier, and delivery filters (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "status": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    },
+                                    "category": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    },
+                                    "supplier_id": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    },
+                                    "location": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    },
+                                    "limit": {
+                                        "default": 50,
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-hardware-order-list.html",
+                                "openai/toolInvocation/invoking": "Loading hardware orders...",
+                                "openai/toolInvocation/invoked": "Hardware orders ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "get_supplier_performance",
+                            "description": "Supplier performance dashboard for Coupa IT hardware suppliers (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "supplier_id": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-supplier-performance.html",
+                                "openai/toolInvocation/invoking": "Loading supplier performance...",
+                                "openai/toolInvocation/invoked": "Supplier performance ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "get_item_demand",
+                            "description": "Item demand and stock coverage for phones, laptops, accessories, and office equipment in Coupa (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "item_id": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    },
+                                    "category": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-item-demand.html",
+                                "openai/toolInvocation/invoking": "Loading item demand...",
+                                "openai/toolInvocation/invoked": "Item demand ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        },
+                        {
+                            "name": "get_servicenow_coupa_flow",
+                            "description": "Trace ServiceNow employee requests through Coupa requisitions, POs, receipts, and invoices (mocked).",
+                            "inputSchema": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "request_number": {
+                                        "anyOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ],
+                                        "default": null
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "outputSchema": {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            "annotations": {
+                                "readOnlyHint": true
+                            },
+                            "_meta": {
+                                "openai/outputTemplate": "ui://widget/coupa-request-flow.html",
+                                "openai/toolInvocation/invoking": "Tracing request flow...",
+                                "openai/toolInvocation/invoked": "Request flow ready.",
+                                "fastmcp": {
+                                    "tags": []
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

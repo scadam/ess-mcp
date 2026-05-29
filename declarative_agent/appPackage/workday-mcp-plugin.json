@@ -1,0 +1,1164 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "Workday MCP Server",
+    "description_for_human": "Workday MCP Server provides access to Workday functionalities.",
+    "description_for_model": "Use for HR and people actions: worker profile (get_worker), leave balances and requests (get_leave_balances, prepare_request_leave), pay slips (get_pay_slips), direct reports (get_direct_reports), Workday inbox tasks (get_inbox_tasks), learning content (get_learning_assignments, search_learning_content), and business title changes (prepare_change_business_title). Not for IT incidents (ServiceNow), compliance cases (Salesforce), or project tracking (Jira).",
+    "contact_email": "scadam@microsoft.com",
+    "namespace": "mcpworkday",
+    "functions": [
+        {
+            "name": "get_worker",
+            "description": "Get the current Workday worker profile. Result is rendered as an interactive widget."
+        },
+        {
+            "name": "get_leave_balances",
+            "description": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave."
+        },
+        {
+            "name": "get_direct_reports",
+            "description": "List direct reports for the current worker."
+        },
+        {
+            "name": "get_inbox_tasks",
+            "description": "List Workday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny."
+        },
+        {
+            "name": "get_learning_assignments",
+            "description": "Retrieve required learning assignments. Result is rendered as an interactive widget."
+        },
+        {
+            "name": "get_pay_slips",
+            "description": "List recent Workday pay slips."
+        },
+        {
+            "name": "get_time_off_entries",
+            "description": "List time off entries for the current worker."
+        },
+        {
+            "name": "prepare_request_leave",
+            "description": "Book time off — opens the interactive leave booking form for the user to review and confirm. Use this when the user asks to book leave, request PTO, or take time off. Pass startDate, endDate, quantity, unit, and timeOffTypeId (from get_leave_balances). The user confirms and submits via the widget."
+        },
+        {
+            "name": "book_leave",
+            "description": "Submit leave request to Workday. Widget callback — called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."
+        },
+        {
+            "name": "prepare_change_business_title",
+            "description": "Change business title — opens the interactive title change form for the user to enter a new title and submit. Use this when the user asks to change their business title."
+        },
+        {
+            "name": "change_business_title",
+            "description": "Submit business title change to Workday. Widget callback — called automatically by the title change form after the user clicks Submit. To change a business title, use prepare_change_business_title instead."
+        },
+        {
+            "name": "search_learning_content",
+            "description": "Search Workday learning content filtered by skills. Resolves skill names to Workday IDs automatically; invalid skills are dropped and the search still runs."
+        },
+        {
+            "name": "get_org_chart",
+            "description": "Get the organizational chart for the current worker's supervisory organization."
+        },
+        {
+            "name": "get_team_calendar",
+            "description": "Get the team time-off calendar showing who is out in the current worker's team."
+        },
+        {
+            "name": "get_team_overview",
+            "description": "Get a team overview dashboard for managers showing headcount, role breakdown, and team member details."
+        },
+        {
+            "name": "get_team_performance_summary",
+            "description": "Get team performance review status for managers including pending inbox items and team absence overview."
+        },
+        {
+            "name": "action_inbox_task",
+            "description": "Approve or reject a Workday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment."
+        },
+        {
+            "name": "get_inbox_task_detail",
+            "description": "Get detailed information about a specific Workday inbox task by its task_id."
+        },
+        {
+            "name": "get_goals",
+            "description": "Get your performance goals including status, due dates, and categories. Result is rendered as an interactive dashboard."
+        },
+        {
+            "name": "get_feedback",
+            "description": "Get anytime feedback you've received from colleagues and managers."
+        },
+        {
+            "name": "give_feedback",
+            "description": "Give anytime feedback to a colleague. Provide worker_id, comment, and optional badge ID (from get_feedback_badges)."
+        },
+        {
+            "name": "get_feedback_badges",
+            "description": "List available feedback badges that can be used when giving anytime feedback."
+        },
+        {
+            "name": "get_development_items",
+            "description": "Get your individual development plan items including skills, dates, and status. Result is rendered as an interactive widget."
+        },
+        {
+            "name": "request_feedback_on_self",
+            "description": "Request feedback on yourself from peers and managers. Optionally include a message."
+        },
+        {
+            "name": "get_learning_records",
+            "description": "Get your learning history with completion status, grades, scores, and expiration dates."
+        },
+        {
+            "name": "get_check_ins",
+            "description": "Get 1:1 check-in records with topics and notes."
+        },
+        {
+            "name": "create_check_in",
+            "description": "Create a 1:1 check-in record. Provide description, date, participant_id, and optional topic_ids."
+        },
+        {
+            "name": "get_check_in_topics",
+            "description": "List check-in topics available for creating check-ins."
+        },
+        {
+            "name": "get_worker_skills",
+            "description": "Get skills listed on your Workday profile."
+        },
+        {
+            "name": "get_team_goals",
+            "description": "Get performance goals for all direct reports showing goal status and due dates (manager tool). Result is rendered as an interactive widget."
+        },
+        {
+            "name": "request_feedback_on_worker",
+            "description": "Request feedback on a specific direct report. Provide worker_id and optional comment (manager tool)."
+        },
+        {
+            "name": "prepare_give_feedback",
+            "description": "Open the give feedback widget — select a colleague, pick a badge, and write feedback. Use when the user wants to recognize or give feedback to someone."
+        },
+        {
+            "name": "prepare_create_check_in",
+            "description": "Open the check-in creation widget — select a team member, choose topics, set a date, and create a 1:1 check-in. Use when a manager wants to schedule or create a check-in."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "auth": {
+                "type": "None"
+            },
+            "run_for_functions": [
+                "get_worker",
+                "get_leave_balances",
+                "get_direct_reports",
+                "get_inbox_tasks",
+                "get_learning_assignments",
+                "get_pay_slips",
+                "get_time_off_entries",
+                "prepare_request_leave",
+                "book_leave",
+                "prepare_change_business_title",
+                "change_business_title",
+                "search_learning_content",
+                "get_org_chart",
+                "get_team_calendar",
+                "get_team_overview",
+                "get_team_performance_summary",
+                "action_inbox_task",
+                "get_inbox_task_detail",
+                "get_goals",
+                "get_feedback",
+                "give_feedback",
+                "get_feedback_badges",
+                "get_development_items",
+                "request_feedback_on_self",
+                "get_learning_records",
+                "get_check_ins",
+                "create_check_in",
+                "get_check_in_topics",
+                "get_worker_skills",
+                "get_team_goals",
+                "request_feedback_on_worker",
+                "prepare_give_feedback",
+                "prepare_create_check_in"
+            ],
+            "spec": {
+                "url": "https://essmcp-workday.wittysand-460bf1d9.eastus.azurecontainerapps.io/workday/mcp",
+                "mcp_tool_description": {
+                    "tools": [
+                        {
+                        "name": "get_worker",
+                        "description": "Get the current Workday worker profile. Result is rendered as an interactive widget.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/worker-profile.html",
+                            "openai/toolInvocation/invoking": "Loading worker profile…",
+                            "openai/toolInvocation/invoked": "Worker profile ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_leave_balances",
+                        "description": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_direct_reports",
+                        "description": "List direct reports for the current worker.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_inbox_tasks",
+                        "description": "List Workday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/inbox-tasks.html",
+                            "openai/toolInvocation/invoking": "Loading inbox tasks…",
+                            "openai/toolInvocation/invoked": "Inbox tasks ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_learning_assignments",
+                        "description": "Retrieve required learning assignments. Result is rendered as an interactive widget.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/learning-assignments.html",
+                            "openai/toolInvocation/invoking": "Loading learning assignments…",
+                            "openai/toolInvocation/invoked": "Learning assignments ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_pay_slips",
+                        "description": "List recent Workday pay slips.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_time_off_entries",
+                        "description": "List time off entries for the current worker.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "prepare_request_leave",
+                        "description": "Book time off — opens the interactive leave booking form for the user to review and confirm. Use this when the user asks to book leave, request PTO, or take time off. Pass startDate, endDate, quantity, unit, and timeOffTypeId (from get_leave_balances). The user confirms and submits via the widget.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "startDate": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            },
+                            "endDate": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            },
+                            "quantity": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            },
+                            "unit": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            },
+                            "reason": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            },
+                            "timeOffTypeId": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            }
+                            },
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/leave-booking.html",
+                            "openai/toolInvocation/invoking": "Preparing leave request…",
+                            "openai/toolInvocation/invoked": "Leave request ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "book_leave",
+                        "description": "Submit leave request to Workday. Widget callback — called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "startDate": {
+                                "default": null,
+                                "type": "string"
+                            },
+                            "endDate": {
+                                "default": null,
+                                "type": "string"
+                            },
+                            "timeOffTypeId": {
+                                "default": null,
+                                "type": "string"
+                            },
+                            "quantity": {
+                                "default": "8",
+                                "type": "string"
+                            },
+                            "unit": {
+                                "default": "Hours",
+                                "type": "string"
+                            },
+                            "reason": {
+                                "default": "Time off request",
+                                "type": "string"
+                            }
+                            },
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "prepare_change_business_title",
+                        "description": "Change business title — opens the interactive title change form for the user to enter a new title and submit. Use this when the user asks to change their business title.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/change-business-title.html",
+                            "openai/toolInvocation/invoking": "Loading business title form…",
+                            "openai/toolInvocation/invoked": "Business title form ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "change_business_title",
+                        "description": "Submit business title change to Workday. Widget callback — called automatically by the title change form after the user clicks Submit. To change a business title, use prepare_change_business_title instead.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "proposedBusinessTitle": {
+                                "default": null,
+                                "type": "string"
+                            }
+                            },
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "search_learning_content",
+                        "description": "Search Workday learning content filtered by skills. Resolves skill names to Workday IDs automatically; invalid skills are dropped and the search still runs.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "skills": {
+                                "anyOf": [
+                                {
+                                    "items": {
+                                    "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            }
+                            },
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/learning-catalog.html",
+                            "openai/toolInvocation/invoking": "Searching learning catalog…",
+                            "openai/toolInvocation/invoked": "Learning catalog ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_org_chart",
+                        "description": "Get the organizational chart for the current worker's supervisory organization.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/org-chart.html",
+                            "openai/toolInvocation/invoking": "Loading org chart…",
+                            "openai/toolInvocation/invoked": "Org chart ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_team_calendar",
+                        "description": "Get the team time-off calendar showing who is out in the current worker's team.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/team-calendar.html",
+                            "openai/toolInvocation/invoking": "Loading team calendar…",
+                            "openai/toolInvocation/invoked": "Team calendar ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_team_overview",
+                        "description": "Get a team overview dashboard for managers showing headcount, role breakdown, and team member details.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/team-dashboard.html",
+                            "openai/toolInvocation/invoking": "Loading team overview…",
+                            "openai/toolInvocation/invoked": "Team overview ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_team_performance_summary",
+                        "description": "Get team performance review status for managers including pending inbox items and team absence overview.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "action_inbox_task",
+                        "description": "Approve or reject a Workday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "task_id": {
+                                "type": "string"
+                            },
+                            "decision": {
+                                "type": "string"
+                            },
+                            "comment": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            }
+                            },
+                            "required": [
+                            "task_id",
+                            "decision"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_inbox_task_detail",
+                        "description": "Get detailed information about a specific Workday inbox task by its task_id.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "task_id": {
+                                "type": "string"
+                            }
+                            },
+                            "required": [
+                            "task_id"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_goals",
+                        "description": "Get your performance goals including status, due dates, and categories. Result is rendered as an interactive dashboard.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/goals-dashboard.html",
+                            "openai/toolInvocation/invoking": "Loading goals…",
+                            "openai/toolInvocation/invoked": "Goals dashboard ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_feedback",
+                        "description": "Get anytime feedback you've received from colleagues and managers.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "give_feedback",
+                        "description": "Give anytime feedback to a colleague. Provide worker_id, comment, and optional badge ID (from get_feedback_badges).",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "worker_id": {
+                                "type": "string"
+                            },
+                            "comment": {
+                                "type": "string"
+                            },
+                            "badge": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            },
+                            "hidden_from_worker": {
+                                "default": false,
+                                "type": "boolean"
+                            },
+                            "hidden_from_manager": {
+                                "default": false,
+                                "type": "boolean"
+                            }
+                            },
+                            "required": [
+                            "worker_id",
+                            "comment"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_feedback_badges",
+                        "description": "List available feedback badges that can be used when giving anytime feedback.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_development_items",
+                        "description": "Get your individual development plan items including skills, dates, and status. Result is rendered as an interactive widget.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/development-items.html",
+                            "openai/toolInvocation/invoking": "Loading development items…",
+                            "openai/toolInvocation/invoked": "Development items ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "request_feedback_on_self",
+                        "description": "Request feedback on yourself from peers and managers. Optionally include a message.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "comment": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            }
+                            },
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_learning_records",
+                        "description": "Get your learning history with completion status, grades, scores, and expiration dates.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "limit": {
+                                "default": 20,
+                                "type": "integer"
+                            }
+                            },
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_check_ins",
+                        "description": "Get 1:1 check-in records with topics and notes.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "create_check_in",
+                        "description": "Create a 1:1 check-in record. Provide description, date, participant_id, and optional topic_ids.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "description": {
+                                "type": "string"
+                            },
+                            "date": {
+                                "type": "string"
+                            },
+                            "participant_id": {
+                                "type": "string"
+                            },
+                            "topic_ids": {
+                                "anyOf": [
+                                {
+                                    "items": {
+                                    "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            }
+                            },
+                            "required": [
+                            "description",
+                            "date",
+                            "participant_id"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_check_in_topics",
+                        "description": "List check-in topics available for creating check-ins.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_worker_skills",
+                        "description": "Get skills listed on your Workday profile.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "get_team_goals",
+                        "description": "Get performance goals for all direct reports showing goal status and due dates (manager tool). Result is rendered as an interactive widget.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/team-goals.html",
+                            "openai/toolInvocation/invoking": "Loading team goals…",
+                            "openai/toolInvocation/invoked": "Team goals ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "request_feedback_on_worker",
+                        "description": "Request feedback on a specific direct report. Provide worker_id and optional comment (manager tool).",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                            "worker_id": {
+                                "type": "string"
+                            },
+                            "comment": {
+                                "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                                ],
+                                "default": null
+                            }
+                            },
+                            "required": [
+                            "worker_id"
+                            ],
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "prepare_give_feedback",
+                        "description": "Open the give feedback widget — select a colleague, pick a badge, and write feedback. Use when the user wants to recognize or give feedback to someone.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/give-feedback.html",
+                            "openai/toolInvocation/invoking": "Loading feedback form…",
+                            "openai/toolInvocation/invoked": "Feedback form ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        },
+                        {
+                        "name": "prepare_create_check_in",
+                        "description": "Open the check-in creation widget — select a team member, choose topics, set a date, and create a 1:1 check-in. Use when a manager wants to schedule or create a check-in.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                        },
+                        "outputSchema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "annotations": {
+                            "readOnlyHint": true
+                        },
+                        "_meta": {
+                            "openai/outputTemplate": "ui://widget/create-check-in-form.html",
+                            "openai/toolInvocation/invoking": "Loading check-in form…",
+                            "openai/toolInvocation/invoked": "Check-in form ready.",
+                            "fastmcp": {
+                            "tags": []
+                            }
+                        }
+                        }
+                    ]
+                    }
+
+            }
+        }
+    ]
+}

@@ -6,162 +6,453 @@
 <title>Control Plane — ESS-MCP</title>
 <style>
   :root {
-    --bg: #0a0e17; --surface: #111827; --surface-2: #1a2332;
-    --border: #1e293b; --border-light: #334155;
-    --text: #e2e8f0; --muted: #94a3b8; --dim: #64748b;
-    --accent: #3b82f6; --accent-glow: rgba(59,130,246,.15);
-    --green: #22c55e; --green-bg: rgba(34,197,94,.12);
-    --orange: #f59e0b; --orange-bg: rgba(245,158,11,.12);
-    --red: #ef4444; --red-bg: rgba(239,68,68,.12);
-    --purple: #a855f7; --purple-bg: rgba(168,85,247,.12);
-    --radius: 8px; --radius-lg: 12px;
+    --bg: #f7f8fb; --chrome: #ffffff; --surface: #ffffff; --surface-2: #f4f7fb;
+    --border: #e2e7ef; --border-light: #d1d9e6;
+    --text: #1f2937; --muted: #65748b; --dim: #8a97aa;
+    --accent: #3369d6; --accent-soft: #eef4ff; --accent-line: #4f80ff;
+    --green: #0c8f5b; --green-bg: #eaf8f1;
+    --orange: #b86a00; --orange-bg: #fff4df;
+    --red: #c93535; --red-bg: #fff0f0;
+    --purple: #7a4cc2; --purple-bg: #f5efff;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 8px 24px rgba(16, 24, 40, .04);
+    --radius: 6px; --radius-lg: 8px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; font-size: 12px; }
 
-  /* ── Sidebar ── */
-  .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; flex-shrink: 0; display: flex; flex-direction: column; }
-  .sidebar-brand { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
-  .sidebar-brand h2 { font-size: 15px; font-weight: 700; color: var(--accent); }
-  .sidebar-brand .subtitle { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  /* Sidebar */
+  .sidebar { width: 126px; background: var(--chrome); border-right: 1px solid var(--border); padding: 10px 7px; flex-shrink: 0; display: flex; flex-direction: column; }
+  .sidebar-brand { padding: 2px 2px 12px; margin-bottom: 2px; }
+  .sidebar-brand h2 { font-size: 13px; font-weight: 700; color: #111827; letter-spacing: -.01em; }
+  .sidebar-brand .subtitle { font-size: 10px; color: var(--muted); margin-top: 3px; }
   .sidebar-nav { flex: 1; }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; font-size: 13px; color: var(--muted); cursor: pointer; border-left: 3px solid transparent; transition: all .15s; }
-  .nav-item:hover { background: var(--surface-2); color: var(--text); }
-  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-glow); }
-  .nav-item .icon { width: 18px; text-align: center; }
-  .nav-item .badge { margin-left: auto; font-size: 10px; padding: 1px 7px; border-radius: 10px; background: var(--accent-glow); color: var(--accent); font-weight: 600; }
-  .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--dim); }
+  .nav-item { display: flex; align-items: center; gap: 7px; min-height: 26px; padding: 5px 7px; font-size: 11px; font-weight: 600; color: #5e6b7f; cursor: pointer; border-radius: 4px; transition: background .12s, color .12s; }
+  .nav-item:hover { background: var(--surface-2); color: #111827; }
+  .nav-item.active { color: var(--accent); background: var(--accent-soft); }
+  .nav-item .icon { width: 14px; text-align: center; color: var(--accent); font-size: 10px; }
+  .nav-item .badge { margin-left: auto; min-width: 16px; height: 16px; line-height: 16px; text-align: center; font-size: 9px; padding: 0 5px; border-radius: 999px; background: #e9edf5; color: #516078; font-weight: 700; }
+  .sidebar-footer { padding: 12px 8px 2px; border-top: 1px solid var(--border); font-size: 10px; color: var(--dim); }
   .sidebar-footer a { color: var(--accent); text-decoration: none; }
   .sidebar-footer a:hover { text-decoration: underline; }
 
-  /* ── Main ── */
-  .main { flex: 1; overflow-y: auto; }
-  .topbar { padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; background: var(--surface); }
-  .topbar h3 { font-size: 15px; font-weight: 600; }
+  /* Main */
+  .main { flex: 1; min-width: 0; overflow-y: auto; }
+  .topbar { height: 42px; padding: 0 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--chrome); }
+  .topbar h3 { font-size: 13px; font-weight: 700; color: #111827; }
+  .topbar h3::after { content: 'operations status across all domains'; display: block; font-size: 10px; font-weight: 500; color: var(--muted); margin-top: 1px; }
   .topbar .spacer { flex: 1; }
   .server-dots { display: flex; gap: 8px; align-items: center; }
-  .server-dot { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); padding: 4px 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
-  .server-dot .dot { width: 7px; height: 7px; border-radius: 50%; }
-  .server-dot .dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .server-dot { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); padding: 3px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); text-transform: capitalize; }
+  .server-dot .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .server-dot .dot.on { background: var(--green); box-shadow: 0 0 0 3px rgba(12,143,91,.09); }
   .server-dot .dot.off { background: var(--dim); }
-  .content { padding: 28px; }
+  .content { padding: 10px 12px 14px; }
 
-  /* ── Dashboard KPIs ── */
-  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-  .kpi .value { font-size: 32px; font-weight: 700; }
-  .kpi .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
-  .kpi .sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  /* Dashboard — control room layout: main center + right rail for static metadata */
+  .dashboard-view { display: grid; grid-template-columns: minmax(0, 1fr) 580px; gap: 12px; align-items: start; }
+  .dashboard-view.hidden { display: none; }
+  .dashboard-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+  .right-rail { display: flex; flex-direction: column; gap: 8px; padding-right: 2px; }
+  .right-rail .rail-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .right-rail summary { cursor: pointer; padding: 8px 10px; font-size: 11px; font-weight: 750; color: #172033; display: flex; align-items: center; gap: 7px; user-select: none; list-style: none; }
+  .right-rail summary::-webkit-details-marker { display: none; }
+  .right-rail summary::before { content: '▸'; font-size: 9px; color: var(--muted); transition: transform .15s; display: inline-block; }
+  .right-rail details[open] > summary::before { transform: rotate(90deg); }
+  .right-rail .rail-body { padding: 0 10px 10px; }
+  .right-rail .rail-body.tight { padding: 0 10px 8px; }
+
+  /* Fleet activity ticker */
+  .fleet-ticker { background: #0f1626; color: #d6e4ff; border-radius: var(--radius); padding: 7px 12px; font-size: 11px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); overflow: hidden; min-height: 30px; }
+  .fleet-ticker .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(12,143,91,.18); flex-shrink: 0; animation: pulse 1.4s ease-in-out infinite; }
+  .fleet-ticker .pulse.idle { background: var(--dim); box-shadow: none; animation: none; }
+  .fleet-ticker .ticker-label { color: #6f87b5; font-size: 9px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; flex-shrink: 0; }
+  .fleet-ticker .ticker-stream { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .fleet-ticker .ticker-stream .tk { display: inline-block; margin-right: 18px; }
+  .fleet-ticker .ticker-stream .tk .who { color: #93b6ff; }
+  .fleet-ticker .ticker-stream .tk .what { color: #d6e4ff; }
+  .fleet-ticker .ticker-stream .tk .when { color: #6f87b5; margin-left: 4px; font-size: 10px; }
+
+  /* Active-now strip — full-width prominent live runs */
+  .active-now { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px; }
+  .active-now .empty { grid-column: 1 / -1; background: var(--surface); border: 1px dashed var(--border-light); border-radius: var(--radius); padding: 10px; font-size: 11px; color: var(--dim); text-align: center; }
+  .now-card { background: linear-gradient(180deg, #fff 0%, #fff8ec 100%); border: 1px solid #f2d18b; border-left: 3px solid var(--orange); border-radius: var(--radius); padding: 9px 11px; box-shadow: var(--shadow); cursor: pointer; transition: transform .12s, box-shadow .12s; min-width: 0; }
+  .now-card.waiting { background: linear-gradient(180deg, #fff 0%, #f5efff 100%); border-color: #d9c8fb; border-left-color: var(--purple); }
+  .now-card:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16, 24, 40, .08); }
+  .now-card .now-head { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+  .now-card .now-spinner { width: 10px; height: 10px; border: 2px solid #f2d18b; border-top-color: var(--orange); border-radius: 50%; animation: spin .8s linear infinite; flex-shrink: 0; }
+  .now-card.waiting .now-spinner { border-color: #d9c8fb; border-top-color: var(--purple); animation: pulse 1.4s ease-in-out infinite; }
+  .now-card .now-who { font-size: 11px; font-weight: 750; color: #172033; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+  .now-card .now-elapsed { font-size: 10px; color: var(--muted); font-family: ui-monospace, monospace; flex-shrink: 0; }
+  .now-card .now-title { font-size: 11px; color: #4b5b73; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .now-card .now-activity { font-size: 10px; color: var(--accent); font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .now-card .now-activity.hitl { color: var(--purple); }
+
+  /* Anything with this class becomes a "open the related run" affordance */
+  .clickable { cursor: pointer; }
+  .instance-card.clickable:hover { box-shadow: 0 0 0 2px var(--orange-bg) inset; }
+  .agentic-card.clickable:hover { box-shadow: 0 0 0 2px var(--orange-bg) inset; }
+
+  /* Live activity ribbon inside instance cards */
+  .instance-card .live-strip { background: var(--surface-2); border-radius: 4px; padding: 6px 8px; font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 6px; min-width: 0; border-left: 2px solid var(--accent); }
+  .instance-card .live-strip.running { background: #fff8ec; border-left-color: var(--orange); color: var(--orange); }
+  .instance-card .live-strip.waiting { background: #f5efff; border-left-color: var(--purple); color: var(--purple); }
+  .instance-card .live-strip .ls-spin { width: 8px; height: 8px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; flex-shrink: 0; opacity: .8; }
+  .instance-card .live-strip .ls-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, monospace; }
+  .instance-card .live-strip .ls-elapsed { flex-shrink: 0; font-family: ui-monospace, monospace; opacity: .85; }
+
+  /* Recent activity strip — demoted from full grid */
+  .recent-runs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; max-height: 220px; overflow-y: auto; padding: 2px; }
+  .recent-runs::-webkit-scrollbar { width: 6px; }
+  .recent-runs::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+  .recent-runs .run-card { padding: 7px 8px; }
+  .recent-runs .run-card-title { font-size: 10px; margin-bottom: 4px; }
+  .recent-runs .run-card-meta { font-size: 9px; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-bottom: 0; }
+
+  /* Toast — small transient confirmation strip in lower-right */
+  .toast-host { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 9000; pointer-events: none; }
+  .toast-host .toast { background: #0f1626; color: #e6efff; font-size: 11px; padding: 8px 12px; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,.18); border-left: 3px solid var(--green); animation: toastIn .18s ease-out; max-width: 300px; }
+  .toast-host .toast.warn { border-left-color: var(--orange); }
+  @keyframes toastIn { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 11px; min-height: 58px; box-shadow: var(--shadow); }
+  .kpi .value { font-size: 20px; line-height: 1; font-weight: 750; letter-spacing: -.02em; color: #172033; }
+  .kpi .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 5px; font-weight: 700; }
+  .kpi .sub { font-size: 10px; color: var(--dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .kpi.accent .value { color: var(--accent); }
   .kpi.green .value { color: var(--green); }
   .kpi.orange .value { color: var(--orange); }
   .kpi.purple .value { color: var(--purple); }
 
-  /* ── Section headers ── */
-  .section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .section-title .count { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .section-title { grid-column: 1; font-size: 11px; font-weight: 750; margin: 2px 0 -2px; display: flex; align-items: center; gap: 7px; color: #202a3a; }
+  .section-title .count { font-size: 10px; color: var(--muted); font-weight: 600; }
+  .metadata-title { grid-column: 1; grid-row: auto; margin: 0; align-self: end; font-size: 11px; color: #334155; }
 
-  /* ── Server cards ── */
-  .server-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
-  .server-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
-  .server-card .server-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .server-card .server-icon { font-size: 22px; }
-  .server-card .server-name { font-size: 14px; font-weight: 600; text-transform: capitalize; }
-  .server-card .server-status { margin-left: auto; font-size: 10px; padding: 3px 8px; border-radius: 10px; font-weight: 600; }
+  .server-grid { grid-column: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 7px; margin-bottom: 0; }
+  .server-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 10px; box-shadow: var(--shadow); display: grid; grid-template-columns: 1fr auto; column-gap: 8px; align-items: start; }
+  .server-card .server-header { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; grid-column: 1 / -1; }
+  .server-card .server-icon { width: 20px; height: 20px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-size: 9px; font-weight: 800; }
+  .server-card .server-name { font-size: 12px; font-weight: 700; text-transform: capitalize; color: #172033; }
+  .server-card .server-status { margin-left: auto; font-size: 9px; padding: 2px 7px; border-radius: 999px; font-weight: 750; }
   .server-card .server-status.connected { background: var(--green-bg); color: var(--green); }
   .server-card .server-status.disconnected { background: var(--surface-2); color: var(--dim); }
-  .server-card .tool-count { font-size: 24px; font-weight: 700; color: var(--accent); }
-  .server-card .tool-label { font-size: 11px; color: var(--muted); }
-  .server-card .tool-types { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--dim); }
+  .server-card .tool-count { font-size: 18px; line-height: 1; font-weight: 750; color: var(--accent); grid-column: 2; grid-row: 2 / span 2; text-align: right; }
+  .server-card .tool-label { font-size: 10px; color: var(--muted); }
+  .server-card .tool-types { margin-top: 4px; font-size: 10px; color: var(--dim); line-height: 1.25; }
+  .server-card .endpoint { grid-column: 1 / -1; margin-top: 5px; font-size: 9px; color: #9aa5b5; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* ── Scenario cards ── */
-  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 28px; }
-  .scenario-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden; }
-  .scenario-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+  .metadata-grid { grid-column: 1; grid-row: auto; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 7px; margin-bottom: 0; position: static; }
+  .metadata-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 10px; box-shadow: var(--shadow); min-width: 0; }
+  .metadata-panel h4 { font-size: 11px; font-weight: 750; margin-bottom: 6px; display: flex; align-items: center; gap: 7px; color: #172033; }
+  .meta-list { display: grid; gap: 0; }
+  .meta-row { display: grid; grid-template-columns: minmax(90px, 132px) 1fr; gap: 7px; align-items: start; font-size: 10px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-row .label { color: var(--muted); }
+  .meta-row .value { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; color: #334155; word-break: break-all; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .pill { font-size: 10px; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--border-light); background: var(--surface-2); color: var(--muted); }
+  .pill.on { border-color: #b8e6cf; color: var(--green); background: var(--green-bg); }
+  .pill.warn { border-color: #f7dca8; color: var(--orange); background: var(--orange-bg); }
+
+  .instance-grid { grid-column: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; margin-bottom: 0; }
+  .instance-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 11px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .instance-card.running { border-color: var(--orange); background: #fffbf4; }
+  .instance-head { display: flex; align-items: flex-start; gap: 8px; }
+  .instance-avatar { width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 800; flex-shrink: 0; }
+  .instance-id-block { min-width: 0; flex: 1; }
+  .instance-name { font-size: 12px; font-weight: 750; color: #172033; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .instance-sub { font-size: 10px; color: var(--muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .instance-state { font-size: 9px; padding: 2px 7px; border-radius: 999px; font-weight: 750; background: var(--surface-2); color: var(--muted); flex-shrink: 0; }
+  .instance-state.idle { background: var(--green-bg); color: var(--green); }
+  .instance-state.running { background: var(--orange-bg); color: var(--orange); }
+  .instance-state.delivered { background: var(--accent-soft); color: var(--accent); }
+  .instance-state.failed { background: var(--red-bg); color: var(--red); }
+  .instance-meta { display: grid; gap: 3px; font-size: 10px; color: var(--muted); }
+  .instance-meta .row { display: grid; grid-template-columns: 60px 1fr; gap: 6px; }
+  .instance-meta .row .k { color: var(--dim); text-transform: uppercase; font-size: 9px; letter-spacing: .04em; padding-top: 1px; }
+  .instance-meta .row .v { color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .instance-meta .row .v.warn { color: var(--orange); }
+  .instance-meta .row .v.ok { color: var(--green); }
+  .instance-launch { display: flex; gap: 6px; align-items: center; }
+  .instance-launch select { flex: 1; min-width: 0; font: inherit; font-size: 11px; padding: 4px 6px; border: 1px solid var(--border-light); border-radius: 4px; background: #fff; color: var(--text); }
+  .instance-launch button { font: inherit; font-size: 11px; font-weight: 750; padding: 4px 10px; border-radius: 4px; border: 1px solid #cddaf5; background: #f7faff; color: var(--accent); cursor: pointer; }
+  .instance-launch button:hover { background: var(--accent-soft); }
+  .instance-launch button:disabled { opacity: .5; cursor: not-allowed; }
+  .instance-launch .gov-isolate { border-color: #f0c5c5; background: #fff5f5; color: #b42318; }
+  .instance-launch .gov-isolate:hover { background: #ffe5e5; }
+  .instance-launch .gov-restore { border-color: #c5e6c8; background: #f3fbf4; color: #136d2c; }
+  .instance-launch .gov-restore:hover { background: #e1f5e3; }
+  .gov-banner { font-size: 10.5px; font-weight: 600; color: #b42318; background: #fff1f1; border: 1px solid #f0c5c5; border-radius: 4px; padding: 5px 7px; }
+  .gov-section { margin-bottom: 10px; }
+  .gov-section + .gov-section { border-top: 1px solid var(--border); padding-top: 9px; }
+  .gov-section-title { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 5px; display: flex; align-items: baseline; gap: 6px; }
+  .gov-sub { font-size: 10px; font-weight: 400; color: var(--dim); }
+  #governanceDenyInput { width: 100%; box-sizing: border-box; font: inherit; font-size: 11px; padding: 5px 7px; border: 1px solid var(--border-light); border-radius: 4px; font-family: ui-monospace, monospace; resize: vertical; }
+  .gov-actions { display: flex; gap: 5px; margin-top: 5px; }
+  .gov-actions button { font: inherit; font-size: 10.5px; font-weight: 700; padding: 4px 9px; border-radius: 4px; border: 1px solid #cddaf5; background: #f7faff; color: var(--accent); cursor: pointer; }
+  .gov-actions .gov-clear { border-color: var(--border); background: #fff; color: var(--muted); }
+  .gov-active { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .gov-active .chip { font-size: 10px; font-family: ui-monospace, monospace; background: #fff5f5; color: #b42318; border: 1px solid #f0c5c5; padding: 1px 6px; border-radius: 999px; }
+  .gov-list .row { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 4px 0; font-size: 11px; border-bottom: 1px dashed var(--border); }
+  .gov-list .row:last-child { border-bottom: 0; }
+  .gov-list .target { font-family: ui-monospace, monospace; font-size: 10px; color: var(--muted); }
+  .gov-list .row button { font: inherit; font-size: 10px; padding: 2px 7px; border-radius: 3px; border: 1px solid var(--border-light); background: #fff; color: var(--accent); cursor: pointer; }
+  .gov-audit { max-height: 220px; overflow-y: auto; }
+  .gov-audit .entry { font-size: 10.5px; padding: 5px 0; border-bottom: 1px dashed var(--border); }
+  .gov-audit .entry:last-child { border-bottom: 0; }
+  .gov-audit .when { color: var(--dim); font-family: ui-monospace, monospace; font-size: 9.5px; }
+  .gov-audit .act { font-weight: 700; color: var(--text); }
+  .gov-audit .who { color: var(--muted); }
+  .gov-audit .det { color: var(--muted); font-size: 10px; margin-top: 2px; }
+  .gov-empty { font-size: 11px; color: var(--dim); padding: 6px 0; }
+  .gov-toast { position: fixed; bottom: 18px; right: 18px; background: #fff1f1; border: 1px solid #f0c5c5; color: #b42318; padding: 10px 14px; border-radius: 8px; box-shadow: 0 6px 22px rgba(0,0,0,.12); font-size: 12px; font-weight: 600; max-width: 360px; z-index: 9999; animation: govToastIn .25s ease-out; }
+  @keyframes govToastIn { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .evidence-btn { font: inherit; font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 4px; border: 1px solid #cddaf5; background: #f7faff; color: var(--accent); cursor: pointer; margin-left: 8px; }
+  .evidence-btn:hover { background: var(--accent-soft); }
+  .surfaces-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  .surface-card { display: grid; grid-template-columns: 28px 1fr 14px; align-items: start; gap: 9px; padding: 9px 10px; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; background: var(--surface); text-decoration: none; color: inherit; transition: background .15s, border-color .15s, transform .15s; }
+  .surface-card:hover { background: var(--accent-soft); border-color: var(--accent); transform: translateX(1px); }
+  .surface-card .surf-icon { font-size: 18px; line-height: 1.1; }
+  .surface-card .surf-body { min-width: 0; }
+  .surface-card .surf-title { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.25; }
+  .surface-card .surf-portal { font-size: 10px; color: var(--muted); margin-top: 1px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .2px; }
+  .surface-card .surf-purpose { font-size: 11px; color: var(--dim); margin-top: 4px; line-height: 1.35; }
+  .surface-card .surf-arrow { font-size: 11px; color: var(--muted); align-self: center; }
+  .surface-card:hover .surf-arrow { color: var(--accent); }
+  .surfaces-foot { font-size: 10px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+  /* ── Agent 365 value panel ────────────────────────────────────── */
+  .a365-summary { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .a365-summary .pill { font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 700; line-height: 1.4; }
+  .a365-summary .pill.total { background: var(--accent-soft); color: var(--accent); }
+  .a365-pill { font-size: 9px; padding: 1px 6px; border-radius: 999px; font-weight: 700; line-height: 1.4; flex-shrink: 0; text-transform: uppercase; letter-spacing: .04em; }
+  .a365-pill.active { background: #def4e3; color: #146c2e; }
+  .a365-pill.configured { background: #e3eefd; color: #1452b3; }
+  .a365-pill.manual { background: #fdebcf; color: #8a5a08; }
+  .a365-pill.roadmap { background: #ecedf1; color: #5b6172; }
+  .a365-cat { margin-bottom: 6px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .a365-cat > summary { list-style: none; cursor: pointer; padding: 6px 9px; font-size: 11px; font-weight: 700; color: var(--text); background: #fbfcff; display: flex; align-items: center; gap: 8px; user-select: none; }
+  .a365-cat > summary::-webkit-details-marker { display: none; }
+  .a365-cat > summary::before { content: '▸'; font-size: 9px; color: var(--muted); transition: transform .15s; }
+  .a365-cat[open] > summary::before { transform: rotate(90deg); }
+  .a365-cat .cat-icon { font-size: 14px; line-height: 1; }
+  .a365-cat .cat-count { margin-left: auto; font-size: 10px; color: var(--muted); font-weight: 600; }
+  .a365-feat-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0; }
+  .a365-feat { display: grid; grid-template-columns: 1fr auto; gap: 6px 9px; align-items: start; padding: 7px 10px; border-top: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: background .12s; text-align: left; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; font: inherit; color: inherit; }
+  .a365-feat:hover { background: var(--accent-soft); }
+  .a365-feat .feat-name { font-size: 11px; font-weight: 700; color: var(--text); line-height: 1.3; }
+  .a365-feat .feat-summary { grid-column: 1 / 3; font-size: 10.5px; color: var(--muted); line-height: 1.35; }
+  .a365-foot { font-size: 10px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+  /* ── Agent 365 value modal ────────────────────────────────────── */
+  .a365-modal-bg { position: fixed; inset: 0; background: rgba(15, 20, 33, .55); display: none; z-index: 9000; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
+  .a365-modal-bg.open { display: flex; }
+  .a365-modal { background: var(--surface); border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.25); max-width: 760px; width: 100%; padding: 22px 26px 24px; position: relative; max-height: calc(100vh - 80px); overflow-y: auto; }
+  .a365-modal h3 { margin: 0 0 4px; font-size: 18px; color: var(--text); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .a365-modal .feat-pitch { font-size: 13px; color: var(--text); margin: 6px 0 16px; line-height: 1.45; font-style: italic; color: #4a5468; }
+  .a365-modal .feat-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: var(--muted); margin-bottom: 18px; }
+  .a365-modal .feat-meta .tag { background: #f2f4f9; padding: 3px 8px; border-radius: 999px; font-weight: 600; }
+  .a365-modal .feat-section { margin-bottom: 18px; }
+  .a365-modal .feat-section h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 8px; color: var(--accent); font-weight: 800; }
+  .a365-modal .feat-flow { display: grid; grid-template-columns: 1fr 24px 1fr; gap: 10px; align-items: stretch; background: #f7faff; border: 1px solid #d9e2f2; border-radius: 8px; padding: 12px; }
+  .a365-modal .feat-flow .flow-col { display: flex; flex-direction: column; gap: 4px; }
+  .a365-modal .feat-flow .flow-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 800; color: var(--accent); margin-bottom: 2px; }
+  .a365-modal .feat-flow .flow-item { font-size: 11.5px; line-height: 1.4; color: var(--text); padding-left: 12px; position: relative; }
+  .a365-modal .feat-flow .flow-item::before { content: ''; position: absolute; left: 0; top: 7px; width: 6px; height: 6px; border-radius: 999px; background: var(--accent); }
+  .a365-modal .feat-flow .flow-arrow { display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--accent); font-weight: 800; }
+  .a365-modal .feat-list { display: flex; flex-direction: column; gap: 4px; }
+  .a365-modal .feat-list .li { font-size: 11.5px; line-height: 1.45; color: var(--text); padding-left: 16px; position: relative; }
+  .a365-modal .feat-list .li::before { content: '›'; position: absolute; left: 4px; top: 0; color: var(--muted); font-weight: 700; }
+  .a365-modal .feat-portals { display: flex; flex-wrap: wrap; gap: 6px; }
+  .a365-modal .feat-portals a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; background: #f7faff; border: 1px solid #cddaf5; border-radius: 6px; color: var(--accent); font-size: 11.5px; font-weight: 700; text-decoration: none; }
+  .a365-modal .feat-portals a:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .a365-modal .feat-query { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+  .a365-modal .feat-query .q-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; background: #fafbfd; border-bottom: 1px solid var(--border); }
+  .a365-modal .feat-query .q-label { font-size: 11.5px; font-weight: 700; color: var(--text); }
+  .a365-modal .feat-query .q-portal-tag { font-size: 9px; padding: 2px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: .05em; margin-left: 6px; }
+  .a365-modal .feat-query .q-actions { display: flex; gap: 6px; }
+  .a365-modal .feat-query button { font-size: 10.5px; font-weight: 700; padding: 4px 10px; border-radius: 5px; border: 1px solid #cddaf5; background: #f7faff; color: var(--accent); cursor: pointer; }
+  .a365-modal .feat-query button:hover { background: var(--accent-soft); }
+  .a365-modal .feat-query pre { margin: 0; padding: 11px 13px; background: #1f2333; color: #e6e9f2; font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; white-space: pre; }
+  .a365-modal .feat-wired { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); }
+  .a365-modal .feat-wired code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); background: #f2f4f9; padding: 1px 5px; border-radius: 3px; font-size: 10.5px; }
+  .a365-modal .modal-close { position: absolute; top: 12px; right: 14px; background: transparent; border: 0; font-size: 22px; line-height: 1; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+  .a365-modal .modal-close:hover { background: #f2f4f9; color: var(--text); }
+
+  @media (max-width: 760px) {
+    .a365-modal .feat-flow { grid-template-columns: 1fr; }
+    .a365-modal .feat-flow .flow-arrow { transform: rotate(90deg); height: 28px; }
+  }
+  .instance-last { font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 6px; }
+  .instance-last .lbl { color: var(--dim); margin-right: 4px; }
+  .instance-last a { color: var(--accent); text-decoration: none; }
+  .instance-last a:hover { text-decoration: underline; }
+
+  .agentic-grid { grid-column: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 7px; margin-bottom: 0; }
+  .agentic-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 10px; box-shadow: var(--shadow); min-width: 0; }
+  .agentic-card.active { border-color: #f2d18b; background: #fffbf4; }
+  .agentic-head { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+  .agentic-avatar { width: 22px; height: 22px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-size: 9px; font-weight: 800; flex-shrink: 0; }
+  .agentic-name { min-width: 0; flex: 1; font-size: 11px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agentic-state { font-size: 9px; padding: 2px 7px; border-radius: 999px; font-weight: 750; background: var(--green-bg); color: var(--green); }
+  .agentic-state.active { background: var(--orange-bg); color: var(--orange); }
+  .agentic-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 7px; }
+  .agentic-metric { border: 1px solid var(--border); border-radius: 5px; padding: 5px 6px; background: #fbfcff; }
+  .agentic-metric strong { display: block; font-size: 14px; line-height: 1; color: #172033; }
+  .agentic-metric span { display: block; margin-top: 3px; font-size: 8px; color: var(--muted); text-transform: uppercase; font-weight: 750; letter-spacing: .03em; }
+  .agentic-detail { display: grid; gap: 3px; font-size: 10px; color: var(--muted); }
+  .agentic-detail .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; }
+
+  .scenario-grid { grid-column: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 7px; margin-bottom: 0; }
+  .scenario-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px; cursor: pointer; transition: border-color .12s, box-shadow .12s; position: relative; overflow: hidden; min-height: 84px; box-shadow: var(--shadow); display: grid; grid-template-columns: 1fr auto; column-gap: 8px; align-items: start; }
+  .scenario-card:hover { border-color: #bdd0f8; box-shadow: 0 0 0 2px rgba(79,128,255,.08), var(--shadow); }
   .scenario-card.running { border-color: var(--orange); }
-  .scenario-card .scenario-icon { font-size: 28px; margin-bottom: 12px; }
-  .scenario-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-  .scenario-card .scenario-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
-  .scenario-card .scenario-servers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-  .scenario-card .server-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--surface-2); color: var(--dim); border: 1px solid var(--border); }
-  .scenario-card .run-btn { width: 100%; padding: 10px; border-radius: var(--radius); border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .scenario-card .scenario-icon { display: inline-flex; height: 16px; align-items: center; padding: 0 6px; border-radius: 999px; background: var(--purple-bg); color: var(--purple); font-size: 8px; font-weight: 800; letter-spacing: .02em; margin-bottom: 5px; grid-column: 1; }
+  .scenario-card h3 { font-size: 11px; font-weight: 750; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #172033; grid-column: 1; }
+  .scenario-card .scenario-desc { font-size: 10px; color: var(--muted); line-height: 1.25; margin-bottom: 5px; display: -webkit-box; line-clamp: 1; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; grid-column: 1; }
+  .scenario-card .scenario-servers { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 0; grid-column: 1; }
+  .scenario-card .server-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: var(--surface-2); color: #627089; border: 1px solid var(--border); font-weight: 700; }
+  .scenario-card .run-btn { width: 70px; min-height: 56px; padding: 6px 8px; border-radius: 4px; border: 1px solid #cddaf5; background: #f7faff; color: var(--accent); font-size: 10px; font-weight: 750; cursor: pointer; transition: background .12s; grid-column: 2; grid-row: 1 / span 4; align-self: stretch; }
   .scenario-card .run-btn:hover { opacity: .9; }
   .scenario-card .run-btn:disabled { opacity: .4; cursor: not-allowed; }
 
-  /* ── Run view ── */
+  /* Run view */
   .run-view { display: none; }
   .run-view.active { display: block; }
-  .dashboard-view { display: block; }
-  .dashboard-view.hidden { display: none; }
+  .approvals-view { display: none; }
+  .approvals-view.active { display: block; }
+  .approvals-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .approvals-header h2 { font-size: 18px; font-weight: 750; color: #172033; margin: 0; }
+  .approvals-sub { font-size: 11px; color: var(--dim); }
+  .approval-stack { display: grid; gap: 10px; }
+  .approval-stack.completed { gap: 6px; }
+  .approval-empty { background: var(--surface); border: 1px dashed var(--border-light); border-radius: var(--radius); padding: 14px; font-size: 11px; color: var(--dim); text-align: center; }
+  .approval-card { background: var(--surface); border: 1px solid #d9c8fb; border-left: 3px solid var(--purple); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
+  .approval-card .ac-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .approval-card .ac-instance { font-size: 12px; font-weight: 700; color: #172033; }
+  .approval-card .ac-scenario { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .approval-card .ac-recipient { font-size: 10px; color: var(--purple); margin-left: auto; }
+  .approval-card .ac-channel { font-size: 9px; color: var(--dim); }
+  .approval-card .ac-channel.error { color: var(--orange); font-weight: 700; }
+  .approval-card .ac-question { font-size: 12px; line-height: 1.5; color: var(--text); margin: 6px 0 10px; padding: 8px 10px; background: #fbfcff; border: 1px solid var(--border-light); border-radius: 6px; white-space: pre-wrap; }
+  .approval-card textarea { width: 100%; resize: vertical; border-radius: var(--radius); border: 1px solid var(--border-light); background: #fff; color: var(--text); padding: 8px 10px; font: inherit; font-size: 12px; margin-bottom: 8px; box-sizing: border-box; }
+  .approval-card .ac-actions { display: flex; gap: 8px; align-items: center; }
+  .approval-card .ac-quick { display: flex; gap: 4px; }
+  .approval-card .ac-quick button { font-size: 10px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer; font-weight: 600; }
+  .approval-card .ac-quick button:hover { border-color: var(--accent); color: var(--accent); }
+  .approval-card .ac-send { margin-left: auto; font-size: 11px; padding: 5px 12px; border-radius: 6px; border: 0; background: var(--accent); color: #fff; cursor: pointer; font-weight: 700; }
+  .approval-card .ac-send:disabled { opacity: .5; cursor: not-allowed; }
+  .approval-card .ac-open { font-size: 10px; color: var(--muted); cursor: pointer; text-decoration: underline; background: none; border: 0; padding: 0; }
+  .approval-card.completed { padding: 8px 12px; border-left-color: var(--green); border-color: var(--border); background: #fbfcff; }
+  .approval-card.completed .ac-question { display: none; }
+  .approval-card.completed .ac-reply { font-size: 11px; color: var(--muted); margin-top: 4px; padding: 6px 8px; background: var(--green-bg); border-radius: 4px; border-left: 2px solid var(--green); }
 
-  .run-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-  .run-header .back-link { font-size: 12px; color: var(--accent); cursor: pointer; padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); transition: all .15s; }
+  .run-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .run-header .back-link { font-size: 11px; color: var(--accent); cursor: pointer; padding: 6px 10px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); transition: all .15s; }
   .run-header .back-link:hover { background: var(--surface-2); }
-  .run-header h2 { font-size: 20px; font-weight: 700; }
-  .run-header .run-status { font-size: 12px; padding: 4px 12px; border-radius: 12px; font-weight: 600; margin-left: auto; }
+  .run-header h2 { font-size: 18px; font-weight: 750; }
+  .run-header .run-status { font-size: 10px; padding: 4px 10px; border-radius: 999px; font-weight: 750; margin-left: auto; }
   .run-header .run-status.running { background: var(--orange-bg); color: var(--orange); }
   .run-header .run-status.complete { background: var(--green-bg); color: var(--green); }
 
-  .run-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+  .run-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 8px; align-items: start; }
+  .run-grid > * { min-width: 0; }
   @media (max-width: 1000px) { .run-grid { grid-template-columns: 1fr; } }
 
-  /* ── Tool call timeline ── */
-  .timeline-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; }
-  .timeline-panel h4 { font-size: 13px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .timeline-panel h4 .count { font-size: 12px; color: var(--muted); font-weight: 400; }
-  .timeline-empty { font-size: 13px; color: var(--dim); text-align: center; padding: 20px; }
+  .timeline-panel, .result-panel, .stats-panel, .event-panel, .servers-used-panel, .human-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; margin-bottom: 8px; box-shadow: var(--shadow); overflow: hidden; }
+  .timeline-panel h4, .result-panel h4, .stats-panel h4, .event-panel h4, .servers-used-panel h4, .human-panel h4 { font-size: 11px; font-weight: 750; margin-bottom: 7px; display: flex; align-items: center; gap: 7px; color: #172033; }
+  .timeline-panel h4 .count { font-size: 10px; color: var(--muted); font-weight: 600; }
+  .timeline-empty { font-size: 12px; color: var(--dim); text-align: center; padding: 18px; }
 
   .tool-timeline { list-style: none; }
-  .tool-entry { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start; cursor: pointer; transition: background .15s; border-radius: 4px; padding-left: 8px; margin: 0 -8px; }
+  .tool-entry { display: flex; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); align-items: flex-start; cursor: pointer; transition: background .15s; border-radius: 4px; padding-left: 4px; margin: 0; max-width: 100%; overflow: hidden; }
   .tool-entry:hover { background: var(--surface-2); }
   .tool-entry:last-child { border-bottom: none; }
-  .tool-entry .entry-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .tool-entry .entry-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
   .tool-entry .entry-dot.pending { background: var(--orange); animation: pulse 1.2s ease-in-out infinite; }
   .tool-entry .entry-dot.done { background: var(--green); }
   .tool-entry .entry-dot.error { background: var(--red); }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
   .tool-entry .entry-body { flex: 1; min-width: 0; }
-  .tool-entry .entry-header { display: flex; align-items: center; gap: 8px; }
-  .tool-entry .entry-server { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: .3px; }
-  .tool-entry .entry-tool { font-size: 13px; font-weight: 500; }
-  .tool-entry .entry-index { font-size: 10px; color: var(--dim); margin-left: auto; font-family: monospace; }
-  .tool-entry .entry-preview { font-size: 11px; color: var(--dim); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tool-entry .entry-header { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .tool-entry .entry-server { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: .03em; }
+  .tool-entry .entry-tool { font-size: 11px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tool-entry .entry-index { font-size: 9px; color: var(--dim); margin-left: auto; font-family: monospace; }
+  .tool-entry .entry-preview { font-size: 10px; color: var(--dim); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* ── Result panel ── */
-  .result-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; }
-  .result-panel h4 { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
-  .result-content { font-size: 13px; line-height: 1.7; color: var(--muted); white-space: pre-wrap; word-break: break-word; max-height: 500px; overflow-y: auto; }
-
-  /* ── Stats bar ── */
-  .stats-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
-  .stats-panel h4 { font-size: 13px; font-weight: 600; margin-bottom: 14px; }
-  .stat-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+  .result-content { font-size: 12px; line-height: 1.45; color: #4b5b73; white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow-y: auto; }
+  .stat-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 11px; border-bottom: 1px solid var(--border); }
+  .stat-row:last-child { border-bottom: none; }
   .stat-row .label { color: var(--muted); }
-  .stat-row .value { font-weight: 600; }
+  .stat-row .value { font-weight: 700; }
 
-  /* ── Server breakdown (right sidebar in run view) ── */
-  .servers-used-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
-  .servers-used-panel h4 { font-size: 13px; font-weight: 600; margin-bottom: 14px; }
-  .server-used-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .event-stream { display: grid; gap: 6px; max-height: 230px; overflow-y: auto; }
+  .event-empty { font-size: 11px; color: var(--dim); padding: 8px 0; }
+  .event-item { border: 1px solid var(--border); background: #fbfcff; border-radius: 5px; padding: 9px; cursor: pointer; min-width: 0; max-width: 100%; overflow: hidden; }
+  .event-item:hover { border-color: var(--border-light); }
+  .event-name { font-size: 11px; font-weight: 750; color: var(--accent); overflow-wrap: anywhere; }
+  .event-meta { font-size: 9px; color: var(--dim); margin-top: 3px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+  .event-preview { font-size: 10px; color: var(--muted); margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+  .server-used-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
   .server-used-item:last-child { border-bottom: none; }
-  .server-used-item .su-icon { font-size: 18px; }
-  .server-used-item .su-name { font-size: 13px; flex: 1; text-transform: capitalize; }
-  .server-used-item .su-count { font-size: 12px; font-weight: 700; color: var(--accent); }
+  .server-used-item .su-icon { width: 22px; height: 22px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-size: 9px; font-weight: 800; }
+  .server-used-item .su-name { font-size: 11px; flex: 1; text-transform: capitalize; font-weight: 700; }
+  .server-used-item .su-count { font-size: 10px; font-weight: 750; color: var(--accent); }
 
-  /* ── Running indicator ── */
-  .running-bar { background: var(--surface-2); border: 1px solid var(--orange); border-radius: 30px; padding: 12px 24px; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; font-size: 13px; color: var(--orange); }
-  .running-bar .spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  .running-bar { background: var(--orange-bg); border: 1px solid #f2d18b; border-radius: var(--radius); padding: 8px 10px; display: flex; align-items: center; gap: 9px; margin-bottom: 8px; font-size: 11px; color: var(--orange); }
+  .running-bar .spinner { width: 12px; height: 12px; border: 2px solid #f2d18b; border-top-color: var(--orange); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .running-bar.hidden { display: none; }
 
-  /* ── Tool detail overlay ── */
+  .run-history { grid-column: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 7px; margin-bottom: 0; }
+  .section-action { margin-left: auto; border: 1px solid var(--border-light); background: var(--surface); color: var(--muted); border-radius: 4px; padding: 3px 7px; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; }
+  .section-action:hover { color: var(--accent); border-color: #bdd0f8; background: var(--accent-soft); }
+  .run-history-empty { grid-column: 1 / -1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; font-size: 11px; color: var(--dim); }
+  .run-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 9px; cursor: pointer; transition: border-color .15s, background .15s; box-shadow: var(--shadow); }
+  .run-card:hover { border-color: var(--accent); background: var(--surface-2); }
+  .run-card.active { border-color: var(--accent); }
+  .run-card-title { font-size: 11px; font-weight: 750; margin-bottom: 7px; }
+  .run-card-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 10px; color: var(--dim); }
+  .run-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 750; text-transform: uppercase; }
+  .run-chip.running { background: var(--orange-bg); color: var(--orange); }
+  .run-chip.waiting { background: var(--purple-bg); color: var(--purple); }
+  .run-chip.complete { background: var(--green-bg); color: var(--green); }
+  .run-chip.error { background: var(--red-bg); color: var(--red); }
+  .human-panel { border-color: #d9c8fb; }
+  .human-copy { font-size: 12px; line-height: 1.6; color: var(--muted); white-space: pre-wrap; margin-bottom: 12px; }
+  .teams-card { background: #fbfcff; border: 1px solid var(--border-light); border-radius: var(--radius); padding: 12px; }
+  .teams-card-header { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+  .teams-thread { display: grid; gap: 10px; margin-bottom: 12px; }
+  .teams-message { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; background: #fff; font-size: 11px; color: var(--text); }
+  .teams-message.manager { border-color: #b8e6cf; background: var(--green-bg); }
+  .teams-message .sender { font-size: 9px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+  .teams-card textarea { width: 100%; resize: vertical; border-radius: var(--radius); border: 1px solid var(--border-light); background: #fff; color: var(--text); padding: 10px; font: inherit; font-size: 11px; margin-bottom: 10px; }
+
+  /* Modal */
   .detail-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 200; justify-content: center; align-items: center; }
   .detail-overlay.visible { display: flex; }
-  .detail-modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; }
-  .detail-modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .detail-modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 80px rgba(15,23,42,.28); }
+  .detail-modal h3 { font-size: 14px; font-weight: 750; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
   .detail-modal .close-btn { margin-left: auto; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; }
-  .detail-modal .section-label { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; margin: 14px 0 6px; }
-  .detail-modal pre { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; color: var(--text); }
+  .detail-modal .section-label { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; margin: 14px 0 6px; }
+  .detail-modal pre { background: #fbfcff; border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; color: var(--text); }
+
+  @media (max-width: 1460px) {
+    .dashboard-view { grid-template-columns: 1fr; }
+    .right-rail { position: static; max-height: none; flex-direction: row; flex-wrap: wrap; }
+    .right-rail .rail-card { flex: 1 1 320px; min-width: 280px; }
+    .metadata-grid, .metadata-title { grid-column: 1; grid-row: auto; position: static; }
+    .metadata-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  }
+  @media (max-width: 760px) {
+    body { display: block; }
+    .sidebar { width: 100%; flex-direction: row; align-items: center; gap: 12px; border-right: 0; border-bottom: 1px solid var(--border); }
+    .sidebar-brand { padding: 0; margin: 0; }
+    .sidebar-nav { display: flex; gap: 6px; }
+    .sidebar-footer { display: none; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  }
 </style>
 </head>
 <body>
@@ -169,15 +460,16 @@
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-brand">
-    <h2>⚡ Control Plane</h2>
-    <div class="subtitle">ESS-MCP Agent</div>
+    <h2>Project ESS</h2>
+    <div class="subtitle">Control Plane</div>
   </div>
   <div class="sidebar-nav">
-    <div class="nav-item active" onclick="showDashboard()"><span class="icon">📊</span> Dashboard <span class="badge" id="navToolCount">—</span></div>
-    <div class="nav-item" id="navRunItem" onclick="showDashboard()" style="display:none"><span class="icon">▶️</span> Active Run</div>
+    <div class="nav-item active" id="navDashboard" onclick="showDashboard()"><span class="icon">D</span> Dashboard <span class="badge" id="navToolCount">—</span></div>
+    <div class="nav-item" id="navApprovals" onclick="showApprovals()"><span class="icon">A</span> Approvals <span class="badge" id="navApprovalsCount">0</span></div>
+    <div class="nav-item" id="navRunItem" onclick="showRunHistory()"><span class="icon">R</span> Runs <span class="badge" id="navRunCount">0</span></div>
   </div>
   <div class="sidebar-footer">
-    <a href="/">← Back to Agent UI</a>
+    <a href="/">Back to Agent UI</a>
   </div>
 </div>
 
@@ -192,25 +484,122 @@
   <!-- ═══ Dashboard View ═══ -->
   <div class="content dashboard-view" id="dashboardView">
 
-    <!-- KPIs -->
-    <div class="kpi-row" id="kpiRow">
-      <div class="kpi accent"><div class="value" id="kpiServers">—</div><div class="label">MCP Servers</div><div class="sub" id="kpiServersDetail">connecting…</div></div>
-      <div class="kpi green"><div class="value" id="kpiTools">—</div><div class="label">Tools Available</div><div class="sub">across all servers</div></div>
-      <div class="kpi orange"><div class="value" id="kpiScenarios">—</div><div class="label">Scenarios</div><div class="sub">ready to execute</div></div>
-      <div class="kpi purple"><div class="value" id="kpiResources">—</div><div class="label">Widget Resources</div><div class="sub" id="kpiResourcesDetail">per-server UI components</div></div>
+    <div class="dashboard-main">
+
+      <!-- Fleet activity ticker — what's happening across the workforce -->
+      <div class="fleet-ticker" id="fleetTicker">
+        <span class="pulse idle" id="fleetPulse"></span>
+        <span class="ticker-label">Fleet</span>
+        <span class="ticker-stream" id="fleetStream">All instances idle. Launch a scenario to see activity.</span>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-row" id="kpiRow">
+        <div class="kpi accent"><div class="value" id="kpiServers">—</div><div class="label">MCP Servers</div><div class="sub" id="kpiServersDetail">connecting…</div></div>
+        <div class="kpi green"><div class="value" id="kpiTools">—</div><div class="label">Tools Available</div><div class="sub">across all servers</div></div>
+        <div class="kpi orange"><div class="value" id="kpiScenarios">—</div><div class="label">Scenarios</div><div class="sub">ready to execute</div></div>
+        <div class="kpi purple"><div class="value" id="kpiResources">—</div><div class="label">Widget Resources</div><div class="sub" id="kpiResourcesDetail">per-server UI components</div></div>
+      </div>
+
+      <!-- Now Running — only active runs, prominent so you can watch the workforce live -->
+      <div class="section-title">Now Running <span class="count" id="nowRunningCount">(0)</span></div>
+      <div class="active-now" id="activeNow">
+        <div class="empty">No agents are running right now. Launch a scenario on an instance below.</div>
+      </div>
+
+      <!-- AI Teammate Instances — the operating consoles for each agent in the workforce -->
+      <div class="section-title">AI Teammate Instances <span class="count" id="instanceCount">(0)</span>
+        <button class="section-action" id="instanceRefreshBtn" onclick="refreshInstances(true)">Refresh from Entra</button>
+        <button class="section-action" id="instanceLaunchAllBtn" onclick="launchAllInstances()" style="margin-left:6px">Run scenario on all</button>
+      </div>
+      <div class="instance-grid" id="instanceGrid">
+        <div class="run-history-empty">Loading instances from Microsoft Graph…</div>
+      </div>
+
+      <div class="section-title">Agentic User Sessions <span class="count" id="agenticUserCount">(0)</span></div>
+      <div class="agentic-grid" id="agenticUserGrid">
+        <div class="run-history-empty">No agentic-user sessions yet.</div>
+      </div>
+
+      <!-- Connected MCP Servers -->
+      <div class="section-title">Connected MCP Servers</div>
+      <div class="server-grid" id="serverGrid">
+        <div class="server-card"><div style="text-align:center;padding:20px;color:var(--dim)">Loading servers…</div></div>
+      </div>
+
+      <!-- Scenarios -->
+      <div class="section-title">Active Workflows <span class="count" id="scenarioCount"></span></div>
+      <div class="scenario-grid" id="scenarioGrid">
+        <div class="scenario-card"><div style="text-align:center;padding:20px;color:var(--dim)">Loading scenarios…</div></div>
+      </div>
+
+      <!-- Recent activity — demoted: small scrollable strip behind expand toggle -->
+      <div class="section-title" id="runHistoryTitle">Recent Runs <span class="count" id="runHistoryCount">(0)</span><button class="section-action" onclick="resetRuns()">Reset stale runs</button></div>
+      <div class="recent-runs" id="runHistory">
+        <div class="run-history-empty">No runs yet. Launch a scenario to build the audit trail.</div>
+      </div>
     </div>
 
-    <!-- Server status -->
-    <div class="section-title">🔌 Connected MCP Servers</div>
-    <div class="server-grid" id="serverGrid">
-      <div class="server-card"><div style="text-align:center;padding:20px;color:var(--dim)">Loading servers…</div></div>
-    </div>
-
-    <!-- Scenarios -->
-    <div class="section-title">🚀 Agent Scenarios <span class="count" id="scenarioCount"></span></div>
-    <div class="scenario-grid" id="scenarioGrid">
-      <div class="scenario-card"><div style="text-align:center;padding:20px;color:var(--dim)">Loading scenarios…</div></div>
-    </div>
+    <!-- Right rail — static identity + runtime metadata kept out of the way -->
+    <aside class="right-rail">
+      <details class="rail-card" open>
+        <summary>Entra Agent Identity</summary>
+        <div class="rail-body">
+          <div class="meta-list" id="identityMeta">
+            <div class="meta-row"><span class="label">Status</span><span class="value">Loading…</span></div>
+          </div>
+        </div>
+      </details>
+      <details class="rail-card">
+        <summary>Runtime Signals</summary>
+        <div class="rail-body">
+          <div class="pill-row" id="runtimePills"></div>
+          <div class="meta-list" id="runtimeMeta" style="margin-top:8px"></div>
+        </div>
+      </details>
+      <details class="rail-card" open id="governanceCard">
+        <summary>Control Plane Enforcement <span class="count" id="governanceCount">(0)</span></summary>
+        <div class="rail-body">
+          <div class="gov-section">
+            <div class="gov-section-title">Tool deny-list <span class="gov-sub">applies to every run, every agent</span></div>
+            <textarea id="governanceDenyInput" rows="3" placeholder="One pattern per line — e.g. workday.terminate_*, servicenow.delete_*, coupa.*"></textarea>
+            <div class="gov-actions">
+              <button class="gov-apply" onclick="applyToolDenylist()">Apply deny-list</button>
+              <button class="gov-clear" onclick="clearToolDenylist()">Clear</button>
+            </div>
+            <div class="gov-active" id="governanceActiveRules"></div>
+          </div>
+          <div class="gov-section">
+            <div class="gov-section-title">Isolated agent identities</div>
+            <div class="gov-list" id="governanceDisabledList">
+              <div class="gov-empty">No agents isolated. Use the Isolate button on any instance card to kill-switch a single agent identity in real time.</div>
+            </div>
+          </div>
+          <div class="gov-section">
+            <div class="gov-section-title">Audit ledger <span class="gov-sub">latest first · evidence for investigations</span></div>
+            <div class="gov-audit" id="governanceAudit">
+              <div class="gov-empty">No enforcement events yet.</div>
+            </div>
+          </div>
+        </div>
+      </details>
+      <details class="rail-card" open id="a365ValueCard">
+        <summary>Agent 365 value <span class="gov-sub" id="a365ValueSubtitle">loading…</span></summary>
+        <div class="rail-body">
+          <div class="a365-summary" id="a365ValueSummary"></div>
+          <div id="a365ValueCategories"></div>
+          <div class="a365-foot">Each capability shows the data flowing in, the value it unlocks, and copy-paste KQL / PowerShell ready for the linked portal. Catalogue mirrors the Agent 365 SDK matrix narrowed to HIGH-value items for this agent.</div>
+        </div>
+      </details>
+      <details class="rail-card" open id="surfacesCard">
+        <summary>Microsoft 365 governance surfaces <span class="gov-sub">same tools, same teams</span></summary>
+        <div class="rail-body">
+          <div class="surfaces-grid" id="surfacesGrid">
+            <!-- populated by renderSurfaces() -->
+          </div>
+        </div>
+      </details>
+    </aside>
   </div>
 
   <!-- ═══ Run View ═══ -->
@@ -219,6 +608,9 @@
       <button class="back-link" onclick="showDashboard()">← Back</button>
       <h2 id="runTitle">—</h2>
       <span class="run-status running" id="runStatus">Running</span>
+      <button class="evidence-btn" id="evidenceBtn" onclick="downloadEvidence(activeRunId)" title="Download a complete evidence pack for this run — identity, prompts, tool calls, sensitivity labels, governance enforcement, timestamps. Suitable for compliance investigations.">⬇ Evidence pack</button>
+      <button class="evidence-btn" id="lookupPurviewBtn" onclick="lookupRunInPurview(activeRunId)" title="Open Purview DSPM Activity Explorer in a new tab and copy the User-participant + Timestamp filter values needed to find this run's rows. DSPM-for-AI does not support per-teammate URL filters today; you'll paste the values into the filter panel.">🛡 Look up in Purview</button>
+      <button class="evidence-btn" id="lookupDefenderBtn" onclick="lookupRunInDefender(activeRunId)" title="Open Defender Advanced Hunting in a new tab with a CloudAppEvents query pre-filtered to this run's actor and time window.">🔎 Look up in Defender</button>
     </div>
 
     <div class="running-bar" id="runningBar">
@@ -230,7 +622,7 @@
       <div>
         <!-- Tool call timeline -->
         <div class="timeline-panel">
-          <h4>🔧 Tool Calls <span class="count" id="runToolCount">0</span></h4>
+          <h4>Tool Calls <span class="count" id="runToolCount">0</span></h4>
           <div id="toolTimeline">
             <div class="timeline-empty">Waiting for agent to start calling tools…</div>
           </div>
@@ -238,15 +630,29 @@
 
         <!-- Result -->
         <div class="result-panel" id="resultPanel" style="display:none">
-          <h4>📋 Agent Result</h4>
+          <h4>Agent Result</h4>
           <div class="result-content" id="runResultContent"></div>
+        </div>
+
+        <div class="human-panel" id="humanPanel" style="display:none">
+          <h4>Manager Input Required</h4>
+          <div class="human-copy" id="humanMessage"></div>
+          <div class="teams-card">
+            <div class="teams-card-header">
+              <span>Microsoft Teams</span>
+              <strong id="teamsRecipient">Hiring Manager</strong>
+            </div>
+            <div class="teams-thread" id="teamsThread"></div>
+            <textarea id="managerReply" rows="5" placeholder="Pretend manager reply, for example: Role: Senior Procurement Analyst; Team: LSEG Procurement Operations; Hire type: new hire."></textarea>
+            <button class="run-btn" onclick="sendManagerReply()">Send Manager Reply And Resume</button>
+          </div>
         </div>
       </div>
 
       <div>
         <!-- Stats -->
         <div class="stats-panel" id="statsPanel" style="display:none">
-          <h4>📊 Run Statistics</h4>
+          <h4>Run Statistics</h4>
           <div class="stat-row"><span class="label">Duration</span><span class="value" id="runStatDuration">—</span></div>
           <div class="stat-row"><span class="label">Turns</span><span class="value" id="runStatTurns">—</span></div>
           <div class="stat-row"><span class="label">Tool Calls</span><span class="value" id="runStatCalls">—</span></div>
@@ -257,12 +663,43 @@
 
         <!-- Servers used -->
         <div class="servers-used-panel">
-          <h4>🔌 Servers Used</h4>
+          <h4>Servers Used</h4>
           <div id="serversUsed">
             <div style="font-size:12px;color:var(--dim);padding:8px 0">No tool calls yet</div>
           </div>
         </div>
+
+        <!-- Agent 365 events -->
+        <div class="event-panel">
+          <h4>Fleet Manager Event Stream <span class="count" id="agentEventCount">0</span></h4>
+          <div class="event-stream" id="agentEventStream">
+            <div class="event-empty">Waiting for LLM, tool, and telemetry events…</div>
+          </div>
+        </div>
+
+        <div class="event-panel">
+          <h4>Logged Tool Observations <span class="count" id="loggedEventCount">0</span></h4>
+          <div class="event-stream" id="loggedEventStream">
+            <div class="event-empty">Tool-call observation records will appear here.</div>
+          </div>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══ Approvals View ═══ -->
+  <div class="content approvals-view" id="approvalsView">
+    <div class="approvals-header">
+      <h2>Approvals Queue</h2>
+      <span class="approvals-sub" id="approvalsSub">No pending approvals.</span>
+    </div>
+    <div class="section-title">Pending <span class="count" id="approvalsPendingCount">(0)</span></div>
+    <div class="approval-stack" id="approvalsPending">
+      <div class="approval-empty">No agents are waiting on a human decision right now.</div>
+    </div>
+    <div class="section-title" style="margin-top:20px">Completed <span class="count" id="approvalsCompletedCount">(0)</span></div>
+    <div class="approval-stack completed" id="approvalsCompleted">
+      <div class="approval-empty">Completed approvals will collapse here after the agent receives your reply.</div>
     </div>
   </div>
 </div>
@@ -282,37 +719,227 @@
 // ── State ──
 let servers = [];
 let skills = [];
-let toolData = {};  // id -> {server, tool, arguments, result}
-let running = false;
-let serverCallCounts = {};
+let identity = null;
+let runs = [];
+let activeRunId = null;
+let instances = [];
+const instanceState = {};   // instance_id -> { lastError, lastDelivery, lastScenario }
+// User's current scenario-dropdown selection per instance. Captured before any
+// re-render so the dropdown doesn't snap back to the first option while the
+// polling refresh ticks.
+const instanceScenarioSelection = {}; // instance_id -> scenario value
+
+// Control-plane governance state — kill switch per agent identity instance,
+// runtime tool deny-list, and the in-memory audit ledger. Mirrored from
+// `/api/governance` on a slow timer and after every operator action.
+let governance = { disabledInstances: {}, toolDenylist: [], audit: [] };
+
+const RUN_STORAGE_KEY = 'ess-control-plane-runs-v3';
+const LEGACY_RUN_STORAGE_KEYS = ['ess-control-plane-runs-v2'];
+const RUN_STALE_AFTER_MS = 20 * 60 * 1000;
 
 const SCENARIO_META = {
-  'incident-triage': { icon: '🚨', desc: 'Cross-reference ServiceNow incidents with Jira engineering work. Identifies critical escalations, SLA breaches, and gaps without Jira coverage.', tags: ['servicenow', 'jira'] },
-  'team-review': { icon: '📊', desc: 'Executive-level team status report covering HR headcount, IT incident workload, sales pipeline, and engineering sprint progress.', tags: ['workday', 'servicenow', 'salesforce', 'jira'] },
-  'onboarding-audit': { icon: '✅', desc: 'Audit new-hire onboarding readiness across all enterprise systems — HR profile, IT access, CRM setup, and project assignments.', tags: ['workday', 'servicenow', 'salesforce', 'jira'] },
-  'sprint-readiness': { icon: '🏃', desc: 'Check sprint readiness by cross-referencing Jira sprint data with team availability and IT health blockers.', tags: ['jira', 'workday', 'servicenow'] },
-  'hiring-pipeline': { icon: '🧑‍💼', desc: 'End-to-end recruitment pipeline status — requisitions, compliance checks, CRM conflict screening, and project alignment.', tags: ['workday', 'servicenow', 'salesforce', 'jira'] },
-  'cross-system-overview': { icon: '🔗', desc: 'Employee self-service overview — pull your Workday HR profile, compensation, and time-off balances alongside open ServiceNow incidents and pending tasks.', tags: ['workday', 'servicenow'] },
+  'incident-triage': { icon: 'INCIDENT', desc: 'ServiceNow incident triage enriched with Workday availability and manager context.', tags: ['servicenow', 'workday'] },
+  'team-review': { icon: 'REVIEW', desc: 'Executive team status report covering Workday people signals and ServiceNow operational health.', tags: ['workday', 'servicenow'] },
+  'onboarding-audit': { icon: 'AUDIT', desc: 'New-hire onboarding readiness across Workday profile, learning, approvals, and ServiceNow provisioning.', tags: ['workday', 'servicenow'] },
+  'sprint-readiness': { icon: 'SPRINT', desc: 'Delivery readiness using Workday capacity signals and ServiceNow IT health blockers.', tags: ['workday', 'servicenow'] },
+  'hiring-pipeline': { icon: 'HIRING', desc: 'Hiring and onboarding workflow focused on Workday team context and ServiceNow provisioning.', tags: ['workday', 'servicenow'] },
+  'cross-system-overview': { icon: 'SYSTEM', desc: 'Employee self-service overview across Workday profile, time off, pay, tasks, and ServiceNow IT items.', tags: ['workday', 'servicenow'] },
+  'procurement-to-invoice': { icon: 'PROCURE', desc: 'Reconcile Coupa POs/invoices against ServiceNow receipts; ask manager to hold pay + reject invoice on discrepancies.', tags: ['coupa', 'servicenow'] },
+  'requisition-approval-triage': { icon: 'REQUISITION', desc: 'Find Coupa requisitions stuck in approval, cross-reference requester ServiceNow tickets, ask manager approve/reject/hold.', tags: ['coupa', 'servicenow'] },
 };
 
-const SERVER_ICONS = { workday: '👥', servicenow: '🔧', salesforce: '💼', jira: '📋' };
+const SERVER_ICONS = { workday: 'WD', servicenow: 'SN', coupa: 'CP' };
 const SERVER_DESCS = {
   workday: 'HR, payroll, learning, performance, org structure',
   servicenow: 'Incidents, changes, problems, catalog, approvals',
-  salesforce: 'Accounts, opportunities, leads, campaigns, cases',
-  jira: 'Issues, sprints, boards, epics, project management',
+  coupa: 'Procurement, requisitions, POs, receipts, invoices, supplier mgmt',
 };
+const ALL_SERVER_NAMES = ['workday', 'servicenow', 'coupa'];
 
 // ── Init ──
 async function init() {
-  const [skillRes, serverRes] = await Promise.all([
+  loadRuns();
+  const [skillRes, serverRes, identityRes, runRes] = await Promise.all([
     fetch('/api/skills').then(r => r.json()).catch(() => []),
     fetch('/api/servers').then(r => r.json()).catch(() => []),
+    fetch('/api/identity').then(r => r.json()).catch(() => null),
+    fetch('/api/runs').then(r => r.json()).catch(() => []),
   ]);
 
   skills = skillRes;
   servers = serverRes;
+  identity = identityRes;
+  mergeServerRuns(runRes);
   renderDashboard();
+  refreshInstances(false);
+  refreshGovernance();
+  setInterval(refreshServerRuns, 3500);
+  setInterval(() => refreshInstances(false), 30000);
+  setInterval(refreshGovernance, 10000);
+  // Live elapsed-counter tick — keep the control room "alive" even between server polls.
+  // We only re-render the lightweight ticker + Now Running cards every second; the
+  // instance grid is heavier and re-rendering it tears down any open <select>.
+  setInterval(() => {
+    const dash = document.getElementById('dashboardView');
+    if (!dash || dash.classList.contains('hidden')) return;
+    renderActiveNow();
+    renderFleetTicker();
+    // Only re-render the instance grid if the user isn't currently interacting
+    // with one of its inputs (otherwise the open <select> dropdown collapses).
+    if (!isInteractingWithInstanceGrid()) renderInstances();
+  }, 1000);
+  // Lightweight approvals refresh — keeps the nav badge live regardless of view.
+  setInterval(() => { renderApprovalsBadge(); }, 2000);
+  // When the approvals view is open, keep cards in sync with run state.
+  setInterval(() => {
+    const v = document.getElementById('approvalsView');
+    if (v && v.classList.contains('active')) renderApprovals();
+  }, 3000);
+}
+
+function isInteractingWithInstanceGrid() {
+  const grid = document.getElementById('instanceGrid');
+  if (!grid) return false;
+  const ae = document.activeElement;
+  if (ae && grid.contains(ae) && (ae.tagName === 'SELECT' || ae.tagName === 'BUTTON' || ae.tagName === 'INPUT')) return true;
+  // Treat very recent pointerdown/click within the grid as "interacting" so the
+  // re-render doesn't fight a freshly-opened native <select> dropdown.
+  if (window.__instanceGridInteractAt && (Date.now() - window.__instanceGridInteractAt) < 1500) return true;
+  return false;
+}
+
+document.addEventListener('pointerdown', (e) => {
+  const grid = document.getElementById('instanceGrid');
+  if (grid && grid.contains(e.target)) window.__instanceGridInteractAt = Date.now();
+}, true);
+
+function newRunId() {
+  return 'run-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+}
+
+function loadRuns() {
+  for (const key of LEGACY_RUN_STORAGE_KEYS) localStorage.removeItem(key);
+  try {
+    runs = JSON.parse(localStorage.getItem(RUN_STORAGE_KEY) || '[]');
+  } catch (_) {
+    runs = [];
+  }
+  expireStaleRuns();
+}
+
+function isActiveStatus(status) {
+  return status === 'running' || status === 'waiting';
+}
+
+function expireStaleRuns() {
+  const now = Date.now();
+  let changed = false;
+  for (const run of runs) {
+    if (!isActiveStatus(run.status)) continue;
+    const lastUpdate = run.updatedAt || run.startedAt || 0;
+    if (lastUpdate && now - lastUpdate > RUN_STALE_AFTER_MS) {
+      run.status = 'error';
+      run.error = 'Marked stale by the control plane after no updates for 20 minutes.';
+      run.runningText = run.error;
+      run.completedAt = now;
+      run.updatedAt = now;
+      changed = true;
+    }
+  }
+  if (changed) saveRuns();
+}
+
+function resetRuns() {
+  runs = [];
+  activeRunId = null;
+  localStorage.removeItem(RUN_STORAGE_KEY);
+  fetch('/api/runs/reset', { method: 'POST' }).catch(() => {});
+  renderRunHistory();
+  renderAgenticUsers();
+}
+
+function saveRuns() {
+  expireStaleRunsNoSave();
+  const compact = runs.slice(0, 30).map(run => ({
+    ...run,
+    toolData: Object.fromEntries(Object.entries(run.toolData || {}).map(([id, value]) => [id, { ...value, result: value.result ? String(value.result).slice(0, 2000) : value.result }])),
+    agentEvents: (run.agentEvents || []).slice(0, 20),
+    loggedEvents: (run.loggedEvents || []).slice(0, 20),
+  }));
+  localStorage.setItem(RUN_STORAGE_KEY, JSON.stringify(compact));
+}
+
+function expireStaleRunsNoSave() {
+  const now = Date.now();
+  for (const run of runs) {
+    if (!isActiveStatus(run.status)) continue;
+    const lastUpdate = run.updatedAt || run.startedAt || 0;
+    if (lastUpdate && now - lastUpdate > RUN_STALE_AFTER_MS) {
+      run.status = 'error';
+      run.error = 'Marked stale by the control plane after no updates for 20 minutes.';
+      run.runningText = run.error;
+      run.completedAt = now;
+      run.updatedAt = now;
+    }
+  }
+}
+
+async function refreshServerRuns() {
+  try {
+    const serverRuns = await fetch('/api/runs').then(r => r.json());
+    mergeServerRuns(serverRuns);
+    renderApprovalsBadge();
+    const v = document.getElementById('approvalsView');
+    if (v && v.classList.contains('active')) renderApprovals();
+  } catch (_) { /* keep the last known state */ }
+}
+
+function mergeServerRuns(serverRuns) {
+  expireStaleRunsNoSave();
+  if (!Array.isArray(serverRuns) || !serverRuns.length) return;
+  let changed = false;
+  for (const serverRun of serverRuns) {
+    const index = runs.findIndex(run => run.id === serverRun.id);
+    if (index < 0) {
+      runs.unshift(serverRun);
+      changed = true;
+    } else if ((serverRun.updatedAt || 0) >= (runs[index].updatedAt || 0)) {
+      runs[index] = { ...runs[index], ...serverRun };
+      changed = true;
+    }
+  }
+  runs.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+  if (changed) {
+    saveRuns();
+    renderRunHistory();
+    if (activeRunId) {
+      const active = getRun(activeRunId);
+      if (active) renderRun(active);
+    }
+  }
+}
+
+function getRun(id = activeRunId) {
+  return runs.find(run => run.id === id) || null;
+}
+
+function upsertRun(run) {
+  const index = runs.findIndex(existing => existing.id === run.id);
+  if (index >= 0) runs[index] = run;
+  else runs.unshift(run);
+  runs.sort((a, b) => b.startedAt - a.startedAt);
+  saveRuns();
+  renderRunHistory();
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+}
+
+function safeText(value, fallback = 'not configured') {
+  if (value === undefined || value === null || value === '') return fallback;
+  return String(value);
 }
 
 function renderDashboard() {
@@ -328,7 +955,7 @@ function renderDashboard() {
   document.getElementById('navToolCount').textContent = totalTools || '—';
 
   // Widget resource count — known per-server resource counts
-  const RESOURCE_COUNTS = { workday: 14, servicenow: 12, salesforce: 9, jira: 5 };
+  const RESOURCE_COUNTS = { workday: 14, servicenow: 12, coupa: 9 };
   const connectedNames = new Set(servers.map(s => s.name));
   const totalResources = servers.reduce((n, s) => n + (RESOURCE_COUNTS[s.name] || 0), 0);
   document.getElementById('kpiResources').textContent = totalResources || '—';
@@ -337,14 +964,13 @@ function renderDashboard() {
     : 'connect servers to see resources';
 
   // Server dots in topbar
-  const allNames = ['workday', 'servicenow', 'salesforce', 'jira'];
-  document.getElementById('serverDots').innerHTML = allNames.map(name => {
+  document.getElementById('serverDots').innerHTML = ALL_SERVER_NAMES.map(name => {
     const on = connectedNames.has(name);
     return `<span class="server-dot"><span class="dot ${on ? 'on' : 'off'}"></span>${name}</span>`;
   }).join('');
 
   // Server cards
-  document.getElementById('serverGrid').innerHTML = allNames.map(name => {
+  document.getElementById('serverGrid').innerHTML = ALL_SERVER_NAMES.map(name => {
     const srv = servers.find(s => s.name === name);
     const icon = SERVER_ICONS[name] || '🔌';
     const desc = SERVER_DESCS[name] || '';
@@ -357,8 +983,9 @@ function renderDashboard() {
             <span class="server-status connected">Connected</span>
           </div>
           <div class="tool-count">${srv.tools}</div>
-          <div class="tool-label">tools available</div>
+          <div class="tool-label">tools available${srv.gateway ? ' through gateway' : ''}</div>
           <div class="tool-types">${desc}</div>
+          <div class="endpoint">${srv.url || ''}</div>
         </div>`;
     }
     return `
@@ -369,10 +996,13 @@ function renderDashboard() {
           <span class="server-status disconnected">Not connected</span>
         </div>
         <div class="tool-count" style="color:var(--dim)">—</div>
-        <div class="tool-label">configure ESS_${name.toUpperCase()}_MCP_URL</div>
+        <div class="tool-label">configure ESS_${name.toUpperCase()}_AI_GATEWAY_MCP_URL</div>
         <div class="tool-types">${desc}</div>
       </div>`;
   }).join('');
+
+  renderIdentity();
+  renderAgenticUsers();
 
   // Scenario cards
   const scenarioCount = skills.length;
@@ -393,44 +1023,965 @@ function renderDashboard() {
         <button class="run-btn" onclick="event.stopPropagation();runScenario(${i})">▶ Run Scenario</button>
       </div>`;
   }).join('');
+
+  renderRunHistory();
+}
+
+function runStatusLabel(status) {
+  return status === 'waiting' ? 'Waiting' : status === 'complete' ? 'Complete' : status === 'error' ? 'Error' : 'Running';
+}
+
+function actorInitials(name) {
+  const text = safeText(name, 'AU').replace(/[^a-z0-9 ]/gi, ' ').trim();
+  const parts = text.split(/\s+/).filter(Boolean);
+  if (!parts.length) return 'AU';
+  return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
+}
+
+function runAgenticUser(run) {
+  if (run.agenticUser) return run.agenticUser;
+  const actor = run.actor || {};
+  const source = run.source || 'control-plane';
+  const actorName = actor.name || actor.id || (source === 'teams-chat' ? 'Teams User' : 'Control Plane Operator');
+  return {
+    id: actor.id || (source === 'control-plane' ? 'control-plane' : source),
+    name: actorName,
+    source,
+    mode: source === 'teams-chat' ? 'teams-agentic-user' : 'hosted-control-plane',
+    templateId: identity && identity.agentIdentity ? identity.agentIdentity.objectId : '',
+    blueprintId: identity && identity.blueprint ? identity.blueprint.clientId : '',
+    runtimeAgentIdentityId: identity && identity.agentIdentity ? identity.agentIdentity.objectId : '',
+  };
+}
+
+function getAgenticUserSessions() {
+  expireStaleRunsNoSave();
+  const grouped = new Map();
+  for (const run of runs) {
+    const agenticUser = runAgenticUser(run);
+    const key = agenticUser.id || agenticUser.name || agenticUser.source || 'unknown';
+    const existing = grouped.get(key) || {
+      ...agenticUser,
+      totalRuns: 0,
+      activeRuns: 0,
+      toolCalls: 0,
+      latestRun: null,
+      sources: new Set(),
+    };
+    existing.totalRuns += 1;
+    if (isActiveStatus(run.status)) existing.activeRuns += 1;
+    existing.toolCalls += Object.keys(run.toolData || {}).length;
+    existing.sources.add(run.source || agenticUser.source || 'unknown');
+    if (!existing.latestRun || (run.startedAt || 0) > (existing.latestRun.startedAt || 0)) {
+      existing.latestRun = run;
+      existing.name = agenticUser.name || existing.name;
+      existing.mode = agenticUser.mode || existing.mode;
+    }
+    grouped.set(key, existing);
+  }
+  return Array.from(grouped.values()).sort((a, b) => ((b.latestRun && b.latestRun.startedAt) || 0) - ((a.latestRun && a.latestRun.startedAt) || 0));
+}
+
+function renderAgenticUsers() {
+  const grid = document.getElementById('agenticUserGrid');
+  const countEl = document.getElementById('agenticUserCount');
+  if (!grid || !countEl) return;
+  const sessions = getAgenticUserSessions();
+  const active = sessions.filter(session => session.activeRuns > 0).length;
+  countEl.textContent = `(${sessions.length}${active ? `, ${active} active` : ''})`;
+  if (!sessions.length) {
+    grid.innerHTML = '<div class="run-history-empty">No agentic-user sessions yet.</div>';
+    return;
+  }
+  grid.innerHTML = sessions.slice(0, 6).map(session => {
+    const latest = session.latestRun || {};
+    const sourceLabel = session.mode === 'teams-agentic-user' ? 'Teams chat' : 'Control plane';
+    const when = latest.startedAt ? new Date(latest.startedAt).toLocaleTimeString() : '—';
+    const templateId = session.templateId || (identity && identity.agentIdentity && identity.agentIdentity.objectId) || 'not configured';
+    const latestTitle = latest.title || 'No run yet';
+    // Find the actual active run for this session so the card can deep-link
+    // into it, consistent with the AI Teammate Instances panel above.
+    const liveRun = activeRunForAgenticSession(session.id);
+    const cardClasses = ['agentic-card'];
+    if (session.activeRuns) cardClasses.push('active');
+    if (liveRun) cardClasses.push('clickable');
+    const cardClick = liveRun ? ` onclick="openRun('${escapeHtml(liveRun.id)}')" title="Open active run"` : '';
+    return `
+      <div class="${cardClasses.join(' ')}"${cardClick}>
+        <div class="agentic-head">
+          <span class="agentic-avatar">${escapeHtml(actorInitials(session.name))}</span>
+          <span class="agentic-name">${escapeHtml(session.name)}</span>
+          <span class="agentic-state ${session.activeRuns ? 'active' : ''}">${session.activeRuns ? 'Active' : 'Idle'}</span>
+        </div>
+        <div class="agentic-metrics">
+          <div class="agentic-metric"><strong>${session.activeRuns}</strong><span>Active</span></div>
+          <div class="agentic-metric"><strong>${session.totalRuns}</strong><span>Runs</span></div>
+          <div class="agentic-metric"><strong>${session.toolCalls}</strong><span>Tools</span></div>
+        </div>
+        <div class="agentic-detail">
+          <div>${escapeHtml(sourceLabel)} · last ${escapeHtml(when)}</div>
+          <div class="mono">${escapeHtml(latestTitle)}</div>
+          <div class="mono">template ${escapeHtml(templateId)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function refreshInstances(force) {
+  const grid = document.getElementById('instanceGrid');
+  try {
+    const url = '/api/agentic-instances' + (force ? '?refresh=1' : '');
+    const res = await fetch(url).then(r => r.json());
+    instances = res.instances || [];
+    document.getElementById('instanceCount').textContent = `(${instances.length})`;
+    renderInstances();
+  } catch (e) {
+    if (grid) grid.innerHTML = `<div class="run-history-empty">Could not load instances: ${escapeHtml(String(e))}</div>`;
+  }
+}
+
+// ── Control-plane enforcement (governance) ─────────────────────────
+async function refreshGovernance() {
+  try {
+    const res = await fetch('/api/governance').then(r => r.json());
+    governance = {
+      disabledInstances: res.disabledInstances || {},
+      toolDenylist: res.toolDenylist || [],
+      audit: res.audit || [],
+    };
+    renderGovernancePanel();
+    // Instance cards display "Isolated" badges / disabled Run buttons from
+    // governance state — re-render so operator actions are visible immediately.
+    if (instances.length) renderInstances();
+  } catch (e) { /* ignore — best effort */ }
+}
+
+function renderGovernancePanel() {
+  const countEl = document.getElementById('governanceCount');
+  if (countEl) {
+    const n = Object.keys(governance.disabledInstances || {}).length + (governance.toolDenylist || []).length;
+    countEl.textContent = `(${n})`;
+  }
+  const input = document.getElementById('governanceDenyInput');
+  if (input && document.activeElement !== input) {
+    input.value = (governance.toolDenylist || []).join('\n');
+  }
+  const chips = document.getElementById('governanceActiveRules');
+  if (chips) {
+    if (!governance.toolDenylist.length) {
+      chips.innerHTML = '<span class="gov-sub">No active deny rules. All tools allowed.</span>';
+    } else {
+      chips.innerHTML = governance.toolDenylist.map(p =>
+        `<span class="chip">${escapeHtml(p)}</span>`
+      ).join('');
+    }
+  }
+  const list = document.getElementById('governanceDisabledList');
+  if (list) {
+    const entries = Object.entries(governance.disabledInstances || {});
+    if (!entries.length) {
+      list.innerHTML = '<div class="gov-empty">No agents isolated. Use the Isolate button on any instance card to kill-switch a single agent identity in real time.</div>';
+    } else {
+      list.innerHTML = entries.map(([id, reason]) => {
+        const inst = instances.find(i => i.instance_id === id);
+        const name = inst ? (inst.display_name || id) : id;
+        return `<div class="row">
+          <div>
+            <div>${escapeHtml(name)}</div>
+            <div class="target">${escapeHtml(id)} · ${escapeHtml(reason)}</div>
+          </div>
+          <button onclick="restoreInstance('${escapeHtml(id)}')">Restore</button>
+        </div>`;
+      }).join('');
+    }
+  }
+  const audit = document.getElementById('governanceAudit');
+  if (audit) {
+    if (!governance.audit.length) {
+      audit.innerHTML = '<div class="gov-empty">No enforcement events yet.</div>';
+    } else {
+      audit.innerHTML = governance.audit.slice(0, 25).map(e => {
+        const when = new Date(e.timestampMs).toLocaleTimeString();
+        const det = Object.entries(e.detail || {})
+          .filter(([k, v]) => v !== '' && v != null && k !== 'previous')
+          .map(([k, v]) => `${k}=${typeof v === 'string' ? v : JSON.stringify(v)}`)
+          .join(' · ');
+        return `<div class="entry">
+          <span class="when">${escapeHtml(when)}</span>
+          <span class="act">${escapeHtml(e.action)}</span>
+          <span class="who">by ${escapeHtml(e.actor)}</span>
+          <div class="target">${escapeHtml(e.target)}</div>
+          ${det ? `<div class="det">${escapeHtml(det)}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+async function isolateInstance(id, name) {
+  const reason = prompt(`Isolate "${name}"?\n\nAll future runs from this agent identity will be blocked immediately. Provide a reason for the audit ledger:`, 'Compliance review');
+  if (reason == null) return;
+  try {
+    await fetch(`/api/governance/instance/${encodeURIComponent(id)}/disable`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason || 'Isolated by control plane operator' }),
+    });
+    showGovernanceToast(`Agent ${name} isolated. Kill switch active.`);
+    await refreshGovernance();
+  } catch (e) {
+    alert('Isolate failed: ' + e);
+  }
+}
+
+async function restoreInstance(id) {
+  try {
+    await fetch(`/api/governance/instance/${encodeURIComponent(id)}/enable`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    showGovernanceToast('Agent restored. Runs may resume.');
+    await refreshGovernance();
+  } catch (e) {
+    alert('Restore failed: ' + e);
+  }
+}
+
+async function applyToolDenylist() {
+  const input = document.getElementById('governanceDenyInput');
+  const patterns = (input.value || '')
+    .split(/[\n,]/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  try {
+    await fetch('/api/governance/tool-denylist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patterns }),
+    });
+    showGovernanceToast(patterns.length
+      ? `Tool deny-list applied (${patterns.length} rule${patterns.length === 1 ? '' : 's'}).`
+      : 'Tool deny-list cleared.');
+    await refreshGovernance();
+  } catch (e) {
+    alert('Apply failed: ' + e);
+  }
+}
+
+async function clearToolDenylist() {
+  document.getElementById('governanceDenyInput').value = '';
+  await applyToolDenylist();
+}
+
+function showGovernanceToast(message) {
+  const existing = document.getElementById('govToast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.id = 'govToast';
+  el.className = 'gov-toast';
+  el.textContent = message;
+  document.body.appendChild(el);
+  setTimeout(() => { try { el.remove(); } catch (_) {} }, 5500);
+}
+
+function downloadEvidence(runId) {
+  if (!runId) return;
+  const url = `/api/runs/${encodeURIComponent(runId)}/evidence`;
+  // Force a navigation download. Content-Disposition: attachment is set by the server.
+  window.location.href = url;
+}
+
+// ─── Run → portal correlation ────────────────────────────────────────────
+// DSPM-for-AI's Activity Explorer does not currently accept filter values
+// via URL params. Per-teammate Agent name break-out is also not possible
+// today (Microsoft has not shipped a public registration API for per-
+// instance AI apps; all SDK runs collapse under the parent registered
+// app). The practical workaround is to open the portal at the right
+// tenant/view and copy the filter values to the clipboard so the operator
+// can paste them into the filter panel. We compute a tight ±5 min window
+// around the run start so the row count stays manageable.
+function _runFilterValues(run) {
+  if (!run) return null;
+  const actor = run.actor || {};
+  const ident = (typeof identity !== 'undefined' && identity) ? identity : null;
+  const tid = (ident && ident.tenantId) || '';
+  const started = run.startedAt ? new Date(run.startedAt) : new Date();
+  const fromTs = new Date(started.getTime() - 5 * 60 * 1000);
+  const toTs = new Date(started.getTime() + 10 * 60 * 1000);
+  // Collect every AAD object id / app id that could legitimately appear
+  // on a Defender row for this run, so the AADSpnSignInEventsBeta filter
+  // can match the per-teammate ServicePrincipalId AND the parent agent SP.
+  const parentAppId = (ident && ident.agentIdentity && ident.agentIdentity.clientId) || '';
+  const parentSpOid = (ident && ident.agentIdentity && ident.agentIdentity.objectId) || '';
+  const blueprintAppId = (ident && ident.blueprint && ident.blueprint.clientId) || '';
+  const blueprintSpOid = (ident && ident.blueprint && ident.blueprint.objectId) || '';
+  const agenticAppId = actor.agenticAppClientId || actor.agenticAppId || '';
+  const agenticSpOid = actor.agenticUserId || '';
+  const managerOid = actor.aadObjectId || actor.id || '';
+  const ids = [parentAppId, parentSpOid, blueprintAppId, blueprintSpOid, agenticAppId, agenticSpOid, managerOid]
+    .filter(Boolean)
+    .filter((v, i, a) => a.indexOf(v) === i);
+  return {
+    tenantId: tid,
+    managerUpn: actor.upn || actor.managerEmail || actor.managerUpn || '',
+    managerName: actor.name || '',
+    managerOid: managerOid,
+    agenticUpn: actor.agenticUserUpn || '',
+    agenticAppId: agenticAppId,
+    agenticSpOid: agenticSpOid,
+    agenticName: actor.agenticUserName || actor.agenticAppName || '',
+    parentAppId: parentAppId,
+    parentSpOid: parentSpOid,
+    runId: run.id || '',
+    fromIso: fromTs.toISOString(),
+    toIso: toTs.toISOString(),
+    startedIso: started.toISOString(),
+    ids: ids,
+  };
+}
+
+function _copyToClipboard(text) {
+  if (!navigator.clipboard) return Promise.resolve(false);
+  return navigator.clipboard.writeText(text).then(() => true, () => false);
+}
+
+function lookupRunInPurview(runId) {
+  const run = runs.find(r => r.id === runId);
+  if (!run) { showToast('Run not found', 'warn'); return; }
+  const v = _runFilterValues(run);
+  if (!v) { showToast('No filter values to compute', 'warn'); return; }
+  // Use the same Activity Explorer URL as the top-bar surfaces panel
+  // (https://purview.microsoft.com/activityexplorer). The /dspm/* path
+  // does not exist as a public route and silently redirects to the
+  // Purview home/start screen. The DSPM-for-AI Activity Explorer view is
+  // the same surface — it just opens with the AI filter preselected when
+  // entered via the DSPM-for-AI home card, which is the secondary URL
+  // we expose if the operator wants to land on the AI Hub first.
+  const tenantSeg = v.tenantId ? `?tid=${encodeURIComponent(v.tenantId)}` : '';
+  const url = `https://purview.microsoft.com/activityexplorer${tenantSeg}`;
+  const stamp = Date.now().toString(36);
+  const clip = [
+    `User participant: ${v.managerUpn}`,
+    `Timestamp (from): ${v.fromIso}`,
+    `Timestamp (to):   ${v.toIso}`,
+    `App accessed in:  agent365-control-plane`,
+    v.agenticUpn ? `Agentic UPN (audit): ${v.agenticUpn}` : '',
+    v.agenticAppId ? `Agentic app id (audit): ${v.agenticAppId}` : '',
+    `Run id: ${v.runId}`,
+    ``,
+    `Hint: in Activity Explorer click the filter funnel, choose`,
+    `"User" → set to manager UPN above, then "Date" → set the from/to`,
+    `range above. Switch to the DSPM-for-AI view from the left nav if`,
+    `you only want AI rows.`,
+  ].filter(Boolean).join('\n');
+  _copyToClipboard(clip).then(ok => {
+    const msg = ok
+      ? `Purview Activity Explorer opened. Filter values copied — paste them into the User + Date filters.`
+      : `Purview opened. Apply filters manually: User=${v.managerUpn || 'manager'} · Timestamp ${v.startedIso} ±5m.`;
+    showToast(msg);
+  });
+  window.open(`${url}${tenantSeg ? '&' : '?'}essCorr=${stamp}`, `essPurview_${stamp}`, 'noopener,noreferrer');
+}
+
+function lookupRunInDefender(runId) {
+  const run = runs.find(r => r.id === runId);
+  if (!run) { showToast('Run not found', 'warn'); return; }
+  const v = _runFilterValues(run);
+  if (!v) { showToast('No filter values to compute', 'warn'); return; }
+  // AADSpnSignInEventsBeta is the Defender table where per-teammate
+  // ServiceIdentity sign-ins (and the parent agent SP's sign-ins to
+  // Azure OpenAI / Microsoft Graph / Cosmos) land for SDK-hosted agents.
+  // CloudAppEvents is NOT populated for our agent in this tenant (no
+  // Defender for Cloud Apps connector covers it) and the column we tried
+  // to filter on (AccountUpn) does not exist on that table — produces a
+  // "Failed to resolve column or scalar expression" semantic error.
+  // Filtering by ServicePrincipalId against the set of known agent SP
+  // oids (parent + blueprint + per-teammate) within the run's time
+  // window is reliable and returns only this run's rows.
+  const quotedIds = v.ids.map(id => `"${id}"`).join(', ');
+  const kqlLines = [
+    `// ===== ESS Agent 365 · Correlate run ${v.runId} =====`,
+    `// Run started ${v.startedIso}. Manager: ${v.managerName || v.managerUpn}`,
+    `// Agentic identity: ${v.agenticUpn || '(none)'} / app ${v.agenticAppId || '(none)'}`,
+    `let runStart = datetime(${v.fromIso});`,
+    `let runEnd   = datetime(${v.toIso});`,
+    `let agentIds = dynamic([${quotedIds}]);`,
+    `AADSpnSignInEventsBeta`,
+    `| where Timestamp between (runStart .. runEnd)`,
+    `| where ServicePrincipalId in (agentIds) or ApplicationId in (agentIds) or ServicePrincipalName has "ESS" or ResourceDisplayName has "ESS"`,
+    `| project-reorder Timestamp, ServicePrincipalName, ServicePrincipalId, ResourceDisplayName, ResourceId, IPAddress, ErrorCode, CorrelationId`,
+    `| sort by Timestamp asc`,
+  ];
+  const kql = kqlLines.join('\n');
+  const tid = v.tenantId ? `tid=${encodeURIComponent(v.tenantId)}&` : '';
+  const stamp = Date.now().toString(36);
+  const url = `https://security.microsoft.com/v2/advanced-hunting?${tid}body=${encodeURIComponent(kql)}&essTab=${stamp}`;
+  _copyToClipboard(kql).then(ok => {
+    showToast(ok
+      ? `Defender opened with AADSpnSignInEventsBeta query (also copied to clipboard).`
+      : `Defender opened with query in body= param.`);
+  });
+  window.open(url, `essDefender_${stamp}`, 'noopener,noreferrer');
+}
+// ─── end run → portal correlation ────────────────────────────────────────
+
+function renderInstances() {
+  const grid = document.getElementById('instanceGrid');
+  if (!grid) return;
+  // Snapshot any currently-open dropdown selections so we can restore them
+  // after the innerHTML rebuild.
+  grid.querySelectorAll('select[id^="scenario-"]').forEach(sel => {
+    const id = sel.id.slice('scenario-'.length);
+    if (sel.value) instanceScenarioSelection[id] = sel.value;
+  });
+  if (!instances.length) {
+    grid.innerHTML = '<div class="run-history-empty">No AI Teammate instances found. Provision one from the blueprint to populate this list.</div>';
+    return;
+  }
+  grid.innerHTML = instances.map(inst => {
+    const id = inst.instance_id;
+    // Single source of truth for "is this instance running right now?":
+    // an active run whose agenticUser.id matches this instance. Same rule
+    // the bottom Agentic User Sessions panel already uses, so the two stay
+    // in sync and the badge clears the moment the run completes.
+    const liveRun = activeRunForInstance(id);
+    const state = instanceState[id] || {};
+    const running = !!liveRun;
+    const lastDelivery = state.lastDelivery || latestDeliveryForInstance(id);
+    const stateLabel = running ? (liveRun.status === 'waiting' ? 'Waiting' : 'Running')
+      : (lastDelivery && lastDelivery.status === 'sent') ? 'Delivered'
+      : state.status === 'failed' ? 'Failed'
+      : 'Idle';
+    const stateCls = running ? (liveRun.status === 'waiting' ? 'waiting' : 'running')
+      : (lastDelivery && lastDelivery.status === 'sent') ? 'delivered'
+      : state.status === 'failed' ? 'failed'
+      : 'idle';
+    const selectedScenario = instanceScenarioSelection[id] || '';
+    const skillOptions = (skills || []).map(s => {
+      const sel = selectedScenario && selectedScenario === s.name ? ' selected' : '';
+      return `<option value="${escapeHtml(s.name)}"${sel}>${escapeHtml(titleCase(s.name))}</option>`;
+    }).join('');
+    const userLabel = inst.user_display_name || inst.user_upn || '— not resolved —';
+    const userClass = inst.user_id ? 'ok' : 'warn';
+    const managerLabel = inst.manager_display_name
+      ? `${inst.manager_display_name}${inst.manager_email ? ' · ' + inst.manager_email : ''}`
+      : '— no manager in directory —';
+    const managerClass = inst.manager_id ? 'ok' : 'warn';
+    const teamsBits = [];
+    // HITL delivery uses Microsoft Graph 1:1 chat by default (via the
+    // agent-identity sidecar), falling back to Graph email. No bot install
+    // step is required of the manager any more — this label reflects which
+    // path will fire when the agent escalates.
+    if (inst.notificationChannel === 'graph-chat') {
+      teamsBits.push('Teams 1:1 chat via Graph (agent identity) · HITL ready');
+    } else if (inst.notificationChannel === 'email') {
+      teamsBits.push('Email fallback via Graph · HITL ready (no manager AAD id resolved)');
+    } else if (!inst.user_id) {
+      teamsBits.push('agent user not resolved');
+    } else if (!inst.manager_id && !inst.manager_email) {
+      teamsBits.push('no manager in directory — HITL cannot deliver');
+    } else {
+      teamsBits.push('notification channel not configured');
+    }
+    const initials = actorInitials(inst.user_display_name || inst.display_name);
+    const lastBlock = lastDelivery ? renderInstanceDelivery(lastDelivery, state.lastScenario) : '';
+    // Live activity ribbon for active runs owned by this instance
+    let liveBlock = '';
+    if (liveRun) {
+      const elapsed = fmtElapsed(Date.now() - (liveRun.startedAt || Date.now()));
+      const last = lastToolForRun(liveRun);
+      const isWaiting = liveRun.status === 'waiting';
+      let txt;
+      let cls;
+      if (isWaiting) {
+        txt = '⏸ awaiting manager reply in Teams';
+        cls = 'waiting';
+      } else if (last) {
+        txt = `${last.server}/${last.tool}`;
+        cls = 'running';
+      } else {
+        txt = liveRun.runningText || 'starting…';
+        cls = 'running';
+      }
+      liveBlock = `
+        <div class="live-strip ${cls}" onclick="event.stopPropagation();openRun('${escapeHtml(liveRun.id)}')" title="Open run detail">
+          <span class="ls-spin"></span>
+          <span class="ls-text">${escapeHtml(txt)}</span>
+          <span class="ls-elapsed">${elapsed}</span>
+        </div>`;
+    }
+    const cardClasses = ['instance-card'];
+    if (running) cardClasses.push('running', 'clickable');
+    const cardClick = running ? ` onclick="openRun('${escapeHtml(liveRun.id)}')" title="Open active run"` : '';
+    const stateClick = running ? ` onclick="event.stopPropagation();openRun('${escapeHtml(liveRun.id)}')" style="cursor:pointer" title="Open active run"` : '';
+    return `
+      <div class="${cardClasses.join(' ')}" data-instance="${escapeHtml(id)}"${cardClick}>
+        <div class="instance-head">
+          <span class="instance-avatar">${escapeHtml(initials)}</span>
+          <div class="instance-id-block">
+            <div class="instance-name">${escapeHtml(inst.display_name)}</div>
+            <div class="instance-sub">${escapeHtml(inst.instance_app_id || id)}</div>
+          </div>
+          <span class="instance-state ${stateCls}"${stateClick}>${escapeHtml(stateLabel)}</span>
+        </div>
+        <div class="instance-meta">
+          <div class="row"><div class="k">User</div><div class="v ${userClass}">${escapeHtml(userLabel)}</div></div>
+          <div class="row"><div class="k">Manager</div><div class="v ${managerClass}">${escapeHtml(managerLabel)}</div></div>
+          <div class="row"><div class="k">Notify</div><div class="v">${escapeHtml(teamsBits.join(' · '))}</div></div>
+        </div>
+        ${liveBlock}
+        <div class="instance-launch" onclick="event.stopPropagation()">
+          <select id="scenario-${escapeHtml(id)}" onchange="instanceScenarioSelection['${escapeHtml(id)}']=this.value" ${running ? 'disabled' : ''}>
+            ${skillOptions || '<option value="">No scenarios available</option>'}
+          </select>
+          <button onclick="event.stopPropagation();launchInstanceScenario('${escapeHtml(id)}')" ${running || !inst.user_id || (governance.disabledInstances || {})[id] ? 'disabled' : ''}>${running ? 'Running…' : ((governance.disabledInstances || {})[id] ? 'Isolated' : 'Run')}</button>
+          ${(governance.disabledInstances || {})[id]
+            ? `<button class="gov-restore" onclick="event.stopPropagation();restoreInstance('${escapeHtml(id)}')" title="Re-enable this agent">Restore</button>`
+            : `<button class="gov-isolate" onclick="event.stopPropagation();isolateInstance('${escapeHtml(id)}','${escapeHtml(inst.display_name || id)}')" title="Block all future runs from this agent identity">Isolate</button>`}
+        </div>
+        ${(governance.disabledInstances || {})[id]
+          ? `<div class="gov-banner">🛑 Isolated by control plane · ${escapeHtml((governance.disabledInstances || {})[id])}</div>`
+          : ''}
+        ${lastBlock}
+      </div>`;
+  }).join('');
+}
+
+// Most recent completed-or-error run for this instance, used to render
+// "Last: delivered ..." beneath a now-idle card after a run finishes.
+function latestDeliveryForInstance(instanceId) {
+  if (!instanceId) return null;
+  for (const r of runs) {
+    if (isActiveStatus(r.status)) continue;
+    const aid = r.agenticUser && r.agenticUser.id;
+    if (aid === instanceId && r.delivery) return r.delivery;
+  }
+  return null;
+}
+
+function renderInstanceDelivery(delivery, scenario) {
+  if (!delivery) return '';
+  const status = delivery.status || 'unknown';
+  const target = delivery.delivered_to ? ` to ${delivery.delivered_to}` : '';
+  const scen = scenario ? ` · ${titleCase(scenario)}` : '';
+  let detail = '';
+  const channel = delivery.channel ? ` via ${delivery.channel}` : '';
+  if (status === 'sent') detail = `delivered${target}${channel}${scen}`;
+  else if (status === 'no_recipients') detail = `no manager resolved${scen}`;
+  else if (status === 'no_sender') detail = `agent user not resolved${scen}`;
+  else if (status === 'no_reference') detail = `notification path unavailable${scen}`;
+  else if (status === 'disabled') detail = `notification channel disabled${scen} — ${delivery.reason || ''}`;
+  else if (status === 'error') detail = `error${channel}${scen} — ${delivery.reason || ''}`;
+  else detail = `${status}${channel}${scen}${delivery.reason ? ' — ' + delivery.reason : ''}`;
+  return `<div class="instance-last"><span class="lbl">Last:</span>${escapeHtml(detail)}</div>`;
+}
+
+function titleCase(slug) {
+  return String(slug || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function launchInstanceScenario(instanceId) {
+  const select = document.getElementById('scenario-' + instanceId);
+  if (!select) return;
+  const scenario = select.value;
+  if (!scenario) return;
+  // Remember the chosen scenario so the dropdown stays put and the post-run
+  // "Last: ..." line shows the right scenario name. Running state itself is
+  // derived from the runs list (see activeRunForInstance).
+  instanceScenarioSelection[instanceId] = scenario;
+  instanceState[instanceId] = { lastScenario: scenario };
+  renderInstances();
+  try {
+    const res = await fetch(`/api/agentic-instances/${encodeURIComponent(instanceId)}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scenario, prompt: scenario.replace(/-/g, ' ') }),
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`HTTP ${res.status}: ${txt}`);
+    }
+    pollInstanceCompletion(instanceId);
+  } catch (e) {
+    instanceState[instanceId] = { status: 'failed', lastError: String(e), lastScenario: scenario };
+    renderInstances();
+  }
+}
+
+function launchAllInstances() {
+  const idle = instances.filter(i => (instanceState[i.instance_id] && instanceState[i.instance_id].status || 'idle') !== 'running' && i.user_id);
+  if (!idle.length) return;
+  if (!confirm(`Launch the same scenario on all ${idle.length} ready instance(s)?`)) return;
+  const first = idle[0];
+  const select = document.getElementById('scenario-' + first.instance_id);
+  const scenario = select && select.value;
+  if (!scenario) return;
+  for (const inst of idle) {
+    const sel = document.getElementById('scenario-' + inst.instance_id);
+    if (sel) sel.value = scenario;
+    launchInstanceScenario(inst.instance_id);
+  }
+}
+
+function pollInstanceCompletion(instanceId) {
+  // Running-state is derived from the runs list (see activeRunForInstance),
+  // so all this poll has to do is capture the final delivery result + clear
+  // the scenario hint once the run completes. The global refreshServerRuns
+  // tick (every 3.5s) is what actually moves the badge from Running→Idle.
+  const start = Date.now();
+  const interval = setInterval(async () => {
+    try {
+      const data = await fetch('/api/runs').then(r => r.json());
+      const list = Array.isArray(data) ? data : (data.runs || []);
+      // Server-side run lifecycle uses 'complete' (see _publish_run_event
+      // 'done' branch in web.py). The 'completed' spelling was a typo that
+      // caused successful runs to never match this filter, so the 5-minute
+      // timeout below would fire and stamp the instance as 'failed' even
+      // though the run had actually succeeded.
+      const run = list.find(r => (r.agenticUser && r.agenticUser.id === instanceId) && r.startedAt >= start - 2000 && (r.status === 'complete' || r.status === 'completed' || r.status === 'error'));
+      if (run) {
+        clearInterval(interval);
+        const delivery = run.delivery || null;
+        const prior = instanceState[instanceId] || {};
+        instanceState[instanceId] = {
+          ...prior,
+          lastDelivery: delivery,
+          status: (run.status === 'error') ? 'failed' : undefined,
+          lastScenario: prior.lastScenario,
+        };
+        renderInstances();
+      } else if (Date.now() - start > 5 * 60 * 1000) {
+        clearInterval(interval);
+        const prior = instanceState[instanceId] || {};
+        instanceState[instanceId] = { ...prior, status: 'failed', lastError: 'timed out waiting for run completion' };
+        renderInstances();
+      }
+    } catch (_) { /* ignore */ }
+  }, 3000);
+}
+
+function renderRunHistory() {
+  expireStaleRunsNoSave();
+  const count = runs.length;
+  const activeCount = runs.filter(run => isActiveStatus(run.status)).length;
+  document.getElementById('navRunCount').textContent = activeCount || count || '0';
+  document.getElementById('runHistoryCount').textContent = `(${count})`;
+  renderAgenticUsers();
+  renderInstances();
+  renderActiveNow();
+  renderFleetTicker();
+  const el = document.getElementById('runHistory');
+  if (!el) return;
+  if (!runs.length) {
+    el.innerHTML = '<div class="run-history-empty">No runs yet. Launch a scenario to build the audit trail.</div>';
+    return;
+  }
+  el.innerHTML = runs.slice(0, 12).map(run => {
+    const when = new Date(run.startedAt).toLocaleTimeString();
+    const tools = Object.keys(run.toolData || {}).length;
+    const detail = run.status === 'waiting' ? 'manager input required' : `${tools} tool call${tools === 1 ? '' : 's'}`;
+    const origin = run.source === 'teams-chat'
+      ? `Teams chat${run.actor && run.actor.name ? ' · ' + run.actor.name : ''}`
+      : (run.source || 'control plane');
+    return `
+      <div class="run-card ${run.id === activeRunId ? 'active' : ''}" onclick="openRun('${run.id}')">
+        <div class="run-card-title">${escapeHtml(run.title)}</div>
+        <div class="run-card-meta"><span>${when}</span><span class="run-chip ${run.status}">${runStatusLabel(run.status)}</span></div>
+        <div class="run-card-meta" style="margin-top:8px"><span>${escapeHtml(detail)}</span><span>${escapeHtml((run.servers || []).join(', '))}</span></div>
+        <div class="run-card-meta" style="margin-top:6px"><span>${escapeHtml(origin)}</span><span>${run.serverRun ? 'hosted' : 'local'}</span></div>
+      </div>`;
+  }).join('');
+}
+
+// ─── Live operations dashboard helpers ─────────────────────────────────
+
+function fmtElapsed(ms) {
+  if (!ms || ms < 0) return '0s';
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return s + 's';
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m + 'm' + String(r).padStart(2, '0') + 's';
+}
+
+function activeRunForInstance(instanceId) {
+  if (!instanceId) return null;
+  for (const r of runs) {
+    if (!isActiveStatus(r.status)) continue;
+    const aid = r.agenticUser && r.agenticUser.id;
+    if (aid === instanceId) return r;
+  }
+  return null;
+}
+
+function activeRunForAgenticSession(sessionId) {
+  if (!sessionId) return null;
+  for (const r of runs) {
+    if (!isActiveStatus(r.status)) continue;
+    const u = runAgenticUser(r);
+    if ((u.id || '') === sessionId) return r;
+  }
+  return null;
+}
+
+function lastToolForRun(run) {
+  const entries = Object.entries(run.toolData || {});
+  if (!entries.length) return null;
+  // Highest index first, fall back to insertion order (object keys preserve insertion).
+  entries.sort((a, b) => (b[1].index || 0) - (a[1].index || 0));
+  return entries[0][1];
+}
+
+function renderActiveNow() {
+  const el = document.getElementById('activeNow');
+  const countEl = document.getElementById('nowRunningCount');
+  if (!el) return;
+  const live = runs.filter(r => isActiveStatus(r.status)).sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+  if (countEl) countEl.textContent = `(${live.length})`;
+  if (!live.length) {
+    el.innerHTML = '<div class="empty">No agents are running right now. Launch a scenario on an instance below.</div>';
+    return;
+  }
+  const now = Date.now();
+  el.innerHTML = live.map(run => {
+    const who = (run.agenticUser && run.agenticUser.name) || (run.actor && run.actor.name) || 'Control Plane';
+    const elapsed = fmtElapsed(now - (run.startedAt || now));
+    const isWaiting = run.status === 'waiting';
+    const last = lastToolForRun(run);
+    let activity;
+    let activityCls = '';
+    if (isWaiting) {
+      activity = '⏸ awaiting manager reply in Teams';
+      activityCls = 'hitl';
+    } else if (last) {
+      activity = `→ ${last.server}/${last.tool}`;
+    } else {
+      activity = run.runningText || 'starting…';
+    }
+    return `
+      <div class="now-card ${isWaiting ? 'waiting' : ''}" onclick="openRun('${escapeHtml(run.id)}')">
+        <div class="now-head">
+          <span class="now-spinner"></span>
+          <span class="now-who">${escapeHtml(who)}</span>
+          <span class="now-elapsed">${elapsed}</span>
+        </div>
+        <div class="now-title">${escapeHtml(run.title || run.skillName || 'Run')}</div>
+        <div class="now-activity ${activityCls}">${escapeHtml(activity)}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderFleetTicker() {
+  const stream = document.getElementById('fleetStream');
+  const pulse = document.getElementById('fleetPulse');
+  if (!stream || !pulse) return;
+  // Compose a ticker of the last few notable events: tool calls + completions.
+  const events = [];
+  const now = Date.now();
+  for (const r of runs.slice(0, 12)) {
+    const who = (r.agenticUser && r.agenticUser.name) || (r.actor && r.actor.name) || 'control-plane';
+    const last = lastToolForRun(r);
+    const ago = fmtElapsed(now - (r.updatedAt || r.startedAt || now)) + ' ago';
+    if (isActiveStatus(r.status) && last) {
+      events.push({ when: r.updatedAt || r.startedAt || 0, who, what: `calling ${last.server}/${last.tool}`, ago });
+    } else if (r.status === 'waiting') {
+      events.push({ when: r.updatedAt || r.startedAt || 0, who, what: 'awaiting manager reply', ago });
+    } else if (r.status === 'complete') {
+      events.push({ when: r.completedAt || r.updatedAt || 0, who, what: 'completed', ago });
+    } else if (r.status === 'error') {
+      events.push({ when: r.completedAt || r.updatedAt || 0, who, what: 'error', ago });
+    }
+  }
+  events.sort((a, b) => b.when - a.when);
+  const top = events.slice(0, 6);
+  const anyActive = runs.some(r => isActiveStatus(r.status));
+  pulse.classList.toggle('idle', !anyActive);
+  if (!top.length) {
+    stream.textContent = 'All instances idle. Launch a scenario to see activity.';
+    return;
+  }
+  stream.innerHTML = top.map(e =>
+    `<span class="tk"><span class="who">${escapeHtml(e.who)}</span> <span class="what">${escapeHtml(e.what)}</span><span class="when">· ${escapeHtml(e.ago)}</span></span>`
+  ).join('');
+}
+
+function renderIdentity() {
+  if (!identity) return;
+  const idRows = [
+    ['Agent display name', identity.displayName],
+    ['Tenant ID', identity.tenantId],
+    ['Agent Identity object ID', identity.agentIdentity && identity.agentIdentity.objectId],
+    ['Agent Identity client ID', identity.agentIdentity && identity.agentIdentity.clientId],
+    ['Blueprint client ID', identity.blueprint && identity.blueprint.clientId],
+    ['Blueprint object ID', identity.blueprint && identity.blueprint.objectId],
+    ['Blueprint principal ID', identity.blueprint && identity.blueprint.principalId],
+    ['Foundry agent ID', identity.foundry && identity.foundry.agentId],
+  ];
+  document.getElementById('identityMeta').innerHTML = idRows.map(([label, value]) => `
+    <div class="meta-row"><span class="label">${label}</span><span class="value">${safeText(value)}</span></div>
+  `).join('');
+
+  const obs = identity.observability || {};
+  const gateway = identity.gateway || {};
+  document.getElementById('runtimePills').innerHTML = [
+    `<span class="pill ${identity.enabled ? 'on' : 'warn'}">Agent identity ${identity.enabled ? 'enabled' : 'incomplete'}</span>`,
+    `<span class="pill ${gateway.enabled ? 'on' : 'warn'}">AI Gateway ${gateway.enabled ? 'enabled' : 'direct'}</span>`,
+    `<span class="pill ${obs.sdkConfigured ? 'on' : 'warn'}">A365 SDK ${obs.sdkConfigured ? 'configured' : 'not configured'}</span>`,
+    `<span class="pill ${obs.exporterEnabled ? 'on' : 'warn'}">A365 exporter ${obs.exporterEnabled ? 'on' : 'off'}</span>`,
+    `<span class="pill ${obs.payloadsEnabled ? 'on' : 'warn'}">payload logging ${obs.payloadsEnabled ? 'on' : 'off'}</span>`,
+  ].join('');
+
+  const runtimeRows = [
+    ['LLM backend', identity.llmBackend],
+    ['Model', identity.model],
+    ['Gateway base URL', gateway.baseUrl],
+    ['A365 exporter endpoint', obs.endpoint],
+    ['A365 token source', obs.tokenSource],
+    ['A365 token scope', obs.tokenScope],
+    ['A365 last error', obs.lastError],
+    ['OTEL service', obs.serviceName],
+    ['Generic OTLP endpoint', obs.otlpEndpointConfigured ? obs.otlpEndpoint : 'not configured'],
+    ['Payload max chars', obs.payloadMaxChars],
+    ['Agent headers', Object.keys(identity.headers || {}).join(', ')],
+    ['Emitted events', (obs.events || []).join(', ')],
+  ];
+  document.getElementById('runtimeMeta').innerHTML = runtimeRows.map(([label, value]) => `
+    <div class="meta-row"><span class="label">${label}</span><span class="value">${safeText(value)}</span></div>
+  `).join('');
+  renderSurfaces();
+}
+
+// ── Microsoft 365 governance surfaces — deep links into Entra / Purview / Defender / Admin
+function renderSurfaces() {
+  const grid = document.getElementById('surfacesGrid');
+  if (!grid || !identity) return;
+  const tid = identity.tenantId || '';
+  const agentAppId = (identity.agentIdentity && identity.agentIdentity.clientId) || '';
+  const agentObjId = (identity.agentIdentity && identity.agentIdentity.objectId) || '';
+  const blueprintAppId = (identity.blueprint && identity.blueprint.clientId) || '';
+  const blueprintObjId = (identity.blueprint && identity.blueprint.objectId) || '';
+  const tenantSeg = tid ? encodeURIComponent(tid) : 'common';
+
+  // Entra Enterprise App overview for the agent identity (works with appId in the AAD blade).
+  const entraAgentUrl = agentAppId
+    ? `https://entra.microsoft.com/${tenantSeg}/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Overview/objectId/${encodeURIComponent(agentObjId)}/appId/${encodeURIComponent(agentAppId)}`
+    : `https://entra.microsoft.com/${tenantSeg}/#view/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade`;
+  const entraBlueprintUrl = blueprintAppId
+    ? `https://entra.microsoft.com/${tenantSeg}/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Overview/objectId/${encodeURIComponent(blueprintObjId)}/appId/${encodeURIComponent(blueprintAppId)}`
+    : entraAgentUrl;
+  const entraAuditUrl = `https://entra.microsoft.com/${tenantSeg}/#view/Microsoft_AAD_IAM/AuditLogsMenuBlade/~/AuditLogs`;
+  const entraSignInsUrl = `https://entra.microsoft.com/${tenantSeg}/#view/Microsoft_AAD_IAM/SignInsBlade`;
+
+  // Purview DSPM for AI — agents inventory + activity explorer.
+  const purviewAgentsUrl = 'https://purview.microsoft.com/aibrowser/aiagents';
+  const purviewActivityUrl = 'https://purview.microsoft.com/activityexplorer';
+  const purviewDspmUrl = 'https://purview.microsoft.com/aibrowser/aihub';
+
+  // Defender XDR — agent inventory + posture + threats.
+  const defenderAgentsUrl = 'https://security.microsoft.com/agents';
+  const defenderPostureUrl = 'https://security.microsoft.com/securityposture';
+
+  // M365 Admin Center — Agent 365 console.
+  const m365AgentsUrl = 'https://admin.microsoft.com/Adminportal/Home#/agents';
+  const m365AgentMapUrl = 'https://admin.microsoft.com/Adminportal/Home#/copilot/agentmap';
+
+  const surfaces = [
+    {
+      icon: '🪪', title: 'Entra — Agent identity', portal: 'entra.microsoft.com',
+      url: entraAgentUrl,
+      purpose: 'Sign-ins, audit, Conditional Access, access reviews — for this agent.',
+    },
+    {
+      icon: '🛡️', title: 'Purview — DSPM for AI', portal: 'purview.microsoft.com',
+      url: purviewDspmUrl,
+      purpose: 'Sensitivity labels, prompt + response captures, DLP-for-AI.',
+    },
+    {
+      icon: '🛰️', title: 'Defender — Agent security', portal: 'security.microsoft.com',
+      url: defenderAgentsUrl,
+      purpose: 'Agent posture, threat detection, shadow-AI discovery.',
+    },
+    {
+      icon: '⚙️', title: 'M365 Admin — Agent 365 console', portal: 'admin.microsoft.com',
+      url: m365AgentsUrl,
+      purpose: 'Lifecycle, agent map, policy templates, governance actions.',
+    },
+    {
+      icon: '🧬', title: 'Entra — Blueprint app (template)', portal: 'entra.microsoft.com',
+      url: entraBlueprintUrl,
+      purpose: 'Inheritable permissions for every per-user teammate.',
+    },
+    {
+      icon: '📜', title: 'Entra — Directory audit log', portal: 'entra.microsoft.com',
+      url: entraAuditUrl,
+      purpose: 'Every kill-switch + provisioning event lands here.',
+    },
+    {
+      icon: '🔍', title: 'Purview — Activity Explorer', portal: 'purview.microsoft.com',
+      url: purviewActivityUrl,
+      purpose: 'Per-run, per-tool I/O ledger with sensitivity classifications.',
+    },
+  ];
+
+  grid.innerHTML = surfaces.map(s => `
+    <a class="surface-card" href="${s.url}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(s.title)} in a new tab">
+      <span class="surf-icon">${s.icon}</span>
+      <span class="surf-body">
+        <div class="surf-title">${escapeHtml(s.title)}</div>
+        <div class="surf-portal">${escapeHtml(s.portal)}</div>
+        <div class="surf-purpose">${escapeHtml(s.purpose)}</div>
+      </span>
+      <span class="surf-arrow">↗</span>
+    </a>
+  `).join('') + `<div class="surfaces-foot">Deep links scoped to this tenant. Sign in once; every tile opens the right blade for agent identity <code style="font-family:inherit">${escapeHtml((agentAppId || '').slice(0, 8))}…</code></div>`;
 }
 
 // ── Run scenario ──
-async function runScenario(index) {
-  if (running) return;
+async function runScenario(index, resumeText = '', parentRunId = null) {
   const skill = skills[index];
   if (!skill) return;
 
-  running = true;
-  toolData = {};
-  serverCallCounts = {};
-  let toolIndex = 0;
-
-  // Switch to run view
   const title = skill.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  document.getElementById('runTitle').textContent = title;
-  document.getElementById('runStatus').textContent = 'Running';
-  document.getElementById('runStatus').className = 'run-status running';
-  document.getElementById('runningBar').classList.remove('hidden');
-  document.getElementById('runningText').textContent = 'Starting agent…';
-  document.getElementById('toolTimeline').innerHTML = '<div class="timeline-empty">Waiting for agent to start calling tools…</div>';
-  document.getElementById('runToolCount').textContent = '0';
-  document.getElementById('resultPanel').style.display = 'none';
-  document.getElementById('statsPanel').style.display = 'none';
-  document.getElementById('serversUsed').innerHTML = '<div style="font-size:12px;color:var(--dim);padding:8px 0">No tool calls yet</div>';
-  document.getElementById('navRunItem').style.display = '';
-  document.getElementById('topbarTitle').textContent = title;
-
-  document.getElementById('dashboardView').classList.add('hidden');
-  document.getElementById('runView').classList.add('active');
-
-  // Disable all run buttons
-  document.querySelectorAll('.run-btn').forEach(b => b.disabled = true);
+  const meta = SCENARIO_META[skill.name];
+  const basePrompt = skill.prompt;
+  const prompt = resumeText
+    ? `${basePrompt}\n\n## Manager response received via simulated Teams\n${resumeText}\n\nContinue the hiring pipeline using this manager-provided context. Make the relevant Workday and ServiceNow tool calls now.`
+    : basePrompt;
+  const run = {
+    id: newRunId(),
+    skillIndex: index,
+    skillName: skill.name,
+    title: resumeText ? `${title} · Manager Reply` : title,
+    status: 'running',
+    startedAt: Date.now(),
+    completedAt: null,
+    parentRunId,
+    prompt,
+    servers: meta && meta.tags ? meta.tags : [],
+    toolData: {},
+    serverCallCounts: {},
+    agentEvents: [],
+    loggedEvents: [],
+    result: '',
+    stats: null,
+    humanRequest: null,
+    error: '',
+  };
+  activeRunId = run.id;
+  upsertRun(run);
+  renderRun(run);
+  // Stay on the dashboard so the user can watch the run land in the
+  // "Now Running" strip and start more runs in parallel. They can click
+  // any active card to drill into the per-run timeline.
+  showToast(`Started: ${title}`);
 
   try {
-    const meta = SCENARIO_META[skill.name];
-    const payload = { prompt: skill.prompt };
+    const payload = { prompt };
     if (meta && meta.tags && meta.tags.length) payload.servers = meta.tags;
+    payload.runId = run.id;
+    payload.title = run.title;
+    payload.source = 'control-plane';
 
     const response = await fetch('/api/run', {
       method: 'POST',
@@ -457,112 +2008,269 @@ async function runScenario(index) {
         } else if (line.startsWith('data: ') && eventType) {
           try {
             const data = JSON.parse(line.slice(6));
-            handleRunEvent(eventType, data);
+            handleRunEvent(run.id, eventType, data);
           } catch (e) { /* ignore */ }
           eventType = null;
         }
       }
     }
   } catch (e) {
-    document.getElementById('runningText').textContent = '❌ Error: ' + e.message;
+    run.status = 'error';
+    run.error = e.message;
+    upsertRun(run);
+    if (activeRunId === run.id) renderRun(run);
   }
-
-  running = false;
-  document.querySelectorAll('.run-btn').forEach(b => b.disabled = false);
 }
 
-function handleRunEvent(type, data) {
-  switch (type) {
-    case 'status':
-      document.getElementById('runningText').textContent = data.message;
-      break;
+function renderRun(run) {
+  if (!run) return;
+  activeRunId = run.id;
+  document.getElementById('runTitle').textContent = run.title;
+  document.getElementById('topbarTitle').textContent = run.title;
+  document.getElementById('runStatus').textContent = runStatusLabel(run.status);
+  document.getElementById('runStatus').className = `run-status ${run.status === 'complete' ? 'complete' : 'running'}`;
+  document.getElementById('runningBar').classList.toggle('hidden', run.status !== 'running');
+  document.getElementById('runningText').textContent = run.error ? `Error: ${run.error}` : (run.runningText || 'Starting agent...');
+  document.getElementById('runToolCount').textContent = Object.keys(run.toolData || {}).length;
+  renderToolTimeline(run);
+  renderServersUsed(run);
+  renderEventStream('agentEventStream', run.agentEvents || []);
+  renderEventStream('loggedEventStream', run.loggedEvents || []);
+  document.getElementById('agentEventCount').textContent = (run.agentEvents || []).length;
+  document.getElementById('loggedEventCount').textContent = (run.loggedEvents || []).length;
 
-    case 'tool_call': {
-      // Remove empty state
-      const timeline = document.getElementById('toolTimeline');
-      const empty = timeline.querySelector('.timeline-empty');
-      if (empty) empty.remove();
+  document.getElementById('resultPanel').style.display = run.result ? '' : 'none';
+  document.getElementById('runResultContent').textContent = run.result || '';
 
-      toolData[data.id] = { server: data.server, tool: data.tool, arguments: data.arguments, result: null };
+  if (run.stats) {
+    document.getElementById('statsPanel').style.display = '';
+    document.getElementById('runStatDuration').textContent = run.stats.duration + 's';
+    document.getElementById('runStatTurns').textContent = run.stats.turns;
+    document.getElementById('runStatCalls').textContent = run.stats.tool_calls;
+    document.getElementById('runStatPrompt').textContent = (run.stats.prompt_tokens || 0).toLocaleString();
+    document.getElementById('runStatComp').textContent = (run.stats.completion_tokens || 0).toLocaleString();
+    document.getElementById('runStatModel').textContent = run.stats.model;
+  } else {
+    document.getElementById('statsPanel').style.display = 'none';
+  }
 
-      // Track server usage
-      serverCallCounts[data.server] = (serverCallCounts[data.server] || 0) + 1;
-      updateServersUsed();
+  renderHumanPanel(run);
+  renderRunHistory();
+}
 
-      // Add timeline entry
-      const entry = document.createElement('div');
-      entry.className = 'tool-entry';
-      entry.id = 'entry-' + data.id;
-      entry.onclick = () => showToolDetail(data.id);
-      const argsPreview = JSON.stringify(data.arguments).slice(0, 80);
-      entry.innerHTML = `
-        <span class="entry-dot pending"></span>
+function renderToolTimeline(run) {
+  const timeline = document.getElementById('toolTimeline');
+  const entries = Object.entries(run.toolData || {});
+  if (!entries.length) {
+    timeline.innerHTML = '<div class="timeline-empty">Waiting for agent to start calling tools...</div>';
+    return;
+  }
+  timeline.innerHTML = entries.map(([id, data]) => {
+    const argsPreview = JSON.stringify(data.arguments || {}).slice(0, 80);
+    const state = data.result ? 'done' : 'pending';
+    return `
+      <div class="tool-entry" id="entry-${escapeHtml(id)}" onclick="showToolDetail('${escapeHtml(id)}')">
+        <span class="entry-dot ${state}"></span>
         <div class="entry-body">
           <div class="entry-header">
-            <span class="entry-server">${data.server}</span>
-            <span class="entry-tool">${data.tool}</span>
-            <span class="entry-index">#${data.index}</span>
+            <span class="entry-server">${escapeHtml(data.server)}</span>
+            <span class="entry-tool">${escapeHtml(data.tool)}</span>
+            <span class="entry-index">#${data.index || ''}</span>
           </div>
-          <div class="entry-preview">${argsPreview}</div>
-        </div>`;
-      timeline.appendChild(entry);
+          <div class="entry-preview">${escapeHtml(argsPreview)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
 
-      document.getElementById('runToolCount').textContent = data.index;
-      document.getElementById('runningText').textContent = `Calling ${data.server}/${data.tool}…`;
+function renderServersUsed(run) {
+  const el = document.getElementById('serversUsed');
+  const entries = Object.entries(run.serverCallCounts || {}).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--dim);padding:8px 0">No tool calls yet</div>';
+    return;
+  }
+  el.innerHTML = entries.map(([name, count]) => `
+    <div class="server-used-item">
+      <span class="su-icon">${SERVER_ICONS[name] || '🔌'}</span>
+      <span class="su-name">${escapeHtml(name)}</span>
+      <span class="su-count">${count} call${count !== 1 ? 's' : ''}</span>
+    </div>`).join('');
+}
+
+function renderHumanPanel(run) {
+  const panel = document.getElementById('humanPanel');
+  if (!run.humanRequest) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = '';
+  const request = run.humanRequest;
+  document.getElementById('humanMessage').textContent = request.message || 'The agent needs manager input before it can continue.';
+  document.getElementById('teamsRecipient').textContent = request.recipient || 'Hiring Manager';
+  document.getElementById('teamsThread').innerHTML = `
+    <div class="teams-message"><div class="sender">${escapeHtml(identity?.displayName || 'Demo Agent')}</div>${escapeHtml(request.message || '')}</div>
+    ${run.managerReply ? `<div class="teams-message manager"><div class="sender">${escapeHtml(request.recipient || 'Hiring Manager')}</div>${escapeHtml(run.managerReply)}</div>` : ''}`;
+  document.getElementById('managerReply').value = run.managerReply || '';
+}
+
+function handleRunEvent(runId, type, data) {
+  const run = getRun(runId);
+  if (!run) return;
+  switch (type) {
+    case 'status':
+      run.runningText = data.message;
+      break;
+
+    case 'metadata':
+      identity = data;
+      renderIdentity();
+      break;
+
+    case 'turn':
+      addAgentEvent(run, { event: `agent.llm.${data.phase}`, attributes: data });
+      run.runningText = data.phase === 'starting'
+        ? `Turn ${data.turn}: asking the model with ${data.tools} tools…`
+        : `Turn ${data.turn}: model response received (${data.finish_reason || 'complete'})`;
+      break;
+
+    case 'agent_event':
+      addAgentEvent(run, data);
+      break;
+
+    case 'agent365_event':
+      addLoggedEvent(run, data);
+      break;
+
+    case 'policy_event': {
+      // Surface a transient governance toast so audiences see the
+      // control plane reacting in real time.
+      const srv = data && data.server ? data.server : '';
+      const tool = data && data.tool ? data.tool : '';
+      const action = data && data.action ? data.action : 'policy';
+      const reason = data && data.reason ? data.reason : '';
+      const where = [srv, tool].filter(Boolean).join('/');
+      showGovernanceToast(`⛔ ${action}${where ? ' · ' + where : ''}${reason ? ' — ' + reason : ''}`);
+      // Also log it into the run's agent event timeline for auditors.
+      addAgentEvent(run, { event: 'controlplane.policy_event', attributes: data || {} });
+      // Refresh governance state so the ledger updates.
+      try { refreshGovernance(); } catch (_) {}
+      break;
+    }
+
+    case 'tool_call': {
+      run.toolData[data.id] = { server: data.server, tool: data.tool, arguments: data.arguments, result: null, index: data.index };
+
+      // Track server usage
+      run.serverCallCounts[data.server] = (run.serverCallCounts[data.server] || 0) + 1;
+      run.runningText = `Calling ${data.server}/${data.tool}…`;
       break;
     }
 
     case 'tool_result': {
-      if (toolData[data.id]) {
-        toolData[data.id].result = data.result;
-      }
-      const dot = document.querySelector(`#entry-${data.id} .entry-dot`);
-      if (dot) {
-        dot.classList.remove('pending');
-        dot.classList.add('done');
+      if (run.toolData[data.id]) {
+        run.toolData[data.id].result = data.result;
       }
       break;
     }
 
     case 'result':
-      document.getElementById('runningBar').classList.add('hidden');
-      document.getElementById('runStatus').textContent = 'Complete';
-      document.getElementById('runStatus').className = 'run-status complete';
-      document.getElementById('resultPanel').style.display = '';
-      document.getElementById('runResultContent').textContent = data.content;
+      run.result = data.content || '';
+      break;
+
+    case 'human_input_required':
+      run.status = 'waiting';
+      run.humanRequest = data;
+      run.runningText = 'Waiting for manager reply in simulated Teams handoff';
+      renderApprovals();
+      break;
+
+    case 'hitl_reply':
+      if (data && data.reply) {
+        run.managerReply = data.reply;
+        run.status = 'running';
+        renderApprovals();
+      }
       break;
 
     case 'stats':
-      document.getElementById('statsPanel').style.display = '';
-      document.getElementById('runStatDuration').textContent = data.duration + 's';
-      document.getElementById('runStatTurns').textContent = data.turns;
-      document.getElementById('runStatCalls').textContent = data.tool_calls;
-      document.getElementById('runStatPrompt').textContent = (data.prompt_tokens || 0).toLocaleString();
-      document.getElementById('runStatComp').textContent = (data.completion_tokens || 0).toLocaleString();
-      document.getElementById('runStatModel').textContent = data.model;
+      run.stats = data;
       break;
 
     case 'error':
-      document.getElementById('runningText').textContent = '❌ ' + data.message;
-      document.getElementById('runStatus').textContent = 'Error';
-      document.getElementById('runStatus').className = 'run-status running';
+      run.status = 'error';
+      run.error = data.message;
+      run.runningText = 'Error: ' + data.message;
       break;
 
     case 'done':
-      // Keep the running bar visible if it's showing an error
-      const runText = document.getElementById('runningText').textContent;
-      if (!runText.startsWith('❌')) {
-        document.getElementById('runningBar').classList.add('hidden');
-      }
-      document.getElementById('runStatus').textContent = runText.startsWith('❌') ? 'Error' : 'Done';
-      document.getElementById('runStatus').className = 'run-status';
+      if (run.status === 'running') run.status = 'complete';
+      run.completedAt = Date.now();
       break;
   }
+  upsertRun(run);
+  if (activeRunId === run.id) renderRun(run);
+}
+
+function eventPreview(record) {
+  const attrs = record.attributes || record;
+  const parts = [];
+  if (attrs['mcp.server.name'] || attrs.server) parts.push(attrs['mcp.server.name'] || attrs.server);
+  if (attrs['mcp.tool.name'] || attrs.tool) parts.push(attrs['mcp.tool.name'] || attrs.tool);
+  if (attrs.phase) parts.push(attrs.phase);
+  if (attrs['mcp.tool.call.success'] !== undefined) parts.push(attrs['mcp.tool.call.success'] ? 'success' : 'failed');
+  if (attrs['mcp.tool.call.duration_ms']) parts.push(attrs['mcp.tool.call.duration_ms'] + 'ms');
+  return parts.join(' · ') || JSON.stringify(attrs).slice(0, 120);
+}
+
+function addAgentEvent(run, record) {
+  run.agentEvents.unshift(record);
+  run.agentEvents = run.agentEvents.slice(0, 40);
+}
+
+function addLoggedEvent(run, record) {
+  run.loggedEvents.unshift(record);
+  run.loggedEvents = run.loggedEvents.slice(0, 40);
+}
+
+function renderEventStream(elementId, records) {
+  const el = document.getElementById(elementId);
+  if (!records.length) {
+    el.innerHTML = elementId === 'agentEventStream'
+      ? '<div class="event-empty">Waiting for LLM, tool, and telemetry events...</div>'
+      : '<div class="event-empty">Tool-call observation records will appear here.</div>';
+    return;
+  }
+  el.innerHTML = records.map((record, index) => {
+    const name = record.event || 'event';
+    const attrs = record.attributes || record;
+    const time = record.timestamp ? new Date(record.timestamp * 1000).toLocaleTimeString() : new Date().toLocaleTimeString();
+    return `
+      <div class="event-item" onclick='showEventDetail(${JSON.stringify(elementId)}, ${index})'>
+        <div class="event-name">${name}</div>
+        <div class="event-meta">${time}</div>
+        <div class="event-preview">${eventPreview(record)}</div>
+      </div>`;
+  }).join('');
+}
+
+function showEventDetail(elementId, index) {
+  const run = getRun();
+  if (!run) return;
+  const source = elementId === 'agentEventStream' ? run.agentEvents : run.loggedEvents;
+  const record = source[index];
+  if (!record) return;
+  document.getElementById('detailTitle').textContent = record.event || 'Agent event';
+  document.getElementById('detailInput').textContent = JSON.stringify(record.attributes || {}, null, 2);
+  document.getElementById('detailOutput').textContent = JSON.stringify(record, null, 2);
+  document.getElementById('detailOverlay').classList.add('visible');
 }
 
 function updateServersUsed() {
+  const run = getRun();
+  if (!run) return;
   const el = document.getElementById('serversUsed');
-  const entries = Object.entries(serverCallCounts).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(run.serverCallCounts || {}).sort((a, b) => b[1] - a[1]);
   el.innerHTML = entries.map(([name, count]) => `
     <div class="server-used-item">
       <span class="su-icon">${SERVER_ICONS[name] || '🔌'}</span>
@@ -573,7 +2281,8 @@ function updateServersUsed() {
 
 // ── Tool detail modal ──
 function showToolDetail(id) {
-  const d = toolData[id];
+  const run = getRun();
+  const d = run && run.toolData[id];
   if (!d) return;
   document.getElementById('detailTitle').textContent = `${d.server} / ${d.tool}`;
   document.getElementById('detailInput').textContent = JSON.stringify(d.arguments, null, 2);
@@ -589,20 +2298,462 @@ function closeDetail() {
 function showDashboard() {
   document.getElementById('dashboardView').classList.remove('hidden');
   document.getElementById('runView').classList.remove('active');
+  document.getElementById('approvalsView').classList.remove('active');
   document.getElementById('topbarTitle').textContent = 'Dashboard';
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelectorAll('.nav-item')[0].classList.add('active');
+  document.getElementById('navDashboard').classList.add('active');
+  renderRunHistory();
 }
 
 function showRunView() {
+  const run = getRun();
+  if (run) renderRun(run);
   document.getElementById('dashboardView').classList.add('hidden');
   document.getElementById('runView').classList.add('active');
+  document.getElementById('approvalsView').classList.remove('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('navRunItem').classList.add('active');
+}
+
+function showApprovals() {
+  document.getElementById('dashboardView').classList.add('hidden');
+  document.getElementById('runView').classList.remove('active');
+  document.getElementById('approvalsView').classList.add('active');
+  document.getElementById('topbarTitle').textContent = 'Approvals';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('navApprovals').classList.add('active');
+  renderApprovals();
+}
+
+function pendingApprovals() {
+  return runs.filter(r => r.humanRequest && !r.managerReply && isActiveStatus(r.status));
+}
+function completedApprovals() {
+  return runs
+    .filter(r => r.humanRequest && r.managerReply)
+    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+    .slice(0, 25);
+}
+
+function renderApprovalsBadge() {
+  const n = pendingApprovals().length;
+  const badge = document.getElementById('navApprovalsCount');
+  if (badge) {
+    badge.textContent = String(n);
+    badge.style.background = n > 0 ? 'var(--orange-bg)' : '';
+    badge.style.color = n > 0 ? 'var(--orange)' : '';
+  }
+}
+
+function renderApprovals() {
+  renderApprovalsBadge();
+  const view = document.getElementById('approvalsView');
+  if (!view || !view.classList.contains('active')) return;
+  const pending = pendingApprovals();
+  const completed = completedApprovals();
+  document.getElementById('approvalsPendingCount').textContent = `(${pending.length})`;
+  document.getElementById('approvalsCompletedCount').textContent = `(${completed.length})`;
+  document.getElementById('approvalsSub').textContent = pending.length
+    ? `${pending.length} approval${pending.length !== 1 ? 's' : ''} waiting on you. Reply here or via Teams chat — first reply wins.`
+    : 'No pending approvals. Teams 1:1 chat replies are also accepted automatically.';
+
+  const pendEl = document.getElementById('approvalsPending');
+  if (!pending.length) {
+    pendEl.innerHTML = '<div class="approval-empty">No agents are waiting on a human decision right now.</div>';
+  } else {
+    pendEl.innerHTML = pending.map(r => approvalCardHtml(r, false)).join('');
+  }
+  const compEl = document.getElementById('approvalsCompleted');
+  if (!completed.length) {
+    compEl.innerHTML = '<div class="approval-empty">Completed approvals will collapse here after the agent receives your reply.</div>';
+  } else {
+    compEl.innerHTML = completed.map(r => approvalCardHtml(r, true)).join('');
+  }
+}
+
+function approvalCardHtml(run, isCompleted) {
+  const req = run.humanRequest || {};
+  const recipient = req.recipient || run.managerDisplayName || 'Manager';
+  const instance = run.instanceLabel || run.instanceDisplayName || run.skillTitle || run.skillId || 'Agent';
+  const scenario = run.skillId || run.scenario || '';
+  const question = req.message || 'The agent needs manager input before it can continue.';
+  const channelRaw = req.channel || req.deliveryChannel || '';
+  const channelStatus = req.deliveryStatus || (req.deliveryError ? 'error' : '');
+  let channelLabel = '';
+  if (channelRaw === 'teams-chat' && channelStatus === 'error') {
+    channelLabel = `<span class="ac-channel error">Teams chat delivery failed — reply here</span>`;
+  } else if (channelRaw === 'teams-chat') {
+    channelLabel = `<span class="ac-channel">Sent via Teams 1:1 chat</span>`;
+  } else if (channelRaw) {
+    channelLabel = `<span class="ac-channel">Channel: ${escapeHtml(channelRaw)}</span>`;
+  }
+  const askedAt = req.askedAt ? new Date(req.askedAt).toLocaleString() : '';
+  if (isCompleted) {
+    return `
+      <div class="approval-card completed">
+        <div class="ac-head">
+          <span class="ac-instance">${escapeHtml(instance)}</span>
+          <span class="ac-scenario">${escapeHtml(scenario)}</span>
+          <span class="ac-recipient">${escapeHtml(recipient)}</span>
+          ${askedAt ? `<span class="ac-time">asked ${escapeHtml(askedAt)}</span>` : ''}
+          <button class="ac-open" onclick="openRun('${escapeHtml(run.id)}')">open run</button>
+        </div>
+        <div class="ac-question"><strong>Agent asked:</strong> ${escapeHtml(question)}</div>
+        <div class="ac-reply"><strong>${escapeHtml(recipient)} replied:</strong> ${escapeHtml(run.managerReply)}</div>
+      </div>`;
+  }
+  const safeId = escapeHtml(run.id);
+  return `
+    <div class="approval-card" data-run-id="${safeId}">
+      <div class="ac-head">
+        <span class="ac-instance">${escapeHtml(instance)}</span>
+        <span class="ac-scenario">${escapeHtml(scenario)}</span>
+        <span class="ac-recipient">→ ${escapeHtml(recipient)}</span>
+      </div>
+      ${channelLabel}
+      <div class="ac-question">${escapeHtml(question)}</div>
+      <textarea id="ar-${safeId}" rows="3" placeholder="Reply to the agent here…"></textarea>
+      <div class="ac-actions">
+        <div class="ac-quick">
+          <button onclick="quickApproval('${safeId}','yes')">yes</button>
+          <button onclick="quickApproval('${safeId}','no')">no</button>
+          <button onclick="quickApproval('${safeId}','hold')">hold</button>
+        </div>
+        <button class="ac-open" onclick="openRun('${safeId}')">open run</button>
+        <button class="ac-send" onclick="sendApprovalReply('${safeId}')">Send reply &amp; resume</button>
+      </div>
+    </div>`;
+}
+
+function quickApproval(runId, value) {
+  const ta = document.getElementById('ar-' + runId);
+  if (ta) { ta.value = value; ta.focus(); }
+}
+
+function sendApprovalReply(runId) {
+  const run = getRun(runId);
+  if (!run || !run.humanRequest) return;
+  const ta = document.getElementById('ar-' + runId);
+  const reply = (ta?.value || '').trim();
+  if (!reply) { ta?.focus(); return; }
+  const requestId = run.humanRequest.requestId || run.humanRequest.request_id;
+  const btn = document.querySelector(`.approval-card[data-run-id="${runId}"] .ac-send`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  // Preferred path: resolve the pending HITL future via the public form endpoint
+  // (same path the Teams bot reply handler uses). The agent is awaiting that
+  // future and will continue its current turn as soon as we POST a reply.
+  const postForm = requestId
+    ? fetch(`/api/hitl/${encodeURIComponent(requestId)}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'reply=' + encodeURIComponent(reply),
+      }).then(r => r.ok ? { ok: true } : r.text().then(t => ({ ok: false, err: t })))
+    : Promise.resolve({ ok: false, err: 'no request id' });
+  postForm.then(res => {
+    if (!res.ok) {
+      // Fall back to the legacy resume-by-rerun path so the demo still works.
+      run.managerReply = reply;
+      run.status = 'complete';
+      upsertRun(run);
+      renderApprovals();
+      try { renderDashboard(); } catch (_) {}
+      runScenario(run.skillIndex, reply, run.id);
+      showToast('Reply sent (legacy resume)', 'warn');
+      return;
+    }
+    // Future was resolved. Clear waiting state locally so the Now Running
+    // panel + instance card stop showing "awaiting manager reply". The
+    // running run will continue emitting turn/result events over SSE.
+    run.managerReply = reply;
+    run.status = 'running';
+    run.runningText = 'agent resuming with manager reply…';
+    upsertRun(run);
+    renderApprovals();
+    try { renderDashboard(); } catch (_) {}
+    // Re-sync run state from the server after a moment in case the SSE
+    // stream had dropped (proxies idle out long-waiting connections).
+    setTimeout(() => { try { refreshServerRuns(); } catch (_) {} }, 1500);
+    setTimeout(() => { try { refreshServerRuns(); } catch (_) {} }, 6000);
+    showToast('Reply sent — agent resuming', null);
+  }).finally(() => {
+    if (btn) { btn.disabled = false; btn.textContent = 'Send reply & resume'; }
+  });
+}
+
+function openRun(id) {
+  const run = getRun(id);
+  if (!run) return;
+  activeRunId = id;
+  renderRun(run);
+  showRunView();
+}
+
+function showRunHistory() {
+  expireStaleRunsNoSave();
+  const active = runs.find(run => isActiveStatus(run.status)) || runs[0];
+  if (active) openRun(active.id);
+  else showDashboard();
+}
+
+function sendManagerReply() {
+  const run = getRun();
+  if (!run || !run.humanRequest) return;
+  const reply = document.getElementById('managerReply').value.trim();
+  if (!reply) return;
+  run.managerReply = reply;
+  run.status = 'complete';
+  upsertRun(run);
+  renderRun(run);
+  renderApprovals();
+  runScenario(run.skillIndex, reply, run.id);
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
 
+function showToast(message, kind) {
+  let host = document.getElementById('toastHost');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'toastHost';
+    host.className = 'toast-host';
+    document.body.appendChild(host);
+  }
+  const t = document.createElement('div');
+  t.className = 'toast' + (kind === 'warn' ? ' warn' : '');
+  t.textContent = message;
+  host.appendChild(t);
+  setTimeout(() => { t.style.transition = 'opacity .25s'; t.style.opacity = '0'; }, 2400);
+  setTimeout(() => { t.remove(); }, 2750);
+}
+
+// ── Agent 365 value panel ─────────────────────────────────────────
+let a365ValueData = null;
+const A365_CAT_META = {
+  'Entra':              { icon: '🪪', order: 1 },
+  'Purview':            { icon: '🛡️', order: 2 },
+  'Defender':           { icon: '🛰️', order: 3 },
+  'M365 Admin Center':  { icon: '⚙️', order: 4 },
+  'Intune':             { icon: '📱', order: 5 },
+};
+
+async function loadA365Value() {
+  try {
+    const r = await fetch('/api/a365-value');
+    if (!r.ok) throw new Error('http ' + r.status);
+    a365ValueData = await r.json();
+    renderA365Value();
+  } catch (e) {
+    const sub = document.getElementById('a365ValueSubtitle');
+    if (sub) sub.textContent = 'load failed — ' + (e.message || e);
+  }
+}
+
+function renderA365Value() {
+  if (!a365ValueData) return;
+  const sum = a365ValueData.statusSummary || {};
+  const order = a365ValueData.statusOrder || ['active','configured','manual','roadmap'];
+  const labels = a365ValueData.statusLabels || {};
+  const total = (a365ValueData.features || []).length;
+
+  const subEl = document.getElementById('a365ValueSubtitle');
+  if (subEl) subEl.textContent = total + ' capabilities · ' + (sum.active || 0) + ' active';
+
+  const summaryEl = document.getElementById('a365ValueSummary');
+  if (summaryEl) {
+    const parts = [`<span class="pill total">${total} total</span>`];
+    for (const s of order) {
+      const n = sum[s] || 0;
+      if (!n) continue;
+      parts.push(`<span class="a365-pill ${s}">${n} ${escapeHtml(labels[s] || s)}</span>`);
+    }
+    summaryEl.innerHTML = parts.join('');
+  }
+
+  const grouped = {};
+  for (const f of (a365ValueData.features || [])) {
+    (grouped[f.category] = grouped[f.category] || []).push(f);
+  }
+  const cats = Object.keys(grouped).sort((a, b) =>
+    ((A365_CAT_META[a] && A365_CAT_META[a].order) || 99) -
+    ((A365_CAT_META[b] && A365_CAT_META[b].order) || 99)
+  );
+
+  const catsEl = document.getElementById('a365ValueCategories');
+  if (!catsEl) return;
+  catsEl.innerHTML = cats.map(cat => {
+    const meta = A365_CAT_META[cat] || { icon: '•' };
+    const feats = grouped[cat];
+    const active = feats.filter(f => f.status === 'active').length;
+    const isOpen = cat === 'Defender' || cat === 'Purview' || cat === 'Entra';
+    return `
+      <details class="a365-cat"${isOpen ? ' open' : ''}>
+        <summary><span class="cat-icon">${meta.icon}</span>${escapeHtml(cat)}<span class="cat-count">${active}/${feats.length} active</span></summary>
+        <div class="a365-feat-list">
+          ${feats.map((f, i) => `
+            <button class="a365-feat" type="button" onclick="openA365Feature('${escapeHtml(f.id)}')">
+              <span class="feat-name">${escapeHtml(f.name)}</span>
+              <span class="a365-pill ${f.status}">${escapeHtml(labels[f.status] || f.status)}</span>
+              <span class="feat-summary">${escapeHtml(f.summary || '')}</span>
+            </button>
+          `).join('')}
+        </div>
+      </details>
+    `;
+  }).join('');
+}
+
+function openA365Feature(id) {
+  if (!a365ValueData) return;
+  const f = (a365ValueData.features || []).find(x => x.id === id);
+  if (!f) return;
+  const labels = a365ValueData.statusLabels || {};
+  const meta = A365_CAT_META[f.category] || { icon: '•' };
+
+  const flowIn = (f.flow && f.flow.in) || [];
+  const flowOut = (f.flow && f.flow.out) || [];
+  const queries = f.queries || [];
+  const portals = f.portals || [];
+  const wired = f.wired || [];
+  const docs = f.docs || [];
+
+  const flowSection = (flowIn.length || flowOut.length) ? `
+    <div class="feat-section">
+      <h4>Data flow</h4>
+      <div class="feat-flow">
+        <div class="flow-col">
+          <div class="flow-label">What goes in →</div>
+          ${flowIn.map(s => `<div class="flow-item">${escapeHtml(s)}</div>`).join('') || '<div class="flow-item" style="color:var(--muted)">(none)</div>'}
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-col">
+          <div class="flow-label">What comes out</div>
+          ${flowOut.map(s => `<div class="flow-item">${escapeHtml(s)}</div>`).join('') || '<div class="flow-item" style="color:var(--muted)">(none)</div>'}
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  const wiredSection = wired.length ? `
+    <div class="feat-section">
+      <h4>How this agent wires it</h4>
+      <div class="feat-wired">
+        ${wired.map(s => `<div>${linkifyCodePaths(escapeHtml(s))}</div>`).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const portalsSection = portals.length ? `
+    <div class="feat-section">
+      <h4>Where to see it</h4>
+      <div class="feat-portals">
+        ${portals.map(p => `<a href="${escapeAttr(p.url)}" target="_blank" rel="noopener">${escapeHtml(p.label)} ↗</a>`).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const queriesSection = queries.length ? `
+    <div class="feat-section">
+      <h4>Copy-paste queries</h4>
+      ${queries.map((q, idx) => `
+        <div class="feat-query">
+          <div class="q-head">
+            <div><span class="q-label">${escapeHtml(q.label)}</span><span class="q-portal-tag">${escapeHtml(q.syntax || 'snippet')}</span></div>
+            <div class="q-actions">
+              <button onclick="copyA365Query('${escapeAttr(f.id)}',${idx})">Copy</button>
+              ${q.portal === 'defender-hunting' ? `<button onclick="openInDefender(${idx},'${escapeAttr(f.id)}')">Open in Defender</button>` : ''}
+            </div>
+          </div>
+          <pre id="a365q-${escapeAttr(f.id)}-${idx}">${escapeHtml(q.code)}</pre>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const docsSection = docs.length ? `
+    <div class="feat-section">
+      <h4>Docs in this repo</h4>
+      <div class="feat-wired">${docs.map(d => `<div><code>${escapeHtml(d)}</code></div>`).join('')}</div>
+    </div>
+  ` : '';
+
+  const gaTag = f.ga ? `<span class="tag">GA: ${escapeHtml(f.ga)}</span>` : '';
+
+  const html = `
+    <div class="a365-modal" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeA365Modal()" title="Close">×</button>
+      <h3>${meta.icon} ${escapeHtml(f.name)} <span class="a365-pill ${f.status}">${escapeHtml(labels[f.status] || f.status)}</span></h3>
+      <div class="feat-pitch">“${escapeHtml(f.pitch || f.summary || '')}”</div>
+      <div class="feat-meta">
+        <span class="tag">${escapeHtml(f.category)}</span>
+        <span class="tag">${escapeHtml(f.pillar)}</span>
+        ${gaTag}
+      </div>
+      ${flowSection}
+      ${wiredSection}
+      ${portalsSection}
+      ${queriesSection}
+      ${docsSection}
+    </div>
+  `;
+
+  const bg = document.getElementById('a365ModalBg');
+  bg.innerHTML = html;
+  bg.classList.add('open');
+  document.addEventListener('keydown', _a365EscClose);
+}
+
+function _a365EscClose(ev) {
+  if (ev.key === 'Escape') closeA365Modal();
+}
+
+function closeA365Modal() {
+  const bg = document.getElementById('a365ModalBg');
+  if (!bg) return;
+  bg.classList.remove('open');
+  bg.innerHTML = '';
+  document.removeEventListener('keydown', _a365EscClose);
+}
+
+function copyA365Query(featureId, idx) {
+  const el = document.getElementById('a365q-' + featureId + '-' + idx);
+  if (!el) return;
+  const text = el.textContent || '';
+  navigator.clipboard.writeText(text).then(
+    () => showToast('Copied to clipboard'),
+    () => showToast('Copy failed — select + Ctrl+C manually')
+  );
+}
+
+function openInDefender(idx, featureId) {
+  const f = (a365ValueData.features || []).find(x => x.id === featureId);
+  if (!f) return;
+  const q = (f.queries || [])[idx];
+  if (!q) return;
+  const tid = (a365ValueData.agent && a365ValueData.agent.tenantId) || '';
+  // Cache-bust the URL + unique window name so Defender's SPA opens a fresh
+  // advanced-hunting tab instead of appending body= onto an existing editor.
+  const stamp = Date.now().toString(36);
+  const url = `https://security.microsoft.com/v2/advanced-hunting`
+    + `?tid=${encodeURIComponent(tid)}`
+    + `&body=${encodeURIComponent(q.code)}`
+    + `&essTab=${stamp}`;
+  window.open(url, 'essDefender_' + stamp, 'noopener,noreferrer');
+}
+
+function linkifyCodePaths(s) {
+  // Wrap obvious code paths in <code>; leave already-escaped HTML alone.
+  return s.replace(/((?:[a-zA-Z_]+\/)+[a-zA-Z0-9_.-]+\.[a-z]{2,4})/g, '<code>$1</code>')
+          .replace(/(\/api\/[A-Za-z0-9_\/{}\-]+)/g, '<code>$1</code>');
+}
+
+function escapeAttr(s) { return String(s || '').replace(/'/g, "&#39;").replace(/"/g, '&quot;'); }
+
+// Wire on boot
+window.addEventListener('DOMContentLoaded', () => loadA365Value());
+
 // ── Boot ──
 init();
 </script>
+<div class="a365-modal-bg" id="a365ModalBg" onclick="closeA365Modal()"></div>
 </body>
 </html>

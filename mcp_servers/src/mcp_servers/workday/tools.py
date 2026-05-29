@@ -6,11 +6,16 @@ from urllib.parse import urlencode
 
 from fastmcp import Context
 
-from ..auth import get_bearer_token
+from ..auth import TokenValidationError, get_bearer_token
 from ..http import create_async_client
 from ..logging import get_logger
 from .config import get_endpoints
-from .helpers import build_worker_context_from_bearer
+from .helpers import (
+    WorkerContext,
+    build_worker_context_from_bearer,
+    build_worker_context_from_fallback,
+    get_workday_fallback_access_token,
+)
 import httpx
 
 LOGGER = get_logger(__name__)
@@ -29,6 +34,22 @@ class WorkdayApiNotAvailable(Exception):
 def _get_auth_token(ctx: Optional[Context] = None) -> str:
     """Extract the OAuth 2.0 Bearer token from the Authorization request header."""
     return get_bearer_token(ctx)
+
+
+async def _get_access_token(ctx: Optional[Context] = None) -> str:
+    try:
+        return _get_auth_token(ctx)
+    except TokenValidationError:
+        LOGGER.info("workday_no_incoming_bearer_using_refresh_token_fallback")
+        return await get_workday_fallback_access_token()
+
+
+async def _get_worker_context(ctx: Optional[Context] = None) -> WorkerContext:
+    try:
+        return await build_worker_context_from_bearer(_get_auth_token(ctx))
+    except TokenValidationError:
+        LOGGER.info("workday_no_incoming_bearer_building_default_worker_context")
+        return await build_worker_context_from_fallback()
 
 
 
@@ -98,7 +119,7 @@ async def _fetch_json_with_params(
 
 async def tool_get_worker(ctx: Optional[Context] = None) -> Dict:
     """Get the current Workday worker profile using the provided OAuth 2.0 bearer token."""
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     worker = _transform_worker(worker_context.worker_data)
     worker["_widget_hint"] = "Worker profile is ready."
     return worker
@@ -194,7 +215,7 @@ async def _get_time_off_details(access_token: str, workday_id: str) -> List[Dict
 
 
 async def tool_get_leave_balances(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     workday_id = worker_context.workday_id
     access_token = worker_context.workday_access_token
     leave_balances, eligible_absence_types, leaves_of_absence, booked_time_off = await asyncio.gather(
@@ -238,7 +259,7 @@ async def _fetch_direct_reports(access_token: str, workday_id: str) -> List[Dict
 
 
 async def tool_get_direct_reports(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     reports = await _fetch_direct_reports(worker_context.workday_access_token, worker_context.workday_id)
     payload = {"success": True, "directReports": reports}
     return _tool_response("List direct reports for the current worker.", payload)
@@ -287,7 +308,7 @@ async def _fetch_inbox_tasks(access_token: str, workday_id: str) -> List[Dict[st
 
 
 async def tool_get_inbox_tasks(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     tasks = await _fetch_inbox_tasks(worker_context.workday_access_token, worker_context.workday_id)
     payload = {"success": True, "tasks": tasks}
     return _tool_response("List Workday inbox tasks for the current worker.", payload)
@@ -336,7 +357,7 @@ async def _fetch_learning_assignments(access_token: str, workday_id: str) -> Lis
 
 
 async def tool_get_learning_assignments(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     assignments = await _fetch_learning_assignments(
         worker_context.workday_access_token, worker_context.workday_id
     )
@@ -366,7 +387,7 @@ async def _fetch_pay_slips(access_token: str, workday_id: str) -> List[Dict[str,
 
 
 async def tool_get_pay_slips(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     pay_slips = await _fetch_pay_slips(worker_context.workday_access_token, worker_context.workday_id)
     payload = {"success": True, "paySlips": pay_slips}
     return _tool_response("List recent Workday pay slips.", payload)
@@ -398,7 +419,7 @@ async def _fetch_time_off_entries(access_token: str, workday_id: str) -> List[Di
 
 
 async def tool_get_time_off_entries(ctx: Optional[Context] = None) -> Dict:
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     entries = await _fetch_time_off_entries(
         worker_context.workday_access_token, worker_context.workday_id
     )
@@ -421,7 +442,7 @@ async def tool_prepare_request_leave(
     reason: Optional[str] = None,
     timeOffTypeId: Optional[str] = None,
 ) -> Dict:
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     default_dates = await _get_default_dates()
     request_params = {
         "startDate": startDate or default_dates["startDate"],
@@ -495,7 +516,7 @@ async def tool_book_leave(
     unit: str = "Hours",
     reason: str = "Time off request",
 ) -> Dict:
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     
     if not startDate or not endDate or not timeOffTypeId:
         raise ValueError("startDate, endDate, and timeOffTypeId are required")
@@ -564,7 +585,7 @@ async def tool_prepare_change_business_title(ctx: Optional[Context] = None) -> D
     widget so the user can enter a new title and submit. The widget handles
     submission via change_business_title.
     """
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     worker = _transform_worker(worker_context.worker_data)
     return {
         "success": True,
@@ -579,7 +600,7 @@ async def tool_change_business_title(
     if not proposedBusinessTitle:
         return {"success": False, "error": "proposedBusinessTitle is required"}
     try:
-        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        worker_context = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/common/v1/{tenant}/workers/{workday_id}/businessTitleChanges",
@@ -720,7 +741,7 @@ async def tool_search_learning_content(
     via the Skills RaaS report; any value that cannot be resolved is
     silently dropped so the search still runs.
     """
-    access_token = _get_auth_token(ctx)
+    access_token = await _get_access_token(ctx)
 
     def _normalize(value: Any) -> List[str]:
         if value is None:
@@ -829,7 +850,7 @@ async def provider_list_tasks(ctx: Optional[Context] = None) -> List[Dict[str, A
     Non-approval inbox tasks are regular tasks (impl notes S3).
     """
     try:
-        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        worker_context = await _get_worker_context(ctx)
     except Exception:  # noqa: BLE001
         LOGGER.debug("workday_auth_not_available_for_tasks")
         return []
@@ -846,7 +867,7 @@ async def provider_list_approvals(ctx: Optional[Context] = None) -> List[Dict[st
     (impl notes S3).
     """
     try:
-        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        worker_context = await _get_worker_context(ctx)
     except Exception:  # noqa: BLE001
         LOGGER.debug("workday_auth_not_available_for_approvals")
         return []
@@ -859,7 +880,7 @@ async def provider_list_approvals(ctx: Optional[Context] = None) -> List[Dict[st
 async def provider_list_learning(ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """List Workday required learning assignments for TaskServer normalization."""
     try:
-        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        worker_context = await _get_worker_context(ctx)
     except Exception:  # noqa: BLE001
         LOGGER.debug("workday_auth_not_available_for_learning")
         return []
@@ -872,7 +893,7 @@ async def provider_get_approval_detail(
     task_id: str, ctx: Optional[Context] = None
 ) -> Dict[str, Any]:
     """Get detail for a specific Workday inbox task."""
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     endpoints = get_endpoints()
     url = endpoints.full_url(
         "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}",
@@ -901,7 +922,7 @@ async def provider_execute_approval(
     Only works for tasks with stepType == Approval.  Approve/reject APIs
     will fail if stepType is not Approval (impl notes S3).
     """
-    worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+    worker_context = await _get_worker_context(ctx)
     action = "approve" if decision == "approve" else "deny"
     endpoints = get_endpoints()
     url = endpoints.full_url(
@@ -947,7 +968,7 @@ async def provider_execute_approval(
 async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
     """Get the organizational chart for the current worker's supervisory organization."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         worker = _transform_worker(wctx.worker_data)
         current_id = wctx.workday_id
 
@@ -1015,7 +1036,7 @@ async def tool_get_org_chart(ctx: Optional[Context] = None) -> Dict:
 async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
     """Get the team time-off calendar showing who is out in the current worker's team."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         reports = await _fetch_direct_reports(wctx.workday_access_token, wctx.workday_id)
         team_time_off = []
         for report in reports:
@@ -1053,7 +1074,7 @@ async def tool_get_team_calendar(ctx: Optional[Context] = None) -> Dict:
 async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
     """Team overview dashboard for managers showing headcount, role breakdown, and team member details."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         reports = await _fetch_direct_reports(wctx.workday_access_token, wctx.workday_id)
         title_counts: Dict[str, int] = {}
         org_counts: Dict[str, int] = {}
@@ -1090,7 +1111,7 @@ async def tool_get_team_overview(ctx: Optional[Context] = None) -> Dict:
 async def tool_get_team_performance_summary(ctx: Optional[Context] = None) -> Dict:
     """Team performance review status for managers with inbox tasks and absence overview."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         access_token = wctx.workday_access_token
         workday_id = wctx.workday_id
 
@@ -1185,7 +1206,7 @@ async def tool_action_inbox_task(
     Only works for tasks whose stepType is Approval.
     """
     try:
-        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        worker_context = await _get_worker_context(ctx)
         action = "approve" if decision == "approve" else "deny"
         endpoints = get_endpoints()
         url = endpoints.full_url(
@@ -1231,7 +1252,7 @@ async def tool_get_inbox_task_detail(
 ) -> Dict:
     """Get detailed information about a specific Workday inbox task by its task_id."""
     try:
-        worker_context = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        worker_context = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/common/v1/{tenant}/workers/{workday_id}/inboxTasks/{task_id}",
@@ -1265,7 +1286,7 @@ async def tool_get_inbox_task_detail(
 async def tool_get_goals(ctx: Optional[Context] = None) -> Dict:
     """Get performance goals for the current worker."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/goals",
@@ -1300,7 +1321,7 @@ async def tool_get_goals(ctx: Optional[Context] = None) -> Dict:
 async def tool_get_feedback(ctx: Optional[Context] = None) -> Dict:
     """Get anytime feedback events received by the current worker."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/anytimeFeedbackEvents",
@@ -1348,7 +1369,7 @@ async def tool_give_feedback(
         hidden_from_manager: If True, feedback is hidden from the worker's manager.
     """
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/anytimeFeedbackEvents",
@@ -1392,7 +1413,7 @@ async def tool_give_feedback(
 async def tool_get_feedback_badges(ctx: Optional[Context] = None) -> Dict:
     """Get available feedback badges that can be used when giving feedback."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/performanceEnablement/v5/{tenant}/feedbackBadges",
@@ -1419,7 +1440,7 @@ async def tool_get_feedback_badges(ctx: Optional[Context] = None) -> Dict:
 async def tool_get_development_items(ctx: Optional[Context] = None) -> Dict:
     """Get development items (individual development plan) for the current worker."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/developmentItems",
@@ -1459,7 +1480,7 @@ async def tool_request_feedback_on_self(
         comment: Optional message to include with the feedback request.
     """
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/requestedFeedbackOnSelfEvents",
@@ -1508,7 +1529,7 @@ async def tool_get_learning_records(
         limit: Maximum number of records to return (default: 20, max: 100).
     """
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         safe_limit = max(1, min(int(limit), 100))
         endpoints = get_endpoints()
         url = endpoints.full_url(
@@ -1549,7 +1570,7 @@ async def tool_get_check_ins(
 ) -> Dict:
     """Get 1:1 check-in records for the current worker (manager or employee)."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/checkIns",
@@ -1593,7 +1614,7 @@ async def tool_create_check_in(
         topic_ids: Optional list of check-in topic IDs to associate.
     """
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/checkIns",
@@ -1638,7 +1659,7 @@ async def tool_get_check_in_topics(
 ) -> Dict:
     """Get check-in topics for the current worker (used for creating check-ins)."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/checkInTopics",
@@ -1665,7 +1686,7 @@ async def tool_get_check_in_topics(
 async def tool_get_worker_skills(ctx: Optional[Context] = None) -> Dict:
     """Get skills for the current worker from their Workday profile."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v7/{tenant}/workers/{workday_id}/skillItems",
@@ -1695,7 +1716,7 @@ async def tool_get_worker_skills(ctx: Optional[Context] = None) -> Dict:
 async def tool_get_team_goals(ctx: Optional[Context] = None) -> Dict:
     """Get performance goals for all direct reports (manager tool)."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         access_token = wctx.workday_access_token
         endpoints = get_endpoints()
         # Get direct reports first
@@ -1758,7 +1779,7 @@ async def tool_request_feedback_on_worker(
         comment: Optional message to include with the feedback request.
     """
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/performanceEnablement/v5/{tenant}/workers/{workday_id}/requestedFeedbackOnWorkerEvents",
@@ -1798,7 +1819,7 @@ async def tool_request_feedback_on_worker(
 async def tool_prepare_give_feedback(ctx: Optional[Context] = None) -> Dict:
     """Load colleagues and feedback badges for the interactive feedback widget."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         people: List[Dict[str, Any]] = []
         badges: List[Dict[str, Any]] = []
@@ -1872,7 +1893,7 @@ async def tool_prepare_give_feedback(ctx: Optional[Context] = None) -> Dict:
 async def tool_prepare_create_check_in(ctx: Optional[Context] = None) -> Dict:
     """Load direct reports and check-in topics for the interactive check-in creation widget."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         people: List[Dict[str, Any]] = []
         topics: List[Dict[str, Any]] = []
@@ -1931,7 +1952,7 @@ async def tool_get_job_profiles(
 ) -> Dict:
     """List Workday job profiles. Uses Staffing REST API GET /jobProfiles."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/jobProfiles")
         params: Dict[str, Any] = {"limit": min(limit, 100)}
@@ -1969,7 +1990,7 @@ async def tool_get_job_profile(
     if not job_profile_id:
         raise ValueError("job_profile_id is required")
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v6/{tenant}/jobProfiles/{job_profile_id}",
@@ -2001,7 +2022,7 @@ async def tool_get_job_families(
 ) -> Dict:
     """List Workday job families. Uses Staffing REST API GET /jobFamilies."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/jobFamilies")
         params: Dict[str, Any] = {"limit": min(limit, 100)}
@@ -2035,7 +2056,7 @@ async def tool_get_jobs(
 ) -> Dict:
     """List Workday jobs. Uses Staffing REST API GET /jobs."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/jobs")
         params: Dict[str, Any] = {"limit": min(limit, 100)}
@@ -2067,7 +2088,7 @@ async def tool_get_job_requisitions(
 ) -> Dict:
     """List open job requisitions. Uses Staffing REST API GET /values/jobChangesGroup/jobRequisitions."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/values/jobChangesGroup/jobRequisitions")
         params: Dict[str, Any] = {"limit": min(limit, 100)}
@@ -2099,7 +2120,7 @@ async def tool_get_supervisory_orgs(
 ) -> Dict:
     """List supervisory organizations. Uses Staffing REST API GET /supervisoryOrganizations."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/supervisoryOrganizations")
         params: Dict[str, Any] = {"limit": min(limit, 100)}
@@ -2133,7 +2154,7 @@ async def tool_get_supervisory_org_members(
     if not org_id:
         raise ValueError("org_id is required")
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v6/{tenant}/supervisoryOrganizations/{org_id}/members",
@@ -2181,7 +2202,7 @@ async def tool_create_job_change(
     if not reason_id:
         raise ValueError("reason_id is required. Use get_job_change_reasons to look up valid values.")
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v6/{tenant}/workers/{worker_id}/jobChanges",
@@ -2230,7 +2251,7 @@ async def tool_get_job_change(
     if not job_change_id:
         raise ValueError("job_change_id is required")
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v6/{tenant}/jobChanges/{job_change_id}",
@@ -2260,7 +2281,7 @@ async def tool_submit_job_change(
     if not job_change_id:
         raise ValueError("job_change_id is required")
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v6/{tenant}/jobChanges/{job_change_id}/submit",
@@ -2297,7 +2318,7 @@ async def tool_get_job_change_reasons(
 ) -> Dict:
     """List valid job change reasons (e.g. New Hire, Promotion, Transfer). Uses Staffing REST API GET /values/jobChangesGroup/reason."""
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url("/ccx/api/staffing/v6/{tenant}/values/jobChangesGroup/reason")
         params: Dict[str, Any] = {"limit": min(limit, 100)}
@@ -2339,7 +2360,7 @@ async def tool_create_org_assignment_change(
     if not worker_id:
         raise ValueError("worker_id is required")
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v6/{tenant}/workers/{worker_id}/organizationAssignmentChanges",
@@ -2386,7 +2407,7 @@ async def tool_submit_org_assignment_change(
     if not change_id:
         raise ValueError("change_id is required")
     try:
-        wctx = await build_worker_context_from_bearer(_get_auth_token(ctx))
+        wctx = await _get_worker_context(ctx)
         endpoints = get_endpoints()
         url = endpoints.full_url(
             "/ccx/api/staffing/v6/{tenant}/organizationAssignmentChanges/{change_id}/submit",
@@ -2430,8 +2451,8 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "openai/toolInvocation/invoked": "Worker profile ready.",
         },
     },
-    {"name": "get_leave_balances", "func": tool_get_leave_balances, "summary": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave."},
-    {"name": "get_direct_reports", "func": tool_get_direct_reports, "summary": "List direct reports for the current worker."},
+    {"name": "get_leave_balances", "func": tool_get_leave_balances, "summary": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave.", "annotations": {"readOnlyHint": True}},
+    {"name": "get_direct_reports", "func": tool_get_direct_reports, "summary": "List direct reports for the current worker.", "annotations": {"readOnlyHint": True}},
     {
         "name": "get_inbox_tasks",
         "func": tool_get_inbox_tasks,
@@ -2454,25 +2475,26 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "openai/toolInvocation/invoked": "Learning assignments ready.",
         },
     },
-    {"name": "get_pay_slips", "func": tool_get_pay_slips, "summary": "List recent Workday pay slips."},
-    {"name": "get_time_off_entries", "func": tool_get_time_off_entries, "summary": "List time off entries for the current worker."},
+    {"name": "get_pay_slips", "func": tool_get_pay_slips, "summary": "List recent Workday pay slips.", "annotations": {"readOnlyHint": True}},
+    {"name": "get_time_off_entries", "func": tool_get_time_off_entries, "summary": "List time off entries for the current worker.", "annotations": {"readOnlyHint": True}},
     {
         "name": "prepare_request_leave",
-        "func": tool_prepare_request_leave,
-        "summary": (
+                "func": tool_prepare_request_leave,
+                "summary": (
             "Book time off — opens the interactive leave booking form for the "
             "user to review and confirm. Use this when the user asks to book "
             "leave, request PTO, or take time off. Pass startDate, endDate, "
             "quantity, unit, and timeOffTypeId (from get_leave_balances). "
             "The user confirms and submits via the widget."
         ),
+                "annotations": {"readOnlyHint": True},
         "meta": {
             "openai/outputTemplate": "ui://widget/leave-booking.html",
             "openai/toolInvocation/invoking": "Preparing leave request\u2026",
             "openai/toolInvocation/invoked": "Leave request ready.",
         },
     },
-    {"name": "book_leave", "func": tool_book_leave, "summary": "Submit leave request to Workday. Widget callback — called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."},
+    {"name": "book_leave", "func": tool_book_leave, "summary": "Submit leave request to Workday. Widget callback — called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead.", "annotations": {"readOnlyHint": True}},
     {
         "name": "prepare_change_business_title",
         "func": tool_prepare_change_business_title,
@@ -2496,6 +2518,7 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "called automatically by the title change form after the user clicks Submit. "
             "To change a business title, use prepare_change_business_title instead."
         ),
+        "annotations": {"readOnlyHint": True},
     },
     {"name": "search_learning_content", "func": tool_search_learning_content, "summary": "Search Workday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Workday IDs automatically; invalid values are dropped.",
         "annotations": {"readOnlyHint": True},
@@ -2532,7 +2555,7 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "openai/toolInvocation/invoked": "Team overview ready.",
         },
     },
-    {"name": "get_team_performance_summary", "func": tool_get_team_performance_summary, "summary": "Get team performance review status for managers including pending inbox items and team absence overview."},
+    {"name": "get_team_performance_summary", "func": tool_get_team_performance_summary, "summary": "Get team performance review status for managers including pending inbox items and team absence overview.", "annotations": {"readOnlyHint": True}},
     {
         "name": "action_inbox_task",
         "func": tool_action_inbox_task,
@@ -2729,6 +2752,7 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "job_profile_id, supervisory_org_id, position_id, or job_requisition_id. "
             "Returns a job change event ID for submit_job_change."
         ),
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "get_job_change",
@@ -2740,6 +2764,7 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
         "name": "submit_job_change",
         "func": tool_submit_job_change,
         "summary": "Submit a job change event for approval. Provide the job_change_id from create_job_change.",
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "create_org_assignment_change",
@@ -2748,10 +2773,16 @@ WORKDAY_TOOL_SPECS: List[Dict[str, Any]] = [
             "Initiate an organization assignment change for a worker. Assign company, "
             "cost center, region, or business unit. Returns a change ID for submit_org_assignment_change."
         ),
+        "annotations": {"readOnlyHint": True},
     },
     {
         "name": "submit_org_assignment_change",
         "func": tool_submit_org_assignment_change,
         "summary": "Submit an organization assignment change for approval. Provide the change_id from create_org_assignment_change.",
+        "annotations": {"readOnlyHint": True},
     },
 ]
+
+
+
+

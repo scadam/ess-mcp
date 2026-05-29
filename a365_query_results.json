@@ -1,0 +1,65 @@
+[
+  {
+    "feature": "agent-id",
+    "label": "Defender \u00b7 Recent sign-ins by this agent",
+    "ok": false,
+    "status": 403,
+    "error": "Missing application scopes. API required scopes: AdvancedHunting.Read, application scopes: user_impersonation."
+  },
+  {
+    "feature": "ca",
+    "label": "Defender \u00b7 CA decisions for this agent",
+    "ok": false,
+    "status": 403,
+    "error": "Missing application scopes. API required scopes: AdvancedHunting.Read, application scopes: user_impersonation."
+  },
+  {
+    "feature": "idp",
+    "label": "Defender \u00b7 Risky users served by this agent",
+    "ok": false,
+    "status": 403,
+    "error": "Missing application scopes. API required scopes: AdvancedHunting.Read, application scopes: user_impersonation."
+  },
+  {
+    "feature": "audit",
+    "label": "Defender \u00b7 Cross-correlate audit + sign-ins",
+    "ok": false,
+    "status": 403,
+    "error": "Missing application scopes. API required scopes: AdvancedHunting.Read, application scopes: user_impersonation."
+  },
+  {
+    "feature": "threat-det",
+    "label": "Defender \u00b7 Is the agent registered?",
+    "ok": false,
+    "status": 403,
+    "error": "Missing application scopes. API required scopes: AdvancedHunting.Read, application scopes: user_impersonation."
+  },
+  {
+    "feature": "threat-det",
+    "label": "Defender \u00b7 Behavior anomalies",
+    "ok": false,
+    "status": 403,
+    "error": "Missing application scopes. API required scopes: AdvancedHunting.Read, application scopes: user_impersonation."
+  },
+  {
+    "feature": "rt-protect",
+    "label": "Defender \u00b7 Detection rule template (destructive tool block)",
+    "ok": false,
+    "status": 403,
+    "error": "Missing application scopes. API required scopes: AdvancedHunting.Read, application scopes: user_impersonation."
+  },
+  {
+    "feature": "hunting",
+    "label": "Defender \u00b7 7-day activity summary",
+    "ok": false,
+    "status": 403,
+    "error": "Missing application scopes. API required scopes: AdvancedHunting.Read, application scopes: user_impersonation."
+  },
+  {
+    "feature": "hunting",
+    "label": "Defender \u00b7 Alerts referencing this agent",
+    "ok": false,
+    "status": 403,
+    "error": "Missing application scopes. API required scopes: AdvancedHunting.Read, application scopes: user_impersonation."
+  }
+]

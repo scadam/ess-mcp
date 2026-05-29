@@ -1,0 +1,49 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.0.0",
+  "id": "d8e1c462-3a91-4f7d-9b25-7e6c8a1f4d31",
+  "packageName": "com.essmcp.jira.delivery-intelligence",
+  "developer": {
+    "name": "ESS MCP Demo",
+    "websiteUrl": "https://www.microsoft.com",
+    "privacyUrl": "https://www.microsoft.com/privacy",
+    "termsOfUseUrl": "https://www.microsoft.com/termsofuse"
+  },
+  "name": {
+    "short": "Jira Delivery Intel",
+    "full": "Jira Delivery Intelligence Suite for Copilot Cowork"
+  },
+  "description": {
+    "short": "Sprint health dashboards, standup briefs, release readiness packs and backlog grooming reports from Jira",
+    "full": "Engineering-delivery suite that turns Jira MCP data into actionable assets: daily standup brief HTML dashboard, sprint health and burndown deck, release readiness pack, weekly delivery update Adaptive Card for Teams, and backlog grooming report. Designed for engineering managers, scrum masters and product leads."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#0052CC",
+  "agentSkills": [
+    { "folder": "./skills/daily-standup-brief-dashboard" },
+    { "folder": "./skills/sprint-health-deck" },
+    { "folder": "./skills/release-readiness-pack" },
+    { "folder": "./skills/weekly-delivery-update-card" },
+    { "folder": "./skills/backlog-grooming-report" }
+  ],
+  "agentConnectors": [
+    {
+      "id": "jira-mcp",
+      "displayName": "Jira MCP Server",
+      "description": "Jira connector covering issues, projects, boards, sprints, backlog, epics, versions, work-log, team workload and sprint-health metrics.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://essmcp-jira.wittysand-460bf1d9.eastus.azurecontainerapps.io/jira/mcp",
+          "authorization": {
+            "type": "OAuthPluginVault",
+            "referenceId": "REPLACE_WITH_JIRA_OAUTH_REFERENCE_ID"
+          }
+        }
+      }
+    }
+  ]
+}

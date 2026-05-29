@@ -1,0 +1,49 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.0.2",
+  "id": "c2d4f198-7b3e-4a9b-9c01-1d8c4e7e90a2",
+  "packageName": "com.essmcp.salesforce.sales-intelligence",
+  "developer": {
+    "name": "ESS MCP Demo",
+    "websiteUrl": "https://www.microsoft.com",
+    "privacyUrl": "https://www.microsoft.com/privacy",
+    "termsOfUseUrl": "https://www.microsoft.com/termsofuse"
+  },
+  "name": {
+    "short": "Salesforce Sales Intel",
+    "full": "Salesforce Sales Intelligence Suite for Copilot Cowork"
+  },
+  "description": {
+    "short": "Deep dives and forecast packs from Salesforce + WorkIQ context",
+    "full": "Sales-intelligence suite that turns Salesforce MCP data plus Microsoft 365 WorkIQ context (recent emails, meetings, Loop pages) into actionable assets: morning pipeline briefing HTML dashboard, weekly pipeline review PowerPoint, account deep-dive briefs, monthly forecast packs, deal-risk Adaptive Cards for Teams, and rep coaching decks."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#00A1E0",
+  "agentSkills": [
+    { "folder": "./skills/morning-pipeline-briefing-dashboard" },
+    { "folder": "./skills/weekly-pipeline-review-deck" },
+    { "folder": "./skills/account-deep-dive-brief" },
+    { "folder": "./skills/forecast-call-pack" },
+    { "folder": "./skills/deal-risk-card" },
+    { "folder": "./skills/rep-performance-coaching-deck" }
+  ],
+  "agentConnectors": [
+    {
+      "id": "salesforce-mcp-demo",
+      "displayName": "Salesforce MCP Demo Server",
+      "description": "Salesforce CRM connector covering accounts, contacts, opportunities, leads, cases, tasks, events, campaigns, quotes, products, forecast, reports and team manager dashboards.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://essmcp-salesforce.wittysand-460bf1d9.eastus.azurecontainerapps.io/salesforce/mcp",
+          "authorization": {
+            "type": "None"
+          }
+        }
+      }
+    }
+  ]
+}

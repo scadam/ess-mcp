@@ -664,7 +664,7 @@ WORKDAY_TENANT=your_tenant_name
 | `delete_cart` / `remove_cart_item` | 🗑️ **Delete** | **Empty cart or remove items** |
 | `list_my_requests` | 📖 Read | List user's service requests |
 | `list_change_requests` / `get_change_request` | 📖 Read | View change requests |
-| `show_create_change_request_form` | 🖼️ Widget | **Create new change request** — interactive creation form |
+| `show_create_change_req_form` | 🖼️ Widget | **Create new change request** — interactive creation form |
 | `create_change_request` | ⚙️ Callback | Widget callback: submits change request creation form |
 | `update_change_request` | ✏️ **Update** | **Update change request** |
 | `search_knowledge` / `get_knowledge_article` | 📖 Read | Search knowledge base |
@@ -790,12 +790,14 @@ JIRA_PROJECT_KEY=PROJ  # Optional
 
 > *Employee profiles, leave management, pay stubs, org charts, personal data changes, employee transfers, document management, background checks, and employment verification.*
 
-**Auth:** Entra ID → SAP SuccessFactors token exchange (OAuth 2.0 client_credentials for demo environments).
+**Auth:** Static API key header (`APIKey`) against SAP SuccessFactors sandbox OData APIs.
 
-**Tools (20):**
+**Tools (22):**
 
 | Tool | Type | Description |
 |------|------|-------------|
+| `list_sandbox_entity_sets` | 📖 Read | Discover available SuccessFactors OData entity sets |
+| `query_sandbox_entity` | 📖 Read | Generic OData query against any sandbox entity set |
 | `get_employee_profile` | 📖 Read | Fetch employee profile from SF |
 | `get_leave_balances` | 📖 Read | View time-off balances by plan |
 | `get_time_off_history` | 📖 Read | Historical leave entries |
@@ -821,11 +823,8 @@ JIRA_PROJECT_KEY=PROJ  # Optional
 
 **Configuration** (`env/sap_sf.env`):
 ```env
-SAP_SF_ODATA_URL=https://api15.sapsf.com/odata/v2
-SAP_SF_TOKEN_URL=https://api15.sapsf.com/oauth/token
-SAP_SF_COMPANY_ID=yourCompanyId
-SAP_SF_CLIENT_ID=yourOAuthClientId
-SAP_SF_RESOURCE_URI=https://api15.sapsf.com
+SAP_SF_ODATA_URL=https://sandbox.api.sap.com/successfactorsfoundation/odata/v2
+SAP_SF_API_KEY=your_api_key
 ```
 
 ---

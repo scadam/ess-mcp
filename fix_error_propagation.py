@@ -13,12 +13,11 @@ from pathlib import Path
 
 ROOT = Path(r"c:\Users\scadam\AgentsToolkitProjects\ess-mcp\mcp_servers\src\mcp_servers")
 
-FILES = [
-    ROOT / "workday" / "tools.py",
-    ROOT / "servicenow" / "tools.py",
-    ROOT / "salesforce" / "tools.py",
-    ROOT / "jira" / "tools.py",
-]
+
+def iter_tool_files():
+    for path in sorted(ROOT.glob("*/tools.py")):
+        if path.is_file():
+            yield path
 
 # Regex: captures leading whitespace + except Exception (with optional `as varname`)
 EXCEPT_RE = re.compile(r"^(\s+)(except\s+Exception(?:\s+as\s+\w+)?\s*:.*)$")
@@ -71,6 +70,22 @@ def transform_file(path):
         m = EXCEPT_RE.match(line)
         if m and should_modify(lines, i):
             indent = m.group(1)
+
+            # Idempotence: do not add duplicate handler if one is already present.
+            prev = []
+            for j in range(i - 1, -1, -1):
+                s = lines[j].strip()
+                if s:
+                    prev.append(s)
+                if len(prev) == 2:
+                    break
+            if (
+                len(prev) >= 2
+                and prev[0] == "raise"
+                and prev[1] == "except httpx.HTTPStatusError:"
+            ):
+                continue
+
             insertions.append((i, indent))
 
     if not insertions:
@@ -110,14 +125,15 @@ def transform_file(path):
 def main():
     total = 0
     errors = 0
-    for f in FILES:
+    files = list(iter_tool_files())
+    for f in files:
         n = transform_file(f)
         if n < 0:
             errors += 1
         else:
             total += n
 
-    print(f"\nTotal: {total} except blocks modified across {len(FILES)} files")
+    print(f"\nTotal: {total} except blocks modified across {len(files)} files")
     if errors:
         print(f"WARNING: {errors} file(s) had syntax errors!")
         sys.exit(1)

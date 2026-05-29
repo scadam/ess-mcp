@@ -9,8 +9,8 @@ Requires: pip install playwright && python -m playwright install chromium
 
 import json
 import re
+from importlib import import_module
 from pathlib import Path
-from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent
 WIDGET_DIR = ROOT / "mcp_servers" / "src" / "mcp_servers" / "ui" / "widget"
@@ -93,9 +93,14 @@ POST_ACTIONS = {
 }
 
 
+def _sync_playwright():
+    """Load Playwright lazily so this script imports cleanly without the package."""
+    return import_module("playwright.sync_api").sync_playwright
+
+
 def load_sample_data_from_js():
     """Evaluate sample-data.js in a Playwright page to get Python dicts."""
-    with sync_playwright() as p:
+    with _sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         js_source = SAMPLE_DATA_JS.read_text(encoding="utf-8")
@@ -182,7 +187,7 @@ def main():
 
     print(f"Capturing {len(all_widgets)} widgets...\n")
 
-    with sync_playwright() as p:
+    with _sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
             viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT},

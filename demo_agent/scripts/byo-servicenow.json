@@ -1,0 +1,168 @@
+{
+  "serverName": "ext_ESSServiceNow2",
+  "serverUrl": "https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp",
+  "authType": "NoAuth",
+  "description": "ServiceNow IT service: incidents, changes, problems, knowledge, catalog.",
+  "publisherName": "Project ESS",
+  "tools": [
+    {
+      "name": "list_incidents",
+      "description": "Search and list ServiceNow incidents. Supports filtering by free-text search, incident number, category, state, priority, assigned user, and active status. Returns up to 100 incidents per call. Results are rendered as an interactive widget."
+    },
+    {
+      "name": "show_create_incident_form",
+      "description": "Create a new incident — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to report an issue, create an incident, or log a problem. Pass any known details to pre-fill fields including assignment_group for intelligent routing."
+    },
+    {
+      "name": "create_incident",
+      "description": "Submit incident creation to ServiceNow. Widget callback — called automatically by the incident form after the user clicks Submit. To create an incident, use show_create_incident_form instead."
+    },
+    {
+      "name": "show_update_incident_form",
+      "description": "Edit an existing incident — fetches the incident and opens the interactive update form with current values. Use this when the user asks to update or edit an incident. Provide the incident number (e.g. INC0010006)."
+    },
+    {
+      "name": "get_incident",
+      "description": "Retrieve full details and comment/work-note history for a single ServiceNow incident by its number (e.g. INC0010006). Use this to show the user an incident's current state and conversation history."
+    },
+    {
+      "name": "update_incident",
+      "description": "Submit incident updates to ServiceNow. Widget callback — called automatically by the incident update form after the user clicks Submit. To update an incident, use show_update_incident_form instead."
+    },
+    {
+      "name": "list_tasks",
+      "description": "List active ServiceNow tasks. Queries the task table which spans all task-derived tables (incidents, changes, problems, etc.). Returns active tasks ordered by most recently updated."
+    },
+    {
+      "name": "update_task",
+      "description": "Update a ServiceNow task. Change state, priority, assignment, or add comments/work notes. Only the sys_id is required -- include only the fields you want to change."
+    },
+    {
+      "name": "list_approvals",
+      "description": "List pending ServiceNow approvals from the sysapproval_approver table. Returns approvals in 'requested' state, ordered by most recently created."
+    },
+    {
+      "name": "get_approval",
+      "description": "Get full details of a single ServiceNow approval by its sys_id. Returns approver, state, source table, document information, and comments."
+    },
+    {
+      "name": "approve_reject",
+      "description": "Approve or reject a ServiceNow approval request. Provide the sys_id and decision (approve/reject). Also used as a widget callback by the approval-review widget."
+    },
+    {
+      "name": "list_catalog_items",
+      "description": "Search and list items from the ServiceNow Service Catalog. When a search term is provided, uses the Table API with server-side LIKE filtering on name and short_description -- faster and more complete than a page-then-filter approach. Supports filtering by category_sys_id or catal"
+    },
+    {
+      "name": "list_catalog_categories",
+      "description": "List categories in the ServiceNow Service Catalog. Use this to help the user explore the catalog structure and find the right category before listing items."
+    },
+    {
+      "name": "get_catalog_item",
+      "description": "Get full details of a ServiceNow catalog item including its dynamic order form (variables, choices, UI policies). Renders an interactive widget where the user can fill in the form, select a quantity, and order or add to cart."
+    },
+    {
+      "name": "order_catalog_item",
+      "description": "Submit a catalog item order to ServiceNow. Widget callback — called automatically by the catalog item widget when the user clicks Order Now. To order an item, use get_catalog_item to display it first."
+    },
+    {
+      "name": "add_to_cart",
+      "description": "Add a catalog item to the ServiceNow shopping cart. Widget callback — called automatically by the catalog item widget when the user clicks Add to Cart. To browse items, use get_catalog_item."
+    },
+    {
+      "name": "get_cart",
+      "description": "Get the contents of the current ServiceNow shopping cart, including item names, quantities, prices, and subtotal."
+    },
+    {
+      "name": "checkout_cart",
+      "description": "Submit the ServiceNow shopping cart as an order. Widget callback — called automatically by the cart widget. To view the cart, use get_cart."
+    },
+    {
+      "name": "delete_cart",
+      "description": "Empty the ServiceNow shopping cart. Widget callback — called by the cart widget, or directly to clear the cart."
+    },
+    {
+      "name": "remove_cart_item",
+      "description": "Remove a single line item from the ServiceNow shopping cart by cart_item_id. Use get_cart first to discover cart_item_id values."
+    },
+    {
+      "name": "list_my_requests",
+      "description": "List the current user's ServiceNow service requests (REQ) and requested items (RITM) with their catalog item name, state, stage, quantity, price, and dates. Use this when the user asks what they have on order, the status of their requests, or wants to track submitted catalog orde"
+    },
+    {
+      "name": "search_reference_values",
+      "description": "Search a ServiceNow table for reference field values. Used to look up values for reference-type catalog variables where choices come from a table (e.g. cmdb_ci, sys_user). Returns matching records with sys_id and display value."
+    },
+    {
+      "name": "list_change_requests",
+      "description": "Search and list ServiceNow change requests. Supports filtering by free-text search, state, risk level, category, and assigned user. Returns up to 100 change requests per call."
+    },
+    {
+      "name": "get_change_request",
+      "description": "Retrieve full details of a single ServiceNow change request by its sys_id."
+    },
+    {
+      "name": "show_create_change_req_form",
+      "description": "Create a new change request — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create or raise a change request. Pass any known details to pre-fill fields."
+    },
+    {
+      "name": "create_change_request",
+      "description": "Submit change request creation to ServiceNow. Widget callback — called automatically by the change request form after the user clicks Submit. To create a change request, use show_create_change_req_form instead."
+    },
+    {
+      "name": "update_change_request",
+      "description": "Update an existing ServiceNow change request. Only the sys_id is required; include only the fields you want to change."
+    },
+    {
+      "name": "search_knowledge",
+      "description": "Search the ServiceNow knowledge base for published articles. Supports free-text search across article titles and body text, and optional category filtering."
+    },
+    {
+      "name": "get_knowledge_article",
+      "description": "Retrieve a single ServiceNow knowledge article by its sys_id. Returns the full article text, category, author, and publish status."
+    },
+    {
+      "name": "list_problems",
+      "description": "Search and list ServiceNow problem records. Supports filtering by free-text search, state, priority, category, and assigned user. Returns up to 100 problems per call."
+    },
+    {
+      "name": "show_create_problem_form",
+      "description": "Create a new problem record — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create a problem or log a root cause analysis. Pass any known details to pre-fill fields."
+    },
+    {
+      "name": "create_problem",
+      "description": "Submit problem creation to ServiceNow. Widget callback — called automatically by the problem form after the user clicks Submit. To create a problem, use show_create_problem_form instead."
+    },
+    {
+      "name": "update_problem",
+      "description": "Update an existing ServiceNow problem record. Only the sys_id is required; include only the fields you want to change."
+    },
+    {
+      "name": "get_cmdb_ci",
+      "description": "Retrieve a CMDB configuration item by its sys_id. Returns name, class, category, operational status, and assignment details."
+    },
+    {
+      "name": "list_cmdb_cis",
+      "description": "Search CMDB configuration items. Supports free-text search across name and description, and filtering by CI class, category, and operational status."
+    },
+    {
+      "name": "get_team_incidents",
+      "description": "Team incident workload dashboard for managers. Queries active incidents assigned to team members, with breakdowns by priority, state, and assignee. Optionally filter by assignment group name. Returns the top 10 most recent incidents."
+    },
+    {
+      "name": "get_team_approvals",
+      "description": "Bulk team approvals view for managers. Lists all pending approvals (state=requested), grouped by source table type, with approval age in hours. Returns structured data suitable for batch approve or reject decisions."
+    },
+    {
+      "name": "get_sla_status",
+      "description": "Get SLA compliance status for incidents. Shows breached, at-risk, and compliant SLAs with percentage complete and time remaining. Optionally filter by incident number or show only breached SLAs."
+    },
+    {
+      "name": "create_knowledge_article",
+      "description": "Create a new knowledge base article in ServiceNow as a draft. Provide title, body content, and optionally a knowledge base and category."
+    }
+  ],
+  "remoteScopes": null,
+  "externalOAuth": null,
+  "apiKey": null
+}

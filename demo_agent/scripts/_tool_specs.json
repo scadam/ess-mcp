@@ -1,0 +1,452 @@
+{
+  "workday": [
+    {
+      "name": "get_worker",
+      "description": "Get the current Workday worker profile. Result is rendered as an interactive widget."
+    },
+    {
+      "name": "get_leave_balances",
+      "description": "Retrieve leave balances and eligible absence types for the current worker. The response includes eligibleAbsenceTypes[].id -- use this ID as timeOffTypeId when calling prepare_request_leave."
+    },
+    {
+      "name": "get_direct_reports",
+      "description": "List direct reports for the current worker."
+    },
+    {
+      "name": "get_inbox_tasks",
+      "description": "List Workday inbox tasks for the current worker. Result is rendered as an interactive widget with inline approve/deny."
+    },
+    {
+      "name": "get_learning_assignments",
+      "description": "Retrieve required learning assignments. Result is rendered as an interactive widget."
+    },
+    {
+      "name": "get_pay_slips",
+      "description": "List recent Workday pay slips."
+    },
+    {
+      "name": "get_time_off_entries",
+      "description": "List time off entries for the current worker."
+    },
+    {
+      "name": "prepare_request_leave",
+      "description": "Book time off \u2014 opens the interactive leave booking form for the user to review and confirm. Use this when the user asks to book leave, request PTO, or take time off. Pass startDate, endDate, quantity, unit, and timeOffTypeId (from get_leave_balances). The user confirms and submi"
+    },
+    {
+      "name": "book_leave",
+      "description": "Submit leave request to Workday. Widget callback \u2014 called automatically by the leave booking form after the user clicks Submit. To book leave, use prepare_request_leave instead."
+    },
+    {
+      "name": "prepare_change_business_title",
+      "description": "Change business title \u2014 opens the interactive title change form for the user to enter a new title and submit. Use this when the user asks to change their business title."
+    },
+    {
+      "name": "change_business_title",
+      "description": "Submit business title change to Workday. Widget callback \u2014 called automatically by the title change form after the user clicks Submit. To change a business title, use prepare_change_business_title instead."
+    },
+    {
+      "name": "search_learning_content",
+      "description": "Search Workday learning content filtered by skills and/or category. Accepts optional 'category' (e.g. 'Cloud Computing') to narrow available skills and optional 'skills' list. Resolves names to Workday IDs automatically; invalid values are dropped."
+    },
+    {
+      "name": "get_org_chart",
+      "description": "Get the organizational chart for the current worker's supervisory organization."
+    },
+    {
+      "name": "get_team_calendar",
+      "description": "Get the team time-off calendar showing who is out in the current worker's team."
+    },
+    {
+      "name": "get_team_overview",
+      "description": "Get a team overview dashboard for managers showing headcount, role breakdown, and team member details."
+    },
+    {
+      "name": "get_team_performance_summary",
+      "description": "Get team performance review status for managers including pending inbox items and team absence overview."
+    },
+    {
+      "name": "action_inbox_task",
+      "description": "Approve or reject a Workday inbox task. Provide the task_id from get_inbox_tasks and decision ('approve' or 'deny'). Optionally include a comment."
+    },
+    {
+      "name": "get_inbox_task_detail",
+      "description": "Get detailed information about a specific Workday inbox task by its task_id."
+    },
+    {
+      "name": "get_goals",
+      "description": "Get your performance goals including status, due dates, and categories. Result is rendered as an interactive dashboard."
+    },
+    {
+      "name": "get_feedback",
+      "description": "Get anytime feedback you've received from colleagues and managers."
+    },
+    {
+      "name": "give_feedback",
+      "description": "Give anytime feedback to a colleague. Provide worker_id, comment, and optional badge ID (from get_feedback_badges)."
+    },
+    {
+      "name": "get_feedback_badges",
+      "description": "List available feedback badges that can be used when giving anytime feedback."
+    },
+    {
+      "name": "get_development_items",
+      "description": "Get your individual development plan items including skills, dates, and status. Result is rendered as an interactive widget."
+    },
+    {
+      "name": "request_feedback_on_self",
+      "description": "Request feedback on yourself from peers and managers. Optionally include a message."
+    },
+    {
+      "name": "get_learning_records",
+      "description": "Get your learning history with completion status, grades, scores, and expiration dates."
+    },
+    {
+      "name": "get_check_ins",
+      "description": "Get 1:1 check-in records with topics and notes."
+    },
+    {
+      "name": "create_check_in",
+      "description": "Create a 1:1 check-in record. Provide description, date, participant_id, and optional topic_ids."
+    },
+    {
+      "name": "get_check_in_topics",
+      "description": "List check-in topics available for creating check-ins."
+    },
+    {
+      "name": "get_worker_skills",
+      "description": "Get skills listed on your Workday profile."
+    },
+    {
+      "name": "get_team_goals",
+      "description": "Get performance goals for all direct reports showing goal status and due dates (manager tool). Result is rendered as an interactive widget."
+    },
+    {
+      "name": "request_feedback_on_worker",
+      "description": "Request feedback on a specific direct report. Provide worker_id and optional comment (manager tool)."
+    },
+    {
+      "name": "prepare_give_feedback",
+      "description": "Open the give feedback widget \u2014 select a colleague, pick a badge, and write feedback. Use when the user wants to recognize or give feedback to someone."
+    },
+    {
+      "name": "prepare_create_check_in",
+      "description": "Open the check-in creation widget \u2014 select a team member, choose topics, set a date, and create a 1:1 check-in. Use when a manager wants to schedule or create a check-in."
+    },
+    {
+      "name": "get_job_profiles",
+      "description": "List Workday job profiles with optional search filter. Use to find the right job profile for a hire."
+    },
+    {
+      "name": "get_job_profile",
+      "description": "Get details of a single Workday job profile by ID including job family and management level."
+    },
+    {
+      "name": "get_job_families",
+      "description": "List Workday job families with optional search filter. Job families group related job profiles."
+    },
+    {
+      "name": "get_jobs",
+      "description": "List Workday jobs (filled positions) with optional search filter."
+    },
+    {
+      "name": "get_job_requisitions",
+      "description": "List open job requisitions. Use to find requisitions available for hiring into."
+    },
+    {
+      "name": "get_supervisory_orgs",
+      "description": "List supervisory organizations with optional search filter. Use to find the target org for a hire."
+    },
+    {
+      "name": "get_supervisory_org_members",
+      "description": "List members of a supervisory organization by org_id. Use to review current team composition or find internal candidates."
+    },
+    {
+      "name": "get_job_change_reasons",
+      "description": "List valid job change reasons (e.g. New Hire, Promotion, Transfer). Use to get a reason_id for create_job_change."
+    },
+    {
+      "name": "create_job_change",
+      "description": "Initiate a job change for a worker (hire, promote, or transfer). Provide worker_id and reason_id (from get_job_change_reasons). Optionally provide job_profile_id, supervisory_org_id, position_id, or job_requisition_id. Returns a job change event ID for submit_job_change."
+    },
+    {
+      "name": "get_job_change",
+      "description": "Get details and status of a job change event by its ID."
+    },
+    {
+      "name": "submit_job_change",
+      "description": "Submit a job change event for approval. Provide the job_change_id from create_job_change."
+    },
+    {
+      "name": "create_org_assignment_change",
+      "description": "Initiate an organization assignment change for a worker. Assign company, cost center, region, or business unit. Returns a change ID for submit_org_assignment_change."
+    },
+    {
+      "name": "submit_org_assignment_change",
+      "description": "Submit an organization assignment change for approval. Provide the change_id from create_org_assignment_change."
+    }
+  ],
+  "servicenow": [
+    {
+      "name": "list_incidents",
+      "description": "Search and list ServiceNow incidents. Supports filtering by free-text search, incident number, category, state, priority, assigned user, and active status. Returns up to 100 incidents per call. Results are rendered as an interactive widget."
+    },
+    {
+      "name": "show_create_incident_form",
+      "description": "Create a new incident \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to report an issue, create an incident, or log a problem. Pass any known details to pre-fill fields including assignment_group for intelligent routing."
+    },
+    {
+      "name": "create_incident",
+      "description": "Submit incident creation to ServiceNow. Widget callback \u2014 called automatically by the incident form after the user clicks Submit. To create an incident, use show_create_incident_form instead."
+    },
+    {
+      "name": "show_update_incident_form",
+      "description": "Edit an existing incident \u2014 fetches the incident and opens the interactive update form with current values. Use this when the user asks to update or edit an incident. Provide the incident number (e.g. INC0010006)."
+    },
+    {
+      "name": "get_incident",
+      "description": "Retrieve full details and comment/work-note history for a single ServiceNow incident by its number (e.g. INC0010006). Use this to show the user an incident's current state and conversation history."
+    },
+    {
+      "name": "update_incident",
+      "description": "Submit incident updates to ServiceNow. Widget callback \u2014 called automatically by the incident update form after the user clicks Submit. To update an incident, use show_update_incident_form instead."
+    },
+    {
+      "name": "list_tasks",
+      "description": "List active ServiceNow tasks. Queries the task table which spans all task-derived tables (incidents, changes, problems, etc.). Returns active tasks ordered by most recently updated."
+    },
+    {
+      "name": "update_task",
+      "description": "Update a ServiceNow task. Change state, priority, assignment, or add comments/work notes. Only the sys_id is required -- include only the fields you want to change."
+    },
+    {
+      "name": "list_approvals",
+      "description": "List pending ServiceNow approvals from the sysapproval_approver table. Returns approvals in 'requested' state, ordered by most recently created."
+    },
+    {
+      "name": "get_approval",
+      "description": "Get full details of a single ServiceNow approval by its sys_id. Returns approver, state, source table, document information, and comments."
+    },
+    {
+      "name": "approve_reject",
+      "description": "Approve or reject a ServiceNow approval request. Provide the sys_id and decision (approve/reject). Also used as a widget callback by the approval-review widget."
+    },
+    {
+      "name": "list_catalog_items",
+      "description": "Search and list items from the ServiceNow Service Catalog. When a search term is provided, uses the Table API with server-side LIKE filtering on name and short_description -- faster and more complete than a page-then-filter approach. Supports filtering by category_sys_id or catal"
+    },
+    {
+      "name": "list_catalog_categories",
+      "description": "List categories in the ServiceNow Service Catalog. Use this to help the user explore the catalog structure and find the right category before listing items."
+    },
+    {
+      "name": "get_catalog_item",
+      "description": "Get full details of a ServiceNow catalog item including its dynamic order form (variables, choices, UI policies). Renders an interactive widget where the user can fill in the form, select a quantity, and order or add to cart."
+    },
+    {
+      "name": "order_catalog_item",
+      "description": "Submit a catalog item order to ServiceNow. Widget callback \u2014 called automatically by the catalog item widget when the user clicks Order Now. To order an item, use get_catalog_item to display it first."
+    },
+    {
+      "name": "add_to_cart",
+      "description": "Add a catalog item to the ServiceNow shopping cart. Widget callback \u2014 called automatically by the catalog item widget when the user clicks Add to Cart. To browse items, use get_catalog_item."
+    },
+    {
+      "name": "get_cart",
+      "description": "Get the contents of the current ServiceNow shopping cart, including item names, quantities, prices, and subtotal."
+    },
+    {
+      "name": "checkout_cart",
+      "description": "Submit the ServiceNow shopping cart as an order. Widget callback \u2014 called automatically by the cart widget. To view the cart, use get_cart."
+    },
+    {
+      "name": "delete_cart",
+      "description": "Empty the ServiceNow shopping cart. Widget callback \u2014 called by the cart widget, or directly to clear the cart."
+    },
+    {
+      "name": "remove_cart_item",
+      "description": "Remove a single line item from the ServiceNow shopping cart by cart_item_id. Use get_cart first to discover cart_item_id values."
+    },
+    {
+      "name": "list_my_requests",
+      "description": "List the current user's ServiceNow service requests (REQ) and requested items (RITM) with their catalog item name, state, stage, quantity, price, and dates. Use this when the user asks what they have on order, the status of their requests, or wants to track submitted catalog orde"
+    },
+    {
+      "name": "search_reference_values",
+      "description": "Search a ServiceNow table for reference field values. Used to look up values for reference-type catalog variables where choices come from a table (e.g. cmdb_ci, sys_user). Returns matching records with sys_id and display value."
+    },
+    {
+      "name": "list_change_requests",
+      "description": "Search and list ServiceNow change requests. Supports filtering by free-text search, state, risk level, category, and assigned user. Returns up to 100 change requests per call."
+    },
+    {
+      "name": "get_change_request",
+      "description": "Retrieve full details of a single ServiceNow change request by its sys_id."
+    },
+    {
+      "name": "show_create_change_req_form",
+      "description": "Create a new change request \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create or raise a change request. Pass any known details to pre-fill fields."
+    },
+    {
+      "name": "create_change_request",
+      "description": "Submit change request creation to ServiceNow. Widget callback \u2014 called automatically by the change request form after the user clicks Submit. To create a change request, use show_create_change_req_form instead."
+    },
+    {
+      "name": "update_change_request",
+      "description": "Update an existing ServiceNow change request. Only the sys_id is required; include only the fields you want to change."
+    },
+    {
+      "name": "search_knowledge",
+      "description": "Search the ServiceNow knowledge base for published articles. Supports free-text search across article titles and body text, and optional category filtering."
+    },
+    {
+      "name": "get_knowledge_article",
+      "description": "Retrieve a single ServiceNow knowledge article by its sys_id. Returns the full article text, category, author, and publish status."
+    },
+    {
+      "name": "list_problems",
+      "description": "Search and list ServiceNow problem records. Supports filtering by free-text search, state, priority, category, and assigned user. Returns up to 100 problems per call."
+    },
+    {
+      "name": "show_create_problem_form",
+      "description": "Create a new problem record \u2014 opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create a problem or log a root cause analysis. Pass any known details to pre-fill fields."
+    },
+    {
+      "name": "create_problem",
+      "description": "Submit problem creation to ServiceNow. Widget callback \u2014 called automatically by the problem form after the user clicks Submit. To create a problem, use show_create_problem_form instead."
+    },
+    {
+      "name": "update_problem",
+      "description": "Update an existing ServiceNow problem record. Only the sys_id is required; include only the fields you want to change."
+    },
+    {
+      "name": "get_cmdb_ci",
+      "description": "Retrieve a CMDB configuration item by its sys_id. Returns name, class, category, operational status, and assignment details."
+    },
+    {
+      "name": "list_cmdb_cis",
+      "description": "Search CMDB configuration items. Supports free-text search across name and description, and filtering by CI class, category, and operational status."
+    },
+    {
+      "name": "get_team_incidents",
+      "description": "Team incident workload dashboard for managers. Queries active incidents assigned to team members, with breakdowns by priority, state, and assignee. Optionally filter by assignment group name. Returns the top 10 most recent incidents."
+    },
+    {
+      "name": "get_team_approvals",
+      "description": "Bulk team approvals view for managers. Lists all pending approvals (state=requested), grouped by source table type, with approval age in hours. Returns structured data suitable for batch approve or reject decisions."
+    },
+    {
+      "name": "get_sla_status",
+      "description": "Get SLA compliance status for incidents. Shows breached, at-risk, and compliant SLAs with percentage complete and time remaining. Optionally filter by incident number or show only breached SLAs."
+    },
+    {
+      "name": "create_knowledge_article",
+      "description": "Create a new knowledge base article in ServiceNow as a draft. Provide title, body content, and optionally a knowledge base and category."
+    }
+  ],
+  "coupa": [
+    {
+      "name": "get_invoice_status",
+      "description": "Get invoice payment status from Coupa by invoice number (mocked)."
+    },
+    {
+      "name": "get_po_status",
+      "description": "Get purchase order status from Coupa by PO number (mocked)."
+    },
+    {
+      "name": "reject_invoice",
+      "description": "Reject an invoice in Coupa (mocked)."
+    },
+    {
+      "name": "close_purchase_order",
+      "description": "Close a purchase order in Coupa (mocked)."
+    },
+    {
+      "name": "list_receipts",
+      "description": "List goods receipts from Coupa, optionally filtered by PO (mocked)."
+    },
+    {
+      "name": "prepare_create_receipt",
+      "description": "Show the goods receipt creation form for a PO (mocked)."
+    },
+    {
+      "name": "create_receipt",
+      "description": "Post a goods receipt in Coupa (mocked)."
+    },
+    {
+      "name": "list_requisitions",
+      "description": "List purchase requisitions from Coupa (mocked)."
+    },
+    {
+      "name": "prepare_create_requisition",
+      "description": "Show the purchase requisition creation form (mocked)."
+    },
+    {
+      "name": "create_requisition",
+      "description": "Submit a new purchase requisition in Coupa (mocked)."
+    },
+    {
+      "name": "update_requisition",
+      "description": "Update an existing purchase requisition in Coupa (mocked)."
+    },
+    {
+      "name": "list_catalog_items",
+      "description": "Search the Coupa IT hardware procurement catalog (mocked)."
+    },
+    {
+      "name": "order_catalog_item",
+      "description": "Create a Coupa requisition from a catalog item, as if sourced from ServiceNow (mocked)."
+    },
+    {
+      "name": "list_suppliers",
+      "description": "Search IT hardware suppliers in Coupa with performance rollups (mocked)."
+    },
+    {
+      "name": "get_supplier",
+      "description": "Get supplier details and open order performance from Coupa (mocked)."
+    },
+    {
+      "name": "update_supplier_address",
+      "description": "Update a supplier's address in Coupa (mocked)."
+    },
+    {
+      "name": "update_supplier_bank",
+      "description": "Update a supplier's bank details in Coupa (mocked)."
+    },
+    {
+      "name": "register_supplier",
+      "description": "Register and onboard a new IT hardware supplier in Coupa (mocked)."
+    },
+    {
+      "name": "transfer_purchase_order",
+      "description": "Transfer a purchase order to a new owner in Coupa (mocked)."
+    },
+    {
+      "name": "list_approvals",
+      "description": "List pending approval items in Coupa (mocked)."
+    },
+    {
+      "name": "approve_reject",
+      "description": "Approve or reject a pending approval in Coupa (mocked). Set action to 'approve' or 'reject'."
+    },
+    {
+      "name": "get_category_manager_dashboard",
+      "description": "Category manager dashboard for ServiceNow-sourced IT hardware orders in Coupa (mocked)."
+    },
+    {
+      "name": "list_it_hardware_orders",
+      "description": "List ServiceNow-originated IT hardware purchase orders in Coupa with category, supplier, and delivery filters (mocked)."
+    },
+    {
+      "name": "get_supplier_performance",
+      "description": "Supplier performance dashboard for Coupa IT hardware suppliers (mocked)."
+    },
+    {
+      "name": "get_item_demand",
+      "description": "Item demand and stock coverage for phones, laptops, accessories, and office equipment in Coupa (mocked)."
+    },
+    {
+      "name": "get_servicenow_coupa_flow",
+      "description": "Trace ServiceNow employee requests through Coupa requisitions, POs, receipts, and invoices (mocked)."
+    }
+  ]
+}

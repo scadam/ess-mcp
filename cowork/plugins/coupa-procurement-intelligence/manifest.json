@@ -1,0 +1,46 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.0.2",
+  "id": "6f93e552-45bb-4a13-9c91-3cf149fdc1a5",
+  "packageName": "com.essmcp.coupa.procurement-intelligence",
+  "developer": {
+    "name": "ESS MCP Demo",
+    "websiteUrl": "https://www.microsoft.com",
+    "privacyUrl": "https://www.microsoft.com/privacy",
+    "termsOfUseUrl": "https://www.microsoft.com/termsofuse"
+  },
+  "name": {
+    "short": "Coupa Procurement",
+    "full": "Coupa Procurement Intelligence for Copilot Cowork"
+  },
+  "description": {
+    "short": "Procurement briefs and supplier performance assets from Coupa data",
+    "full": "Create procurement team assets from Coupa MCP data, including supplier performance PowerPoint briefs, IT hardware category dashboards, demand risk summaries, and ServiceNow-to-Coupa fulfilment flow narratives."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#2563EB",
+  "agentSkills": [
+    {
+      "folder": "./skills/supplier-performance-brief"
+    }
+  ],
+  "agentConnectors": [
+    {
+      "id": "coupa-mcp-demo",
+      "displayName": "Coupa MCP Demo Server",
+      "description": "Mock Coupa procurement data for IT hardware orders, suppliers, item demand, approvals, receipts, invoices, and ServiceNow-to-Coupa request flow tracing.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://essmcp-coupa.wittysand-460bf1d9.eastus.azurecontainerapps.io/coupa/mcp",
+          "authorization": {
+            "type": "None"
+          }
+        }
+      }
+    }
+  ]
+}

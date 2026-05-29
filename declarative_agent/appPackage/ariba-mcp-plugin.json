@@ -1,0 +1,836 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "Ariba MCP Server",
+    "description_for_human": "Ariba MCP Server provides access to procurement workflows.",
+    "description_for_model": "Use for Ariba procurement workflows including invoices, purchase orders, requisitions, receipts, catalog, suppliers, and approvals.",
+    "contact_email": "scadam@microsoft.com",
+    "namespace": "mcpariba",
+    "functions": [
+        { "name": "get_invoice_status", "description": "Execute Ariba tool: get_invoice_status." },
+        { "name": "get_po_status", "description": "Execute Ariba tool: get_po_status." },
+        { "name": "reject_invoice", "description": "Execute Ariba tool: reject_invoice." },
+        { "name": "close_purchase_order", "description": "Execute Ariba tool: close_purchase_order." },
+        { "name": "list_receipts", "description": "Execute Ariba tool: list_receipts." },
+        { "name": "prepare_create_receipt", "description": "Execute Ariba tool: prepare_create_receipt." },
+        { "name": "create_receipt", "description": "Execute Ariba tool: create_receipt." },
+        { "name": "list_requisitions", "description": "Execute Ariba tool: list_requisitions." },
+        { "name": "prepare_create_requisition", "description": "Execute Ariba tool: prepare_create_requisition." },
+        { "name": "create_requisition", "description": "Execute Ariba tool: create_requisition." },
+        { "name": "update_requisition", "description": "Execute Ariba tool: update_requisition." },
+        { "name": "list_catalog_items", "description": "Execute Ariba tool: list_catalog_items." },
+        { "name": "order_catalog_item", "description": "Execute Ariba tool: order_catalog_item." },
+        { "name": "list_suppliers", "description": "Execute Ariba tool: list_suppliers." },
+        { "name": "get_supplier", "description": "Execute Ariba tool: get_supplier." },
+        { "name": "update_supplier_address", "description": "Execute Ariba tool: update_supplier_address." },
+        { "name": "update_supplier_bank", "description": "Execute Ariba tool: update_supplier_bank." },
+        { "name": "register_supplier", "description": "Execute Ariba tool: register_supplier." },
+        { "name": "transfer_purchase_order", "description": "Execute Ariba tool: transfer_purchase_order." },
+        { "name": "list_approvals", "description": "Execute Ariba tool: list_approvals." },
+        { "name": "approve_reject", "description": "Execute Ariba tool: approve_reject." }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "auth": {
+                "type": "None"
+            },
+            "run_for_functions": [
+                "get_invoice_status",
+                "get_po_status",
+                "reject_invoice",
+                "close_purchase_order",
+                "list_receipts",
+                "prepare_create_receipt",
+                "create_receipt",
+                "list_requisitions",
+                "prepare_create_requisition",
+                "create_requisition",
+                "update_requisition",
+                "list_catalog_items",
+                "order_catalog_item",
+                "list_suppliers",
+                "get_supplier",
+                "update_supplier_address",
+                "update_supplier_bank",
+                "register_supplier",
+                "transfer_purchase_order",
+                "list_approvals",
+                "approve_reject"
+            ],
+            "spec": {
+                "url": "https://essmcp-ariba.wittysand-460bf1d9.eastus.azurecontainerapps.io/ariba/mcp",
+                "mcp_tool_description": {
+                "tools": [
+                    {
+                    "name": "get_invoice_status",
+                    "description": "Get invoice payment status from SAP Ariba by invoice number.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "invoice_number": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "invoice_number"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-invoice-status.html",
+                        "openai/toolInvocation/invoking": "Checking invoice status…",
+                        "openai/toolInvocation/invoked": "Invoice status ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_po_status",
+                    "description": "Get purchase order status from SAP Ariba by PO number.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "po_number": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "po_number"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-po-status.html",
+                        "openai/toolInvocation/invoking": "Checking PO status…",
+                        "openai/toolInvocation/invoked": "PO status ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "reject_invoice",
+                    "description": "Reject an invoice in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "invoice_id": {
+                            "type": "string"
+                        },
+                        "reason": {
+                            "default": "",
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "invoice_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-confirm-action.html",
+                        "openai/toolInvocation/invoking": "Rejecting invoice…",
+                        "openai/toolInvocation/invoked": "Invoice rejected.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "close_purchase_order",
+                    "description": "Close a purchase order in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "po_id": {
+                            "type": "string"
+                        },
+                        "reason": {
+                            "default": "",
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "po_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-confirm-action.html",
+                        "openai/toolInvocation/invoking": "Closing PO…",
+                        "openai/toolInvocation/invoked": "PO closed.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_receipts",
+                    "description": "List goods receipts from SAP Ariba, optionally filtered by PO number.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "po_number": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-receipt-list.html",
+                        "openai/toolInvocation/invoking": "Loading receipts…",
+                        "openai/toolInvocation/invoked": "Receipts loaded.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "prepare_create_receipt",
+                    "description": "Show the goods receipt creation form for a purchase order.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "po_number": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "po_number"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-create-receipt.html",
+                        "openai/toolInvocation/invoking": "Preparing receipt form…",
+                        "openai/toolInvocation/invoked": "Form ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "create_receipt",
+                    "description": "Post a goods receipt against a purchase order in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "po_number": {
+                            "type": "string"
+                        },
+                        "line_items": {
+                            "items": {
+                            "additionalProperties": true,
+                            "type": "object"
+                            },
+                            "type": "array"
+                        },
+                        "receipt_date": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "po_number",
+                        "line_items",
+                        "receipt_date"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Creating goods receipt…",
+                        "openai/toolInvocation/invoked": "Receipt created.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_requisitions",
+                    "description": "List purchase requisitions from SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "status": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-requisition-list.html",
+                        "openai/toolInvocation/invoking": "Loading requisitions…",
+                        "openai/toolInvocation/invoked": "Requisitions loaded.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "prepare_create_requisition",
+                    "description": "Show the purchase requisition creation form.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-create-requisition.html",
+                        "openai/toolInvocation/invoking": "Preparing requisition form…",
+                        "openai/toolInvocation/invoked": "Form ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "create_requisition",
+                    "description": "Submit a new purchase requisition in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "title": {
+                            "type": "string"
+                        },
+                        "line_items": {
+                            "items": {
+                            "additionalProperties": true,
+                            "type": "object"
+                            },
+                            "type": "array"
+                        },
+                        "requester": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "title",
+                        "line_items"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Creating requisition…",
+                        "openai/toolInvocation/invoked": "Requisition created.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "update_requisition",
+                    "description": "Update an existing purchase requisition in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "requisition_id": {
+                            "type": "string"
+                        },
+                        "updates": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        }
+                        },
+                        "required": [
+                        "requisition_id",
+                        "updates"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Updating requisition…",
+                        "openai/toolInvocation/invoked": "Requisition updated.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_catalog_items",
+                    "description": "Search the SAP Ariba procurement catalog for items to order.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "query": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-catalog-search.html",
+                        "openai/toolInvocation/invoking": "Searching catalog…",
+                        "openai/toolInvocation/invoked": "Catalog results ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "order_catalog_item",
+                    "description": "Create a purchase requisition from a catalog item in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "catalog_item_id": {
+                            "type": "string"
+                        },
+                        "quantity": {
+                            "default": 1,
+                            "type": "integer"
+                        },
+                        "deliver_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "catalog_item_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Ordering catalog item…",
+                        "openai/toolInvocation/invoked": "Item ordered.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_suppliers",
+                    "description": "Search the SAP Ariba supplier master.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "query": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-supplier-list.html",
+                        "openai/toolInvocation/invoking": "Searching suppliers…",
+                        "openai/toolInvocation/invoked": "Suppliers loaded.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_supplier",
+                    "description": "Get supplier details from SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "supplier_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "supplier_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-supplier-profile.html",
+                        "openai/toolInvocation/invoking": "Loading supplier profile…",
+                        "openai/toolInvocation/invoked": "Supplier profile ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "update_supplier_address",
+                    "description": "Update a supplier's address in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "supplier_id": {
+                            "type": "string"
+                        },
+                        "address": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        }
+                        },
+                        "required": [
+                        "supplier_id",
+                        "address"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Updating supplier address…",
+                        "openai/toolInvocation/invoked": "Address updated.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "update_supplier_bank",
+                    "description": "Update a supplier's bank details in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "supplier_id": {
+                            "type": "string"
+                        },
+                        "bank_details": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        }
+                        },
+                        "required": [
+                        "supplier_id",
+                        "bank_details"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Updating bank details…",
+                        "openai/toolInvocation/invoked": "Bank details updated.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "register_supplier",
+                    "description": "Register and onboard a new supplier in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "address": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        },
+                        "contact": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        },
+                        "tax_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "name",
+                        "address",
+                        "contact"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-supplier-registration.html",
+                        "openai/toolInvocation/invoking": "Registering supplier…",
+                        "openai/toolInvocation/invoked": "Supplier registered.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "transfer_purchase_order",
+                    "description": "Transfer a purchase order to a new owner in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "po_id": {
+                            "type": "string"
+                        },
+                        "new_owner": {
+                            "type": "string"
+                        },
+                        "reason": {
+                            "default": "",
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "po_id",
+                        "new_owner"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Transferring PO…",
+                        "openai/toolInvocation/invoked": "PO transferred.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_approvals",
+                    "description": "List pending approval items in SAP Ariba.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/ariba-approval-list.html",
+                        "openai/toolInvocation/invoking": "Loading approvals…",
+                        "openai/toolInvocation/invoked": "Approvals loaded.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "approve_reject",
+                    "description": "Approve or reject a pending approval in SAP Ariba. Set action to 'approve' or 'reject'.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "approvable_id": {
+                            "type": "string"
+                        },
+                        "action": {
+                            "type": "string"
+                        },
+                        "comment": {
+                            "default": "",
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "approvable_id",
+                        "action"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Processing approval…",
+                        "openai/toolInvocation/invoked": "Approval processed.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    }
+                ]
+                }
+            }
+        }
+    ]
+}

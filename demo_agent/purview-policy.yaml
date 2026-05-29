@@ -1,0 +1,97 @@
+# Purview Information Protection policy for the ESS demo agent.
+#
+# Each entry maps a sensitivity-label match (by exact id, case-insensitive name,
+# or `priority_min`) to an enforcement `action`:
+#   - "allow"  : pass content through untouched.
+#   - "redact" : replace matched values in the content with [REDACTED:<reason>].
+#   - "block"  : replace the entire payload with [BLOCKED BY PURVIEW POLICY ...].
+#
+# The first rule that matches a classified label wins. The default action is
+# applied when no rule matches.
+
+default_action: allow
+
+# Label names below are matched case-insensitively. Tenants without a real
+# Purview deployment can still demo the redaction/block behaviour because the
+# heuristic classifier always emits one of the synthetic labels at the bottom.
+rules:
+  # Custom tenant labels (highest sensitivity → block first)
+  - match: { name: "Wingtip Acquisition" }
+    action: block
+    reason: "M&A material non-public information cannot leave the agent boundary"
+
+  - match: { name: "Project Icarus" }
+    action: block
+    reason: "Project Icarus content is need-to-know only and must not leak through agents"
+
+  - match: { name: "Highly Confidential" }
+    action: block
+    reason: "Highly Confidential content cannot leave the agent boundary"
+
+  # Highly Confidential sublabels
+  - match: { name: "Specific People" }
+    action: block
+    reason: "Highly Confidential → Specific People is need-to-know only"
+
+  - match: { priority_min: 70 }
+    action: block
+    reason: "Priority ≥ 70 — Highly Confidential or restricted tier"
+
+  - match: { name: "Confidential" }
+    action: redact
+    reason: "Confidential PII must be redacted before being shown to the user"
+
+  # Confidential sublabels
+  - match: { name: "Trusted People" }
+    action: redact
+    reason: "Confidential → Trusted People still requires PII redaction in agent output"
+
+  - match: { name: "All Employees" }
+    action: redact
+    reason: "Confidential → All Employees still requires PII redaction in agent output"
+
+  - match: { name: "Anyone (unrestricted)" }
+    action: redact
+    reason: "Confidential → Anyone (unrestricted) still requires PII redaction in agent output"
+
+  - match: { name: "All Employees (unrestricted)" }
+    action: allow
+
+  - match: { name: "General" }
+    action: allow
+
+  - match: { name: "Public" }
+    action: allow
+
+  - match: { name: "Personal" }
+    action: allow
+
+  # Synthetic labels emitted by the built-in heuristic classifier when there is
+  # no real Purview tenant policy.
+  - match: { name: "ESS-Demo-Highly-Confidential" }
+    action: block
+    reason: "Heuristic classifier flagged Highly Confidential content"
+
+  - match: { name: "ESS-Demo-Confidential" }
+    action: redact
+    reason: "Heuristic classifier flagged Confidential content"
+
+  - match: { name: "ESS-Demo-General" }
+    action: allow
+
+# Patterns the redaction step uses to mask values inside an otherwise-allowed
+# Confidential payload. Each pattern is a regular expression matched
+# case-insensitively against the result text.
+redaction_patterns:
+  - name: ssn
+    pattern: '\b\d{3}-\d{2}-\d{4}\b'
+    placeholder: "[REDACTED:SSN]"
+  - name: us_phone
+    pattern: '\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b'
+    placeholder: "[REDACTED:PHONE]"
+  - name: email
+    pattern: '\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b'
+    placeholder: "[REDACTED:EMAIL]"
+  - name: salary
+    pattern: '\$\s?\d{2,3}(?:,\d{3})+(?:\.\d{2})?'
+    placeholder: "[REDACTED:SALARY]"

@@ -1,0 +1,2773 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "ServiceNow MCP Server",
+    "description_for_human": "ServiceNow MCP Server provides access to ServiceNow functionalities.",
+    "description_for_model": "Use for ServiceNow IT service management and employee IT service catalog workflows, including laptop options, laptop order forms, IT equipment requests, incidents, knowledge articles, carts, checkout, and request status. For an employee who asks to order a laptop or IT equipment, use the ServiceNow catalog tools only; do not use Coupa unless the user explicitly asks to trace a submitted request into procurement.",
+    "contact_email": "scadam@microsoft.com",
+    "namespace": "mcpservicenow",
+    "functions": [
+        {
+            "name": "list_incidents",
+            "description": "Search and list ServiceNow incidents. Supports filtering by free-text search, incident number, category, state, priority, assigned user, and active status. Returns up to 100 incidents per call. Results are rendered as an interactive widget."
+        },
+        {
+            "name": "show_create_incident_form",
+            "description": "Create a new incident — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to report an issue, create an incident, or log a problem. Pass any known details to pre-fill fields."
+        },
+        {
+            "name": "create_incident",
+            "description": "Submit incident creation to ServiceNow. Widget callback — called automatically by the incident form after the user clicks Submit. To create an incident, use show_create_incident_form instead."
+        },
+        {
+            "name": "show_update_incident_form",
+            "description": "Edit an existing incident — fetches the incident and opens the interactive update form with current values. Use this when the user asks to update or edit an incident. Provide the incident number (e.g. INC0010006)."
+        },
+        {
+            "name": "get_incident",
+            "description": "Retrieve full details and comment/work-note history for a single ServiceNow incident by its number (e.g. INC0010006). Use this to show the user an incident's current state and conversation history."
+        },
+        {
+            "name": "update_incident",
+            "description": "Submit incident updates to ServiceNow. Widget callback — called automatically by the incident update form after the user clicks Submit. To update an incident, use show_update_incident_form instead."
+        },
+        {
+            "name": "list_tasks",
+            "description": "List active ServiceNow tasks. Queries the task table which spans all task-derived tables (incidents, changes, problems, etc.). Returns active tasks ordered by most recently updated."
+        },
+        {
+            "name": "update_task",
+            "description": "Update a ServiceNow task. Change state, priority, assignment, or add comments/work notes. Only the sys_id is required -- include only the fields you want to change."
+        },
+        {
+            "name": "list_approvals",
+            "description": "List pending ServiceNow approvals from the sysapproval_approver table. Returns approvals in 'requested' state, ordered by most recently created."
+        },
+        {
+            "name": "get_approval",
+            "description": "Get full details of a single ServiceNow approval by its sys_id. Returns approver, state, source table, document information, and comments."
+        },
+        {
+            "name": "approve_reject",
+            "description": "Approve or reject a ServiceNow approval request. Provide the sys_id and decision (approve/reject). Also used as a widget callback by the approval-review widget."
+        },
+        {
+            "name": "list_catalog_items",
+            "description": "Search and list items from the ServiceNow Service Catalog. When a search term is provided, uses the Table API with server-side LIKE filtering on name and short_description -- faster and more complete than a page-then-filter approach. Supports filtering by category_sys_id or catalog_sys_id. Each result includes a sys_id that can be passed directly to get_catalog_item or order_catalog_item without any further lookup. If zero results are returned, do NOT retry with the same or similar search; instead call list_catalog_categories to browse by category and pass category_sys_id here."
+        },
+        {
+            "name": "list_catalog_categories",
+            "description": "List categories in the ServiceNow Service Catalog. Use this to help the user explore the catalog structure and find the right category before listing items."
+        },
+        {
+            "name": "get_catalog_item",
+            "description": "Get full details of a ServiceNow catalog item including its dynamic order form (variables, choices, UI policies). Renders an interactive widget where the user can fill in the form, select a quantity, and order or add to cart."
+        },
+        {
+            "name": "order_catalog_item",
+            "description": "Submit a catalog item order to ServiceNow. Widget callback — called automatically by the catalog item widget when the user clicks Order Now. To order an item, use get_catalog_item to display it first."
+        },
+        {
+            "name": "add_to_cart",
+            "description": "Add a catalog item to the ServiceNow shopping cart. Widget callback — called automatically by the catalog item widget when the user clicks Add to Cart. To browse items, use get_catalog_item."
+        },
+        {
+            "name": "get_cart",
+            "description": "Get the contents of the current ServiceNow shopping cart, including item names, quantities, prices, and subtotal."
+        },
+        {
+            "name": "checkout_cart",
+            "description": "Submit the ServiceNow shopping cart as an order. Widget callback — called automatically by the cart widget. To view the cart, use get_cart."
+        },
+        {
+            "name": "delete_cart",
+            "description": "Empty the ServiceNow shopping cart. Widget callback — called by the cart widget, or directly to clear the cart."
+        },
+        {
+            "name": "remove_cart_item",
+            "description": "Remove a single line item from the ServiceNow shopping cart by cart_item_id. Use get_cart first to discover cart_item_id values."
+        },
+        {
+            "name": "list_my_requests",
+            "description": "List the current user's ServiceNow service requests (REQ) and requested items (RITM) with their catalog item name, state, stage, quantity, price, and dates. Use this when the user asks what they have on order, the status of their requests, or wants to track submitted catalog orders."
+        },
+        {
+            "name": "search_reference_values",
+            "description": "Search a ServiceNow table for reference field values. Used to look up values for reference-type catalog variables where choices come from a table (e.g. cmdb_ci, sys_user). Returns matching records with sys_id and display value."
+        },
+        {
+            "name": "list_change_requests",
+            "description": "Search and list ServiceNow change requests. Supports filtering by free-text search, state, risk level, category, and assigned user. Returns up to 100 change requests per call."
+        },
+        {
+            "name": "get_change_request",
+            "description": "Retrieve full details of a single ServiceNow change request by its sys_id."
+        },
+        {
+            "name": "show_create_change_req_form",
+            "description": "Create a new change request — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create or raise a change request. Pass any known details to pre-fill fields."
+        },
+        {
+            "name": "create_change_request",
+            "description": "Submit change request creation to ServiceNow. Widget callback — called automatically by the change request form after the user clicks Submit. To create a change request, use show_create_change_req_form instead."
+        },
+        {
+            "name": "update_change_request",
+            "description": "Update an existing ServiceNow change request. Only the sys_id is required; include only the fields you want to change."
+        },
+        {
+            "name": "search_knowledge",
+            "description": "Search the ServiceNow knowledge base for published articles. Supports free-text search across article titles and body text, and optional category filtering."
+        },
+        {
+            "name": "get_knowledge_article",
+            "description": "Retrieve a single ServiceNow knowledge article by its sys_id. Returns the full article text, category, author, and publish status."
+        },
+        {
+            "name": "list_problems",
+            "description": "Search and list ServiceNow problem records. Supports filtering by free-text search, state, priority, category, and assigned user. Returns up to 100 problems per call."
+        },
+        {
+            "name": "show_create_problem_form",
+            "description": "Create a new problem record — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create a problem or log a root cause analysis. Pass any known details to pre-fill fields."
+        },
+        {
+            "name": "create_problem",
+            "description": "Submit problem creation to ServiceNow. Widget callback — called automatically by the problem form after the user clicks Submit. To create a problem, use show_create_problem_form instead."
+        },
+        {
+            "name": "update_problem",
+            "description": "Update an existing ServiceNow problem record. Only the sys_id is required; include only the fields you want to change."
+        },
+        {
+            "name": "get_cmdb_ci",
+            "description": "Retrieve a CMDB configuration item by its sys_id. Returns name, class, category, operational status, and assignment details."
+        },
+        {
+            "name": "list_cmdb_cis",
+            "description": "Search CMDB configuration items. Supports free-text search across name and description, and filtering by CI class, category, and operational status."
+        },
+        {
+            "name": "get_team_incidents",
+            "description": "Team incident workload dashboard for managers. Queries active incidents assigned to team members, with breakdowns by priority, state, and assignee. Optionally filter by assignment group name. Returns the top 10 most recent incidents."
+        },
+        {
+            "name": "get_team_approvals",
+            "description": "Bulk team approvals view for managers. Lists all pending approvals (state=requested), grouped by source table type, with approval age in hours. Returns structured data suitable for batch approve or reject decisions."
+        },
+        {
+            "name": "get_sla_status",
+            "description": "Get SLA compliance status for incidents. Shows breached, at-risk, and compliant SLAs with percentage complete and time remaining. Optionally filter by incident number or show only breached SLAs."
+        },
+        {
+            "name": "create_knowledge_article",
+            "description": "Create a new knowledge base article in ServiceNow as a draft. Provide title, body content, and optionally a knowledge base and category."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "auth": {
+                "type": "OAuthPluginVault",
+                "reference_id": "ODAzMGQ5MjgtZTU1Ny00YTRjLWFlMWUtOTVjMWM0MTI1ZWFhIyM3MjM4MDYwNC1lZTZjLTQyYjktOTM5MC0zYTYxZGQ1MGVkY2Q="
+            },
+        "run_for_functions": [
+            "list_incidents",
+            "show_create_incident_form",
+            "create_incident",
+            "show_update_incident_form",
+            "get_incident",
+            "update_incident",
+            "list_tasks",
+            "update_task",
+            "list_approvals",
+            "get_approval",
+            "approve_reject",
+            "list_catalog_items",
+            "list_catalog_categories",
+            "get_catalog_item",
+            "order_catalog_item",
+            "add_to_cart",
+            "get_cart",
+            "checkout_cart",
+            "delete_cart",
+            "remove_cart_item",
+            "list_my_requests",
+            "search_reference_values",
+            "list_change_requests",
+            "get_change_request",
+            "show_create_change_req_form",
+            "create_change_request",
+            "update_change_request",
+            "search_knowledge",
+            "get_knowledge_article",
+            "list_problems",
+            "show_create_problem_form",
+            "create_problem",
+            "update_problem",
+            "get_cmdb_ci",
+            "list_cmdb_cis",
+            "get_team_incidents",
+            "get_team_approvals",
+            "get_sla_status",
+            "create_knowledge_article"
+        ],
+        "spec":{
+            "url": "https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp",
+            "mcp_tool_description": {
+                "tools": [
+                    {
+                    "name": "list_incidents",
+                    "description": "Search and list ServiceNow incidents. Supports filtering by free-text search, incident number, category, state, priority, assigned user, and active status. Returns up to 100 incidents per call. Results are rendered as an interactive widget.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "search_text": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "number": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "state": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "priority": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "active": {
+                            "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "limit": {
+                            "default": 10,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/incident-list.html",
+                        "openai/toolInvocation/invoking": "Loading incidents…",
+                        "openai/toolInvocation/invoked": "Incidents ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "show_create_incident_form",
+                    "description": "Create a new incident — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to report an issue, create an incident, or log a problem. Pass any known details to pre-fill fields including assignment_group for intelligent routing.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "short_description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "caller": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "urgency": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "impact": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assignment_group": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/create-incident.html",
+                        "openai/toolInvocation/invoking": "Loading incident form…",
+                        "openai/toolInvocation/invoked": "Incident form ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "create_incident",
+                    "description": "Submit incident creation to ServiceNow. Widget callback — called automatically by the incident form after the user clicks Submit. To create an incident, use show_create_incident_form instead.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "short_description": {
+                            "type": "string"
+                        },
+                        "caller": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "subcategory": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "urgency": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "impact": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "comments": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assignment_group": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "contact_type": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "service": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "service_offering": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "configuration_item": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "short_description",
+                        "caller"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/create-incident.html",
+                        "openai/toolInvocation/invoking": "Creating incident…",
+                        "openai/toolInvocation/invoked": "Incident created.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "show_update_incident_form",
+                    "description": "Edit an existing incident — fetches the incident and opens the interactive update form with current values. Use this when the user asks to update or edit an incident. Provide the incident number (e.g. INC0010006).",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "number": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "number"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/update-incident.html",
+                        "openai/toolInvocation/invoking": "Loading incident for editing…",
+                        "openai/toolInvocation/invoked": "Update form ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_incident",
+                    "description": "Retrieve full details and comment/work-note history for a single ServiceNow incident by its number (e.g. INC0010006). Use this to show the user an incident's current state and conversation history.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "number": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "number"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "update_incident",
+                    "description": "Submit incident updates to ServiceNow. Widget callback — called automatically by the incident update form after the user clicks Submit. To update an incident, use show_update_incident_form instead.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "number": {
+                            "type": "string"
+                        },
+                        "short_description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "subcategory": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "urgency": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "comments": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "state": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "impact": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assignment_group": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "contact_type": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "work_notes": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "service": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "service_offering": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "configuration_item": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "close_code": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "close_notes": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "number"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_tasks",
+                    "description": "List active ServiceNow tasks. Queries the task table which spans all task-derived tables (incidents, changes, problems, etc.). Returns active tasks ordered by most recently updated.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "limit": {
+                            "default": 50,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/task-list.html",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "update_task",
+                    "description": "Update a ServiceNow task. Change state, priority, assignment, or add comments/work notes. Only the sys_id is required -- include only the fields you want to change.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        },
+                        "state": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "priority": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "short_description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "work_notes": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "comments": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_approvals",
+                    "description": "List pending ServiceNow approvals from the sysapproval_approver table. Returns approvals in 'requested' state, ordered by most recently created.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "limit": {
+                            "default": 50,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_approval",
+                    "description": "Get full details of a single ServiceNow approval by its sys_id. Returns approver, state, source table, document information, and comments.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "approve_reject",
+                    "description": "Approve or reject a ServiceNow approval request. Provide the sys_id and decision (approve/reject). Also used as a widget callback by the approval-review widget.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        },
+                        "decision": {
+                            "type": "string"
+                        },
+                        "comment": {
+                            "default": "",
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "sys_id",
+                        "decision"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_catalog_items",
+                    "description": "Search and list items from the ServiceNow Service Catalog. When a search term is provided, uses the Table API with server-side LIKE filtering on name and short_description -- faster and more complete than a page-then-filter approach. Supports filtering by category_sys_id or catalog_sys_id. Each result includes a sys_id that can be passed directly to get_catalog_item or order_catalog_item without any further lookup. If zero results are returned, do NOT retry with the same or similar search; instead call list_catalog_categories to browse by category and pass category_sys_id here.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "search": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category_sys_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "catalog_sys_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "limit": {
+                            "default": 20,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/catalog-list.html",
+                        "openai/toolInvocation/invoking": "Loading catalog items…",
+                        "openai/toolInvocation/invoked": "Catalog items ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_catalog_categories",
+                    "description": "List categories in the ServiceNow Service Catalog. Use this to help the user explore the catalog structure and find the right category before listing items.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "catalog_sys_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "limit": {
+                            "default": 40,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_catalog_item",
+                    "description": "Get full details of a ServiceNow catalog item including its dynamic order form (variables, choices, UI policies). Renders an interactive widget where the user can fill in the form, select a quantity, and order or add to cart.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/catalog-item.html",
+                        "openai/toolInvocation/invoking": "Loading catalog item…",
+                        "openai/toolInvocation/invoked": "Catalog item ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "order_catalog_item",
+                    "description": "Submit a catalog item order to ServiceNow. Widget callback — called automatically by the catalog item widget when the user clicks Order Now. To order an item, use get_catalog_item to display it first.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        },
+                        "variables": {
+                            "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "quantity": {
+                            "default": 1,
+                            "type": "integer"
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "add_to_cart",
+                    "description": "Add a catalog item to the ServiceNow shopping cart. Widget callback — called automatically by the catalog item widget when the user clicks Add to Cart. To browse items, use get_catalog_item.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        },
+                        "variables": {
+                            "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "quantity": {
+                            "default": 1,
+                            "type": "integer"
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_cart",
+                    "description": "Get the contents of the current ServiceNow shopping cart, including item names, quantities, prices, and subtotal.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/cart-summary.html",
+                        "openai/toolInvocation/invoking": "Loading shopping cart…",
+                        "openai/toolInvocation/invoked": "Shopping cart ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "checkout_cart",
+                    "description": "Submit the ServiceNow shopping cart as an order. Widget callback — called automatically by the cart widget. To view the cart, use get_cart.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "delete_cart",
+                    "description": "Empty the ServiceNow shopping cart. Widget callback — called by the cart widget, or directly to clear the cart.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "remove_cart_item",
+                    "description": "Remove a single line item from the ServiceNow shopping cart by cart_item_id. Use get_cart first to discover cart_item_id values.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "cart_item_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "cart_item_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_my_requests",
+                    "description": "List the current user's ServiceNow service requests (REQ) and requested items (RITM) with their catalog item name, state, stage, quantity, price, and dates. Use this when the user asks what they have on order, the status of their requests, or wants to track submitted catalog orders.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "limit": {
+                            "default": 20,
+                            "type": "integer"
+                        },
+                        "state": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "search_reference_values",
+                    "description": "Search a ServiceNow table for reference field values. Used to look up values for reference-type catalog variables where choices come from a table (e.g. cmdb_ci, sys_user). Returns matching records with sys_id and display value.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "table": {
+                            "type": "string"
+                        },
+                        "search": {
+                            "default": "",
+                            "type": "string"
+                        },
+                        "limit": {
+                            "default": 20,
+                            "type": "integer"
+                        }
+                        },
+                        "required": [
+                        "table"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_change_requests",
+                    "description": "Search and list ServiceNow change requests. Supports filtering by free-text search, state, risk level, category, and assigned user. Returns up to 100 change requests per call.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "search_text": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "state": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "risk": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "limit": {
+                            "default": 10,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_change_request",
+                    "description": "Retrieve full details of a single ServiceNow change request by its sys_id.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "show_create_change_req_form",
+                    "description": "Create a new change request — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create or raise a change request. Pass any known details to pre-fill fields.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "short_description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "type": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "risk": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "impact": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "planned_start_date": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "planned_end_date": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/create-change-request.html",
+                        "openai/toolInvocation/invoking": "Loading change request form…",
+                        "openai/toolInvocation/invoked": "Change request form ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "create_change_request",
+                    "description": "Submit change request creation to ServiceNow. Widget callback — called automatically by the change request form after the user clicks Submit. To create a change request, use show_create_change_req_form instead.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "short_description": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "risk": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "impact": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assignment_group": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "planned_start_date": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "planned_end_date": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "short_description"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/create-change-request.html",
+                        "openai/toolInvocation/invoking": "Creating change request…",
+                        "openai/toolInvocation/invoked": "Change request created.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "update_change_request",
+                    "description": "Update an existing ServiceNow change request. Only the sys_id is required; include only the fields you want to change.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        },
+                        "short_description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "type": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "risk": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "impact": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assignment_group": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "state": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "work_notes": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "planned_start_date": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "planned_end_date": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "close_code": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "close_notes": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/create-change-request.html",
+                        "openai/toolInvocation/invoking": "Updating change request…",
+                        "openai/toolInvocation/invoked": "Change request updated.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "search_knowledge",
+                    "description": "Search the ServiceNow knowledge base for published articles. Supports free-text search across article titles and body text, and optional category filtering.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "search_text": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "limit": {
+                            "default": 10,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_knowledge_article",
+                    "description": "Retrieve a single ServiceNow knowledge article by its sys_id. Returns the full article text, category, author, and publish status.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_problems",
+                    "description": "Search and list ServiceNow problem records. Supports filtering by free-text search, state, priority, category, and assigned user. Returns up to 100 problems per call.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "search_text": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "state": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "priority": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "limit": {
+                            "default": 10,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "show_create_problem_form",
+                    "description": "Create a new problem record — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to create a problem or log a root cause analysis. Pass any known details to pre-fill fields.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "short_description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "priority": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "impact": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "urgency": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/create-problem.html",
+                        "openai/toolInvocation/invoking": "Loading problem form…",
+                        "openai/toolInvocation/invoked": "Problem form ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "create_problem",
+                    "description": "Submit problem creation to ServiceNow. Widget callback — called automatically by the problem form after the user clicks Submit. To create a problem, use show_create_problem_form instead.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "short_description": {
+                            "type": "string"
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "priority": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assignment_group": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "impact": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "urgency": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "short_description"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/create-problem.html",
+                        "openai/toolInvocation/invoking": "Creating problem…",
+                        "openai/toolInvocation/invoked": "Problem created.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "update_problem",
+                    "description": "Update an existing ServiceNow problem record. Only the sys_id is required; include only the fields you want to change.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        },
+                        "short_description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "priority": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "impact": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "urgency": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assignment_group": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "assigned_to": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "state": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "work_notes": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/create-problem.html",
+                        "openai/toolInvocation/invoking": "Updating problem…",
+                        "openai/toolInvocation/invoked": "Problem updated.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_cmdb_ci",
+                    "description": "Retrieve a CMDB configuration item by its sys_id. Returns name, class, category, operational status, and assignment details.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "sys_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "sys_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "list_cmdb_cis",
+                    "description": "Search CMDB configuration items. Supports free-text search across name and description, and filtering by CI class, category, and operational status.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "search_text": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "sys_class_name": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "operational_status": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "limit": {
+                            "default": 10,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_team_incidents",
+                    "description": "Team incident workload dashboard for managers. Queries active incidents assigned to team members, with breakdowns by priority, state, and assignee. Optionally filter by assignment group name. Returns the top 10 most recent incidents.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "assigned_to_group": {
+                            "default": "",
+                            "type": "string"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/team-incidents.html",
+                        "openai/toolInvocation/invoking": "Loading team incidents…",
+                        "openai/toolInvocation/invoked": "Team incidents ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_team_approvals",
+                    "description": "Bulk team approvals view for managers. Lists all pending approvals (state=requested), grouped by source table type, with approval age in hours. Returns structured data suitable for batch approve or reject decisions.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "limit": {
+                            "default": 100,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_sla_status",
+                    "description": "Get SLA compliance status for incidents. Shows breached, at-risk, and compliant SLAs with percentage complete and time remaining. Optionally filter by incident number or show only breached SLAs.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "number": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "breached_only": {
+                            "default": false,
+                            "type": "boolean"
+                        },
+                        "limit": {
+                            "default": 25,
+                            "type": "integer"
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "create_knowledge_article",
+                    "description": "Create a new knowledge base article in ServiceNow as a draft. Provide title, body content, and optionally a knowledge base and category.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "title": {
+                            "type": "string"
+                        },
+                        "body_text": {
+                            "type": "string"
+                        },
+                        "knowledge_base": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "category": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "short_description": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "title",
+                        "body_text"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    }
+                ]
+                }
+        }
+        }
+    ]
+}

@@ -12,14 +12,15 @@ from pathlib import Path
 
 ROOT = Path(r"c:\Users\scadam\AgentsToolkitProjects\ess-mcp\mcp_servers\src\mcp_servers")
 
-FILES = [
-    ROOT / "workday" / "tools.py",
-    ROOT / "servicenow" / "tools.py",
-]
+
+def iter_tool_files():
+    for path in sorted(ROOT.glob("*/tools.py")):
+        if path.is_file():
+            yield path
 
 # Match `if resp.is_error:` or `if not resp.is_success:` or `if response.is_error:` etc.
 GUARD_RE = re.compile(
-    r"^\s+if\s+(?:not\s+)?(resp|response|cat_resp)\.(is_error|is_success)\s*:"
+    r"^\s+if\s+(?:not\s+)?([A-Za-z_]\w*)\.(is_error|is_success)\s*:"
 )
 
 
@@ -104,7 +105,7 @@ def process_file(path):
 
 
 total = 0
-for f in FILES:
+for f in iter_tool_files():
     print(f"\n{f.name}:")
     n = process_file(f)
     if n and n > 0:

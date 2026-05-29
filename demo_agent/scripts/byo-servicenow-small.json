@@ -1,0 +1,32 @@
+{
+  "serverName": "ext_ESSServiceNow",
+  "serverUrl": "https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp",
+  "authType": "NoAuth",
+  "description": "ServiceNow IT service: incidents, changes, problems, knowledge, catalog.",
+  "publisherName": "Project ESS",
+  "tools": [
+    {
+      "name": "list_incidents",
+      "description": "Search and list ServiceNow incidents. Supports filtering by free-text search, incident number, category, state, priority, assigned user, and active status. Returns up to 100 incidents per call. Results are rendered as an interactive widget."
+    },
+    {
+      "name": "show_create_incident_form",
+      "description": "Create a new incident — opens the interactive creation form for the user to fill in and submit. Use this when the user asks to report an issue, create an incident, or log a problem. Pass any known details to pre-fill fields including assignment_group for intelligent routing."
+    },
+    {
+      "name": "create_incident",
+      "description": "Submit incident creation to ServiceNow. Widget callback — called automatically by the incident form after the user clicks Submit. To create an incident, use show_create_incident_form instead."
+    },
+    {
+      "name": "show_update_incident_form",
+      "description": "Edit an existing incident — fetches the incident and opens the interactive update form with current values. Use this when the user asks to update or edit an incident. Provide the incident number (e.g. INC0010006)."
+    },
+    {
+      "name": "get_incident",
+      "description": "Retrieve full details and comment/work-note history for a single ServiceNow incident by its number (e.g. INC0010006). Use this to show the user an incident's current state and conversation history."
+    }
+  ],
+  "remoteScopes": null,
+  "externalOAuth": null,
+  "apiKey": null
+}

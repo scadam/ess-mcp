@@ -2723,7 +2723,7 @@ async def tool_get_change_request(
     }
 
 
-async def tool_show_create_change_request_form(
+async def tool_show_create_change_req_form(
     short_description: Optional[str] = None,
     type: Optional[str] = None,
     category: Optional[str] = None,
@@ -3735,14 +3735,14 @@ SERVICENOW_TOOL_SPECS.extend(
             },
         },
         {
-            "name": "show_create_change_request_form",
+            "name": "show_create_change_req_form",
             "summary": (
                 "Create a new change request — opens the interactive creation form "
                 "for the user to fill in and submit. Use this when the user asks "
                 "to create or raise a change request. Pass any known details "
                 "to pre-fill fields."
             ),
-            "func": tool_show_create_change_request_form,
+            "func": tool_show_create_change_req_form,
             "annotations": {"readOnlyHint": True},
             "meta": {
                 "openai/outputTemplate": "ui://widget/create-change-request.html",
@@ -3755,7 +3755,7 @@ SERVICENOW_TOOL_SPECS.extend(
             "summary": (
                 "Submit change request creation to ServiceNow. Widget callback — "
                 "called automatically by the change request form after the user clicks Submit. "
-                "To create a change request, use show_create_change_request_form instead."
+                "To create a change request, use show_create_change_req_form instead."
             ),
             "func": tool_create_change_request,
             "annotations": {
@@ -4312,3 +4312,5 @@ SERVICENOW_TOOL_SPECS.extend(
         },
     ]
 )
+
+

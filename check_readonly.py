@@ -1,39 +1,93 @@
-"""Check which ServiceNow tool specs are missing readOnlyHint: True."""
-import re
+"""Check which MCP tool specs are missing readOnlyHint: True.
 
-with open("mcp_servers/src/mcp_servers/servicenow/tools.py", "r", encoding="utf-8") as f:
-    lines = f.readlines()
+Scans all mcp_servers/src/mcp_servers/**/tools.py files and reports each
+tool spec's read-only annotation status.
+"""
 
-current_tool = None
-current_has_readonly = False
-tool_line = 0
-results = {"missing": [], "ok": []}
+import ast
+from pathlib import Path
 
-for i, line in enumerate(lines):
-    stripped = line.strip()
-    m = re.search(r'"name"\s*:\s*"(\w+)"', stripped)
-    if m:
-        if current_tool is not None:
-            if current_has_readonly:
-                results["ok"].append(current_tool)
-            else:
-                results["missing"].append((current_tool, tool_line))
-        current_tool = m.group(1)
-        tool_line = i + 1
-        current_has_readonly = False
-    if "readOnlyHint" in stripped and "True" in stripped:
-        current_has_readonly = True
+ROOT = Path(r"c:\Users\scadam\AgentsToolkitProjects\ess-mcp\mcp_servers\src\mcp_servers")
 
-# Check last tool
-if current_tool is not None:
-    if current_has_readonly:
-        results["ok"].append(current_tool)
-    else:
-        results["missing"].append((current_tool, tool_line))
 
-print(f"Tools WITH readOnlyHint: {len(results['ok'])}")
-for t in results["ok"]:
-    print(f"  OK: {t}")
-print(f"\nTools MISSING readOnlyHint: {len(results['missing'])}")
-for t, ln in results["missing"]:
-    print(f"  MISSING: {t} (line {ln})")
+def iter_tool_files():
+    for path in sorted(ROOT.glob("*/tools.py")):
+        if path.is_file():
+            yield path
+
+
+def _literal(node):
+    try:
+        return ast.literal_eval(node)
+    except Exception:
+        return None
+
+
+def check_file(path: Path):
+    source = path.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    missing = []
+    ok = []
+
+    for node in ast.walk(tree):
+        spec_list = None
+
+        if isinstance(node, ast.Assign):
+            if any(isinstance(t, ast.Name) and t.id.endswith("_TOOL_SPECS") for t in node.targets):
+                spec_list = node.value
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.target.id.endswith("_TOOL_SPECS"):
+                spec_list = node.value
+
+        if not isinstance(spec_list, ast.List):
+            continue
+
+        for elt in spec_list.elts:
+            if not isinstance(elt, ast.Dict):
+                continue
+
+            name = None
+            read_only = False
+            for k, v in zip(elt.keys, elt.values):
+                key = _literal(k)
+                if key == "name":
+                    name = _literal(v)
+                elif key == "annotations":
+                    ann = _literal(v)
+                    if isinstance(ann, dict) and ann.get("readOnlyHint") is True:
+                        read_only = True
+
+            if isinstance(name, str):
+                row = (name, getattr(elt, "lineno", 0))
+                if read_only:
+                    ok.append(row)
+                else:
+                    missing.append(row)
+
+    return ok, missing
+
+
+def main():
+    total_ok = 0
+    total_missing = 0
+
+    for file_path in iter_tool_files():
+        ok, missing = check_file(file_path)
+        rel = file_path.relative_to(ROOT)
+
+        print(f"\n{rel}:")
+        print(f"  WITH readOnlyHint: {len(ok)}")
+        print(f"  MISSING readOnlyHint: {len(missing)}")
+        for name, line in missing:
+            print(f"    MISSING: {name} (line {line})")
+
+        total_ok += len(ok)
+        total_missing += len(missing)
+
+    print(f"\nTotal WITH readOnlyHint: {total_ok}")
+    print(f"Total MISSING readOnlyHint: {total_missing}")
+
+
+if __name__ == "__main__":
+    main()

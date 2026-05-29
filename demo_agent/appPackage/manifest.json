@@ -1,0 +1,99 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.25/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.25",
+  "version": "1.0.0",
+  "id": "${{TEAMS_APP_ID}}",
+  "developer": {
+    "name": "ESS MCP Demo",
+    "websiteUrl": "https://${{AGENT_DOMAIN}}",
+    "privacyUrl": "https://${{AGENT_DOMAIN}}/privacy",
+    "termsOfUseUrl": "https://${{AGENT_DOMAIN}}/terms"
+  },
+  "name": {
+    "short": "ESS Hosted Agent",
+    "full": "ESS Workday ServiceNow Hosted Agent"
+  },
+  "description": {
+    "short": "Hosted Workday and ServiceNow autonomous agent.",
+    "full": "A hosted autonomous agent that uses its Entra Agent ID, Agent Identity Blueprint metadata, and governed MCP access through the AI Gateway for Workday and ServiceNow tasks."
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#2563EB",
+  "supportsChannelFeatures": "tier1",
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "bots": [
+    {
+      "botId": "${{BOT_ID}}",
+      "scopes": [
+        "personal",
+        "team",
+        "groupChat"
+      ],
+      "isNotificationOnly": false,
+      "supportsFiles": false,
+      "commandLists": [
+        {
+          "scopes": [
+            "personal",
+            "team",
+            "groupChat"
+          ],
+          "commands": [
+            {
+              "title": "team review",
+              "description": "Review Workday people signals and ServiceNow operational health."
+            },
+            {
+              "title": "incident triage",
+              "description": "Triage ServiceNow incidents with Workday availability context."
+            },
+            {
+              "title": "onboarding audit",
+              "description": "Check Workday onboarding and ServiceNow provisioning readiness."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "staticTabs": [
+    {
+      "entityId": "control-plane",
+      "name": "Control Plane",
+      "contentUrl": "https://${{AGENT_DOMAIN}}/control-plane",
+      "websiteUrl": "https://${{AGENT_DOMAIN}}/control-plane",
+      "scopes": [
+        "personal"
+      ]
+    }
+  ],
+  "webApplicationInfo": {
+    "id": "${{BOT_ID}}",
+    "resource": "api://${{AGENT_DOMAIN}}/${{BOT_ID}}"
+  },
+  "copilotAgents": {
+    "customEngineAgents": [
+      {
+        "id": "${{BOT_ID}}",
+        "type": "bot",
+        "disclaimer": {
+          "text": "This hosted demo agent can call governed Workday and ServiceNow MCP tools through the tenant AI Gateway."
+        }
+      }
+    ]
+  },
+  "defaultInstallScope": "personal",
+  "defaultGroupCapability": {
+    "team": "bot",
+    "groupchat": "bot"
+  },
+  "validDomains": [
+    "${{AGENT_DOMAIN}}"
+  ]
+}

@@ -1,0 +1,833 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+    "schema_version": "v2.4",
+    "name_for_human": "SAP SuccessFactors MCP Server",
+    "description_for_human": "SAP SuccessFactors MCP Server provides access to employee and HR workflows.",
+    "description_for_model": "Use for SAP SuccessFactors employee profile, leave, payroll, org, documents, and HR change workflows.",
+    "contact_email": "scadam@microsoft.com",
+    "namespace": "mcpsapsf",
+    "functions": [
+        { "name": "list_sandbox_entity_sets", "description": "Execute SAP SF tool: list_sandbox_entity_sets." },
+        { "name": "query_sandbox_entity", "description": "Execute SAP SF tool: query_sandbox_entity." },
+        { "name": "get_employee_profile", "description": "Execute SAP SF tool: get_employee_profile." },
+        { "name": "get_leave_balances", "description": "Execute SAP SF tool: get_leave_balances." },
+        { "name": "get_time_off_history", "description": "Execute SAP SF tool: get_time_off_history." },
+        { "name": "prepare_book_leave", "description": "Execute SAP SF tool: prepare_book_leave." },
+        { "name": "book_leave", "description": "Execute SAP SF tool: book_leave." },
+        { "name": "prepare_change_personal_data", "description": "Execute SAP SF tool: prepare_change_personal_data." },
+        { "name": "change_personal_data", "description": "Execute SAP SF tool: change_personal_data." },
+        { "name": "get_org_chart", "description": "Execute SAP SF tool: get_org_chart." },
+        { "name": "get_pay_stubs", "description": "Execute SAP SF tool: get_pay_stubs." },
+        { "name": "get_pay_stub_detail", "description": "Execute SAP SF tool: get_pay_stub_detail." },
+        { "name": "prepare_move_employee", "description": "Execute SAP SF tool: prepare_move_employee." },
+        { "name": "move_employee", "description": "Execute SAP SF tool: move_employee." },
+        { "name": "update_hierarchy", "description": "Execute SAP SF tool: update_hierarchy." },
+        { "name": "trigger_background_check", "description": "Execute SAP SF tool: trigger_background_check." },
+        { "name": "get_background_check_status", "description": "Execute SAP SF tool: get_background_check_status." },
+        { "name": "manage_position", "description": "Execute SAP SF tool: manage_position." },
+        { "name": "request_leave_carryover", "description": "Execute SAP SF tool: request_leave_carryover." },
+        { "name": "get_employee_documents", "description": "Execute SAP SF tool: get_employee_documents." },
+        { "name": "generate_employment_verification", "description": "Execute SAP SF tool: generate_employment_verification." },
+        { "name": "generate_employment_reference", "description": "Execute SAP SF tool: generate_employment_reference." }
+    ],
+    "runtimes": [
+        {
+            "type": "RemoteMCPServer",
+            "auth": {
+                "type": "None"
+            },
+            "run_for_functions": [
+                "list_sandbox_entity_sets",
+                "query_sandbox_entity",
+                "get_employee_profile",
+                "get_leave_balances",
+                "get_time_off_history",
+                "prepare_book_leave",
+                "book_leave",
+                "prepare_change_personal_data",
+                "change_personal_data",
+                "get_org_chart",
+                "get_pay_stubs",
+                "get_pay_stub_detail",
+                "prepare_move_employee",
+                "move_employee",
+                "update_hierarchy",
+                "trigger_background_check",
+                "get_background_check_status",
+                "manage_position",
+                "request_leave_carryover",
+                "get_employee_documents",
+                "generate_employment_verification",
+                "generate_employment_reference"
+            ],
+            "spec": {
+                "url": "https://essmcp-sap-sf.wittysand-460bf1d9.eastus.azurecontainerapps.io/sap_sf/mcp",
+                "mcp_tool_description": {
+                "tools": [
+                    {
+                    "name": "get_employee_profile",
+                    "description": "Get the current employee's personal and employment details from SAP SuccessFactors, including name, job title, department, location, contact info, and hire date. Results are rendered as an interactive widget.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-employee-profile.html",
+                        "openai/toolInvocation/invoking": "Loading employee profile…",
+                        "openai/toolInvocation/invoked": "Profile ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_leave_balances",
+                    "description": "Get the employee's leave and time-account balances from SAP SuccessFactors, showing remaining days for each leave type (annual, sick, etc.).",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-leave-balance.html",
+                        "openai/toolInvocation/invoking": "Checking leave balances…",
+                        "openai/toolInvocation/invoked": "Balances loaded.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_time_off_history",
+                    "description": "Get the employee's historical time-off records including leave type, dates, duration, and approval status.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-time-off-history.html",
+                        "openai/toolInvocation/invoking": "Loading time-off history…",
+                        "openai/toolInvocation/invoked": "History ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "prepare_book_leave",
+                    "description": "Show an interactive leave booking form with the employee's current balances pre-populated. Use this before book_leave to let the user choose dates and type.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-leave-booking.html",
+                        "openai/toolInvocation/invoking": "Preparing leave booking form…",
+                        "openai/toolInvocation/invoked": "Form ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "book_leave",
+                    "description": "Submit a leave/time-off request for manager approval. Requires user_id, time_type, start_date, and end_date.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "type": "string"
+                        },
+                        "time_type": {
+                            "type": "string"
+                        },
+                        "start_date": {
+                            "type": "string"
+                        },
+                        "end_date": {
+                            "type": "string"
+                        },
+                        "comment": {
+                            "default": "",
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "user_id",
+                        "time_type",
+                        "start_date",
+                        "end_date"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Submitting leave request…",
+                        "openai/toolInvocation/invoked": "Leave request submitted.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "prepare_change_personal_data",
+                    "description": "Show a form to update personal data (address, phone, email) pre-populated with current values. Use this before change_personal_data.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-personal-data-form.html",
+                        "openai/toolInvocation/invoking": "Loading personal data form…",
+                        "openai/toolInvocation/invoked": "Form ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "change_personal_data",
+                    "description": "Update personal data (address, phone, email) in SAP SuccessFactors. Requires user_id and a changes dict.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "type": "string"
+                        },
+                        "changes": {
+                            "additionalProperties": true,
+                            "type": "object"
+                        }
+                        },
+                        "required": [
+                        "user_id",
+                        "changes"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Updating personal data…",
+                        "openai/toolInvocation/invoked": "Personal data updated.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_org_chart",
+                    "description": "Get the organisational hierarchy for an employee — manager, current role, and direct reports — rendered as an interactive org chart widget.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-org-chart.html",
+                        "openai/toolInvocation/invoking": "Loading org chart…",
+                        "openai/toolInvocation/invoked": "Org chart ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_pay_stubs",
+                    "description": "Get the employee's recent payslips showing pay dates, gross/net amounts, and currency.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-payslip-list.html",
+                        "openai/toolInvocation/invoking": "Loading payslips…",
+                        "openai/toolInvocation/invoked": "Payslips loaded.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_pay_stub_detail",
+                    "description": "Get detailed breakdown of a single payslip including earnings, deductions, and net pay.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "payroll_result_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "payroll_result_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-payslip-detail.html",
+                        "openai/toolInvocation/invoking": "Loading payslip detail…",
+                        "openai/toolInvocation/invoked": "Payslip detail ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "prepare_move_employee",
+                    "description": "Show a form to move an employee to a new position. Pre-populated with current job info. Use this before move_employee.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-move-employee.html",
+                        "openai/toolInvocation/invoking": "Preparing move employee form…",
+                        "openai/toolInvocation/invoked": "Form ready.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "move_employee",
+                    "description": "Submit an employee move to a new position. Requires user_id, new_position_id, and effective_date.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "type": "string"
+                        },
+                        "new_position_id": {
+                            "type": "string"
+                        },
+                        "effective_date": {
+                            "type": "string"
+                        },
+                        "reason": {
+                            "default": "",
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "user_id",
+                        "new_position_id",
+                        "effective_date"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Submitting employee move…",
+                        "openai/toolInvocation/invoked": "Move submitted.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "update_hierarchy",
+                    "description": "Submit a hierarchy change (new manager assignment) for an employee. Requires user_id, new_manager_id, and effective_date.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "type": "string"
+                        },
+                        "new_manager_id": {
+                            "type": "string"
+                        },
+                        "effective_date": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "user_id",
+                        "new_manager_id",
+                        "effective_date"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Updating hierarchy…",
+                        "openai/toolInvocation/invoked": "Hierarchy updated.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "trigger_background_check",
+                    "description": "Trigger a background check for an employee in SAP SuccessFactors.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "person_id": {
+                            "type": "string"
+                        },
+                        "check_type": {
+                            "default": "standard",
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "person_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Triggering background check…",
+                        "openai/toolInvocation/invoked": "Background check triggered.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_background_check_status",
+                    "description": "Get the status of background checks for an employee.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "person_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "person_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Checking background status…",
+                        "openai/toolInvocation/invoked": "Status retrieved.",
+                        "openai/outputTemplate": "ui://widget/sf-background-check.html",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "manage_position",
+                    "description": "Create or modify a position in SAP SuccessFactors. Set action to 'create' or 'update'.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "action": {
+                            "type": "string"
+                        },
+                        "position_code": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "title": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "department": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        },
+                        "effective_date": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "required": [
+                        "action"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Managing position…",
+                        "openai/toolInvocation/invoked": "Position updated.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "request_leave_carryover",
+                    "description": "Submit a leave carryover request to carry unused leave days from one year to the next.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "type": "string"
+                        },
+                        "leave_type": {
+                            "type": "string"
+                        },
+                        "days": {
+                            "type": "number"
+                        },
+                        "from_year": {
+                            "type": "string"
+                        },
+                        "to_year": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "user_id",
+                        "leave_type",
+                        "days",
+                        "from_year",
+                        "to_year"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Submitting carryover request…",
+                        "openai/toolInvocation/invoked": "Carryover request submitted.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "get_employee_documents",
+                    "description": "List the employee's documents stored in SAP SuccessFactors, such as contracts, letters, and certificates.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                            ],
+                            "default": null
+                        }
+                        },
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": true
+                    },
+                    "_meta": {
+                        "openai/outputTemplate": "ui://widget/sf-document-list.html",
+                        "openai/toolInvocation/invoking": "Loading documents…",
+                        "openai/toolInvocation/invoked": "Documents loaded.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "generate_employment_verification",
+                    "description": "Trigger generation of an employment verification letter (US). The letter is created asynchronously and the user is notified when ready.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "user_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Requesting verification letter…",
+                        "openai/toolInvocation/invoked": "Verification letter requested.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    },
+                    {
+                    "name": "generate_employment_reference",
+                    "description": "Trigger generation of an employment reference letter (UK). The letter is created asynchronously and the user is notified when ready.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                        "user_id": {
+                            "type": "string"
+                        }
+                        },
+                        "required": [
+                        "user_id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "outputSchema": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "annotations": {
+                        "readOnlyHint": false
+                    },
+                    "_meta": {
+                        "openai/toolInvocation/invoking": "Requesting reference letter…",
+                        "openai/toolInvocation/invoked": "Reference letter requested.",
+                        "fastmcp": {
+                        "tags": []
+                        }
+                    }
+                    }
+                ]
+                }
+            }
+        }
+    ]
+}

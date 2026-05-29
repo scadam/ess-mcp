@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://aka.ms/m365-agents-toolkits/v1.10/yaml.schema.json
+version: v1.10
+
+publish:
+  - uses: teamsApp/zipAppPackage
+    with:
+      manifestPath: ./appPackage/manifest.json
+      outputZipPath: ./appPackage/build/demo-agent.${{TEAMSFX_ENV}}.zip
+      outputFolder: ./appPackage/build
+  - uses: teamsApp/update
+    with:
+      appPackagePath: ./appPackage/build/demo-agent.${{TEAMSFX_ENV}}.zip
+  - uses: teamsApp/publishAppPackage
+    with:
+      appPackagePath: ./appPackage/build/demo-agent.${{TEAMSFX_ENV}}.zip
+    writeToEnvironmentFile:
+      publishedAppId: TEAMS_APP_PUBLISHED_APP_ID
+
+projectId: 29c5c867-9282-4633-9e64-b139e7f57ff9

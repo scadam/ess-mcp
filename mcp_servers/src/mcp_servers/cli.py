@@ -133,6 +133,28 @@ class AuthErrorPassthroughMiddleware:
         await self.app(scope, receive, buffered_send)
 
 
+class McpTrailingSlashMiddleware:
+    """Accept /<server>/mcp/ without Starlette's redirect.
+
+    Some hosted connector clients probe URLs with a trailing slash. Starlette's
+    default slash redirect can emit an http:// Location behind Container Apps
+    TLS termination, which makes strict HTTPS clients treat the MCP server as
+    unreachable. Rewriting the path in-process keeps both forms equivalent.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope.get("path", "").endswith("/mcp/"):
+            scope = dict(scope)
+            scope["path"] = scope["path"].rstrip("/")
+            if scope.get("raw_path", b"").endswith(b"/mcp/"):
+                scope["raw_path"] = scope["raw_path"].rstrip(b"/")
+
+        await self.app(scope, receive, send)
+
+
 # ── Server registry ─────────────────────────────────────────────────
 
 SERVER_BUILDERS: Dict[str, Callable[[], FastMCP]] = {
@@ -236,7 +258,8 @@ def main() -> None:
         allow_credentials=True,
     )
     auth_passthrough = Middleware(AuthErrorPassthroughMiddleware)
-    app = build_app(server_names, transport=args.transport, middleware=[cors, auth_passthrough])
+    slash_normalizer = Middleware(McpTrailingSlashMiddleware)
+    app = build_app(server_names, transport=args.transport, middleware=[cors, slash_normalizer, auth_passthrough])
     LOGGER.info("starting_server", transport=args.transport, host=args.host, port=args.port)
     uvicorn.run(app, host=args.host, port=args.port)
 

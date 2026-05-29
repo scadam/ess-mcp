@@ -18,6 +18,17 @@ class WorkdaySettings(BaseEnvSettings):
     tenant: str = Field(..., alias="WORKDAY_TENANT")
     skills_report: str = Field("svasireddy/ESSMCPSkills", alias="WORKDAY_SKILLS_REPORT")
     learning_report: str = Field("svasireddy/Required_Learning", alias="WORKDAY_LEARNING_REPORT")
+    oauth_token_url: str = Field("", alias="WORKDAY_OAUTH_TOKEN_URL")
+    oauth_client_id: str = Field("", alias="WORKDAY_OAUTH_CLIENT_ID")
+    oauth_client_secret: str = Field("", alias="WORKDAY_OAUTH_CLIENT_SECRET")
+    oauth_scope: str = Field("", alias="WORKDAY_OAUTH_SCOPE")
+    oauth_audience: str = Field("", alias="WORKDAY_OAUTH_AUDIENCE")
+    oauth_resource: str = Field("", alias="WORKDAY_OAUTH_RESOURCE")
+    oauth_grant_type: str = Field("", alias="WORKDAY_OAUTH_GRANT_TYPE")
+    oauth_auth_method: str = Field("", alias="WORKDAY_OAUTH_AUTH_METHOD")
+    oauth_refresh_token: str = Field("", alias="WORKDAY_OAUTH_REFRESH_TOKEN")
+    default_worker_id: str = Field("", alias="WORKDAY_DEFAULT_WORKER_ID")
+    default_worker_search: str = Field("", alias="WORKDAY_DEFAULT_WORKER_SEARCH")
     openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
 
 
@@ -28,8 +39,21 @@ class ServiceNowSettings(BaseEnvSettings):
 
 
 class SalesforceSettings(BaseEnvSettings):
-    """Settings for Salesforce API access."""
+    """Settings for Salesforce API access.
+
+    Authentication modes (``SF_AUTH_MODE``):
+      * ``auto`` (default) – use the inbound ``Authorization: Bearer`` token if
+        present, otherwise fall back to the OAuth 2.0 Client Credentials flow
+        using ``SF_CLIENT_ID`` / ``SF_CLIENT_SECRET``.
+      * ``oauth_bearer`` – require an inbound bearer token.
+      * ``client_credentials`` – always mint a server-side client-credentials
+        token, ignoring any inbound bearer.
+    """
     domain: str = Field(..., alias="SALESFORCE_DOMAIN")
+    auth_mode: str = Field("auto", alias="SF_AUTH_MODE")
+    client_id: str = Field("", alias="SF_CLIENT_ID")
+    client_secret: str = Field("", alias="SF_CLIENT_SECRET")
+    api_version: str = Field("v59.0", alias="SF_API_VERSION")
     openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
 
 
@@ -43,10 +67,14 @@ class JiraSettings(BaseEnvSettings):
 class SapSfSettings(BaseEnvSettings):
     """Settings for SAP SuccessFactors API access."""
     odata_url: str = Field(..., alias="SAP_SF_ODATA_URL")
-    token_url: str = Field(..., alias="SAP_SF_TOKEN_URL")
-    company_id: str = Field(..., alias="SAP_SF_COMPANY_ID")
-    client_id: str = Field(..., alias="SAP_SF_CLIENT_ID")
+    api_key: str = Field(..., alias="SAP_SF_API_KEY")
+    token_url: str = Field("", alias="SAP_SF_TOKEN_URL")
+    company_id: str = Field("", alias="SAP_SF_COMPANY_ID")
+    client_id: str = Field("", alias="SAP_SF_CLIENT_ID")
     resource_uri: str = Field("", alias="SAP_SF_RESOURCE_URI")
+    entra_app_id: str = Field("", alias="SAP_SF_ENTRA_APP_ID")
+    entra_client_secret: str = Field("", alias="SAP_SF_ENTRA_CLIENT_SECRET")
+    entra_tenant_id: str = Field("", alias="SAP_SF_ENTRA_TENANT_ID")
     openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
 
 

@@ -1,0 +1,116 @@
+{
+  "serverName": "ext_ESSCoupa",
+  "serverUrl": "https://essmcp-coupa.wittysand-460bf1d9.eastus.azurecontainerapps.io/coupa/mcp",
+  "authType": "NoAuth",
+  "description": "Coupa procurement: requisitions, POs, receipts, invoices, suppliers.",
+  "publisherName": "Project ESS",
+  "tools": [
+    {
+      "name": "get_invoice_status",
+      "description": "Get invoice payment status from Coupa by invoice number (mocked)."
+    },
+    {
+      "name": "get_po_status",
+      "description": "Get purchase order status from Coupa by PO number (mocked)."
+    },
+    {
+      "name": "reject_invoice",
+      "description": "Reject an invoice in Coupa (mocked)."
+    },
+    {
+      "name": "close_purchase_order",
+      "description": "Close a purchase order in Coupa (mocked)."
+    },
+    {
+      "name": "list_receipts",
+      "description": "List goods receipts from Coupa, optionally filtered by PO (mocked)."
+    },
+    {
+      "name": "prepare_create_receipt",
+      "description": "Show the goods receipt creation form for a PO (mocked)."
+    },
+    {
+      "name": "create_receipt",
+      "description": "Post a goods receipt in Coupa (mocked)."
+    },
+    {
+      "name": "list_requisitions",
+      "description": "List purchase requisitions from Coupa (mocked)."
+    },
+    {
+      "name": "prepare_create_requisition",
+      "description": "Show the purchase requisition creation form (mocked)."
+    },
+    {
+      "name": "create_requisition",
+      "description": "Submit a new purchase requisition in Coupa (mocked)."
+    },
+    {
+      "name": "update_requisition",
+      "description": "Update an existing purchase requisition in Coupa (mocked)."
+    },
+    {
+      "name": "list_catalog_items",
+      "description": "Search the Coupa IT hardware procurement catalog (mocked)."
+    },
+    {
+      "name": "order_catalog_item",
+      "description": "Create a Coupa requisition from a catalog item, as if sourced from ServiceNow (mocked)."
+    },
+    {
+      "name": "list_suppliers",
+      "description": "Search IT hardware suppliers in Coupa with performance rollups (mocked)."
+    },
+    {
+      "name": "get_supplier",
+      "description": "Get supplier details and open order performance from Coupa (mocked)."
+    },
+    {
+      "name": "update_supplier_address",
+      "description": "Update a supplier's address in Coupa (mocked)."
+    },
+    {
+      "name": "update_supplier_bank",
+      "description": "Update a supplier's bank details in Coupa (mocked)."
+    },
+    {
+      "name": "register_supplier",
+      "description": "Register and onboard a new IT hardware supplier in Coupa (mocked)."
+    },
+    {
+      "name": "transfer_purchase_order",
+      "description": "Transfer a purchase order to a new owner in Coupa (mocked)."
+    },
+    {
+      "name": "list_approvals",
+      "description": "List pending approval items in Coupa (mocked)."
+    },
+    {
+      "name": "approve_reject",
+      "description": "Approve or reject a pending approval in Coupa (mocked). Set action to 'approve' or 'reject'."
+    },
+    {
+      "name": "get_category_manager_dashboard",
+      "description": "Category manager dashboard for ServiceNow-sourced IT hardware orders in Coupa (mocked)."
+    },
+    {
+      "name": "list_it_hardware_orders",
+      "description": "List ServiceNow-originated IT hardware purchase orders in Coupa with category, supplier, and delivery filters (mocked)."
+    },
+    {
+      "name": "get_supplier_performance",
+      "description": "Supplier performance dashboard for Coupa IT hardware suppliers (mocked)."
+    },
+    {
+      "name": "get_item_demand",
+      "description": "Item demand and stock coverage for phones, laptops, accessories, and office equipment in Coupa (mocked)."
+    },
+    {
+      "name": "get_servicenow_coupa_flow",
+      "description": "Trace ServiceNow employee requests through Coupa requisitions, POs, receipts, and invoices (mocked)."
+    }
+  ],
+  "remoteScopes": null,
+  "externalOAuth": null,
+  "apiKey": null
+}
