@@ -37,7 +37,7 @@
       "description": "Jira connector covering issues, projects, boards, sprints, backlog, epics, versions, work-log, team workload and sprint-health metrics.",
       "toolSource": {
         "remoteMcpServer": {
-          "mcpServerUrl": "https://essmcp-jira.wittysand-460bf1d9.eastus.azurecontainerapps.io/jira/mcp",
+          "mcpServerUrl": "https://essmcp-caldova-jira.livelysky-91807d17.eastus2.azurecontainerapps.io/jira/mcp",
           "authorization": {
             "type": "OAuthPluginVault",
             "referenceId": "REPLACE_WITH_JIRA_OAUTH_REFERENCE_ID"

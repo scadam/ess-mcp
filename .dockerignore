@@ -3,6 +3,15 @@
 **/__pycache__
 **/*.pyc
 demo_agent/.env
+demo_agent/a365.config.json
+demo_agent/a365.generated.config.json*
+demo_agent/appPackage/
+demo_agent/manifest/
+demo_agent/scripts/
+demo_agent/tests/
+demo_agent/*.log
+demo_agent/*.out.txt
+.copilot-azure/
 demo_agent/appPackage/.env.*
 demo_agent/appPackage/build
 mcp_servers/env/*.env

@@ -140,6 +140,12 @@ class GovernanceState:
         with self._lock:
             return [e.to_dict() for e in reversed(self._audit[-limit:])]
 
+    def clear_audit(self) -> None:
+        """Operator reset: forget the audit history; kill switches and the deny-list stay."""
+        with self._lock:
+            self._audit = []
+            self._persist()
+
     # ── kill switch ────────────────────────────────────────────────
     def disable_instance(self, instance_id: str, *, reason: str, actor: str) -> GovernanceEvent:
         if not instance_id:

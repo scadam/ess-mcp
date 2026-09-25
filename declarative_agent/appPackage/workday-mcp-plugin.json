@@ -182,7 +182,7 @@
                 "prepare_create_check_in"
             ],
             "spec": {
-                "url": "https://essmcp-workday.wittysand-460bf1d9.eastus.azurecontainerapps.io/workday/mcp",
+                "url": "https://essmcp-caldova-workday.livelysky-91807d17.eastus2.azurecontainerapps.io/workday/mcp",
                 "mcp_tool_description": {
                     "tools": [
                         {

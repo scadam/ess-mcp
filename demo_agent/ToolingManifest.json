@@ -1,11 +1,11 @@
 {
   "mcpServers": [
     {
-      "mcpServerName": "mcp_TeamsServerV1",
-      "mcpServerUniqueName": "mcp_TeamsServerV1",
-      "url": "https://agent365.svc.cloud.microsoft/agents/servers/mcp_TeamsServerV1",
-      "scope": "McpServers.Teams.All",
-      "audience": "ea9ffc3e-8a23-4a7d-836d-234d7c7565c1",
+      "mcpServerName": "Work IQ",
+      "mcpServerUniqueName": "workiq",
+      "url": "https://workiq.svc.cloud.microsoft/mcp",
+      "scope": "WorkIQAgent.Ask",
+      "audience": "fdcc1f02-fc51-4226-8753-f668596af7f7",
       "publisher": "Microsoft"
     }
   ]

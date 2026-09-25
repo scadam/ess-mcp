@@ -1,0 +1,11 @@
+*
+!demo_agent/
+!demo_agent/*.py
+!demo_agent/requirements.txt
+!demo_agent/constraints.txt
+!demo_agent/ToolingManifest.json
+!demo_agent/purview-policy.yaml
+!demo_agent/skills/
+!demo_agent/skills/**
+!demo_agent/static/
+!demo_agent/static/**

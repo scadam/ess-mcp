@@ -20,7 +20,11 @@ Provenance: feature names, pillars, and pitches mirror the public
 
 from __future__ import annotations
 
+import os
+import re
 from typing import Any
+from urllib.parse import urlsplit
+from uuid import UUID
 
 
 STATUS_ORDER = ("active", "configured", "manual", "roadmap")
@@ -32,14 +36,24 @@ STATUS_LABEL = {
     "roadmap": "Roadmap",
 }
 
-# Identifiers re-used across the catalog.
-TENANT_ID         = "8030d928-e557-4a4c-ae1e-95c1c4125eaa"
-TENANT_DOMAIN     = "M365CPI81302533.onmicrosoft.com"
-PARENT_AGENT_APP  = "ed4046aa-a3ef-4685-a73d-ecda5a4f01da"
-BLUEPRINT_APP     = "3f028e66-44cf-4cee-81ee-03ade7717884"
-BLUEPRINT_SP      = "612885df-960e-4900-b065-cc3ff00287bf"
-HOST_MI           = "92983f30-a70d-4c86-8228-3d0b7f82488f"
-AGENT_FQDN        = "ess-demo-agent.wittysand-460bf1d9.eastus.azurecontainerapps.io"
+def _configured_id(name: str) -> str:
+    try:
+        value = UUID(os.getenv(name, ""))
+        return str(value) if value.int else "<not-configured>"
+    except ValueError:
+        return "<not-configured>"
+
+
+# Only this deployment's metadata may be used in links or operator queries.
+# An absent identity is an explicit placeholder, never a historic tenant.
+TENANT_ID = _configured_id("AZURE_TENANT_ID")
+PARENT_AGENT_APP = _configured_id("ENTRA_AGENT_IDENTITY_CLIENT_ID")
+BLUEPRINT_APP = _configured_id("ENTRA_AGENT_BLUEPRINT_CLIENT_ID")
+BLUEPRINT_SP = _configured_id("ENTRA_AGENT_BLUEPRINT_PRINCIPAL_ID")
+HOST_MI = _configured_id("AUTOPILOT_HOST_IDENTITY_OBJECT_ID")
+_public_uri = urlsplit(os.getenv("ESS_PUBLIC_BASE_URL", ""))
+AGENT_FQDN = (_public_uri.hostname or "") if _public_uri.scheme == "https" and not _public_uri.username else ""
+PUBLIC_ORIGIN = f"https://{AGENT_FQDN}" if AGENT_FQDN else ""
 
 # Bring-Your-Own MCP servers registered via the Agent 365 develop-mcp CLI.
 # Calls through the Microsoft Tooling Gateway (Copilot Studio, VS Code MCP
@@ -47,7 +61,10 @@ AGENT_FQDN        = "ess-demo-agent.wittysand-460bf1d9.eastus.azurecontainerapps
 # `ActionType == "ExecuteToolByGateway"` with the server name in RawEventData.
 # Calls from our own demo_agent runtime do NOT flow through the Tooling Gateway
 # and will NOT appear under that ActionType.
-BYO_MCP_SERVERS   = ("ext_ESSWorkday", "ext_ESSServiceNow2", "ext_ESSCoupa")
+BYO_MCP_SERVERS = tuple(
+    name for name in os.getenv("AUTOPILOT_BYO_MCP_NAMES", "").split(",")
+    if re.fullmatch(r"[A-Za-z0-9_]{1,100}", name)
+)
 BYO_MCP_NOTE      = (
     "// Once these MCP servers are registered as BYO MCP and called from\n"
     "// Copilot Studio / VS Code / Claude / GH CLI, this query returns those\n"
@@ -65,7 +82,7 @@ def _byo_mcp_query(label: str) -> dict[str, str]:
         "syntax": "kql",
         "portal": "defender-hunting",
         "code": (
-            "// ===== ESS Agent 365 · BYO MCP Tooling Gateway invocations =====\n"
+            "// ===== Group Functions Autopilot · BYO MCP Tooling Gateway invocations =====\n"
             + BYO_MCP_NOTE
             + "CloudAppEvents\n"
             "| where Timestamp > ago(24h)\n"
@@ -74,6 +91,9 @@ def _byo_mcp_query(label: str) -> dict[str, str]:
             "| project-reorder Timestamp, AccountObjectId, AccountDisplayName, ActionType, ApplicationId, RawEventData\n"
             "| sort by Timestamp desc\n"
             "| take 50"
+        ) if BYO_MCP_SERVERS else (
+            "// No BYO MCP names are configured for this deployment.\n"
+            "// Register and verify the intended tools before querying their gateway traffic."
         ),
     }
 
@@ -127,7 +147,7 @@ def feature_catalog() -> list[dict[str, Any]]:
             pillar="Observe",
             status="active",
             summary="Parent identity + per-user agent identities provisioned and used at runtime.",
-            pitch="Agent 365 starts with an addressable directory identity. One parent app id and three per-user teammates are already in Entra.",
+            pitch="Agent 365 starts with an addressable directory identity. Use the configured blueprint and verified per-user instances in this tenant.",
             flow_in=[
                 "Boot: container reads ENTRA_AGENT_APP_ID + tenant from env",
                 "Sidecar exchanges MSI → Agent Identity token (fmi_path)",
@@ -151,7 +171,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                     "syntax": "kql",
                     "portal": "defender-hunting",
                     "code": (
-                        "// ===== ESS Agent 365 · Recent sign-ins by this agent =====\n"
+                        "// ===== Group Functions Autopilot · Recent sign-ins by this agent =====\n"
                         "// Validated columns: Timestamp, Application, ApplicationId, ResourceDisplayName,\n"
                         "// IPAddress, ErrorCode (per public AADSpnSignInEventsBeta schema).\n"
                         "AADSpnSignInEventsBeta\n"
@@ -235,7 +255,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                     "syntax": "kql",
                     "portal": "defender-hunting",
                     "code": (
-                        "// ===== ESS Agent 365 · CA decisions for this agent =====\n"
+                        "// ===== Group Functions Autopilot · CA decisions for this agent =====\n"
                         "// ConditionalAccessStatus is a top-level column on AADSpnSignInEventsBeta;\n"
                         "// no AdditionalFields parsing required.\n"
                         "AADSpnSignInEventsBeta\n"
@@ -277,7 +297,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                     "syntax": "kql",
                     "portal": "defender-hunting",
                     "code": (
-                        "// ===== ESS Agent 365 · Identity risk on users served by this agent =====\n"
+                        "// ===== Group Functions Autopilot · Identity risk on users served by this agent =====\n"
                         "// AADUserRiskEvents is a Sentinel table, NOT a Defender Advanced Hunting\n"
                         "// table. The equivalent in Defender XDR is IdentityInfo (latest snapshot\n"
                         "// per user). Cross-check the user_id on each agent run against the latest\n"
@@ -311,7 +331,7 @@ def feature_catalog() -> list[dict[str, Any]]:
             ],
             wired=[
                 "ACA workload pinned to known egress IPs (publishable to GSA)",
-                "ESS_REQUIRE_GSA env-var toggle reserved in deploy/main.bicep",
+                "Global Secure Access requires independently verified tenant networking configuration",
             ],
             portals=[
                 {"label": "Entra · Global Secure Access", "url": "https://entra.microsoft.com/#view/Microsoft_Azure_Network/NetworkMenuBlade/~/networkAccessOverview"},
@@ -353,7 +373,7 @@ def feature_catalog() -> list[dict[str, Any]]:
             flow_in=[
                 "Agent SDK posts prompt + response to A365 control plane",
                 "A365 forwards to Purview DSPM-for-AI for classification",
-                "Custom SITs (4 registered) classify ESS-specific PII",
+                "Tenant-configured sensitive information types can classify domain-specific PII",
             ],
             flow_out=[
                 "Purview · DSPM-for-AI · Reports",
@@ -362,7 +382,7 @@ def feature_catalog() -> list[dict[str, Any]]:
             wired=[
                 "demo_agent/purview.py — PurviewLabelClient",
                 "demo_agent/scripts/setup-purview-dspm.ps1 — onboarding (steps 1-2 automated)",
-                "Custom SITs: ESS Employee Id, ESS Workday Worker Id, ESS ServiceNow Sys Id, ESS Internal Ticket",
+                "Verify any custom employee, worker and ticket classifiers in the current tenant; none are assumed from a previous deployment",
             ],
             portals=[
                 {"label": "Purview · DSPM for AI", "url": "https://purview.microsoft.com/datasecurityandgovernance/copilotandaiapps/overview"},
@@ -443,7 +463,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                         "# Open the canonical surface then apply the filter manually:\n"
                         "https://purview.microsoft.com/activityexplorer\n"
                         "# In the filter panel choose:\n"
-                        f"#   Application : ESS Workday ServiceNow Hosted Demo Agent ({PARENT_AGENT_APP})\n"
+                        f"#   Application : Group Functions Autopilot ({PARENT_AGENT_APP})\n"
                         "#   Activity   : LabelApplied / LabelChanged / SensitivityLabelEnforcement\n"
                         "#   Date       : Last 24h\n"
                     ),
@@ -492,7 +512,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                 "DLPRuleMatch records in UnifiedAuditLog",
             ],
             wired=[
-                "Agent identity surfaces in Purview Activity Explorer (Application=ESS Hosted Agent)",
+                "Verify the Group Functions Autopilot identity in Purview Activity Explorer",
             ],
             portals=[
                 {"label": "Purview · DLP policies", "url": "https://purview.microsoft.com/datalossprevention/policiesv2"},
@@ -556,7 +576,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                     "syntax": "kql",
                     "portal": "defender-hunting",
                     "code": (
-                        "// ===== ESS Agent 365 · Cross-correlate audit + sign-ins =====\n"
+                        "// ===== Group Functions Autopilot · Cross-correlate audit + sign-ins =====\n"
                         "// AADSpnSignInEventsBeta is the table that carries our agent's outbound\n"
                         "// sign-ins. CloudAppEvents does NOT have an AccountUpn column and is only\n"
                         "// populated when Defender for Cloud Apps proxies the app — not the case\n"
@@ -651,7 +671,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                     "syntax": "kql",
                     "portal": "defender-hunting",
                     "code": (
-                        "// ===== ESS Agent 365 · Is the agent registered? =====\n"
+                        "// ===== Group Functions Autopilot · Is the agent registered? =====\n"
                         "// PREVIEW table. AIAgentsInfo ships with Defender for AI; if it is not\n"
                         "// enabled in your tenant the query returns 'Failed to resolve table\n"
                         "// or column expression' — fall back to the servicePrincipals Graph\n"
@@ -659,7 +679,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                         "// below are best-effort from public preview docs; adjust if the\n"
                         "// schema reference shows different names.\n"
                         "AIAgentsInfo\n"
-                        f"| where AgentId == \"{PARENT_AGENT_APP}\" or AgentName has \"ESS\"\n"
+                        f"| where AgentId == \"{PARENT_AGENT_APP}\" or AgentName == \"Group Functions Autopilot\"\n"
                         "| project-reorder Timestamp, AgentId, AgentName, AgentStatus, AgentType\n"
                         "| sort by Timestamp desc\n"
                         "| take 50"
@@ -670,7 +690,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                     "syntax": "kql",
                     "portal": "defender-hunting",
                     "code": (
-                        "// ===== ESS Agent 365 · Behavior anomalies referencing this agent =====\n"
+                        "// ===== Group Functions Autopilot · Behavior anomalies referencing this agent =====\n"
                         "// BehaviorEntities + BehaviorInfo are GA Defender tables but their\n"
                         "// EntityType taxonomy does NOT include 'AIAgent' yet. The reliable\n"
                         "// way to find rows tied to our agent is to match the AppId anywhere\n"
@@ -678,7 +698,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                         "// info. Returns 0 rows in tenants with no behaviour anomalies.\n"
                         "BehaviorEntities\n"
                         f"| where EntityId == \"{PARENT_AGENT_APP}\"\n"
-                        f"    or EntityName has \"ESS\"\n"
+                        "    or EntityName == \"Group Functions Autopilot\"\n"
                         f"    or AdditionalFields has \"{PARENT_AGENT_APP}\"\n"
                         "| join kind=inner (BehaviorInfo) on BehaviorId\n"
                         "| project-reorder Timestamp, EntityName, EntityType, ActionType, Severity, Description, Categories, DetectionSource\n"
@@ -713,7 +733,7 @@ def feature_catalog() -> list[dict[str, Any]]:
             ],
             portals=[
                 {"label": "Defender · Custom detection rules", "url": "https://security.microsoft.com/customDetections"},
-                {"label": "Control plane · Governance", "url": f"https://{AGENT_FQDN}/control-plane"},
+                {"label": "Control plane · Governance", "url": f"{PUBLIC_ORIGIN}/control-plane"},
             ],
             queries=[
                 {
@@ -721,7 +741,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                     "syntax": "kql",
                     "portal": "defender-hunting",
                     "code": (
-                        "// ===== ESS Agent 365 · Detection rule template (destructive tool block) =====\n"
+                        "// ===== Group Functions Autopilot · Detection rule template (destructive tool block) =====\n"
                         "// TEMPLATE — not expected to return rows until a custom detection rule\n"
                         "// emits 'AgentToolDenied' events into a custom table or until Defender\n"
                         "// for AI starts ingesting our /api/governance/tool-denylist signal.\n"
@@ -770,7 +790,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                     "syntax": "kql",
                     "portal": "defender-hunting",
                     "code": (
-                        "// ===== ESS Agent 365 · 7-day sign-in activity summary =====\n"
+                        "// ===== Group Functions Autopilot · 7-day sign-in activity summary =====\n"
                         "// Counts sign-ins by error code so success / CA-block / failure ratios\n"
                         "// are visible. The previous CloudAppEvents version did not return rows\n"
                         "// because the agent is not proxied by Defender for Cloud Apps.\n"
@@ -786,7 +806,7 @@ def feature_catalog() -> list[dict[str, Any]]:
                     "syntax": "kql",
                     "portal": "defender-hunting",
                     "code": (
-                        "// ===== ESS Agent 365 · Alerts referencing this agent =====\n"
+                        "// ===== Group Functions Autopilot · Alerts referencing this agent =====\n"
                         "// AlertEvidence carries one row per evidence artefact on an alert. For\n"
                         "// an OAuth / service-principal agent, the matching column is\n"
                         "// OAuthApplicationId (and sometimes ApplicationId). AccountObjectId is\n"
@@ -832,7 +852,7 @@ def feature_catalog() -> list[dict[str, Any]]:
             ],
             portals=[
                 {"label": "M365 Admin · Agent registry", "url": "https://admin.microsoft.com/Adminportal/Home#/agents"},
-                {"label": "Control plane · /api/identity", "url": f"https://{AGENT_FQDN}/api/identity"},
+                {"label": "Control plane · /api/identity", "url": f"{PUBLIC_ORIGIN}/api/identity"},
             ],
         ),
         _f(
@@ -958,7 +978,7 @@ def feature_catalog() -> list[dict[str, Any]]:
             ],
             portals=[
                 {"label": "M365 Admin · Tool controls", "url": "https://admin.microsoft.com/Adminportal/Home#/agents/policies"},
-                {"label": "Control plane · Governance", "url": f"https://{AGENT_FQDN}/control-plane"},
+                {"label": "Control plane · Governance", "url": f"{PUBLIC_ORIGIN}/control-plane"},
             ],
         ),
         _f(
@@ -1006,7 +1026,7 @@ def feature_catalog() -> list[dict[str, Any]]:
             ],
             portals=[
                 {"label": "M365 Admin · Agents", "url": "https://admin.microsoft.com/Adminportal/Home#/agents"},
-                {"label": "Control plane · Governance", "url": f"https://{AGENT_FQDN}/control-plane"},
+                {"label": "Control plane · Governance", "url": f"{PUBLIC_ORIGIN}/control-plane"},
             ],
         ),
         _f(

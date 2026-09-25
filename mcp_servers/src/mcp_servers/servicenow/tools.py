@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 from fastmcp import Context
 
-from ..auth import get_bearer_token
+from ..auth import resolve_servicenow_token
 from ..http import create_async_client
 from ..logging import get_logger
 from ..settings import load_servicenow_settings
@@ -167,7 +167,7 @@ async def tool_list_incidents(
         limit: Maximum number of incidents to return (default 10, max 100).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     query = _build_query(
         search_text=search_text,
@@ -315,34 +315,38 @@ async def _resolve_session_user(
     """Resolve the current ServiceNow session user from the bearer token.
 
     Calls the SN UI user endpoint to determine which SN user the OAuth
-    token belongs to.  Returns a dict with sys_id, name, and user_name,
-    or an empty dict on failure.
+    token belongs to, falling back to the Table API's session user.  Returns
+    a dict with sys_id, name, and user_name, or an empty dict on failure.
+    Only an authentication failure (401) is raised.
     """
-    url = f"{instance_url}/api/now/ui/user"
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
 
     try:
         async with create_async_client() as client:
-            resp = await client.get(url, headers=headers)
-            if resp.is_error:
-                LOGGER.warning(
-                    "servicenow_session_user_http_error",
-                    status=resp.status_code,
-                )
+            resp = await client.get(f"{instance_url}/api/now/ui/user", headers=headers)
+            if resp.status_code == 401:
                 resp.raise_for_status()
-            body = resp.json()
-        result = body.get("result", {})
-        name = (
-            result.get("user_display_name")
-            or result.get("user_name")
-            or ""
-        )
-        if name:
-            return {
-                "sys_id": result.get("user_sys_id", ""),
-                "name": name,
-                "user_name": result.get("user_name", ""),
-            }
+            if not resp.is_error:
+                result = resp.json().get("result", {})
+                name = result.get("user_display_name") or result.get("user_name") or ""
+                if name:
+                    return {"sys_id": result.get("user_sys_id", ""), "name": name,
+                            "user_name": result.get("user_name", "")}
+            else:
+                LOGGER.warning("servicenow_session_user_http_error", status=resp.status_code)
+            # Some instances reject the UI API for OAuth tokens; the Table API still knows the session user.
+            resp = await client.get(f"{instance_url}/api/now/table/sys_user", headers=headers, params={
+                "sysparm_query": "sys_id=javascript:gs.getUserID()",
+                "sysparm_fields": "sys_id,name,user_name", "sysparm_limit": 1})
+            if resp.status_code == 401:
+                resp.raise_for_status()
+            if not resp.is_error:
+                rows = resp.json().get("result", [])
+                if rows and rows[0].get("name"):
+                    return {"sys_id": rows[0].get("sys_id", ""), "name": rows[0]["name"],
+                            "user_name": rows[0].get("user_name", "")}
+            else:
+                LOGGER.warning("servicenow_session_user_table_error", status=resp.status_code)
     except httpx.HTTPStatusError:
         raise
     except Exception as exc:
@@ -409,7 +413,7 @@ async def tool_get_incident(
         number: The incident number (e.g. INC0010006).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     LOGGER.info("servicenow_get_incident", number=number)
 
@@ -455,6 +459,7 @@ async def tool_update_incident(
     configuration_item: Optional[str] = None,
     close_code: Optional[str] = None,
     close_notes: Optional[str] = None,
+    problem: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> dict:
     """Update an existing ServiceNow incident.
@@ -489,9 +494,19 @@ async def tool_update_incident(
         configuration_item: Related configuration item.
         close_code: Closure code (when resolving/closing).
         close_notes: Closure notes (when resolving/closing).
+        problem: Problem number to link the incident to (e.g. PRB0040001).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
+    problem_id = ""
+    if problem:
+        if not re.fullmatch(r"PRB\d{7,10}", problem.strip()):
+            return {"updated": False, "error": "problem must be a problem number such as PRB0040001."}
+        async with create_async_client() as client:
+            problem_id = await _first_sys_id(client, f"{settings.instance_url}/api/now/table/problem", token,
+                                             f"number={problem.strip()}")
+        if not problem_id:
+            return {"updated": False, "error": f"Problem {problem.strip()} was not found."}
 
     # Resolve the incident to get sys_id
     raw = await _resolve_incident(number, token, settings.instance_url)
@@ -524,6 +539,8 @@ async def tool_update_incident(
     for field, value in _field_map.items():
         if value is not None and value != "":
             payload[field] = value
+    if problem_id:
+        payload["problem_id"] = problem_id
 
     # Handle state separately -- accept friendly names
     if state:
@@ -642,7 +659,7 @@ async def tool_create_incident(
         configuration_item: Configuration item related to the incident.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     # Build the payload -- caller_id resolved inside the try block below
     payload: Dict[str, Any] = {
@@ -742,7 +759,7 @@ async def tool_list_tasks(
         limit: Maximum number of tasks to return (default 50, max 100).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     safe_limit = max(1, min(int(limit), 100))
     url = f"{settings.instance_url}/api/now/table/task"
@@ -823,7 +840,7 @@ async def tool_update_task(
         comments: A new customer-visible comment to append.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     payload: Dict[str, Any] = {}
 
@@ -902,7 +919,7 @@ async def tool_list_approvals(
         limit: Maximum number of approvals to return (default 50, max 100).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     safe_limit = max(1, min(int(limit), 100))
     url = f"{settings.instance_url}/api/now/table/sysapproval_approver"
@@ -965,7 +982,7 @@ async def tool_get_approval(
         sys_id: The sys_id of the approval record.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     LOGGER.info("servicenow_get_approval", sys_id=sys_id)
 
@@ -1020,7 +1037,7 @@ async def tool_approve_reject(
         comment: Optional comment to attach to the approval decision.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     if decision not in ("approve", "reject"):
         return {"error": "decision must be 'approve' or 'reject'"}
@@ -1108,7 +1125,7 @@ async def tool_show_create_incident_form(
             The LLM should intelligently route based on issue context.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     prefill: Dict[str, Any] = {}
     if short_description:
@@ -1185,7 +1202,7 @@ async def tool_show_update_incident_form(
         number: The incident number to load (e.g. INC0010006).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     LOGGER.info("servicenow_show_update_incident_form", number=number)
 
@@ -1404,7 +1421,7 @@ async def provider_list_tasks(ctx: Optional[Context] = None) -> List[Dict[str, A
         LOGGER.debug("servicenow_settings_not_configured")
         return []
 
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
     url = f"{settings.instance_url}/api/now/table/task"
     params: Dict[str, Any] = {
         "sysparm_query": "active=true^ORDERBYDESCsys_updated_on",
@@ -1460,7 +1477,7 @@ async def provider_list_approvals(ctx: Optional[Context] = None) -> List[Dict[st
         LOGGER.debug("servicenow_settings_not_configured")
         return []
 
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
     url = f"{settings.instance_url}/api/now/table/sysapproval_approver"
     params: Dict[str, Any] = {
         "sysparm_query": "state=requested^ORDERBYDESCsys_created_on",
@@ -1507,7 +1524,7 @@ async def provider_list_approvals(ctx: Optional[Context] = None) -> List[Dict[st
 async def provider_get_approval_detail(item_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Fetch approval detail from sysapproval_approver."""
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/now/table/sysapproval_approver/{item_id}"
     params: Dict[str, Any] = {
@@ -1548,7 +1565,7 @@ async def provider_execute_approval(
     Updates the ``state`` field on ``sysapproval_approver``.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     state = "approved" if decision == "approve" else "rejected"
     url = f"{settings.instance_url}/api/now/table/sysapproval_approver/{item_id}"
@@ -1622,7 +1639,7 @@ async def tool_list_catalog_items(
         limit: Maximum items to return (default 20, max 100).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     safe_limit = max(1, min(int(limit), 100))
     auth_headers = {
@@ -1764,11 +1781,15 @@ async def tool_list_catalog_categories(
         limit: Maximum categories to return (default 40, max 100).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     safe_limit = max(1, min(int(limit), 100))
 
     # If no catalog specified, get the default catalog first
+    if not catalog_sys_id:
+        async with create_async_client() as client:
+            catalog_sys_id = await _first_sys_id(client, f"{settings.instance_url}/api/now/table/sc_catalog", token,
+                                                 "title=Service Catalog")
     if not catalog_sys_id:
         cat_url = f"{settings.instance_url}/api/sn_sc/servicecatalog/catalogs"
         async with create_async_client() as client:
@@ -1899,7 +1920,7 @@ async def tool_get_catalog_item(
     sys_id = sys_id.strip().lower()
 
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/sn_sc/servicecatalog/items/{sys_id}"
 
@@ -1991,6 +2012,7 @@ async def tool_order_catalog_item(
     sys_id: str,
     variables: Optional[Dict[str, Any]] = None,
     quantity: int = 1,
+    requested_for: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Order a catalog item from the ServiceNow Service Catalog.
@@ -2002,6 +2024,7 @@ async def tool_order_catalog_item(
         sys_id: The sys_id of the catalog item to order.
         variables: A dict of variable name → value pairs for the order form fields.
         quantity: Quantity to order (default 1).
+        requested_for: Full display name of the person the order is for (default: the signed-in user).
     """
     err = _validate_sys_id(sys_id)
     if err:
@@ -2009,7 +2032,7 @@ async def tool_order_catalog_item(
     sys_id = sys_id.strip().lower()
 
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/sn_sc/servicecatalog/items/{sys_id}/order_now"
 
@@ -2018,6 +2041,11 @@ async def tool_order_catalog_item(
     }
     if variables:
         payload["variables"] = variables
+    if requested_for:
+        try:
+            payload["sysparm_requested_for"] = await _resolve_user(requested_for, token, settings.instance_url)
+        except ValueError as exc:
+            return {"success": False, "error": str(exc)}
 
     LOGGER.info(
         "servicenow_order_catalog_item",
@@ -2091,7 +2119,7 @@ async def tool_add_to_cart(
     sys_id = sys_id.strip().lower()
 
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/sn_sc/servicecatalog/items/{sys_id}/add_to_cart"
 
@@ -2160,7 +2188,7 @@ async def tool_get_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
     prices, and the cart total.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/sn_sc/servicecatalog/cart"
 
@@ -2217,7 +2245,7 @@ async def tool_checkout_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
     The cart is emptied after successful checkout.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/sn_sc/servicecatalog/cart/submit_order"
 
@@ -2270,7 +2298,7 @@ async def tool_delete_cart(ctx: Optional[Context] = None) -> Dict[str, Any]:
     Removes all items from the current user's cart.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/sn_sc/servicecatalog/cart"
 
@@ -2314,7 +2342,7 @@ async def tool_remove_cart_item(
         cart_item_id: ServiceNow cart item ID to remove.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     if not cart_item_id:
         return {"success": False, "error": "cart_item_id is required"}
@@ -2375,7 +2403,7 @@ async def tool_list_my_requests(
                closed_incomplete, closed_cancelled.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     safe_limit = max(1, min(int(limit), 50))
 
@@ -2482,7 +2510,7 @@ async def tool_search_reference_values(
         limit: Maximum results to return (default 20, max 50).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     safe_limit = max(1, min(int(limit), 50))
 
@@ -2625,7 +2653,7 @@ async def tool_list_change_requests(
         limit: Maximum number of results to return (default 10, max 100).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     clauses: List[str] = []
     if search_text:
@@ -2692,7 +2720,7 @@ async def tool_get_change_request(
         sys_id: The sys_id of the change request.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/now/table/change_request/{sys_id}"
     params: Dict[str, Any] = {
@@ -2802,7 +2830,7 @@ async def tool_create_change_request(
         planned_end_date: Planned end date/time (ISO 8601 or ServiceNow format).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     payload: Dict[str, Any] = {"short_description": short_description}
     _optional: Dict[str, Optional[str]] = {
@@ -2903,7 +2931,7 @@ async def tool_update_change_request(
         close_notes: Closure notes (when closing).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     payload: Dict[str, Any] = {}
 
@@ -3010,7 +3038,7 @@ async def tool_search_knowledge(
         limit: Maximum number of articles to return (default 10, max 100).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     clauses: List[str] = []
     if search_text:
@@ -3073,7 +3101,7 @@ async def tool_get_knowledge_article(
         sys_id: The sys_id of the knowledge article.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/now/table/kb_knowledge/{sys_id}"
     params: Dict[str, Any] = {
@@ -3127,7 +3155,7 @@ async def tool_list_problems(
         limit: Maximum number of results to return (default 10, max 100).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     clauses: List[str] = []
     if search_text:
@@ -3251,7 +3279,7 @@ async def tool_create_problem(
         urgency: Urgency level (1 = High, 2 = Medium, 3 = Low).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     payload: Dict[str, Any] = {"short_description": short_description}
     _optional: Dict[str, Optional[str]] = {
@@ -3341,7 +3369,7 @@ async def tool_update_problem(
         work_notes: A new internal work note to append.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     payload: Dict[str, Any] = {}
 
@@ -3439,7 +3467,7 @@ async def tool_get_cmdb_ci(
         sys_id: The sys_id of the configuration item.
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     url = f"{settings.instance_url}/api/now/table/cmdb_ci/{sys_id}"
     params: Dict[str, Any] = {
@@ -3493,7 +3521,7 @@ async def tool_list_cmdb_cis(
         limit: Maximum number of results to return (default 10, max 100).
     """
     settings = load_servicenow_settings()
-    token = get_bearer_token(ctx)
+    token = await resolve_servicenow_token(ctx)
 
     clauses: List[str] = []
     if search_text:
@@ -3914,7 +3942,7 @@ async def tool_get_team_incidents(
     """
     try:
         settings = load_servicenow_settings()
-        token = get_bearer_token(ctx)
+        token = await resolve_servicenow_token(ctx)
 
         query_parts = ["active=true"]
         if assigned_to_group:
@@ -4002,7 +4030,7 @@ async def tool_get_team_approvals(
     """
     try:
         settings = load_servicenow_settings()
-        token = get_bearer_token(ctx)
+        token = await resolve_servicenow_token(ctx)
 
         safe_limit = max(1, min(int(limit), 200))
         url = f"{settings.instance_url}/api/now/table/sysapproval_approver"
@@ -4105,7 +4133,7 @@ async def tool_get_sla_status(
 
     try:
         settings = load_servicenow_settings()
-        token = get_bearer_token(ctx)
+        token = await resolve_servicenow_token(ctx)
         safe_limit = max(1, min(int(limit), 100))
 
         url = f"{settings.instance_url}/api/now/table/task_sla"
@@ -4205,7 +4233,7 @@ async def tool_create_knowledge_article(
 
     try:
         settings = load_servicenow_settings()
-        token = get_bearer_token(ctx)
+        token = await resolve_servicenow_token(ctx)
 
         url = f"{settings.instance_url}/api/now/table/kb_knowledge"
         payload: Dict[str, Any] = {
@@ -4251,6 +4279,147 @@ async def tool_create_knowledge_article(
     except Exception as exc:
         LOGGER.error("servicenow_create_knowledge_article_error", error=str(exc))
         return {"success": False, "error": str(exc)}
+
+
+# ── Catalog building ────────────────────────────────────────────────
+# item_option_new.type codes for the supported order-form question types.
+_VARIABLE_TYPES = {"yes_no": "1", "multi_line": "2", "select": "5", "single_line": "6", "checkbox": "7", "date": "9"}
+_VARIABLE_NAME = re.compile(r"[a-z][a-z0-9_]{0,39}")
+
+
+async def _first_sys_id(client: httpx.AsyncClient, url: str, token: str, query: str) -> str:
+    resp = await client.get(url, params={"sysparm_query": query, "sysparm_fields": "sys_id", "sysparm_limit": 1},
+                            headers={"Authorization": f"Bearer {token}", "Accept": "application/json"})
+    resp.raise_for_status()
+    results = resp.json().get("result", [])
+    return results[0]["sys_id"] if results else ""
+
+
+async def tool_create_catalog_item(
+    name: str,
+    short_description: str,
+    description: str,
+    category: Optional[str] = None,
+    variables: Optional[List[Dict[str, Any]]] = None,
+    fulfillment_group: Optional[str] = None,
+    active: bool = False,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Build a new Service Catalog item with its order-form questions.
+
+    The item is created inactive (a draft employees cannot see) unless *active* is true;
+    publish it later with set_catalog_item_active.
+
+    Args:
+        name: Item name shown in the catalog.
+        short_description: One-line summary.
+        description: What the item provides, who it is for and what happens after ordering.
+        category: Catalog category title (for example "Application and Account Access").
+        variables: Up to 15 questions, each {"name", "question", "type": single_line|multi_line|select|
+            checkbox|date|yes_no, "mandatory": bool, "choices": [...] for select}.
+        fulfillment_group: Name of the group that fulfils the request.
+        active: Publish immediately (default false).
+    """
+    questions = variables or []
+    if not (1 <= len(name.strip()) <= 100) or not short_description.strip() or not description.strip():
+        return {"success": False, "error": "name (1-100 characters), short_description and description are required."}
+    if len(questions) > 15:
+        return {"success": False, "error": "A catalog item may define at most 15 questions."}
+    for question in questions:
+        if (not isinstance(question, dict) or not _VARIABLE_NAME.fullmatch(str(question.get("name", "")))
+                or question.get("type", "single_line") not in _VARIABLE_TYPES or not str(question.get("question", "")).strip()
+                or (question.get("type") == "select" and not 1 <= len(question.get("choices") or []) <= 20)):
+            return {"success": False, "error": (
+                "Each question needs a lowercase name, question text and a supported type; "
+                "select questions need 1-20 choices.")}
+
+    settings = load_servicenow_settings()
+    token = await resolve_servicenow_token(ctx)
+    base = f"{settings.instance_url}/api/now/table"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}
+    LOGGER.info("servicenow_create_catalog_item", name=name, questions=len(questions), active=active)
+    notes: List[str] = []
+    try:
+        async with create_async_client(timeout=60.0) as client:
+            catalog = await _first_sys_id(client, f"{base}/sc_catalog", token, "title=Service Catalog")
+            category_id = ""
+            if category:
+                category_id = await _first_sys_id(client, f"{base}/sc_category", token,
+                                                  f"title={category}^sc_catalog={catalog}" if catalog else f"title={category}")
+                if not category_id:
+                    notes.append(f"Category '{category}' was not found, so the item has no category.")
+            group_id = ""
+            if fulfillment_group:
+                group_id = await _first_sys_id(client, f"{base}/sys_user_group", token, f"name={fulfillment_group}")
+                if not group_id:
+                    notes.append(f"Group '{fulfillment_group}' was not found, so no fulfilment group is set.")
+            item: Dict[str, Any] = {"name": name.strip(), "short_description": short_description.strip(),
+                                    "description": description, "active": "true" if active else "false"}
+            if catalog:
+                item["sc_catalogs"] = catalog
+            if category_id:
+                item["category"] = category_id
+            if group_id:
+                item["group"] = group_id
+            resp = await client.post(f"{base}/sc_cat_item", json=item, headers=headers)
+            resp.raise_for_status()
+            item_id = resp.json().get("result", {}).get("sys_id", "")
+            created: List[str] = []
+            for order, question in enumerate(questions, start=1):
+                kind = question.get("type", "single_line")
+                resp = await client.post(f"{base}/item_option_new", headers=headers, json={
+                    "cat_item": item_id, "name": question["name"], "question_text": str(question["question"])[:200],
+                    "type": _VARIABLE_TYPES[kind], "order": str(order * 100),
+                    "mandatory": "true" if question.get("mandatory") else "false",
+                })
+                resp.raise_for_status()
+                variable_id = resp.json().get("result", {}).get("sys_id", "")
+                for position, choice in enumerate(question.get("choices") or [], start=1):
+                    text = str(choice)[:100]
+                    resp = await client.post(f"{base}/question_choice", headers=headers, json={
+                        "question": variable_id, "text": text, "order": str(position * 100),
+                        "value": re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")[:40] or f"choice_{position}",
+                    })
+                    resp.raise_for_status()
+                created.append(question["name"])
+    except httpx.HTTPStatusError:
+        raise
+    except Exception as exc:
+        LOGGER.error("servicenow_create_catalog_item_error", error=str(exc))
+        return {"success": False, "error": str(exc)}
+    return {
+        "success": True, "sys_id": item_id, "name": name.strip(), "active": active, "variables": created,
+        "notes": notes, "link": f"{settings.instance_url}/nav_to.do?uri=sc_cat_item.do?sys_id={item_id}",
+        "message": ("Published to the catalog." if active else
+                    "Created as an inactive draft; publish it with set_catalog_item_active once reviewed."),
+    }
+
+
+async def tool_set_catalog_item_active(
+    sys_id: str,
+    active: bool = True,
+    ctx: Optional[Context] = None,
+) -> Dict[str, Any]:
+    """Publish (active=true) or withdraw (active=false) a Service Catalog item.
+
+    Args:
+        sys_id: The catalog item's sys_id.
+        active: True to make it visible to employees, false to hide it.
+    """
+    err = _validate_sys_id(sys_id)
+    if err:
+        return err
+    settings = load_servicenow_settings()
+    token = await resolve_servicenow_token(ctx)
+    url = f"{settings.instance_url}/api/now/table/sc_cat_item/{sys_id.strip().lower()}"
+    LOGGER.info("servicenow_set_catalog_item_active", sys_id=sys_id, active=active)
+    async with create_async_client() as client:
+        resp = await client.patch(url, json={"active": "true" if active else "false"}, headers={
+            "Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"})
+        resp.raise_for_status()
+        result = resp.json().get("result", {})
+    return {"success": True, "sys_id": result.get("sys_id", sys_id), "name": result.get("name", ""),
+            "active": str(result.get("active", active)).lower() == "true"}
 
 
 # ── Manager-focused tool specs ───────────────────────────────────────
@@ -4309,6 +4478,21 @@ SERVICENOW_TOOL_SPECS.extend(
             "annotations": {
                 "readOnlyHint": True,
             },
+        },
+        {
+            "name": "create_catalog_item",
+            "summary": (
+                "Build a new Service Catalog item with its order-form questions (up to 15). "
+                "Created as an inactive draft unless active is true; publish with set_catalog_item_active."
+            ),
+            "func": tool_create_catalog_item,
+            "annotations": {"readOnlyHint": False, "destructiveHint": False},
+        },
+        {
+            "name": "set_catalog_item_active",
+            "summary": "Publish (active=true) or withdraw (active=false) a Service Catalog item by sys_id.",
+            "func": tool_set_catalog_item_active,
+            "annotations": {"readOnlyHint": False, "destructiveHint": False},
         },
     ]
 )

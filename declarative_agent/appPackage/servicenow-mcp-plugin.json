@@ -168,8 +168,7 @@
         {
             "type": "RemoteMCPServer",
             "auth": {
-                "type": "OAuthPluginVault",
-                "reference_id": "ODAzMGQ5MjgtZTU1Ny00YTRjLWFlMWUtOTVjMWM0MTI1ZWFhIyM3MjM4MDYwNC1lZTZjLTQyYjktOTM5MC0zYTYxZGQ1MGVkY2Q="
+                "type": "None"
             },
         "run_for_functions": [
             "list_incidents",
@@ -213,7 +212,7 @@
             "create_knowledge_article"
         ],
         "spec":{
-            "url": "https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp",
+            "url": "https://essmcp-caldova-servicenow.livelysky-91807d17.eastus2.azurecontainerapps.io/servicenow/mcp",
             "mcp_tool_description": {
                 "tools": [
                     {

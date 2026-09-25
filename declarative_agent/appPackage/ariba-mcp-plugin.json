@@ -59,7 +59,7 @@
                 "approve_reject"
             ],
             "spec": {
-                "url": "https://essmcp-ariba.wittysand-460bf1d9.eastus.azurecontainerapps.io/ariba/mcp",
+                "url": "https://essmcp-caldova-ariba.livelysky-91807d17.eastus2.azurecontainerapps.io/ariba/mcp",
                 "mcp_tool_description": {
                 "tools": [
                     {

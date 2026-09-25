@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-labelledby="title desc">
+  <title id="title">Group Functions Autopilot</title>
+  <desc id="desc">An upward navigation pointer inside a three-node compass arc.</desc>
+  <rect width="192" height="192" fill="#b11f4b"/>
+  <g fill="#fff" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M48 144 A68 68 0 1 1 144 144" fill="none" stroke-width="7"/>
+    <circle cx="48" cy="144" r="7" stroke="none"/>
+    <circle cx="144" cy="144" r="7" stroke="none"/>
+    <circle cx="96" cy="28" r="7" stroke="none"/>
+    <path d="M96 56 L130 134 L96 116 L62 134 Z" stroke-width="3"/>
+  </g>
+</svg>

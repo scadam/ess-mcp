@@ -588,14 +588,15 @@ async def tool_list_cases(
     """
     clauses: List[str] = []
     if status:
-        clauses.append(f"Status = '{status}'")
+        clauses.append(f"Status = '{_sf(status)}'")
     if priority:
-        clauses.append(f"Priority = '{priority}'")
+        clauses.append(f"Priority = '{_sf(priority)}'")
     if case_type:
-        clauses.append(f"Type = '{case_type}'")
+        clauses.append(f"Type = '{_sf(case_type)}'")
     if search_text:
+        term = _sf(search_text).replace("%", "\\%").replace("_", "\\_")
         clauses.append(
-            f"(Subject LIKE '%{search_text}%' OR Description LIKE '%{search_text}%')"
+            f"(Subject LIKE '%{term}%' OR Description LIKE '%{term}%')"
         )
 
     where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
@@ -629,11 +630,11 @@ async def tool_get_case(case_id: str, ctx: Optional[Context] = None) -> Dict[str
     # Support both Id and CaseNumber
     if case_id.isdigit() or len(case_id) < 15:
         records = await _soql_query(
-            f"SELECT {_CASE_FIELDS} FROM Case WHERE CaseNumber = '{case_id}'"
+            f"SELECT {_CASE_FIELDS} FROM Case WHERE CaseNumber = '{_sf(case_id)}'"
         , ctx)
     else:
         records = await _soql_query(
-            f"SELECT {_CASE_FIELDS} FROM Case WHERE Id = '{case_id}'"
+            f"SELECT {_CASE_FIELDS} FROM Case WHERE Id = '{_sf(case_id)}'"
         , ctx)
 
     if not records:
@@ -675,6 +676,7 @@ async def tool_create_case(
     origin: str = "Copilot",
     contact_name: Optional[str] = None,
     reason: Optional[str] = None,
+    requester_email: Optional[str] = None,
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """Create a new Salesforce compliance case.
@@ -698,6 +700,7 @@ async def tool_create_case(
         origin: Channel of origin (default "Copilot").
         contact_name: Name of the person raising the concern.
         reason: Reason for the case.
+        requester_email: Work email of the person raising it, so the compliance desk can reply to them.
     """
     payload: Dict[str, Any] = {
         "Subject": subject,
@@ -710,6 +713,10 @@ async def tool_create_case(
         payload["Description"] = description
     if reason:
         payload["Reason"] = reason
+    if contact_name:
+        payload["SuppliedName"] = contact_name[:80]
+    if requester_email and "@" in requester_email:
+        payload["SuppliedEmail"] = requester_email.strip()[:80]
 
     LOGGER.info("salesforce_create_case", fields=list(payload.keys()))
 

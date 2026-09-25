@@ -38,7 +38,7 @@ class AgentIdentityContext:
     @classmethod
     def from_env(cls) -> "AgentIdentityContext":
         return cls(
-            display_name=os.getenv("ESS_AGENT_DISPLAY_NAME", "ESS Workday ServiceNow Agent"),
+            display_name=os.getenv("ESS_AGENT_DISPLAY_NAME", "Group Functions Autopilot"),
             blueprint_client_id=os.getenv("ENTRA_AGENT_BLUEPRINT_CLIENT_ID", ""),
             blueprint_object_id=os.getenv("ENTRA_AGENT_BLUEPRINT_OBJECT_ID", ""),
             blueprint_principal_id=os.getenv("ENTRA_AGENT_BLUEPRINT_PRINCIPAL_ID", ""),
@@ -139,6 +139,17 @@ def agent_headers(context: AgentIdentityContext | None = None) -> dict[str, str]
     if ctx.foundry_agent_id:
         headers["X-Foundry-Agent-Id"] = ctx.foundry_agent_id
     return headers
+
+
+def mcp_url_for(name: str, context: AgentIdentityContext) -> str:
+    """Resolve the MCP URL, preferring the AI Gateway route when configured."""
+    direct = os.getenv(f"ESS_{name.upper()}_MCP_URL", "")
+    gateway = os.getenv(f"ESS_{name.upper()}_AI_GATEWAY_MCP_URL", "")
+    if gateway:
+        return gateway
+    if context.gateway_base_url:
+        return context.gateway_base_url.rstrip("/") + f"/{name}/mcp"
+    return direct
 
 
 @dataclass(frozen=True)

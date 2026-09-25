@@ -176,21 +176,30 @@ def _supplier_rollup() -> list[dict]:
 
 
 async def tool_get_invoice_status(invoice_number: str, ctx: Context | None = None) -> dict:
-    match = next((i for i in _MOCK_INVOICES if i["invoice-number"] == invoice_number), _MOCK_INVOICES[0])
-    result = copy.deepcopy(match)
-    result["invoice-number"] = invoice_number
-    return result
+    match = next((i for i in _MOCK_INVOICES if i["invoice-number"] == invoice_number), None)
+    if match is None:
+        return {"found": False, "error": f"No invoice {invoice_number!r}."}
+    return copy.deepcopy(match)
 
 
 async def tool_get_po_status(po_number: str, ctx: Context | None = None) -> dict:
-    match = next((p for p in _MOCK_POS if p["po-number"] == po_number), _MOCK_POS[0])
-    result = copy.deepcopy(match)
-    result["po-number"] = po_number
-    return result
+    match = next((p for p in _MOCK_POS if p["po-number"] == po_number), None)
+    if match is None:
+        return {"found": False, "error": f"No purchase order {po_number!r}."}
+    return copy.deepcopy(match)
 
 
 async def tool_reject_invoice(invoice_id: str, reason: str = "", ctx: Context | None = None) -> dict:
-    return {"status": "rejected", "invoice-id": invoice_id, "reason": reason, "actioned-at": TODAY.isoformat()}
+    from .core import _comment, _find_invoice, _stamp, _sync_legacy_invoice
+
+    invoice = _find_invoice(invoice_id)
+    if invoice is None:
+        return {"status": "not_found", "error": f"No invoice {invoice_id!r}."}
+    invoice["status"], invoice["updated-at"] = "rejected", _stamp()
+    if reason:
+        _comment("InvoiceHeader", invoice["id"], reason, True)
+    _sync_legacy_invoice(invoice)
+    return {"status": "rejected", "invoice-id": invoice_id, "reason": reason, "actioned-at": invoice["updated-at"]}
 
 
 async def tool_close_purchase_order(po_id: str, reason: str = "", ctx: Context | None = None) -> dict:
@@ -208,7 +217,22 @@ async def tool_prepare_create_receipt(po_number: str, ctx: Context | None = None
 
 
 async def tool_create_receipt(po_number: str, line_items: list[dict], receipt_date: str, ctx: Context | None = None) -> dict:
-    return {"status": "created", "id": 7099, "receipt-number": "RCPT-2026-7099", "po-number": po_number, "receipt-date": receipt_date, "line-items": line_items}
+    from .core import _find_order, tool_create_receiving_transaction
+
+    po = _find_order(po_number)
+    if po is None:
+        return {"status": "not_found", "error": f"No purchase order {po_number!r}."}
+    results = []
+    for entry in line_items:
+        line = next((item for item in po["order-lines"] if item["description"] == entry.get("description")
+                     or item["line-num"] == entry.get("line-num")), None)
+        if line is None:
+            results.append({"success": False, "error": f"No matching line for {entry!r}."})
+            continue
+        results.append(await tool_create_receiving_transaction(po_number, line["line-num"], float(entry.get("quantity", 0)),
+                                                               "autopilot.supply", receipt_date))
+    return {"status": "created" if all(item.get("success") for item in results) else "partial", "po-number": po_number,
+            "receipt-date": receipt_date, "results": results}
 
 
 async def tool_list_requisitions(status: str | None = None, ctx: Context | None = None) -> dict:
@@ -255,7 +279,8 @@ async def tool_list_suppliers(query: str | None = None, ctx: Context | None = No
 
 async def tool_get_supplier(supplier_id: str, ctx: Context | None = None) -> dict:
     suppliers = _supplier_rollup()
-    return copy.deepcopy(next((s for s in suppliers if s["id"] == supplier_id), suppliers[0]))
+    found = next((s for s in suppliers if s["id"] == supplier_id or s["name"].lower() == str(supplier_id).lower()), None)
+    return copy.deepcopy(found) if found else {"found": False, "error": f"No supplier {supplier_id!r}."}
 
 
 async def tool_update_supplier_address(supplier_id: str, address: dict, ctx: Context | None = None) -> dict:
@@ -267,7 +292,13 @@ async def tool_update_supplier_bank(supplier_id: str, bank_details: dict, ctx: C
 
 
 async def tool_register_supplier(name: str, address: dict, contact: dict, tax_id: str | None = None, ctx: Context | None = None) -> dict:
-    return {"status": "registered", "id": "SUP-4999", "name": name, "address": address, "contact": contact, "tax-id": tax_id, "risk": "pending_review"}
+    from .core import tool_create_supplier_information  # Onboarding starts a supplier information request.
+
+    address, contact = address or {}, contact or {}
+    country = str(address.get("country_code") or address.get("country") or "GB").strip().upper()
+    return await tool_create_supplier_information(
+        name=name, country=country if len(country) == 2 else "GB", commodity=str(address.get("commodity") or "General"),
+        contact_name=str(contact.get("name") or ""), contact_email=str(contact.get("email") or ""), tax_id=tax_id or "")
 
 
 async def tool_transfer_purchase_order(po_id: str, new_owner: str, reason: str = "", ctx: Context | None = None) -> dict:

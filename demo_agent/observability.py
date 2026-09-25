@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import os
+import sys
 import threading
 import time
 import uuid
@@ -18,7 +19,7 @@ import httpx
 
 from .identity import AgentIdentityContext, RunPrincipal
 
-logger = logging.getLogger("ess-mcp.demo_agent.observability")
+logger = logging.getLogger("group-functions-autopilot.observability")
 
 
 _OTEL_CONFIGURED = False
@@ -355,8 +356,8 @@ def _configure_a365_if_requested(context: AgentIdentityContext) -> None:
     try:
         configured = configure(
             service_name=os.getenv("OTEL_SERVICE_NAME", "ess-demo-agent"),
-            service_namespace=os.getenv("A365_OBSERVABILITY_SERVICE_NAMESPACE", "ess-mcp"),
-            logger_name="ess-mcp.demo_agent.observability",
+            service_namespace=os.getenv("A365_OBSERVABILITY_SERVICE_NAMESPACE", "group-functions-autopilot"),
+            logger_name="group-functions-autopilot.observability",
             exporter_options=Agent365ExporterOptions(
                 cluster_category=os.getenv("A365_OBSERVABILITY_CLUSTER_CATEGORY", "prod"),
                 token_resolver=token_resolver,
@@ -481,7 +482,7 @@ class AgentTelemetry:
         except Exception:
             self._tracer = None
         else:
-            self._tracer = trace.get_tracer("ess-mcp.demo_agent")
+            self._tracer = trace.get_tracer("group-functions-autopilot")
 
         try:
             from microsoft_agents_a365.observability.core import (  # type: ignore
@@ -618,6 +619,26 @@ class AgentTelemetry:
         normalized = self._CHANNEL_NAME_MAP.get(raw, raw)
         return Channel(name=normalized, link=None)
 
+    @staticmethod
+    def _close_a365_scope(
+        scope_cm: Any,
+        exc_info: tuple[Any, Any, Any],
+        label: str,
+    ) -> bool:
+        """Close an Agent 365 SDK scope, swallowing teardown errors.
+
+        Returns True only if the scope's ``__exit__`` suppressed the in-flight
+        exception (mirroring normal ``with`` semantics). A failure to tear down
+        observability must NEVER propagate — it would turn an otherwise
+        successful run into an error.
+        """
+        try:
+            return bool(scope_cm.__exit__(*exc_info))
+        except Exception as exit_exc:  # pragma: no cover - SDK teardown guard
+            _A365_STATUS["lastError"] = f"Agent 365 {label} scope exit failed: {exit_exc}"
+            logger.warning("Agent 365 %s scope exit failed: %s", label, exit_exc)
+            return False
+
     @contextmanager
     def start_invoke_scope(
         self,
@@ -661,18 +682,33 @@ class AgentTelemetry:
             conversation_id=conversation_id or run_id,
             channel=self._a365_channel(principal),
         )
+        # Only graceful-degrade when the SDK scope itself fails to set up or
+        # tear down. NEVER wrap the `yield` in a try/except that then yields
+        # again: the @contextmanager machinery throws a run-body exception back
+        # into this generator at the `yield`, and a second `yield` makes CPython
+        # raise "generator didn't stop after throw()", masking the real error
+        # and flipping a successful run to ERROR. Observability must never fail
+        # a run.
         try:
-            with InvokeAgentScope.start(
+            scope_cm = InvokeAgentScope.start(
                 request=request,
                 scope_details=InvokeAgentScopeDetails(),
                 agent_details=agent_details,
                 caller_details=self._a365_caller_details(principal),
-            ) as scope:
-                yield scope
+            )
+            scope = scope_cm.__enter__()
         except Exception as exc:
             _A365_STATUS["lastError"] = f"Agent 365 invoke scope failed: {exc}"
             logger.warning("Agent 365 invoke scope failed: %s", exc)
             yield None
+            return
+        try:
+            yield scope
+        except BaseException:
+            if not self._close_a365_scope(scope_cm, sys.exc_info(), "invoke"):
+                raise
+        else:
+            self._close_a365_scope(scope_cm, (None, None, None), "invoke")
 
     @contextmanager
     def start_inference_scope(
@@ -716,18 +752,29 @@ class AgentTelemetry:
             model=model,
             providerName=provider,
         )
+        # See start_invoke_scope: never swallow the run-body exception inside
+        # this generator (it would raise "generator didn't stop after throw()").
+        # Only degrade when the SDK scope setup/teardown fails.
         try:
-            with InferenceScope.start(
+            scope_cm = InferenceScope.start(
                 request=request,
                 details=details,
                 agent_details=agent_details,
                 user_details=self._a365_user_details(principal),
-            ) as scope:
-                yield scope
+            )
+            scope = scope_cm.__enter__()
         except Exception as exc:
             _A365_STATUS["lastError"] = f"Agent 365 inference scope failed: {exc}"
             logger.warning("Agent 365 inference scope failed: %s", exc)
             yield None
+            return
+        try:
+            yield scope
+        except BaseException:
+            if not self._close_a365_scope(scope_cm, sys.exc_info(), "inference"):
+                raise
+        else:
+            self._close_a365_scope(scope_cm, (None, None, None), "inference")
 
     @contextmanager
     def span(self, name: str, **attributes: object) -> Iterator[None]:

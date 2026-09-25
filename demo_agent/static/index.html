@@ -3,18 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ESS-MCP Demo Agent</title>
+<meta name="referrer" content="no-referrer">
+<title>Group Functions Autopilot</title>
+<link rel="icon" type="image/svg+xml" href="/static/autopilot-icon.svg">
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script src="https://res.cdn.office.net/teams-js/2.34.0/js/MicrosoftTeams.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="/static/control-auth.js"></script>
 <style>
-  :root {
-    --bg: #0d1117; --surface: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
-    --green: #3fb950; --orange: #d29922; --red: #f85149;
-    --pill-bg: #21262d; --pill-hover: #30363d;
-    --radius: 8px;
-  }
+  /* Palette and legacy variable aliases live in the late shared stylesheet. */
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  [data-auth-protected][hidden] { display: none !important; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: var(--cp-font);
     background: var(--bg); color: var(--text);
     min-height: 100vh; display: flex; flex-direction: column;
   }
@@ -42,7 +49,7 @@
     font-size: 13px; transition: all 0.15s;
   }
   .skill-pill:hover { background: var(--pill-hover); border-color: var(--accent); }
-  .skill-pill.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .skill-pill.active { background: var(--accent); color: var(--cp-accent-fg); border-color: var(--accent); font-weight: 600; }
 
   /* Prompt box */
   .prompt-area { margin-bottom: 24px; }
@@ -59,7 +66,7 @@
   .prompt-box textarea::placeholder { color: var(--muted); }
   .send-btn {
     padding: 10px 20px; border-radius: var(--radius); border: none;
-    background: var(--accent); color: #000; font-weight: 600;
+    background: var(--accent); color: var(--cp-accent-fg); font-weight: 600;
     cursor: pointer; font-size: 14px; white-space: nowrap;
     transition: opacity 0.15s;
   }
@@ -94,7 +101,7 @@
   /* Tool detail modal */
   .tool-detail-overlay {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.6); z-index: 100;
+    background: var(--cp-overlay); z-index: 100;
     justify-content: center; align-items: center;
   }
   .tool-detail-overlay.visible { display: flex; }
@@ -158,15 +165,33 @@
   /* Hidden helper */
   .hidden { display: none !important; }
 </style>
+<link rel="stylesheet" href="/static/autopilot-theme.css">
 </head>
 <body>
 
-<header>
-  <h1>🤖 ESS-MCP Demo Agent</h1>
+<section class="auth-panel" id="autopilotAuthPanel" aria-labelledby="autopilotAuthTitle">
+  <img src="/static/autopilot-icon.svg" width="56" height="56" alt="" aria-hidden="true">
+  <h1 id="autopilotAuthTitle">Group Functions Autopilot</h1>
+  <p>Organization sign-in required</p>
+  <p class="auth-message" id="autopilotAuthMessage" role="status" aria-live="polite">Checking sign-in. No operational data has been loaded.</p>
+  <div class="auth-actions">
+    <button class="auth-sign-in" id="autopilotSignIn" type="button" disabled>Sign in</button>
+    <button type="button" onclick="window.location.reload()">Reload</button>
+  </div>
+  <p class="auth-note">Use your organization account in Teams or your regular browser. Access is checked by the server; no run or evidence content is saved in browser storage.</p>
+</section>
+<noscript><p class="auth-noscript">Enable JavaScript to sign in. Operational data is unavailable while signed out.</p></noscript>
+
+<header data-auth-protected hidden inert>
+  <img src="/static/autopilot-icon.svg" width="36" height="36" alt="" aria-hidden="true">
+  <h1>Group Functions Autopilot</h1>
+  <a class="autopilot-tab" href="/control-plane">Control Plane</a>
+  <span class="auth-context" id="autopilotContext"></span>
+  <button class="auth-session-button" id="autopilotLock" type="button">Lock / change account</button>
   <div class="servers" id="servers"></div>
 </header>
 
-<div class="container">
+<div class="container" data-auth-protected hidden inert>
   <!-- Skill pills -->
   <div class="skills">
     <div class="skills-label">Choose a skill</div>
@@ -210,7 +235,7 @@
 </div>
 
 <!-- Tool detail overlay -->
-<div class="tool-detail-overlay" id="toolOverlay" onclick="if(event.target===this)closeDetail()">
+<div class="tool-detail-overlay" id="toolOverlay" data-auth-protected hidden inert onclick="if(event.target===this)closeDetail()">
   <div class="tool-detail" id="toolDetail">
     <button class="close-btn" onclick="closeDetail()">✕</button>
     <h3 id="detailTitle"></h3>
@@ -223,30 +248,46 @@
 
 <script>
 const skills = [];
-const toolData = {};  // id -> {server, tool, arguments, result}
+const toolData = Object.create(null);  // id -> {server, tool, arguments, result}
 
 // ── Init ──────────────────────────────────────────────────────────
 async function init() {
-  // Load skills
+  if (!window.autopilotAuth) {
+    document.getElementById('autopilotAuthMessage').textContent = 'Sign-in support could not load. Reload the page or ask your administrator to check the static assets.';
+    return;
+  }
+  if (!(await window.autopilotAuth.ready())) return;
   try {
-    const res = await fetch('/api/skills');
-    const data = await res.json();
+    const [data, servers] = await Promise.all([
+      fetchJson('/api/skills'), fetchJson('/api/servers'),
+    ]);
+    if (!window.autopilotAuth.isAuthenticated()) return;
+    if (!Array.isArray(data) || !Array.isArray(servers)) throw new Error('Operational data is unavailable.');
     data.forEach(s => skills.push(s));
     renderSkills();
-  } catch (e) { console.error('Failed to load skills', e); }
+    renderServers(servers);
+    window.autopilotAuth.showApp();
+  } catch (_) {
+    if (window.autopilotAuth.isAuthenticated()) {
+      window.autopilotAuth.showError('Operational data could not be loaded. Reload to retry; this is not an empty dashboard.');
+    }
+  }
+}
 
-  // Load servers
-  try {
-    const res = await fetch('/api/servers');
-    const data = await res.json();
-    renderServers(data);
-  } catch (e) { console.error('Failed to load servers', e); }
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Request failed (HTTP ${response.status}).`);
+  return response.json();
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
 }
 
 function renderSkills() {
   const el = document.getElementById('skillPills');
   el.innerHTML = skills.map((s, i) =>
-    `<button class="skill-pill" data-index="${i}" onclick="selectSkill(${i})">${formatSkillName(s.name)}</button>`
+    `<button class="skill-pill" data-index="${i}" onclick="selectSkill(${i})">${escapeHtml(formatSkillName(s.name))}</button>`
   ).join('');
 }
 
@@ -261,7 +302,7 @@ function renderServers(servers) {
     return;
   }
   el.innerHTML = servers.map(s =>
-    `<span class="server-badge">${s.name} (${s.tools})</span>`
+    `<span class="server-badge">${escapeHtml(s.name)} (${escapeHtml(s.tools)})</span>`
   ).join('');
 }
 
@@ -285,6 +326,7 @@ function selectSkill(index) {
 let running = false;
 
 async function runAgent() {
+  if (!window.autopilotAuth?.isAuthenticated()) return;
   const prompt = document.getElementById('promptInput').value.trim();
   if (!prompt || running) return;
 
@@ -307,19 +349,22 @@ async function runAgent() {
       body: JSON.stringify({ prompt }),
     });
 
+    if (!response.ok || !response.body || !response.headers.get('Content-Type')?.includes('text/event-stream')) {
+      throw new Error(`Run could not start (HTTP ${response.status}).`);
+    }
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let eventType = null;
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done || !window.autopilotAuth.isAuthenticated()) break;
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
 
-      let eventType = null;
       for (const line of lines) {
         if (line.startsWith('event: ')) {
           eventType = line.slice(7).trim();
@@ -333,7 +378,7 @@ async function runAgent() {
       }
     }
   } catch (e) {
-    showStatus('Error: ' + e.message);
+    if (window.autopilotAuth.isAuthenticated()) showStatus('The run could not complete. Please retry.');
   }
 
   running = false;
@@ -341,6 +386,7 @@ async function runAgent() {
 }
 
 function handleEvent(type, data) {
+  if (!window.autopilotAuth?.isAuthenticated()) return;
   switch (type) {
     case 'status':
       showStatus(data.message);
@@ -364,6 +410,7 @@ function handleEvent(type, data) {
     case 'result':
       hideStatus();
       document.getElementById('resultSection').classList.remove('hidden');
+      // Safe plain-text Markdown fallback: do not interpret model output as HTML.
       document.getElementById('resultContent').textContent = data.content;
       break;
 
@@ -397,7 +444,7 @@ function addToolPill(id, server, tool, state) {
   el.className = 'tool-pill ' + state;
   el.id = 'pill-' + id;
   el.onclick = () => showDetail(id);
-  el.innerHTML = `<span class="dot"></span><span class="server-tag">${server}/</span><span class="tool-name">${tool}</span>`;
+  el.innerHTML = `<span class="dot"></span><span class="server-tag">${escapeHtml(server)}/</span><span class="tool-name">${escapeHtml(tool)}</span>`;
   document.getElementById('toolPills').appendChild(el);
 }
 
@@ -432,6 +479,21 @@ function showStatus(msg) {
 function hideStatus() {
   document.getElementById('status').classList.remove('visible');
 }
+
+window.addEventListener('autopilot-auth-lost', () => {
+  skills.length = 0;
+  Object.keys(toolData).forEach(key => delete toolData[key]);
+  activeSkill = -1;
+  running = false;
+  document.getElementById('promptInput').value = '';
+  for (const id of ['servers', 'skillPills', 'toolPills', 'resultContent', 'detailTitle', 'detailInput', 'detailOutput', 'statusText']) {
+    document.getElementById(id)?.replaceChildren();
+  }
+  document.querySelectorAll('#statsBar .value').forEach(element => { element.textContent = '—'; });
+  document.getElementById('sendBtn').disabled = false;
+  closeDetail();
+  hideStatus();
+});
 
 // ── Boot ──────────────────────────────────────────────────────────
 init();

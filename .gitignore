@@ -153,6 +153,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local Azure deployment sessions (may contain sensitive deployment state)
+.copilot-azure/
+
 # Spyder project settings
 .spyderproject
 .spyproject

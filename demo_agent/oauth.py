@@ -105,6 +105,9 @@ class EnvOrOAuthTokenProvider(ServerTokenProvider):
         token = os.getenv(f"ESS_{name.upper()}_TOKEN", "")
         if token:
             return token
+        # Explicit opt-in: the MCP server authenticates to its SaaS with its own stored credentials.
+        if os.getenv(f"ESS_{name.upper()}_AUTH_MODE", "").strip().lower() == "server-managed":
+            return ""
         raise RuntimeError(
             f"No token source configured for {name}. Set ESS_{name.upper()}_OAUTH_* "
             f"or, for emergency local testing only, ESS_{name.upper()}_TOKEN."

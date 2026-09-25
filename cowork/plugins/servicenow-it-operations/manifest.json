@@ -37,10 +37,9 @@
       "description": "ServiceNow IT service management connector covering incidents, problems, change requests, approvals, SLAs, knowledge articles, CMDB, service catalog and team manager dashboards.",
       "toolSource": {
         "remoteMcpServer": {
-          "mcpServerUrl": "https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp",
+          "mcpServerUrl": "https://essmcp-caldova-servicenow.livelysky-91807d17.eastus2.azurecontainerapps.io/servicenow/mcp",
           "authorization": {
-            "type": "OAuthPluginVault",
-            "referenceId": "ODAzMGQ5MjgtZTU1Ny00YTRjLWFlMWUtOTVjMWM0MTI1ZWFhIyM3MjM4MDYwNC1lZTZjLTQyYjktOTM5MC0zYTYxZGQ1MGVkY2Q="
+            "type": "None"
           }
         }
       }

@@ -46,10 +46,12 @@ async def _get_access_token(ctx: Optional[Context] = None) -> str:
 
 async def _get_worker_context(ctx: Optional[Context] = None) -> WorkerContext:
     try:
-        return await build_worker_context_from_bearer(_get_auth_token(ctx))
+        token = _get_auth_token(ctx)
     except TokenValidationError:
         LOGGER.info("workday_no_incoming_bearer_building_default_worker_context")
         return await build_worker_context_from_fallback()
+    # Only missing request credentials select fallback, never a downstream error.
+    return await build_worker_context_from_bearer(token)
 
 
 

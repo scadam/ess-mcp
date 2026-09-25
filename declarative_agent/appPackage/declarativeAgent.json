@@ -1,32 +1,55 @@
 {
-    "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.6/schema.json",
-    "version": "v1.6",
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.9/schema.json",
+    "version": "v1.9",
     "name": "Employee Self Service ${{AGENT_VERSION}}",
     "description": "Employee Self Service with Microsoft Copilot using MCP and MCP Apps for Workday, ServiceNow, Jira and Salesforce",
     "instructions": "$[file('instruction.txt')]",
     "behavior_overrides": {
         "special_instructions": {
             "discourage_model_knowledge": true
-        }
+        },
+        "default_response_mode": "Quick response"
     },
     "disclaimer": {
-        "text": "${{AGENT_VERSION}}"
+        "text": "This agent is version ${{AGENT_VERSION}}. It is good but it does not replace common sense and good judgement."
     },
+    "sensitivity_label": {
+        "id": "defa4170-0d19-0005-0005-bc88714345d2"
+    },
+    "user_overrides": [
+        {
+            "path": "$.capabilities[?(@.name == 'Email')]",
+            "allowed_actions": ["remove"]
+        },
+        {
+            "path": "$.capabilities[?(@.name == 'Meetings')]",
+            "allowed_actions": ["remove"]
+        }
+    ],
     "capabilities": [
         {
+            "name": "CodeInterpreter"
+        },
+        {
             "name": "OneDriveAndSharePoint"
+        },
+        {
+            "name": "Email"
+        },
+        {
+            "name": "EmailActions"
+        },
+        {
+            "name": "Meetings"
+        },
+        {
+            "name": "MeetingActions"
         },
         {
             "name": "GraphConnectors",
             "connections": [
                 {
-                    "connection_id": "ServiceNowKB1"
-                },
-                {
-                    "connection_id": "ServiceNowKB2511172205"
-                },
-                {
-                    "connection_id": "ServiceNowKB2511172214"
+                    "connection_id": "ServiceNowKB2609221103"
                 }
             ]
         }
@@ -37,24 +60,28 @@
             "text": "Show my Workday org chart and summarize my manager, team structure, and direct reports."
         },
         {
-            "title": "Open Team Dashboard",
-            "text": "Open the Workday team overview dashboard and highlight headcount, role mix, locations, and anything that needs manager attention."
+            "title": "My Team Right Now",
+            "text": "Give me a snapshot of my team: who's out, what's waiting in my Workday inbox, and the three things I should act on first."
         },
         {
-            "title": "Review Team Goals",
-            "text": "Show the Workday team goals dashboard for my direct reports and call out goals that are overdue, at risk, or missing updates."
+            "title": "Plan Time Off",
+            "text": "I'd like to take next Friday off. Check my balance and who on my team is out, then set up the request for me to confirm."
         },
         {
-            "title": "Book Vacation",
-            "text": "Check my Workday leave balances, show the team time-off calendar, and help me book vacation for next Friday."
+            "title": "Review My Workday Inbox",
+            "text": "Show my Workday inbox tasks and highlight the approvals and anything that is overdue."
         },
         {
-            "title": "Get IT Help",
-            "text": "I need IT help with a laptop issue. Show me relevant ServiceNow help options, then open the incident form with the details prefilled."
+            "title": "Fix An IT Problem",
+            "text": "I'm locked out of my laptop after too many password attempts. Help me get back in, and raise a ticket if that doesn't work."
         },
         {
-            "title": "Order A New Laptop",
-            "text": "Find laptop options in the ServiceNow catalog, recommend the best fit for a developer, and open the ServiceNow order form for confirmation."
+            "title": "Get A New Laptop",
+            "text": "I'm a developer and need a new laptop. Recommend the right one from the ServiceNow catalog and open the order form."
+        },
+        {
+            "title": "Trace Hardware Requests",
+            "text": "Trace our ServiceNow hardware requests through Coupa and tell me where each one is stuck and who needs to act."
         },
         {
             "title": "Track Hardware Orders",
@@ -65,20 +92,39 @@
             "text": "Open the Coupa category manager dashboard for IT hardware and summarize spend, open order value, delivery risk, demand, and supplier performance."
         },
         {
-            "title": "Supplier Performance",
-            "text": "Show Coupa supplier performance for IT hardware suppliers and compare on-time delivery, open order value, risk, and recent purchase order activity."
+            "title": "Supplier Scorecard",
+            "text": "Score our IT hardware suppliers on delivery, quality, lead time and risk, and tell me which contracts need attention."
         },
         {
             "title": "Demand And Stock",
             "text": "Show Coupa item demand and stock coverage for phones, laptops, monitors, docks, and accessories, then identify the items most at risk."
         },
         {
-            "title": "Trace Request Flow",
-            "text": "Trace ServiceNow hardware requests through Coupa requisitions, purchase orders, receipts, and invoices, and show where each request is currently blocked."
+            "title": "Check Supplier Invoices",
+            "text": "Run a three-way match on our Coupa invoices and prepare a rejection for any that bill more than we received."
+        }
+    ],
+    "agent_skills": [
+        {
+            "folder": "skills/plan-time-off"
         },
         {
-            "title": "Resolve Invoice Mismatch",
-            "text": "Look up a Coupa invoice with a mismatch, compare it to the related purchase order and receipts, then prepare the rejection if the billed amount is wrong."
+            "folder": "skills/team-snapshot"
+        },
+        {
+            "folder": "skills/it-self-help"
+        },
+        {
+            "folder": "skills/order-it-equipment"
+        },
+        {
+            "folder": "skills/track-hardware-request"
+        },
+        {
+            "folder": "skills/invoice-three-way-match"
+        },
+        {
+            "folder": "skills/supplier-scorecard"
         }
     ],
     "actions": [
@@ -93,6 +139,22 @@
         {
             "file": "workday-mcp-plugin.json",
             "id": "workday-mcp-plugin-${{AGENT_VERSION}}"
+        },
+        {
+            "file": "salesforce-mcp-plugin.json",
+            "id": "salesforce-mcp-plugin-${{AGENT_VERSION}}"
         }
-    ]
+    ],
+    "editorial_answers": {
+        "answers": [
+            {
+                "question": "What do you do?",
+                "answer": "No idea!",
+                "similarity_thresholds": {
+                    "min": 3,
+                    "max": 10
+                }
+            }
+        ]
+    }
 }

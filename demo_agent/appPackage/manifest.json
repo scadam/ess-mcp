@@ -4,24 +4,24 @@
   "version": "1.0.0",
   "id": "${{TEAMS_APP_ID}}",
   "developer": {
-    "name": "ESS MCP Demo",
+    "name": "Group Functions Autopilot",
     "websiteUrl": "https://${{AGENT_DOMAIN}}",
     "privacyUrl": "https://${{AGENT_DOMAIN}}/privacy",
     "termsOfUseUrl": "https://${{AGENT_DOMAIN}}/terms"
   },
   "name": {
-    "short": "ESS Hosted Agent",
-    "full": "ESS Workday ServiceNow Hosted Agent"
+    "short": "Group Functions Autopilot",
+    "full": "Group Functions Autopilot"
   },
   "description": {
-    "short": "Hosted Workday and ServiceNow autonomous agent.",
-    "full": "A hosted autonomous agent that uses its Entra Agent ID, Agent Identity Blueprint metadata, and governed MCP access through the AI Gateway for Workday and ServiceNow tasks."
+    "short": "An AI teammate for group functions, case investigation and approved work.",
+    "full": "Group Functions Autopilot is an AI teammate for group-function work. It uses conversation-scoped memory, approved skills and authorized tools to investigate questions and report grounded results. Its authenticated control plane shows progress, evidence and human review. Compliance cases remain open until the original requester explicitly confirms resolution. Actions stay within the manager-authorized workflow; other consequential changes require explicit approval."
   },
   "icons": {
     "outline": "outline.png",
     "color": "color.png"
   },
-  "accentColor": "#2563EB",
+  "accentColor": "#B11F4B",
   "supportsChannelFeatures": "tier1",
   "permissions": [
     "identity",
@@ -65,7 +65,7 @@
   "staticTabs": [
     {
       "entityId": "control-plane",
-      "name": "Control Plane",
+      "name": "Autopilot Control Plane",
       "contentUrl": "https://${{AGENT_DOMAIN}}/control-plane",
       "websiteUrl": "https://${{AGENT_DOMAIN}}/control-plane",
       "scopes": [
@@ -83,7 +83,7 @@
         "id": "${{BOT_ID}}",
         "type": "bot",
         "disclaimer": {
-          "text": "This hosted demo agent can call governed Workday and ServiceNow MCP tools through the tenant AI Gateway."
+          "text": "Group Functions Autopilot is an AI teammate, not a human. It uses conversation-scoped memory and approved workflows; other consequential changes require explicit approval."
         }
       }
     ]

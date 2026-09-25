@@ -30,7 +30,7 @@ The skill helps procurement teams create executive-ready assets from Coupa data,
 The connector points to the mock Coupa MCP server:
 
 ```text
-https://essmcp-coupa.wittysand-460bf1d9.eastus.azurecontainerapps.io/coupa/mcp
+https://essmcp-caldova-coupa.livelysky-91807d17.eastus2.azurecontainerapps.io/coupa/mcp
 ```
 
 Authentication is set to `None` because this demo MCP server uses mock data and no auth.
@@ -43,10 +43,8 @@ Create a PowerPoint supplier performance pack for IT hardware procurement using 
 
 ## Package
 
-From this folder, create the upload package with PowerShell:
+Use ATK provisioning with the `caldova` environment in [m365agents.yml](m365agents.yml). It rebuilds the current manifest, includes every declared skill, and validates [build/appPackage.caldova.zip](build/appPackage.caldova.zip).
 
-```powershell
-Compress-Archive -Path manifest.json, color.png, outline.png, skills -DestinationPath coupa-procurement-intelligence.zip -Force
-```
+Microsoft 365 rejects nested ZIP files inside skill folders. [../../prepare_atk_package.ps1](../../prepare_atk_package.ps1) removes those entries from the generated upload only; both original skill archives remain untouched. Do not recursively archive the unfiltered skill directory for upload.
 
-Upload the zip in Microsoft 365 Admin Center > Manage Apps > Upload custom app, then enable it in Cowork Sources & Skills.
+Publish the verified ZIP using ATK's explicit `--package-file` option. The tested CLI otherwise rebuilds an unfiltered package without running the custom lifecycle filter. Publication submits the app to [Teams Admin Center](https://admin.teams.microsoft.com/policies/manage-apps) for approval. After approval, enable it in Cowork Sources & Skills.

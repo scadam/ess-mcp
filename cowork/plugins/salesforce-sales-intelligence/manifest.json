@@ -38,7 +38,7 @@
       "description": "Salesforce CRM connector covering accounts, contacts, opportunities, leads, cases, tasks, events, campaigns, quotes, products, forecast, reports and team manager dashboards.",
       "toolSource": {
         "remoteMcpServer": {
-          "mcpServerUrl": "https://essmcp-salesforce.wittysand-460bf1d9.eastus.azurecontainerapps.io/salesforce/mcp",
+          "mcpServerUrl": "https://essmcp-caldova-salesforce.livelysky-91807d17.eastus2.azurecontainerapps.io/salesforce/mcp",
           "authorization": {
             "type": "None"
           }

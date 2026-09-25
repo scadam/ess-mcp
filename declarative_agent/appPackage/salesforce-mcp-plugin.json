@@ -105,10 +105,7 @@
                 "get_team_performance_metrics"
             ],
             "spec": {
-                "url": "https://essmcp-salesforce.wittysand-460bf1d9.eastus.azurecontainerapps.io/salesforce/mcp",
-                "mcp_tool_description": {
-                    "tools": []
-                }
+                "url": "https://essmcp-caldova-salesforce.livelysky-91807d17.eastus2.azurecontainerapps.io/salesforce/mcp"
             }
         }
     ]

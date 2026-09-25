@@ -7,7 +7,7 @@ Default behaviour (``SF_AUTH_MODE=auto``):
     Client Credentials flow using ``SF_CLIENT_ID`` / ``SF_CLIENT_SECRET``.
 
 Other modes:
-  * ``client_credentials`` – always use client credentials, ignore any bearer.
+    * ``client_credentials`` – allow client-credentials fallback; caller bearer wins.
   * ``oauth_bearer``       – require a bearer token; no fallback.
 
 The minted token is cached process-wide and refreshed on expiry.
@@ -95,7 +95,6 @@ async def _mint_client_credentials_token(settings: SalesforceSettings) -> Salesf
         LOGGER.error(
             "salesforce_token_request_failed",
             status=response.status_code,
-            body=response.text[:400],
         )
         # Surface as an auth error so the 401-passthrough middleware can
         # rewrite the HTTP status appropriately.
@@ -130,33 +129,29 @@ async def resolve_salesforce_token(ctx: Optional[Context]) -> SalesforceToken:
     Resolution order depends on ``SF_AUTH_MODE``:
       * ``auto``               – bearer (if present), else client_credentials.
       * ``oauth_bearer``       – require a bearer header.
-      * ``client_credentials`` – always client credentials.
+    * ``client_credentials`` – bearer (if present), else client credentials.
     """
     settings = load_salesforce_settings()
     mode = (settings.auth_mode or "auto").lower()
 
     bearer = _bearer_from_context(ctx)
 
-    if mode == "oauth_bearer":
-        if not bearer:
-            raise TokenValidationError(
-                "Authorization: Bearer <token> header is required"
-            )
-        return SalesforceToken(
-            access_token=bearer,
-            instance_url=_instance_url_from_domain(settings.domain),
-        )
-
-    if mode == "client_credentials":
-        return await _get_cached_client_credentials_token(settings)
-
-    # ── auto ─────────────────────────────────────────────────────────
+    # A supplied caller identity always wins, even when fallback is configured.
+    # Backend rejection must propagate rather than retry as the service account.
     if bearer:
         LOGGER.debug("salesforce_auth_using_bearer")
         return SalesforceToken(
             access_token=bearer,
             instance_url=_instance_url_from_domain(settings.domain),
         )
+
+    if mode == "oauth_bearer":
+        raise TokenValidationError(
+            "Authorization: Bearer <token> header is required"
+        )
+
+    if mode not in {"auto", "client_credentials"}:
+        raise RuntimeError("Unsupported Salesforce authentication mode")
     LOGGER.debug("salesforce_auth_using_client_credentials_fallback")
     return await _get_cached_client_credentials_token(settings)
 

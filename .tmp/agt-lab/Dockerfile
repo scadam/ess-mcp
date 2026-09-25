@@ -1,0 +1,10 @@
+FROM mcr.microsoft.com/devcontainers/python:3.12-bookworm
+ARG OPA_VERSION=v1.21.0
+ARG OPA_SHA256=5eef70644868bb04d0556bcc795ee42f2ab379e73f51d1bfa30f83e1305bc9b9
+RUN curl -fsSL -o /usr/local/bin/opa "https://github.com/open-policy-agent/opa/releases/download/${OPA_VERSION}/opa_linux_amd64_static" \
+ && echo "${OPA_SHA256}  /usr/local/bin/opa" | sha256sum -c - && chmod 0755 /usr/local/bin/opa && opa version | head -1
+COPY agent_control_specification-0.3.1b1-cp311-abi3-manylinux_2_28_x86_64.whl /tmp/
+RUN pip install --no-cache-dir /tmp/agent_control_specification-0.3.1b1-cp311-abi3-manylinux_2_28_x86_64.whl
+WORKDIR /lab
+COPY lab.py .
+CMD ["python", "lab.py"]

@@ -30,10 +30,10 @@ Skills for engineering managers, scrum masters, product owners and tech leads:
 ## Connector
 
 ```text
-https://essmcp-jira.wittysand-460bf1d9.eastus.azurecontainerapps.io/jira/mcp
+https://essmcp-caldova-jira.livelysky-91807d17.eastus2.azurecontainerapps.io/jira/mcp
 ```
 
-> **This MCP server is wired to a real Jira tenant — not mock data.** Authentication is set to `OAuthPluginVault`. Before uploading the package, replace the placeholder `REPLACE_WITH_JIRA_OAUTH_REFERENCE_ID` in `manifest.json` with the OAuth reference ID for your registered Jira app.
+> **This MCP server uses the real Jira demo site.** Authentication is set to `OAuthPluginVault`. Before uploading, replace the existing `REPLACE_WITH_JIRA_OAUTH_REFERENCE_ID` placeholder in [manifest.json](manifest.json) with an actual new-tenant OAuth registration reference. Jira's verified flow is interactive authorization-code consent initially, followed by refresh-token renewal; client credentials alone did not grant site access. The deployment test's read-only consent is not a Copilot connection registration. See [../../AUTHENTICATION.md](../../AUTHENTICATION.md).
 
 ## Demo Prompt
 

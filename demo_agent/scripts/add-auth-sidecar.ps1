@@ -60,8 +60,11 @@ $sidecarEnv = @(
   [pscustomobject]@{ name = 'DownstreamApis__a365__BaseUrl';                value = 'https://agent365.svc.cloud.microsoft' },
   [pscustomobject]@{ name = 'DownstreamApis__a365__Scopes__0';              value = "api://$A365ResourceAppId/.default" },
   [pscustomobject]@{ name = 'DownstreamApis__a365__RequestAppToken';        value = 'true' },
-  [pscustomobject]@{ name = 'DownstreamApis__workiq_teams__BaseUrl';        value = 'https://agent365.svc.cloud.microsoft' },
-  [pscustomobject]@{ name = 'DownstreamApis__workiq_teams__Scopes__0';      value = 'api://ea9ffc3e-8a23-4a7d-836d-234d7c7565c1/McpServers.Teams.All' },
+  # Current Work IQ requires delegated-user context. This configuration does
+  # not grant app-only access and must not be used as an authorization fallback.
+  [pscustomobject]@{ name = 'DownstreamApis__workiq__BaseUrl';             value = 'https://workiq.svc.cloud.microsoft' },
+  [pscustomobject]@{ name = 'DownstreamApis__workiq__Scopes__0';           value = 'api://workiq.svc.cloud.microsoft/WorkIQAgent.Ask' },
+  [pscustomobject]@{ name = 'DownstreamApis__workiq__RequestAppToken';     value = 'false' },
   # Microsoft Graph downstream — used by graph_chat for agent-identity 1:1
   # Teams chat HITL delivery. The AgentIdentity query parameter sent by the
   # caller selects which agent identity the sidecar mints the token for.

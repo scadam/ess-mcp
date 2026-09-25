@@ -1,24 +1,29 @@
-"""Work IQ Teams MCP client (canonical Agent 365 SDK pattern).
+"""Current Work IQ MCP adapter for verified, delegated SDK turns.
 
-Uses the in-pod Agent 365 SDK's `Authorization.exchange_token(context, scopes,
-auth_handler_id="AGENTIC")` to mint a **delegated** agent-identity token, then
-calls the Work IQ Teams MCP server (`mcp_TeamsServer`, scope
-`McpServers.Teams.All`) to create a 1:1 chat between the agent identity user
-and a recipient (typically the manager) and post a message.
+ToolingManifest.json contains the bare permission and resource application ID
+for A365 provisioning. MSAL requests must use the fully qualified scope below.
+Work IQ is not the preview Agent 365 Teams MCP server, and it is not app-only.
 
-This pattern requires a live `TurnContext` (i.e. the call must happen inside
-an in-flight Teams turn handler or notification handler). For headless /
-autonomous flows there is no SDK-supported MCP path — use the Graph email
-fallback (`demo_agent.graph_chat`) instead.
+The host supplies a live, authenticated SDK context and an explicitly configured
+user authorization handler. Normal group replies use the captured SDK reference,
+not this cross-chat helper. Callers must obtain exact human confirmation BEFORE
+using send_oneonone; Work IQ tenant policy and user permissions still apply.
+Policy failures never trigger a direct-Graph/email fallback or automatic retry.
 """
 
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
+import math
 import os
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import quote
+from uuid import UUID
 
+import httpx
 from fastmcp import Client
 from fastmcp.client.transports import StreamableHttpTransport
 
@@ -26,13 +31,18 @@ from .identity import AgentIdentityContext, agent_headers
 
 _logger = logging.getLogger(__name__)
 
-DEFAULT_TEAMS_MCP_URL = "https://agent365.svc.cloud.microsoft/agents/servers/mcp_TeamsServer"
-# Canonical Agent 365 sample (BaseA365AgentWithTeams) uses the bare scope name
-# (e.g. "McpServers.Mail.All"). MSAL's user_fic grant accepts bare scope and the
-# Agent 365 token service resolves the resource server-side. Do not change to a
-# fully-qualified URI without verifying against the canonical sample first.
-DEFAULT_TEAMS_MCP_SCOPE = "McpServers.Teams.All"
-DEFAULT_AUTH_HANDLER = "AGENTIC"
+WORK_IQ_RESOURCE_APP_ID = "fdcc1f02-fc51-4226-8753-f668596af7f7"
+DEFAULT_TEAMS_MCP_URL = "https://workiq.svc.cloud.microsoft/mcp"
+DEFAULT_TEAMS_MCP_SCOPE = "api://workiq.svc.cloud.microsoft/WorkIQAgent.Ask"
+DEFAULT_AUTH_HANDLER = "OBO"
+
+
+def _http_client(headers: dict[str, str] | None = None, timeout: httpx.Timeout | None = None,
+                 auth: httpx.Auth | None = None, **_kwargs: Any) -> httpx.AsyncClient:
+    return httpx.AsyncClient(
+        headers=headers, timeout=timeout or httpx.Timeout(30, read=300), auth=auth,
+        follow_redirects=False, transport=httpx.AsyncHTTPTransport(retries=0),
+    )
 
 
 @dataclass(frozen=True)
@@ -42,23 +52,33 @@ class WorkIqTeamsConfig:
     auth_handler: str
     timeout: float
 
+    def __post_init__(self) -> None:
+        if self.url != DEFAULT_TEAMS_MCP_URL:
+            raise ValueError("Work IQ requires the current production MCP endpoint.")
+        if self.scope not in {
+            DEFAULT_TEAMS_MCP_SCOPE, f"{WORK_IQ_RESOURCE_APP_ID}/WorkIQAgent.Ask",
+        }:
+            raise ValueError("Work IQ requires its fully qualified delegated WorkIQAgent.Ask scope.")
+        if not self.auth_handler or not math.isfinite(self.timeout) or not 0 < self.timeout <= 300:
+            raise ValueError("Work IQ requires an SDK user authorization handler and a bounded timeout.")
+
     @classmethod
     def from_env(cls) -> "WorkIqTeamsConfig":
         return cls(
-            url=os.getenv("ESS_WORK_IQ_TEAMS_MCP_URL", DEFAULT_TEAMS_MCP_URL),
-            scope=os.getenv("ESS_WORK_IQ_TEAMS_SCOPE", DEFAULT_TEAMS_MCP_SCOPE),
-            auth_handler=os.getenv("AUTH_HANDLER_NAME", DEFAULT_AUTH_HANDLER),
-            timeout=float(os.getenv("ESS_WORK_IQ_TEAMS_TIMEOUT", "30")),
+            url=os.getenv("ESS_WORK_IQ_MCP_URL") or os.getenv("ESS_WORK_IQ_TEAMS_MCP_URL", DEFAULT_TEAMS_MCP_URL),
+            scope=os.getenv("ESS_WORK_IQ_SCOPE") or os.getenv("ESS_WORK_IQ_TEAMS_SCOPE", DEFAULT_TEAMS_MCP_SCOPE),
+            auth_handler=os.getenv("ESS_WORK_IQ_AUTH_HANDLER", DEFAULT_AUTH_HANDLER),
+            timeout=float(os.getenv("ESS_WORK_IQ_TIMEOUT", "60")),
         )
 
 
 class WorkIqTeamsClient:
-    """Canonical-pattern Work IQ Teams MCP client.
+    """Compatibility name for the current Work IQ chat adapter.
 
     Construct once at process start. Each call to :meth:`send_oneonone` must
     pass the active ``agent_app`` (``microsoft_agents.hosting.core.AgentApplication``)
     and the in-flight ``context`` (``TurnContext``) so the SDK can issue a
-    delegated agentic token.
+    delegated user token. It never acquires an app-only replacement identity.
     """
 
     def __init__(
@@ -90,15 +110,17 @@ class WorkIqTeamsClient:
             auth_handler_id=self.config.auth_handler,
         )
         token = getattr(token_response, "token", None) or getattr(token_response, "access_token", None)
-        if not token:
-            raise RuntimeError(f"exchange_token returned no token: {token_response!r}")
+        if not isinstance(token, str) or not token:
+            raise RuntimeError("Work IQ requires a consented delegated token from the SDK.")
         return token
 
     async def _connect(self, agent_app: Any, context: Any) -> Client:
         token = await self._exchange_token(agent_app, context)
         headers = {"Authorization": f"Bearer {token}", **agent_headers(self.identity_context)}
-        transport = StreamableHttpTransport(self.config.url, headers=headers)
-        client = Client(transport, name="mcp_TeamsServer")
+        transport = StreamableHttpTransport(
+            self.config.url, headers=headers, httpx_client_factory=_http_client,
+        )
+        client = Client(transport, name="workiq")
         await client.__aenter__()
         return client
 
@@ -114,19 +136,29 @@ class WorkIqTeamsClient:
         if not self.available:
             return {
                 "status": "disabled",
-                "channel": "teams-mcp",
+                "channel": "workiq-mcp",
                 "reason": "Work IQ Teams MCP config missing (URL/scope/handler).",
             }
         if not (sender_aad_id and recipient_aad_id):
             return {
                 "status": "skipped",
-                "channel": "teams-mcp",
+                "channel": "workiq-mcp",
                 "reason": "missing sender or recipient AAD id",
             }
 
         client: Client | None = None
+        phase = "discovery"
         try:
-            client = await self._connect(agent_app, context)
+            sender_aad_id = str(UUID(sender_aad_id))
+            recipient_aad_id = str(UUID(recipient_aad_id))
+            if not UUID(sender_aad_id).int or not UUID(recipient_aad_id).int or not body_text.strip():
+                raise ValueError("A sender, recipient and message are required.")
+            client = await asyncio.wait_for(self._connect(agent_app, context), timeout=self.config.timeout)
+            # Names and schemas are discovered from THIS endpoint, not inferred
+            # from retired preview tools. Discovery itself has no side effect.
+            tools = await asyncio.wait_for(client.list_tools(), timeout=self.config.timeout)
+            if "create_entity" not in {tool.name for tool in tools}:
+                raise RuntimeError("Work IQ create_entity is unavailable in this tenant.")
             create_args = {
                 "chatType": "oneOnOne",
                 "members": [
@@ -142,31 +174,42 @@ class WorkIqTeamsClient:
                     },
                 ],
             }
-            create_result = await client.call_tool("mcp_graph_chat_createChat", create_args)
-            chat_id = _extract_id(create_result)
+            phase = "create_chat"
+            create_result = await asyncio.wait_for(client.call_tool("create_entity", {
+                "parentUrl": "/chats",
+                "jsonBody": json.dumps(create_args),
+            }), timeout=self.config.timeout)
+            chat_id = _created_entity_id(create_result)
             if not chat_id:
                 return {
-                    "status": "error",
-                    "channel": "teams-mcp",
-                    "reason": "createChat did not return a chat id",
-                    "raw": _safe_dump(create_result),
+                    "status": "unknown",
+                    "channel": "workiq-mcp",
+                    "reason": "Work IQ did not confirm chat creation. Nothing was retried.",
                 }
-            post_result = await client.call_tool(
-                "mcp_graph_chat_postMessage",
-                {
-                    "chat-id": chat_id,
-                    "body": {"content": body_text, "contentType": "text"},
-                },
-            )
+            phase = "post_message"
+            post_result = await asyncio.wait_for(client.call_tool("create_entity", {
+                "parentUrl": f"/chats/{quote(chat_id, safe='')}/messages",
+                "jsonBody": json.dumps({"body": {"content": body_text, "contentType": "text"}}),
+            }), timeout=self.config.timeout)
+            message_id = _created_entity_id(post_result)
+            if not message_id:
+                return {"status": "unknown", "channel": "workiq-mcp",
+                        "reason": "Work IQ did not confirm message creation. Nothing was retried."}
             return {
                 "status": "sent",
-                "channel": "teams-mcp",
+                "channel": "workiq-mcp",
                 "chat_id": chat_id,
-                "message_id": _extract_id(post_result),
+                "message_id": message_id,
             }
         except Exception as exc:  # noqa: BLE001
-            _logger.warning("Work IQ Teams send failed: %s", exc)
-            return {"status": "error", "channel": "teams-mcp", "reason": str(exc)}
+            # Exception/result bodies can carry tokens or private messages.
+            # No raw exception, token response, arguments or payload is logged.
+            _logger.warning("Work IQ request failed phase=%s category=%s", phase, type(exc).__name__)
+            return {
+                "status": "unknown" if phase != "discovery" else "error",
+                "channel": "workiq-mcp", "phase": phase,
+                "reason": "Work IQ did not confirm the operation. Check delegated consent and tenant policy; no fallback or retry was attempted.",
+            }
         finally:
             if client is not None:
                 try:
@@ -175,33 +218,34 @@ class WorkIqTeamsClient:
                     pass
 
 
-def _extract_id(result: Any) -> str:
-    if result is None:
+def _created_entity_id(result: Any) -> str:
+    """Require both a successful entity status and an ID, including structuredContent."""
+    if result is None or getattr(result, "is_error", False) or getattr(result, "isError", False):
         return ""
-    import json as _json
-
+    candidates = []
+    for name in ("structured_content", "structuredContent", "data"):
+        data = getattr(result, name, None)
+        if isinstance(data, dict):
+            candidates.append(data)
     content = getattr(result, "content", None)
     if isinstance(content, list):
         for item in content:
             text = getattr(item, "text", None)
-            if isinstance(text, str) and text.strip().startswith("{"):
+            if isinstance(text, str):
                 try:
-                    parsed = _json.loads(text)
-                except Exception:  # noqa: BLE001
+                    parsed = json.loads(text)
+                except (ValueError, TypeError):
                     continue
-                if isinstance(parsed, dict) and "id" in parsed:
-                    return str(parsed["id"])
-    structured = getattr(result, "structured_content", None)
-    if isinstance(structured, dict) and "id" in structured:
-        return str(structured["id"])
-    data = getattr(result, "data", None)
-    if isinstance(data, dict) and "id" in data:
-        return str(data["id"])
-    return ""
-
-
-def _safe_dump(result: Any) -> str:
-    try:
-        return repr(result)[:500]
-    except Exception:  # noqa: BLE001
-        return "<unrepr>"
+                if isinstance(parsed, dict):
+                    candidates.append(parsed)
+    identifiers = set()
+    for data in candidates:
+        status = data.get("statusCode")
+        entity = data.get("data")
+        if type(status) is not int or not 200 <= status < 300 or not isinstance(entity, dict):
+            return ""
+        identifier = entity.get("id")
+        if not isinstance(identifier, str) or not identifier or len(identifier) > 2048:
+            return ""
+        identifiers.add(identifier)
+    return next(iter(identifiers)) if len(identifiers) == 1 else ""

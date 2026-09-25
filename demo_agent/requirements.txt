@@ -1,0 +1,21 @@
+aiohttp>=3.9.5
+agent-control-specification==0.3.1b1; sys_platform == "linux"
+azure-identity>=1.17.1
+azure-storage-blob>=12.30.2
+fastmcp>=2.0.0
+github-copilot-sdk==1.0.14
+httpx>=0.27.0
+jsonschema>=4.26.0
+microsoft-agents-a365-observability-core>=1.0.0
+microsoft-agents-activity>=0.9.0
+microsoft-agents-authentication-msal>=0.9.0
+microsoft-agents-a365-notifications>=1.0.0
+microsoft-agents-hosting-aiohttp>=0.9.0
+microsoft-agents-hosting-core>=0.9.0
+openai>=1.40.0
+opentelemetry-api>=1.25.0
+opentelemetry-exporter-otlp>=1.25.0
+opentelemetry-sdk>=1.25.0
+PyJWT[crypto]>=2.12.1
+python-dotenv>=1.0.1
+pyyaml>=6.0.1

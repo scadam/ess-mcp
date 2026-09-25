@@ -1,0 +1,2 @@
+# These are maintained regressions, not the ignored root-level ad-hoc probes.
+!test_bearer_fallback.py

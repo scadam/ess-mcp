@@ -35,7 +35,7 @@
       "description": "Mock Coupa procurement data for IT hardware orders, suppliers, item demand, approvals, receipts, invoices, and ServiceNow-to-Coupa request flow tracing.",
       "toolSource": {
         "remoteMcpServer": {
-          "mcpServerUrl": "https://essmcp-coupa.wittysand-460bf1d9.eastus.azurecontainerapps.io/coupa/mcp",
+          "mcpServerUrl": "https://essmcp-caldova-coupa.livelysky-91807d17.eastus2.azurecontainerapps.io/coupa/mcp",
           "authorization": {
             "type": "None"
           }

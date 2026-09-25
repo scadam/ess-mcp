@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastmcp import FastMCP
 from fastmcp.resources import TextResource
 
+from .core import CORE_TOOL_SPECS
 from .resources import COUPA_RESOURCES
 from .tools import COUPA_TOOL_SPECS
 
@@ -15,11 +16,12 @@ def build_coupa_server() -> FastMCP:
         instructions=(
             "Coupa procurement self-service for invoices, purchase orders, "
             "requisitions, goods receipts, catalog ordering, supplier management, "
-            "and approval workflows. All responses are mocked."
+            "and approval workflows. A simulator that follows the Coupa Core REST API's resources, statuses and "
+            "actions; its state lives in memory."
         ),
     )
 
-    for spec in COUPA_TOOL_SPECS:
+    for spec in [*COUPA_TOOL_SPECS, *CORE_TOOL_SPECS]:
         kwargs: dict = {"name": spec["name"], "description": spec["summary"]}
         if annotations := spec.get("annotations"):
             kwargs["annotations"] = annotations

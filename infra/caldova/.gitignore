@@ -1,0 +1,11 @@
+# Runtime parameters are supplied locally after Key Vault seeding, never committed.
+*.runtime*.json
+*.parameters.local.json
+runtime/
+.build-context/
+
+# Locally compiled ARM output is not a source artifact.
+main.json
+
+# The repository ignores *.txt globally; this compatibility input is source.
+!constraints.txt

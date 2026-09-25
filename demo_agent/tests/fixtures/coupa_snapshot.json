@@ -1,0 +1,2958 @@
+{
+ "get_servicenow_coupa_flow": {
+  "success": true,
+  "flows": [
+   {
+    "service-now-request": "REQ0012458",
+    "requested-item": "RITM0018374",
+    "employee": "Maya Singh",
+    "department": "Finance Operations",
+    "location": "London",
+    "status": "issued",
+    "supplier": {
+     "name": "TechDirect UK Ltd",
+     "number": "SUP-4101"
+    },
+    "category": "Laptop hardware",
+    "total": "24,642.00",
+    "open-value": "8,214.00",
+    "blocked-reason": "Progressing",
+    "requisition": {
+     "id": 9001,
+     "requisition-number": "REQ-C-2026-9001",
+     "title": "Finance Operations hardware fulfilment - REQ0012458",
+     "status": "approved",
+     "requester": "Maya Singh",
+     "created-at": "2026-04-12",
+     "service-now-request": "REQ0012458",
+     "requested-item": "RITM0018374",
+     "department": "Finance Operations",
+     "location": "London",
+     "total": "24,642.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "line-items": [
+      {
+       "item-id": "IT-STD-LAPTOP",
+       "description": "Standard Laptop",
+       "quantity": 18,
+       "unit-price": "1180.00",
+       "received": 12
+      },
+      {
+       "item-id": "IT-DOCK-USBC",
+       "description": "USB-C Docking Station",
+       "quantity": 18,
+       "unit-price": "189.00",
+       "received": 12
+      }
+     ],
+     "po-number": "PO-2026-1048"
+    },
+    "purchase_order": {
+     "id": 30201,
+     "po-number": "PO-2026-1048",
+     "status": "issued",
+     "total": "24,642.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "supplier-id": "SUP-4101",
+     "supplier": {
+      "name": "TechDirect UK Ltd",
+      "number": "SUP-4101"
+     },
+     "created-at": "2026-04-12",
+     "expected-delivery": "2026-05-09",
+     "service-now-request": "REQ0012458",
+     "requested-item": "RITM0018374",
+     "employee": "Maya Singh",
+     "department": "Finance Operations",
+     "location": "London",
+     "ship-to": {
+      "city": "London",
+      "country": "GB"
+     },
+     "category": "Laptop hardware",
+     "line-count": 2,
+     "lines": [
+      {
+       "item-id": "IT-STD-LAPTOP",
+       "description": "Standard Laptop",
+       "quantity": 18,
+       "unit-price": "1180.00",
+       "received": 12
+      },
+      {
+       "item-id": "IT-DOCK-USBC",
+       "description": "USB-C Docking Station",
+       "quantity": 18,
+       "unit-price": "189.00",
+       "received": 12
+      }
+     ],
+     "open-value": "8,214.00",
+     "received-value": "16,428.00",
+     "days-open": 24,
+     "days-to-delivery": 3,
+     "delivery-risk": "at_risk"
+    },
+    "receipts": [
+     {
+      "id": 7001,
+      "receipt-number": "RCPT-2026-7001",
+      "po-number": "PO-2026-1048",
+      "receipt-date": "2026-05-02",
+      "status": "partial",
+      "received-by": "maya.singh@example.com",
+      "line-items": [
+       {
+        "description": "Standard Laptop",
+        "quantity": 12,
+        "unit": "EA"
+       },
+       {
+        "description": "USB-C Docking Station",
+        "quantity": 12,
+        "unit": "EA"
+       }
+      ]
+     }
+    ],
+    "invoices": [
+     {
+      "id": 50412,
+      "invoice-number": "INV-2026-0412",
+      "status": "approved",
+      "total": "24,642.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier": {
+       "name": "TechDirect UK Ltd",
+       "number": "SUP-4101"
+      },
+      "invoice-date": "2026-05-03",
+      "due-date": "2026-06-02",
+      "payment-status": "Scheduled",
+      "po-number": "PO-2026-1048"
+     }
+    ]
+   },
+   {
+    "service-now-request": "REQ0012491",
+    "requested-item": "RITM0018442",
+    "employee": "Noah Bennett",
+    "department": "Sales EMEA",
+    "location": "Manchester",
+    "status": "partially_received",
+    "supplier": {
+     "name": "Apple Business Reseller UK",
+     "number": "SUP-4102"
+    },
+    "category": "Mobile devices",
+    "total": "33,390.00",
+    "open-value": "2,796.00",
+    "blocked-reason": "Overdue delivery",
+    "requisition": {
+     "id": 9002,
+     "requisition-number": "REQ-C-2026-9002",
+     "title": "Sales EMEA hardware fulfilment - REQ0012491",
+     "status": "approved",
+     "requester": "Noah Bennett",
+     "created-at": "2026-04-14",
+     "service-now-request": "REQ0012491",
+     "requested-item": "RITM0018442",
+     "department": "Sales EMEA",
+     "location": "Manchester",
+     "total": "33,390.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "line-items": [
+      {
+       "item-id": "IT-IPHONE-15",
+       "description": "iPhone 15 128GB",
+       "quantity": 42,
+       "unit-price": "699.00",
+       "received": 38
+      },
+      {
+       "item-id": "IT-HEADSET",
+       "description": "Teams Certified Headset",
+       "quantity": 42,
+       "unit-price": "96.00",
+       "received": 42
+      }
+     ],
+     "po-number": "PO-2026-1051"
+    },
+    "purchase_order": {
+     "id": 30202,
+     "po-number": "PO-2026-1051",
+     "status": "partially_received",
+     "total": "33,390.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "supplier-id": "SUP-4102",
+     "supplier": {
+      "name": "Apple Business Reseller UK",
+      "number": "SUP-4102"
+     },
+     "created-at": "2026-04-14",
+     "expected-delivery": "2026-05-04",
+     "service-now-request": "REQ0012491",
+     "requested-item": "RITM0018442",
+     "employee": "Noah Bennett",
+     "department": "Sales EMEA",
+     "location": "Manchester",
+     "ship-to": {
+      "city": "Manchester",
+      "country": "GB"
+     },
+     "category": "Mobile devices",
+     "line-count": 2,
+     "lines": [
+      {
+       "item-id": "IT-IPHONE-15",
+       "description": "iPhone 15 128GB",
+       "quantity": 42,
+       "unit-price": "699.00",
+       "received": 38
+      },
+      {
+       "item-id": "IT-HEADSET",
+       "description": "Teams Certified Headset",
+       "quantity": 42,
+       "unit-price": "96.00",
+       "received": 42
+      }
+     ],
+     "open-value": "2,796.00",
+     "received-value": "30,594.00",
+     "days-open": 22,
+     "days-to-delivery": -2,
+     "delivery-risk": "late"
+    },
+    "receipts": [
+     {
+      "id": 7002,
+      "receipt-number": "RCPT-2026-7002",
+      "po-number": "PO-2026-1051",
+      "receipt-date": "2026-05-04",
+      "status": "partial",
+      "received-by": "noah.bennett@example.com",
+      "line-items": [
+       {
+        "description": "iPhone 15 128GB",
+        "quantity": 38,
+        "unit": "EA"
+       },
+       {
+        "description": "Teams Certified Headset",
+        "quantity": 42,
+        "unit": "EA"
+       }
+      ]
+     }
+    ],
+    "invoices": [
+     {
+      "id": 50413,
+      "invoice-number": "INV-2026-0417",
+      "status": "pending_approval",
+      "total": "33,390.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier": {
+       "name": "Apple Business Reseller UK",
+       "number": "SUP-4102"
+      },
+      "invoice-date": "2026-05-05",
+      "due-date": "2026-06-04",
+      "payment-status": "Not Paid",
+      "po-number": "PO-2026-1051"
+     }
+    ]
+   },
+   {
+    "service-now-request": "REQ0012533",
+    "requested-item": "RITM0018528",
+    "employee": "Aisha Khan",
+    "department": "Platform Engineering",
+    "location": "Bristol",
+    "status": "issued",
+    "supplier": {
+     "name": "Dell Premier Solutions",
+     "number": "SUP-4103"
+    },
+    "category": "Developer workstations",
+    "total": "75,576.00",
+    "open-value": "75,576.00",
+    "blocked-reason": "Goods receipt not posted",
+    "requisition": {
+     "id": 9003,
+     "requisition-number": "REQ-C-2026-9003",
+     "title": "Platform Engineering hardware fulfilment - REQ0012533",
+     "status": "approved",
+     "requester": "Aisha Khan",
+     "created-at": "2026-04-17",
+     "service-now-request": "REQ0012533",
+     "requested-item": "RITM0018528",
+     "department": "Platform Engineering",
+     "location": "Bristol",
+     "total": "75,576.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "line-items": [
+      {
+       "item-id": "IT-DEV-LAPTOP",
+       "description": "Developer Laptop",
+       "quantity": 24,
+       "unit-price": "2450.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-MON-34",
+       "description": "34 inch USB-C Monitor",
+       "quantity": 24,
+       "unit-price": "510.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-DOCK-USBC",
+       "description": "USB-C Docking Station",
+       "quantity": 24,
+       "unit-price": "189.00",
+       "received": 0
+      }
+     ],
+     "po-number": "PO-2026-1055"
+    },
+    "purchase_order": {
+     "id": 30203,
+     "po-number": "PO-2026-1055",
+     "status": "issued",
+     "total": "75,576.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "supplier-id": "SUP-4103",
+     "supplier": {
+      "name": "Dell Premier Solutions",
+      "number": "SUP-4103"
+     },
+     "created-at": "2026-04-17",
+     "expected-delivery": "2026-05-13",
+     "service-now-request": "REQ0012533",
+     "requested-item": "RITM0018528",
+     "employee": "Aisha Khan",
+     "department": "Platform Engineering",
+     "location": "Bristol",
+     "ship-to": {
+      "city": "Bristol",
+      "country": "GB"
+     },
+     "category": "Developer workstations",
+     "line-count": 3,
+     "lines": [
+      {
+       "item-id": "IT-DEV-LAPTOP",
+       "description": "Developer Laptop",
+       "quantity": 24,
+       "unit-price": "2450.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-MON-34",
+       "description": "34 inch USB-C Monitor",
+       "quantity": 24,
+       "unit-price": "510.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-DOCK-USBC",
+       "description": "USB-C Docking Station",
+       "quantity": 24,
+       "unit-price": "189.00",
+       "received": 0
+      }
+     ],
+     "open-value": "75,576.00",
+     "received-value": "0.00",
+     "days-open": 19,
+     "days-to-delivery": 7,
+     "delivery-risk": "on_track"
+    },
+    "receipts": [],
+    "invoices": []
+   },
+   {
+    "service-now-request": "REQ0012380",
+    "requested-item": "RITM0018221",
+    "employee": "Oliver Taylor",
+    "department": "People Team",
+    "location": "Edinburgh",
+    "status": "closed",
+    "supplier": {
+     "name": "OfficeWorks Managed Supply",
+     "number": "SUP-4104"
+    },
+    "category": "Office equipment",
+    "total": "7,400.00",
+    "open-value": "0.00",
+    "blocked-reason": "Progressing",
+    "requisition": {
+     "id": 9004,
+     "requisition-number": "REQ-C-2026-9004",
+     "title": "People Team hardware fulfilment - REQ0012380",
+     "status": "approved",
+     "requester": "Oliver Taylor",
+     "created-at": "2026-04-02",
+     "service-now-request": "REQ0012380",
+     "requested-item": "RITM0018221",
+     "department": "People Team",
+     "location": "Edinburgh",
+     "total": "7,400.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "line-items": [
+      {
+       "item-id": "IT-MON-34",
+       "description": "34 inch USB-C Monitor",
+       "quantity": 12,
+       "unit-price": "510.00",
+       "received": 12
+      },
+      {
+       "item-id": "IT-KBDMOUSE",
+       "description": "Keyboard and Mouse Bundle",
+       "quantity": 20,
+       "unit-price": "64.00",
+       "received": 20
+      }
+     ],
+     "po-number": "PO-2026-1062"
+    },
+    "purchase_order": {
+     "id": 30204,
+     "po-number": "PO-2026-1062",
+     "status": "closed",
+     "total": "7,400.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "supplier-id": "SUP-4104",
+     "supplier": {
+      "name": "OfficeWorks Managed Supply",
+      "number": "SUP-4104"
+     },
+     "created-at": "2026-04-02",
+     "expected-delivery": "2026-04-12",
+     "service-now-request": "REQ0012380",
+     "requested-item": "RITM0018221",
+     "employee": "Oliver Taylor",
+     "department": "People Team",
+     "location": "Edinburgh",
+     "ship-to": {
+      "city": "Edinburgh",
+      "country": "GB"
+     },
+     "category": "Office equipment",
+     "line-count": 2,
+     "lines": [
+      {
+       "item-id": "IT-MON-34",
+       "description": "34 inch USB-C Monitor",
+       "quantity": 12,
+       "unit-price": "510.00",
+       "received": 12
+      },
+      {
+       "item-id": "IT-KBDMOUSE",
+       "description": "Keyboard and Mouse Bundle",
+       "quantity": 20,
+       "unit-price": "64.00",
+       "received": 20
+      }
+     ],
+     "open-value": "0.00",
+     "received-value": "7,400.00",
+     "days-open": 34,
+     "days-to-delivery": -24,
+     "delivery-risk": "on_track"
+    },
+    "receipts": [
+     {
+      "id": 7003,
+      "receipt-number": "RCPT-2026-7003",
+      "po-number": "PO-2026-1062",
+      "receipt-date": "2026-04-11",
+      "status": "received",
+      "received-by": "oliver.taylor@example.com",
+      "line-items": [
+       {
+        "description": "34 inch USB-C Monitor",
+        "quantity": 12,
+        "unit": "EA"
+       },
+       {
+        "description": "Keyboard and Mouse Bundle",
+        "quantity": 20,
+        "unit": "EA"
+       }
+      ]
+     }
+    ],
+    "invoices": [
+     {
+      "id": 50414,
+      "invoice-number": "INV-2026-0398",
+      "status": "paid",
+      "total": "7,400.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier": {
+       "name": "OfficeWorks Managed Supply",
+       "number": "SUP-4104"
+      },
+      "invoice-date": "2026-04-12",
+      "due-date": "2026-05-12",
+      "payment-status": "Paid",
+      "po-number": "PO-2026-1062"
+     }
+    ]
+   },
+   {
+    "service-now-request": "REQ0012707",
+    "requested-item": "RITM0018792",
+    "employee": "Grace Williams",
+    "department": "Customer Success",
+    "location": "Leeds",
+    "status": "supplier_acknowledged",
+    "supplier": {
+     "name": "Insight Enterprise Technology",
+     "number": "SUP-4105"
+    },
+    "category": "Accessories",
+    "total": "23,340.00",
+    "open-value": "23,340.00",
+    "blocked-reason": "Goods receipt not posted",
+    "requisition": {
+     "id": 9005,
+     "requisition-number": "REQ-C-2026-9005",
+     "title": "Customer Success hardware fulfilment - REQ0012707",
+     "status": "approved",
+     "requester": "Grace Williams",
+     "created-at": "2026-04-29",
+     "service-now-request": "REQ0012707",
+     "requested-item": "RITM0018792",
+     "department": "Customer Success",
+     "location": "Leeds",
+     "total": "23,340.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "line-items": [
+      {
+       "item-id": "IT-DOCK-USBC",
+       "description": "USB-C Docking Station",
+       "quantity": 60,
+       "unit-price": "189.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-HEADSET",
+       "description": "Teams Certified Headset",
+       "quantity": 75,
+       "unit-price": "96.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-KBDMOUSE",
+       "description": "Keyboard and Mouse Bundle",
+       "quantity": 75,
+       "unit-price": "64.00",
+       "received": 0
+      }
+     ],
+     "po-number": "PO-2026-1065"
+    },
+    "purchase_order": {
+     "id": 30205,
+     "po-number": "PO-2026-1065",
+     "status": "supplier_acknowledged",
+     "total": "23,340.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "supplier-id": "SUP-4105",
+     "supplier": {
+      "name": "Insight Enterprise Technology",
+      "number": "SUP-4105"
+     },
+     "created-at": "2026-04-29",
+     "expected-delivery": "2026-05-16",
+     "service-now-request": "REQ0012707",
+     "requested-item": "RITM0018792",
+     "employee": "Grace Williams",
+     "department": "Customer Success",
+     "location": "Leeds",
+     "ship-to": {
+      "city": "Leeds",
+      "country": "GB"
+     },
+     "category": "Accessories",
+     "line-count": 3,
+     "lines": [
+      {
+       "item-id": "IT-DOCK-USBC",
+       "description": "USB-C Docking Station",
+       "quantity": 60,
+       "unit-price": "189.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-HEADSET",
+       "description": "Teams Certified Headset",
+       "quantity": 75,
+       "unit-price": "96.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-KBDMOUSE",
+       "description": "Keyboard and Mouse Bundle",
+       "quantity": 75,
+       "unit-price": "64.00",
+       "received": 0
+      }
+     ],
+     "open-value": "23,340.00",
+     "received-value": "0.00",
+     "days-open": 7,
+     "days-to-delivery": 10,
+     "delivery-risk": "on_track"
+    },
+    "receipts": [],
+    "invoices": []
+   },
+   {
+    "service-now-request": "REQ0012750",
+    "requested-item": "RITM0018878",
+    "employee": "Leo Martin",
+    "department": "Executive Office",
+    "location": "London",
+    "status": "issued",
+    "supplier": {
+     "name": "Apple Business Reseller UK",
+     "number": "SUP-4102"
+    },
+    "category": "Mobile devices",
+    "total": "21,816.00",
+    "open-value": "21,816.00",
+    "blocked-reason": "Goods receipt not posted",
+    "requisition": {
+     "id": 9006,
+     "requisition-number": "REQ-C-2026-9006",
+     "title": "Executive Office hardware fulfilment - REQ0012750",
+     "status": "approved",
+     "requester": "Leo Martin",
+     "created-at": "2026-05-01",
+     "service-now-request": "REQ0012750",
+     "requested-item": "RITM0018878",
+     "department": "Executive Office",
+     "location": "London",
+     "total": "21,816.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "line-items": [
+      {
+       "item-id": "IT-IPHONE-15P",
+       "description": "iPhone 15 Pro 256GB",
+       "quantity": 16,
+       "unit-price": "999.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-IPAD-AIR",
+       "description": "iPad Air Wi-Fi 256GB",
+       "quantity": 8,
+       "unit-price": "729.00",
+       "received": 0
+      }
+     ],
+     "po-number": "PO-2026-1070"
+    },
+    "purchase_order": {
+     "id": 30206,
+     "po-number": "PO-2026-1070",
+     "status": "issued",
+     "total": "21,816.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "supplier-id": "SUP-4102",
+     "supplier": {
+      "name": "Apple Business Reseller UK",
+      "number": "SUP-4102"
+     },
+     "created-at": "2026-05-01",
+     "expected-delivery": "2026-05-17",
+     "service-now-request": "REQ0012750",
+     "requested-item": "RITM0018878",
+     "employee": "Leo Martin",
+     "department": "Executive Office",
+     "location": "London",
+     "ship-to": {
+      "city": "London",
+      "country": "GB"
+     },
+     "category": "Mobile devices",
+     "line-count": 2,
+     "lines": [
+      {
+       "item-id": "IT-IPHONE-15P",
+       "description": "iPhone 15 Pro 256GB",
+       "quantity": 16,
+       "unit-price": "999.00",
+       "received": 0
+      },
+      {
+       "item-id": "IT-IPAD-AIR",
+       "description": "iPad Air Wi-Fi 256GB",
+       "quantity": 8,
+       "unit-price": "729.00",
+       "received": 0
+      }
+     ],
+     "open-value": "21,816.00",
+     "received-value": "0.00",
+     "days-open": 5,
+     "days-to-delivery": 11,
+     "delivery-risk": "on_track"
+    },
+    "receipts": [],
+    "invoices": []
+   },
+   {
+    "service-now-request": "REQ0012794",
+    "requested-item": "RITM0018960",
+    "employee": "Ethan Brown",
+    "department": "Risk and Compliance",
+    "location": "Cardiff",
+    "status": "pending_supplier_ack",
+    "supplier": {
+     "name": "TechDirect UK Ltd",
+     "number": "SUP-4101"
+    },
+    "category": "Laptop hardware",
+    "total": "41,300.00",
+    "open-value": "41,300.00",
+    "blocked-reason": "Waiting for supplier acknowledgement",
+    "requisition": {
+     "id": 9007,
+     "requisition-number": "REQ-C-2026-9007",
+     "title": "Risk and Compliance hardware fulfilment - REQ0012794",
+     "status": "pending_supplier_ack",
+     "requester": "Ethan Brown",
+     "created-at": "2026-05-03",
+     "service-now-request": "REQ0012794",
+     "requested-item": "RITM0018960",
+     "department": "Risk and Compliance",
+     "location": "Cardiff",
+     "total": "41,300.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "line-items": [
+      {
+       "item-id": "IT-STD-LAPTOP",
+       "description": "Standard Laptop",
+       "quantity": 35,
+       "unit-price": "1180.00",
+       "received": 0
+      }
+     ],
+     "po-number": "PO-2026-1074"
+    },
+    "purchase_order": {
+     "id": 30207,
+     "po-number": "PO-2026-1074",
+     "status": "pending_supplier_ack",
+     "total": "41,300.00",
+     "currency": {
+      "code": "GBP"
+     },
+     "supplier-id": "SUP-4101",
+     "supplier": {
+      "name": "TechDirect UK Ltd",
+      "number": "SUP-4101"
+     },
+     "created-at": "2026-05-03",
+     "expected-delivery": "2026-05-12",
+     "service-now-request": "REQ0012794",
+     "requested-item": "RITM0018960",
+     "employee": "Ethan Brown",
+     "department": "Risk and Compliance",
+     "location": "Cardiff",
+     "ship-to": {
+      "city": "Cardiff",
+      "country": "GB"
+     },
+     "category": "Laptop hardware",
+     "line-count": 1,
+     "lines": [
+      {
+       "item-id": "IT-STD-LAPTOP",
+       "description": "Standard Laptop",
+       "quantity": 35,
+       "unit-price": "1180.00",
+       "received": 0
+      }
+     ],
+     "open-value": "41,300.00",
+     "received-value": "0.00",
+     "days-open": 3,
+     "days-to-delivery": 6,
+     "delivery-risk": "on_track"
+    },
+    "receipts": [],
+    "invoices": []
+   }
+  ],
+  "summary": {
+   "order_count": 7,
+   "total_value": "227,464.00",
+   "open_value": "173,042.00",
+   "at_risk_orders": 2,
+   "by_status": {
+    "issued": 3,
+    "partially_received": 1,
+    "closed": 1,
+    "supplier_acknowledged": 1,
+    "pending_supplier_ack": 1
+   },
+   "by_category": {
+    "Laptop hardware": 2,
+    "Mobile devices": 2,
+    "Developer workstations": 1,
+    "Office equipment": 1,
+    "Accessories": 1
+   },
+   "by_supplier": {
+    "TechDirect UK Ltd": 2,
+    "Apple Business Reseller UK": 2,
+    "Dell Premier Solutions": 1,
+    "OfficeWorks Managed Supply": 1,
+    "Insight Enterprise Technology": 1
+   },
+   "flow_count": 7,
+   "with_receipts": 3,
+   "with_invoices": 3,
+   "blocked_flows": 5,
+   "by_department": {
+    "Finance Operations": 1,
+    "Sales EMEA": 1,
+    "Platform Engineering": 1,
+    "People Team": 1,
+    "Customer Success": 1,
+    "Executive Office": 1,
+    "Risk and Compliance": 1
+   }
+  }
+ },
+ "get_item_demand": {
+  "success": true,
+  "items": [
+   {
+    "id": "IT-IPHONE-15",
+    "name": "iPhone 15 128GB",
+    "category": "Mobile devices",
+    "subcategory": "Phones",
+    "unit-price": "699.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4102",
+    "supplier": "Apple Business Reseller UK",
+    "lead-time-days": 7,
+    "contracted": true,
+    "stock": 84,
+    "monthly-demand": 48,
+    "ordered_quantity": 42,
+    "open_quantity": 4,
+    "ordered_value": "29,358.00",
+    "stock_coverage_months": 1.8,
+    "risk": "watch"
+   },
+   {
+    "id": "IT-IPHONE-15P",
+    "name": "iPhone 15 Pro 256GB",
+    "category": "Mobile devices",
+    "subcategory": "Phones",
+    "unit-price": "999.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4102",
+    "supplier": "Apple Business Reseller UK",
+    "lead-time-days": 11,
+    "contracted": true,
+    "stock": 28,
+    "monthly-demand": 34,
+    "ordered_quantity": 16,
+    "open_quantity": 16,
+    "ordered_value": "15,984.00",
+    "stock_coverage_months": 0.8,
+    "risk": "stockout"
+   },
+   {
+    "id": "IT-STD-LAPTOP",
+    "name": "Standard Laptop",
+    "category": "Laptop hardware",
+    "subcategory": "Laptops",
+    "unit-price": "1180.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4101",
+    "supplier": "TechDirect UK Ltd",
+    "lead-time-days": 5,
+    "contracted": true,
+    "stock": 132,
+    "monthly-demand": 72,
+    "ordered_quantity": 53,
+    "open_quantity": 41,
+    "ordered_value": "62,540.00",
+    "stock_coverage_months": 1.8,
+    "risk": "watch"
+   },
+   {
+    "id": "IT-DEV-LAPTOP",
+    "name": "Developer Laptop",
+    "category": "Developer workstations",
+    "subcategory": "Laptops",
+    "unit-price": "2450.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4103",
+    "supplier": "Dell Premier Solutions",
+    "lead-time-days": 6,
+    "contracted": true,
+    "stock": 42,
+    "monthly-demand": 31,
+    "ordered_quantity": 24,
+    "open_quantity": 24,
+    "ordered_value": "58,800.00",
+    "stock_coverage_months": 1.4,
+    "risk": "watch"
+   },
+   {
+    "id": "IT-MON-34",
+    "name": "34 inch USB-C Monitor",
+    "category": "Office equipment",
+    "subcategory": "Monitors",
+    "unit-price": "510.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4104",
+    "supplier": "OfficeWorks Managed Supply",
+    "lead-time-days": 4,
+    "contracted": true,
+    "stock": 76,
+    "monthly-demand": 25,
+    "ordered_quantity": 36,
+    "open_quantity": 24,
+    "ordered_value": "18,360.00",
+    "stock_coverage_months": 3.0,
+    "risk": "healthy"
+   },
+   {
+    "id": "IT-DOCK-USBC",
+    "name": "USB-C Docking Station",
+    "category": "Accessories",
+    "subcategory": "Docks",
+    "unit-price": "189.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4105",
+    "supplier": "Insight Enterprise Technology",
+    "lead-time-days": 8,
+    "contracted": true,
+    "stock": 39,
+    "monthly-demand": 68,
+    "ordered_quantity": 102,
+    "open_quantity": 90,
+    "ordered_value": "19,278.00",
+    "stock_coverage_months": 0.6,
+    "risk": "stockout"
+   },
+   {
+    "id": "IT-HEADSET",
+    "name": "Teams Certified Headset",
+    "category": "Accessories",
+    "subcategory": "Audio",
+    "unit-price": "96.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4105",
+    "supplier": "Insight Enterprise Technology",
+    "lead-time-days": 6,
+    "contracted": true,
+    "stock": 110,
+    "monthly-demand": 45,
+    "ordered_quantity": 117,
+    "open_quantity": 75,
+    "ordered_value": "11,232.00",
+    "stock_coverage_months": 2.4,
+    "risk": "healthy"
+   },
+   {
+    "id": "IT-KBDMOUSE",
+    "name": "Keyboard and Mouse Bundle",
+    "category": "Office equipment",
+    "subcategory": "Peripherals",
+    "unit-price": "64.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4104",
+    "supplier": "OfficeWorks Managed Supply",
+    "lead-time-days": 3,
+    "contracted": true,
+    "stock": 214,
+    "monthly-demand": 83,
+    "ordered_quantity": 95,
+    "open_quantity": 75,
+    "ordered_value": "6,080.00",
+    "stock_coverage_months": 2.6,
+    "risk": "healthy"
+   },
+   {
+    "id": "IT-IPAD-AIR",
+    "name": "iPad Air Wi-Fi 256GB",
+    "category": "Mobile devices",
+    "subcategory": "Tablets",
+    "unit-price": "729.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4102",
+    "supplier": "Apple Business Reseller UK",
+    "lead-time-days": 9,
+    "contracted": true,
+    "stock": 21,
+    "monthly-demand": 18,
+    "ordered_quantity": 8,
+    "open_quantity": 8,
+    "ordered_value": "5,832.00",
+    "stock_coverage_months": 1.2,
+    "risk": "watch"
+   },
+   {
+    "id": "IT-CONF-PHONE",
+    "name": "Teams Desk Phone",
+    "category": "Office equipment",
+    "subcategory": "Phones",
+    "unit-price": "275.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4104",
+    "supplier": "OfficeWorks Managed Supply",
+    "lead-time-days": 5,
+    "contracted": false,
+    "stock": 36,
+    "monthly-demand": 12,
+    "ordered_quantity": 0,
+    "open_quantity": 0,
+    "ordered_value": "0.00",
+    "stock_coverage_months": 3.0,
+    "risk": "healthy"
+   }
+  ],
+  "summary": {
+   "item_count": 10,
+   "stockout_risk": 2,
+   "watch_items": 4
+  }
+ },
+ "list_suppliers": {
+  "results": [
+   {
+    "id": "SUP-4101",
+    "number": "SUP-4101",
+    "name": "TechDirect UK Ltd",
+    "status": "active",
+    "category": "Laptop hardware",
+    "tier": "strategic",
+    "risk": "low",
+    "preferred": true,
+    "contract": {
+     "id": "CTR-IT-2026-01",
+     "expires": "2027-03-31",
+     "rebate": "4.0%"
+    },
+    "address": {
+     "street": "10 Thames Innovation Park",
+     "city": "London",
+     "postcode": "E14 9TS",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Priya Raman",
+     "email": "priya.raman@techdirect.example.com",
+     "phone": "+44 20 5555 0140"
+    },
+    "tax-id": "GB441230010",
+    "bank": {
+     "name": "Barclays",
+     "account": "****4182",
+     "sort-code": "20-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 94,
+     "defect_rate": 1.1,
+     "avg_lead_days": 6,
+     "open_orders": 6,
+     "open_value": 97840.0
+    },
+    "order_summary": {
+     "order_count": 2,
+     "total_value": "65,942.00",
+     "open_value": "49,514.00",
+     "at_risk_orders": 1,
+     "by_status": {
+      "issued": 1,
+      "pending_supplier_ack": 1
+     },
+     "by_category": {
+      "Laptop hardware": 2
+     },
+     "by_supplier": {
+      "TechDirect UK Ltd": 2
+     }
+    },
+    "orders": [
+     {
+      "id": 30201,
+      "po-number": "PO-2026-1048",
+      "status": "issued",
+      "total": "24,642.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4101",
+      "supplier": {
+       "name": "TechDirect UK Ltd",
+       "number": "SUP-4101"
+      },
+      "created-at": "2026-04-12",
+      "expected-delivery": "2026-05-09",
+      "service-now-request": "REQ0012458",
+      "requested-item": "RITM0018374",
+      "employee": "Maya Singh",
+      "department": "Finance Operations",
+      "location": "London",
+      "ship-to": {
+       "city": "London",
+       "country": "GB"
+      },
+      "category": "Laptop hardware",
+      "line-count": 2,
+      "lines": [
+       {
+        "item-id": "IT-STD-LAPTOP",
+        "description": "Standard Laptop",
+        "quantity": 18,
+        "unit-price": "1180.00",
+        "received": 12
+       },
+       {
+        "item-id": "IT-DOCK-USBC",
+        "description": "USB-C Docking Station",
+        "quantity": 18,
+        "unit-price": "189.00",
+        "received": 12
+       }
+      ],
+      "open-value": "8,214.00",
+      "received-value": "16,428.00",
+      "days-open": 24,
+      "days-to-delivery": 3,
+      "delivery-risk": "at_risk"
+     },
+     {
+      "id": 30207,
+      "po-number": "PO-2026-1074",
+      "status": "pending_supplier_ack",
+      "total": "41,300.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4101",
+      "supplier": {
+       "name": "TechDirect UK Ltd",
+       "number": "SUP-4101"
+      },
+      "created-at": "2026-05-03",
+      "expected-delivery": "2026-05-12",
+      "service-now-request": "REQ0012794",
+      "requested-item": "RITM0018960",
+      "employee": "Ethan Brown",
+      "department": "Risk and Compliance",
+      "location": "Cardiff",
+      "ship-to": {
+       "city": "Cardiff",
+       "country": "GB"
+      },
+      "category": "Laptop hardware",
+      "line-count": 1,
+      "lines": [
+       {
+        "item-id": "IT-STD-LAPTOP",
+        "description": "Standard Laptop",
+        "quantity": 35,
+        "unit-price": "1180.00",
+        "received": 0
+       }
+      ],
+      "open-value": "41,300.00",
+      "received-value": "0.00",
+      "days-open": 3,
+      "days-to-delivery": 6,
+      "delivery-risk": "on_track"
+     }
+    ]
+   },
+   {
+    "id": "SUP-4102",
+    "number": "SUP-4102",
+    "name": "Apple Business Reseller UK",
+    "status": "active",
+    "category": "Mobile devices",
+    "tier": "strategic",
+    "risk": "medium",
+    "preferred": true,
+    "contract": {
+     "id": "CTR-MOB-2025-04",
+     "expires": "2026-12-31",
+     "rebate": "2.5%"
+    },
+    "address": {
+     "street": "One New Change",
+     "city": "London",
+     "postcode": "EC4M 9AF",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Liam Brooks",
+     "email": "liam.brooks@apple-reseller.example.com",
+     "phone": "+44 20 5555 0182"
+    },
+    "tax-id": "GB441230011",
+    "bank": {
+     "name": "HSBC",
+     "account": "****2199",
+     "sort-code": "40-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 88,
+     "defect_rate": 0.7,
+     "avg_lead_days": 9,
+     "open_orders": 7,
+     "open_value": 76430.0
+    },
+    "order_summary": {
+     "order_count": 2,
+     "total_value": "55,206.00",
+     "open_value": "24,612.00",
+     "at_risk_orders": 1,
+     "by_status": {
+      "partially_received": 1,
+      "issued": 1
+     },
+     "by_category": {
+      "Mobile devices": 2
+     },
+     "by_supplier": {
+      "Apple Business Reseller UK": 2
+     }
+    },
+    "orders": [
+     {
+      "id": 30202,
+      "po-number": "PO-2026-1051",
+      "status": "partially_received",
+      "total": "33,390.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4102",
+      "supplier": {
+       "name": "Apple Business Reseller UK",
+       "number": "SUP-4102"
+      },
+      "created-at": "2026-04-14",
+      "expected-delivery": "2026-05-04",
+      "service-now-request": "REQ0012491",
+      "requested-item": "RITM0018442",
+      "employee": "Noah Bennett",
+      "department": "Sales EMEA",
+      "location": "Manchester",
+      "ship-to": {
+       "city": "Manchester",
+       "country": "GB"
+      },
+      "category": "Mobile devices",
+      "line-count": 2,
+      "lines": [
+       {
+        "item-id": "IT-IPHONE-15",
+        "description": "iPhone 15 128GB",
+        "quantity": 42,
+        "unit-price": "699.00",
+        "received": 38
+       },
+       {
+        "item-id": "IT-HEADSET",
+        "description": "Teams Certified Headset",
+        "quantity": 42,
+        "unit-price": "96.00",
+        "received": 42
+       }
+      ],
+      "open-value": "2,796.00",
+      "received-value": "30,594.00",
+      "days-open": 22,
+      "days-to-delivery": -2,
+      "delivery-risk": "late"
+     },
+     {
+      "id": 30206,
+      "po-number": "PO-2026-1070",
+      "status": "issued",
+      "total": "21,816.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4102",
+      "supplier": {
+       "name": "Apple Business Reseller UK",
+       "number": "SUP-4102"
+      },
+      "created-at": "2026-05-01",
+      "expected-delivery": "2026-05-17",
+      "service-now-request": "REQ0012750",
+      "requested-item": "RITM0018878",
+      "employee": "Leo Martin",
+      "department": "Executive Office",
+      "location": "London",
+      "ship-to": {
+       "city": "London",
+       "country": "GB"
+      },
+      "category": "Mobile devices",
+      "line-count": 2,
+      "lines": [
+       {
+        "item-id": "IT-IPHONE-15P",
+        "description": "iPhone 15 Pro 256GB",
+        "quantity": 16,
+        "unit-price": "999.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-IPAD-AIR",
+        "description": "iPad Air Wi-Fi 256GB",
+        "quantity": 8,
+        "unit-price": "729.00",
+        "received": 0
+       }
+      ],
+      "open-value": "21,816.00",
+      "received-value": "0.00",
+      "days-open": 5,
+      "days-to-delivery": 11,
+      "delivery-risk": "on_track"
+     }
+    ]
+   },
+   {
+    "id": "SUP-4103",
+    "number": "SUP-4103",
+    "name": "Dell Premier Solutions",
+    "status": "active",
+    "category": "Developer workstations",
+    "tier": "preferred",
+    "risk": "low",
+    "preferred": true,
+    "contract": {
+     "id": "CTR-DEV-2026-02",
+     "expires": "2028-01-31",
+     "rebate": "5.0%"
+    },
+    "address": {
+     "street": "Bracknell Business Park",
+     "city": "Bracknell",
+     "postcode": "RG12 1LF",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Hannah Patel",
+     "email": "hannah.patel@dell-premier.example.com",
+     "phone": "+44 1344 555 010"
+    },
+    "tax-id": "GB441230012",
+    "bank": {
+     "name": "NatWest",
+     "account": "****7721",
+     "sort-code": "60-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 97,
+     "defect_rate": 0.9,
+     "avg_lead_days": 5,
+     "open_orders": 4,
+     "open_value": 112660.0
+    },
+    "order_summary": {
+     "order_count": 1,
+     "total_value": "75,576.00",
+     "open_value": "75,576.00",
+     "at_risk_orders": 0,
+     "by_status": {
+      "issued": 1
+     },
+     "by_category": {
+      "Developer workstations": 1
+     },
+     "by_supplier": {
+      "Dell Premier Solutions": 1
+     }
+    },
+    "orders": [
+     {
+      "id": 30203,
+      "po-number": "PO-2026-1055",
+      "status": "issued",
+      "total": "75,576.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4103",
+      "supplier": {
+       "name": "Dell Premier Solutions",
+       "number": "SUP-4103"
+      },
+      "created-at": "2026-04-17",
+      "expected-delivery": "2026-05-13",
+      "service-now-request": "REQ0012533",
+      "requested-item": "RITM0018528",
+      "employee": "Aisha Khan",
+      "department": "Platform Engineering",
+      "location": "Bristol",
+      "ship-to": {
+       "city": "Bristol",
+       "country": "GB"
+      },
+      "category": "Developer workstations",
+      "line-count": 3,
+      "lines": [
+       {
+        "item-id": "IT-DEV-LAPTOP",
+        "description": "Developer Laptop",
+        "quantity": 24,
+        "unit-price": "2450.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-MON-34",
+        "description": "34 inch USB-C Monitor",
+        "quantity": 24,
+        "unit-price": "510.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-DOCK-USBC",
+        "description": "USB-C Docking Station",
+        "quantity": 24,
+        "unit-price": "189.00",
+        "received": 0
+       }
+      ],
+      "open-value": "75,576.00",
+      "received-value": "0.00",
+      "days-open": 19,
+      "days-to-delivery": 7,
+      "delivery-risk": "on_track"
+     }
+    ]
+   },
+   {
+    "id": "SUP-4104",
+    "number": "SUP-4104",
+    "name": "OfficeWorks Managed Supply",
+    "status": "active",
+    "category": "Office equipment",
+    "tier": "approved",
+    "risk": "low",
+    "preferred": false,
+    "contract": {
+     "id": "CTR-OFF-2025-11",
+     "expires": "2026-09-30",
+     "rebate": "1.5%"
+    },
+    "address": {
+     "street": "42 Distribution Way",
+     "city": "Birmingham",
+     "postcode": "B24 8DW",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Marcus Lee",
+     "email": "marcus.lee@officeworks.example.com",
+     "phone": "+44 121 555 0190"
+    },
+    "tax-id": "GB441230013",
+    "bank": {
+     "name": "Lloyds",
+     "account": "****0921",
+     "sort-code": "30-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 91,
+     "defect_rate": 1.8,
+     "avg_lead_days": 4,
+     "open_orders": 5,
+     "open_value": 18520.0
+    },
+    "order_summary": {
+     "order_count": 1,
+     "total_value": "7,400.00",
+     "open_value": "0.00",
+     "at_risk_orders": 0,
+     "by_status": {
+      "closed": 1
+     },
+     "by_category": {
+      "Office equipment": 1
+     },
+     "by_supplier": {
+      "OfficeWorks Managed Supply": 1
+     }
+    },
+    "orders": [
+     {
+      "id": 30204,
+      "po-number": "PO-2026-1062",
+      "status": "closed",
+      "total": "7,400.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4104",
+      "supplier": {
+       "name": "OfficeWorks Managed Supply",
+       "number": "SUP-4104"
+      },
+      "created-at": "2026-04-02",
+      "expected-delivery": "2026-04-12",
+      "service-now-request": "REQ0012380",
+      "requested-item": "RITM0018221",
+      "employee": "Oliver Taylor",
+      "department": "People Team",
+      "location": "Edinburgh",
+      "ship-to": {
+       "city": "Edinburgh",
+       "country": "GB"
+      },
+      "category": "Office equipment",
+      "line-count": 2,
+      "lines": [
+       {
+        "item-id": "IT-MON-34",
+        "description": "34 inch USB-C Monitor",
+        "quantity": 12,
+        "unit-price": "510.00",
+        "received": 12
+       },
+       {
+        "item-id": "IT-KBDMOUSE",
+        "description": "Keyboard and Mouse Bundle",
+        "quantity": 20,
+        "unit-price": "64.00",
+        "received": 20
+       }
+      ],
+      "open-value": "0.00",
+      "received-value": "7,400.00",
+      "days-open": 34,
+      "days-to-delivery": -24,
+      "delivery-risk": "on_track"
+     }
+    ]
+   },
+   {
+    "id": "SUP-4105",
+    "number": "SUP-4105",
+    "name": "Insight Enterprise Technology",
+    "status": "active",
+    "category": "Accessories",
+    "tier": "preferred",
+    "risk": "medium",
+    "preferred": true,
+    "contract": {
+     "id": "CTR-ACC-2025-07",
+     "expires": "2026-06-30",
+     "rebate": "3.0%"
+    },
+    "address": {
+     "street": "6 City Exchange",
+     "city": "Manchester",
+     "postcode": "M1 3LD",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Sofia Evans",
+     "email": "sofia.evans@insight.example.com",
+     "phone": "+44 161 555 0162"
+    },
+    "tax-id": "GB441230014",
+    "bank": {
+     "name": "Santander",
+     "account": "****5528",
+     "sort-code": "09-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 84,
+     "defect_rate": 2.4,
+     "avg_lead_days": 8,
+     "open_orders": 8,
+     "open_value": 33475.0
+    },
+    "order_summary": {
+     "order_count": 1,
+     "total_value": "23,340.00",
+     "open_value": "23,340.00",
+     "at_risk_orders": 0,
+     "by_status": {
+      "supplier_acknowledged": 1
+     },
+     "by_category": {
+      "Accessories": 1
+     },
+     "by_supplier": {
+      "Insight Enterprise Technology": 1
+     }
+    },
+    "orders": [
+     {
+      "id": 30205,
+      "po-number": "PO-2026-1065",
+      "status": "supplier_acknowledged",
+      "total": "23,340.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4105",
+      "supplier": {
+       "name": "Insight Enterprise Technology",
+       "number": "SUP-4105"
+      },
+      "created-at": "2026-04-29",
+      "expected-delivery": "2026-05-16",
+      "service-now-request": "REQ0012707",
+      "requested-item": "RITM0018792",
+      "employee": "Grace Williams",
+      "department": "Customer Success",
+      "location": "Leeds",
+      "ship-to": {
+       "city": "Leeds",
+       "country": "GB"
+      },
+      "category": "Accessories",
+      "line-count": 3,
+      "lines": [
+       {
+        "item-id": "IT-DOCK-USBC",
+        "description": "USB-C Docking Station",
+        "quantity": 60,
+        "unit-price": "189.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-HEADSET",
+        "description": "Teams Certified Headset",
+        "quantity": 75,
+        "unit-price": "96.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-KBDMOUSE",
+        "description": "Keyboard and Mouse Bundle",
+        "quantity": 75,
+        "unit-price": "64.00",
+        "received": 0
+       }
+      ],
+      "open-value": "23,340.00",
+      "received-value": "0.00",
+      "days-open": 7,
+      "days-to-delivery": 10,
+      "delivery-risk": "on_track"
+     }
+    ]
+   }
+  ]
+ },
+ "list_approvals": {
+  "results": [
+   {
+    "id": "APR-601",
+    "type": "Requisition",
+    "title": "Developer Laptop wave - Platform Engineering",
+    "requester": "aisha.khan@example.com",
+    "total": "75,576.00",
+    "currency": "GBP",
+    "submitted-at": "2026-04-17",
+    "status": "pending",
+    "risk": "high value",
+    "service-now-request": "REQ0012533"
+   },
+   {
+    "id": "APR-602",
+    "type": "Invoice",
+    "title": "INV-2026-0417 - Apple Business Reseller UK",
+    "requester": "accounts.payable@example.com",
+    "total": "33,390.00",
+    "currency": "GBP",
+    "submitted-at": "2026-05-05",
+    "status": "pending",
+    "risk": "quantity mismatch",
+    "service-now-request": "REQ0012491"
+   },
+   {
+    "id": "APR-603",
+    "type": "Purchase Order",
+    "title": "PO-2026-1074 - Standard Laptop replenishment",
+    "requester": "ethan.brown@example.com",
+    "total": "41,300.00",
+    "currency": "GBP",
+    "submitted-at": "2026-05-03",
+    "status": "pending",
+    "risk": "supplier acknowledgement overdue",
+    "service-now-request": "REQ0012794"
+   }
+  ]
+ },
+ "get_category_manager_dashboard": {
+  "success": true,
+  "as_of": "2026-05-06",
+  "category": "All IT hardware",
+  "summary": {
+   "order_count": 7,
+   "total_value": "227,464.00",
+   "open_value": "173,042.00",
+   "at_risk_orders": 2,
+   "by_status": {
+    "issued": 3,
+    "partially_received": 1,
+    "closed": 1,
+    "supplier_acknowledged": 1,
+    "pending_supplier_ack": 1
+   },
+   "by_category": {
+    "Laptop hardware": 2,
+    "Mobile devices": 2,
+    "Developer workstations": 1,
+    "Office equipment": 1,
+    "Accessories": 1
+   },
+   "by_supplier": {
+    "TechDirect UK Ltd": 2,
+    "Apple Business Reseller UK": 2,
+    "Dell Premier Solutions": 1,
+    "OfficeWorks Managed Supply": 1,
+    "Insight Enterprise Technology": 1
+   }
+  },
+  "orders": [
+   {
+    "id": 30201,
+    "po-number": "PO-2026-1048",
+    "status": "issued",
+    "total": "24,642.00",
+    "currency": {
+     "code": "GBP"
+    },
+    "supplier-id": "SUP-4101",
+    "supplier": {
+     "name": "TechDirect UK Ltd",
+     "number": "SUP-4101"
+    },
+    "created-at": "2026-04-12",
+    "expected-delivery": "2026-05-09",
+    "service-now-request": "REQ0012458",
+    "requested-item": "RITM0018374",
+    "employee": "Maya Singh",
+    "department": "Finance Operations",
+    "location": "London",
+    "ship-to": {
+     "city": "London",
+     "country": "GB"
+    },
+    "category": "Laptop hardware",
+    "line-count": 2,
+    "lines": [
+     {
+      "item-id": "IT-STD-LAPTOP",
+      "description": "Standard Laptop",
+      "quantity": 18,
+      "unit-price": "1180.00",
+      "received": 12
+     },
+     {
+      "item-id": "IT-DOCK-USBC",
+      "description": "USB-C Docking Station",
+      "quantity": 18,
+      "unit-price": "189.00",
+      "received": 12
+     }
+    ],
+    "open-value": "8,214.00",
+    "received-value": "16,428.00",
+    "days-open": 24,
+    "days-to-delivery": 3,
+    "delivery-risk": "at_risk"
+   },
+   {
+    "id": 30202,
+    "po-number": "PO-2026-1051",
+    "status": "partially_received",
+    "total": "33,390.00",
+    "currency": {
+     "code": "GBP"
+    },
+    "supplier-id": "SUP-4102",
+    "supplier": {
+     "name": "Apple Business Reseller UK",
+     "number": "SUP-4102"
+    },
+    "created-at": "2026-04-14",
+    "expected-delivery": "2026-05-04",
+    "service-now-request": "REQ0012491",
+    "requested-item": "RITM0018442",
+    "employee": "Noah Bennett",
+    "department": "Sales EMEA",
+    "location": "Manchester",
+    "ship-to": {
+     "city": "Manchester",
+     "country": "GB"
+    },
+    "category": "Mobile devices",
+    "line-count": 2,
+    "lines": [
+     {
+      "item-id": "IT-IPHONE-15",
+      "description": "iPhone 15 128GB",
+      "quantity": 42,
+      "unit-price": "699.00",
+      "received": 38
+     },
+     {
+      "item-id": "IT-HEADSET",
+      "description": "Teams Certified Headset",
+      "quantity": 42,
+      "unit-price": "96.00",
+      "received": 42
+     }
+    ],
+    "open-value": "2,796.00",
+    "received-value": "30,594.00",
+    "days-open": 22,
+    "days-to-delivery": -2,
+    "delivery-risk": "late"
+   },
+   {
+    "id": 30203,
+    "po-number": "PO-2026-1055",
+    "status": "issued",
+    "total": "75,576.00",
+    "currency": {
+     "code": "GBP"
+    },
+    "supplier-id": "SUP-4103",
+    "supplier": {
+     "name": "Dell Premier Solutions",
+     "number": "SUP-4103"
+    },
+    "created-at": "2026-04-17",
+    "expected-delivery": "2026-05-13",
+    "service-now-request": "REQ0012533",
+    "requested-item": "RITM0018528",
+    "employee": "Aisha Khan",
+    "department": "Platform Engineering",
+    "location": "Bristol",
+    "ship-to": {
+     "city": "Bristol",
+     "country": "GB"
+    },
+    "category": "Developer workstations",
+    "line-count": 3,
+    "lines": [
+     {
+      "item-id": "IT-DEV-LAPTOP",
+      "description": "Developer Laptop",
+      "quantity": 24,
+      "unit-price": "2450.00",
+      "received": 0
+     },
+     {
+      "item-id": "IT-MON-34",
+      "description": "34 inch USB-C Monitor",
+      "quantity": 24,
+      "unit-price": "510.00",
+      "received": 0
+     },
+     {
+      "item-id": "IT-DOCK-USBC",
+      "description": "USB-C Docking Station",
+      "quantity": 24,
+      "unit-price": "189.00",
+      "received": 0
+     }
+    ],
+    "open-value": "75,576.00",
+    "received-value": "0.00",
+    "days-open": 19,
+    "days-to-delivery": 7,
+    "delivery-risk": "on_track"
+   },
+   {
+    "id": 30204,
+    "po-number": "PO-2026-1062",
+    "status": "closed",
+    "total": "7,400.00",
+    "currency": {
+     "code": "GBP"
+    },
+    "supplier-id": "SUP-4104",
+    "supplier": {
+     "name": "OfficeWorks Managed Supply",
+     "number": "SUP-4104"
+    },
+    "created-at": "2026-04-02",
+    "expected-delivery": "2026-04-12",
+    "service-now-request": "REQ0012380",
+    "requested-item": "RITM0018221",
+    "employee": "Oliver Taylor",
+    "department": "People Team",
+    "location": "Edinburgh",
+    "ship-to": {
+     "city": "Edinburgh",
+     "country": "GB"
+    },
+    "category": "Office equipment",
+    "line-count": 2,
+    "lines": [
+     {
+      "item-id": "IT-MON-34",
+      "description": "34 inch USB-C Monitor",
+      "quantity": 12,
+      "unit-price": "510.00",
+      "received": 12
+     },
+     {
+      "item-id": "IT-KBDMOUSE",
+      "description": "Keyboard and Mouse Bundle",
+      "quantity": 20,
+      "unit-price": "64.00",
+      "received": 20
+     }
+    ],
+    "open-value": "0.00",
+    "received-value": "7,400.00",
+    "days-open": 34,
+    "days-to-delivery": -24,
+    "delivery-risk": "on_track"
+   },
+   {
+    "id": 30205,
+    "po-number": "PO-2026-1065",
+    "status": "supplier_acknowledged",
+    "total": "23,340.00",
+    "currency": {
+     "code": "GBP"
+    },
+    "supplier-id": "SUP-4105",
+    "supplier": {
+     "name": "Insight Enterprise Technology",
+     "number": "SUP-4105"
+    },
+    "created-at": "2026-04-29",
+    "expected-delivery": "2026-05-16",
+    "service-now-request": "REQ0012707",
+    "requested-item": "RITM0018792",
+    "employee": "Grace Williams",
+    "department": "Customer Success",
+    "location": "Leeds",
+    "ship-to": {
+     "city": "Leeds",
+     "country": "GB"
+    },
+    "category": "Accessories",
+    "line-count": 3,
+    "lines": [
+     {
+      "item-id": "IT-DOCK-USBC",
+      "description": "USB-C Docking Station",
+      "quantity": 60,
+      "unit-price": "189.00",
+      "received": 0
+     },
+     {
+      "item-id": "IT-HEADSET",
+      "description": "Teams Certified Headset",
+      "quantity": 75,
+      "unit-price": "96.00",
+      "received": 0
+     },
+     {
+      "item-id": "IT-KBDMOUSE",
+      "description": "Keyboard and Mouse Bundle",
+      "quantity": 75,
+      "unit-price": "64.00",
+      "received": 0
+     }
+    ],
+    "open-value": "23,340.00",
+    "received-value": "0.00",
+    "days-open": 7,
+    "days-to-delivery": 10,
+    "delivery-risk": "on_track"
+   },
+   {
+    "id": 30206,
+    "po-number": "PO-2026-1070",
+    "status": "issued",
+    "total": "21,816.00",
+    "currency": {
+     "code": "GBP"
+    },
+    "supplier-id": "SUP-4102",
+    "supplier": {
+     "name": "Apple Business Reseller UK",
+     "number": "SUP-4102"
+    },
+    "created-at": "2026-05-01",
+    "expected-delivery": "2026-05-17",
+    "service-now-request": "REQ0012750",
+    "requested-item": "RITM0018878",
+    "employee": "Leo Martin",
+    "department": "Executive Office",
+    "location": "London",
+    "ship-to": {
+     "city": "London",
+     "country": "GB"
+    },
+    "category": "Mobile devices",
+    "line-count": 2,
+    "lines": [
+     {
+      "item-id": "IT-IPHONE-15P",
+      "description": "iPhone 15 Pro 256GB",
+      "quantity": 16,
+      "unit-price": "999.00",
+      "received": 0
+     },
+     {
+      "item-id": "IT-IPAD-AIR",
+      "description": "iPad Air Wi-Fi 256GB",
+      "quantity": 8,
+      "unit-price": "729.00",
+      "received": 0
+     }
+    ],
+    "open-value": "21,816.00",
+    "received-value": "0.00",
+    "days-open": 5,
+    "days-to-delivery": 11,
+    "delivery-risk": "on_track"
+   },
+   {
+    "id": 30207,
+    "po-number": "PO-2026-1074",
+    "status": "pending_supplier_ack",
+    "total": "41,300.00",
+    "currency": {
+     "code": "GBP"
+    },
+    "supplier-id": "SUP-4101",
+    "supplier": {
+     "name": "TechDirect UK Ltd",
+     "number": "SUP-4101"
+    },
+    "created-at": "2026-05-03",
+    "expected-delivery": "2026-05-12",
+    "service-now-request": "REQ0012794",
+    "requested-item": "RITM0018960",
+    "employee": "Ethan Brown",
+    "department": "Risk and Compliance",
+    "location": "Cardiff",
+    "ship-to": {
+     "city": "Cardiff",
+     "country": "GB"
+    },
+    "category": "Laptop hardware",
+    "line-count": 1,
+    "lines": [
+     {
+      "item-id": "IT-STD-LAPTOP",
+      "description": "Standard Laptop",
+      "quantity": 35,
+      "unit-price": "1180.00",
+      "received": 0
+     }
+    ],
+    "open-value": "41,300.00",
+    "received-value": "0.00",
+    "days-open": 3,
+    "days-to-delivery": 6,
+    "delivery-risk": "on_track"
+   }
+  ],
+  "supplier_performance": [
+   {
+    "id": "SUP-4101",
+    "number": "SUP-4101",
+    "name": "TechDirect UK Ltd",
+    "status": "active",
+    "category": "Laptop hardware",
+    "tier": "strategic",
+    "risk": "low",
+    "preferred": true,
+    "contract": {
+     "id": "CTR-IT-2026-01",
+     "expires": "2027-03-31",
+     "rebate": "4.0%"
+    },
+    "address": {
+     "street": "10 Thames Innovation Park",
+     "city": "London",
+     "postcode": "E14 9TS",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Priya Raman",
+     "email": "priya.raman@techdirect.example.com",
+     "phone": "+44 20 5555 0140"
+    },
+    "tax-id": "GB441230010",
+    "bank": {
+     "name": "Barclays",
+     "account": "****4182",
+     "sort-code": "20-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 94,
+     "defect_rate": 1.1,
+     "avg_lead_days": 6,
+     "open_orders": 6,
+     "open_value": 97840.0
+    },
+    "order_summary": {
+     "order_count": 2,
+     "total_value": "65,942.00",
+     "open_value": "49,514.00",
+     "at_risk_orders": 1,
+     "by_status": {
+      "issued": 1,
+      "pending_supplier_ack": 1
+     },
+     "by_category": {
+      "Laptop hardware": 2
+     },
+     "by_supplier": {
+      "TechDirect UK Ltd": 2
+     }
+    },
+    "orders": [
+     {
+      "id": 30201,
+      "po-number": "PO-2026-1048",
+      "status": "issued",
+      "total": "24,642.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4101",
+      "supplier": {
+       "name": "TechDirect UK Ltd",
+       "number": "SUP-4101"
+      },
+      "created-at": "2026-04-12",
+      "expected-delivery": "2026-05-09",
+      "service-now-request": "REQ0012458",
+      "requested-item": "RITM0018374",
+      "employee": "Maya Singh",
+      "department": "Finance Operations",
+      "location": "London",
+      "ship-to": {
+       "city": "London",
+       "country": "GB"
+      },
+      "category": "Laptop hardware",
+      "line-count": 2,
+      "lines": [
+       {
+        "item-id": "IT-STD-LAPTOP",
+        "description": "Standard Laptop",
+        "quantity": 18,
+        "unit-price": "1180.00",
+        "received": 12
+       },
+       {
+        "item-id": "IT-DOCK-USBC",
+        "description": "USB-C Docking Station",
+        "quantity": 18,
+        "unit-price": "189.00",
+        "received": 12
+       }
+      ],
+      "open-value": "8,214.00",
+      "received-value": "16,428.00",
+      "days-open": 24,
+      "days-to-delivery": 3,
+      "delivery-risk": "at_risk"
+     },
+     {
+      "id": 30207,
+      "po-number": "PO-2026-1074",
+      "status": "pending_supplier_ack",
+      "total": "41,300.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4101",
+      "supplier": {
+       "name": "TechDirect UK Ltd",
+       "number": "SUP-4101"
+      },
+      "created-at": "2026-05-03",
+      "expected-delivery": "2026-05-12",
+      "service-now-request": "REQ0012794",
+      "requested-item": "RITM0018960",
+      "employee": "Ethan Brown",
+      "department": "Risk and Compliance",
+      "location": "Cardiff",
+      "ship-to": {
+       "city": "Cardiff",
+       "country": "GB"
+      },
+      "category": "Laptop hardware",
+      "line-count": 1,
+      "lines": [
+       {
+        "item-id": "IT-STD-LAPTOP",
+        "description": "Standard Laptop",
+        "quantity": 35,
+        "unit-price": "1180.00",
+        "received": 0
+       }
+      ],
+      "open-value": "41,300.00",
+      "received-value": "0.00",
+      "days-open": 3,
+      "days-to-delivery": 6,
+      "delivery-risk": "on_track"
+     }
+    ]
+   },
+   {
+    "id": "SUP-4102",
+    "number": "SUP-4102",
+    "name": "Apple Business Reseller UK",
+    "status": "active",
+    "category": "Mobile devices",
+    "tier": "strategic",
+    "risk": "medium",
+    "preferred": true,
+    "contract": {
+     "id": "CTR-MOB-2025-04",
+     "expires": "2026-12-31",
+     "rebate": "2.5%"
+    },
+    "address": {
+     "street": "One New Change",
+     "city": "London",
+     "postcode": "EC4M 9AF",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Liam Brooks",
+     "email": "liam.brooks@apple-reseller.example.com",
+     "phone": "+44 20 5555 0182"
+    },
+    "tax-id": "GB441230011",
+    "bank": {
+     "name": "HSBC",
+     "account": "****2199",
+     "sort-code": "40-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 88,
+     "defect_rate": 0.7,
+     "avg_lead_days": 9,
+     "open_orders": 7,
+     "open_value": 76430.0
+    },
+    "order_summary": {
+     "order_count": 2,
+     "total_value": "55,206.00",
+     "open_value": "24,612.00",
+     "at_risk_orders": 1,
+     "by_status": {
+      "partially_received": 1,
+      "issued": 1
+     },
+     "by_category": {
+      "Mobile devices": 2
+     },
+     "by_supplier": {
+      "Apple Business Reseller UK": 2
+     }
+    },
+    "orders": [
+     {
+      "id": 30202,
+      "po-number": "PO-2026-1051",
+      "status": "partially_received",
+      "total": "33,390.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4102",
+      "supplier": {
+       "name": "Apple Business Reseller UK",
+       "number": "SUP-4102"
+      },
+      "created-at": "2026-04-14",
+      "expected-delivery": "2026-05-04",
+      "service-now-request": "REQ0012491",
+      "requested-item": "RITM0018442",
+      "employee": "Noah Bennett",
+      "department": "Sales EMEA",
+      "location": "Manchester",
+      "ship-to": {
+       "city": "Manchester",
+       "country": "GB"
+      },
+      "category": "Mobile devices",
+      "line-count": 2,
+      "lines": [
+       {
+        "item-id": "IT-IPHONE-15",
+        "description": "iPhone 15 128GB",
+        "quantity": 42,
+        "unit-price": "699.00",
+        "received": 38
+       },
+       {
+        "item-id": "IT-HEADSET",
+        "description": "Teams Certified Headset",
+        "quantity": 42,
+        "unit-price": "96.00",
+        "received": 42
+       }
+      ],
+      "open-value": "2,796.00",
+      "received-value": "30,594.00",
+      "days-open": 22,
+      "days-to-delivery": -2,
+      "delivery-risk": "late"
+     },
+     {
+      "id": 30206,
+      "po-number": "PO-2026-1070",
+      "status": "issued",
+      "total": "21,816.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4102",
+      "supplier": {
+       "name": "Apple Business Reseller UK",
+       "number": "SUP-4102"
+      },
+      "created-at": "2026-05-01",
+      "expected-delivery": "2026-05-17",
+      "service-now-request": "REQ0012750",
+      "requested-item": "RITM0018878",
+      "employee": "Leo Martin",
+      "department": "Executive Office",
+      "location": "London",
+      "ship-to": {
+       "city": "London",
+       "country": "GB"
+      },
+      "category": "Mobile devices",
+      "line-count": 2,
+      "lines": [
+       {
+        "item-id": "IT-IPHONE-15P",
+        "description": "iPhone 15 Pro 256GB",
+        "quantity": 16,
+        "unit-price": "999.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-IPAD-AIR",
+        "description": "iPad Air Wi-Fi 256GB",
+        "quantity": 8,
+        "unit-price": "729.00",
+        "received": 0
+       }
+      ],
+      "open-value": "21,816.00",
+      "received-value": "0.00",
+      "days-open": 5,
+      "days-to-delivery": 11,
+      "delivery-risk": "on_track"
+     }
+    ]
+   },
+   {
+    "id": "SUP-4103",
+    "number": "SUP-4103",
+    "name": "Dell Premier Solutions",
+    "status": "active",
+    "category": "Developer workstations",
+    "tier": "preferred",
+    "risk": "low",
+    "preferred": true,
+    "contract": {
+     "id": "CTR-DEV-2026-02",
+     "expires": "2028-01-31",
+     "rebate": "5.0%"
+    },
+    "address": {
+     "street": "Bracknell Business Park",
+     "city": "Bracknell",
+     "postcode": "RG12 1LF",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Hannah Patel",
+     "email": "hannah.patel@dell-premier.example.com",
+     "phone": "+44 1344 555 010"
+    },
+    "tax-id": "GB441230012",
+    "bank": {
+     "name": "NatWest",
+     "account": "****7721",
+     "sort-code": "60-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 97,
+     "defect_rate": 0.9,
+     "avg_lead_days": 5,
+     "open_orders": 4,
+     "open_value": 112660.0
+    },
+    "order_summary": {
+     "order_count": 1,
+     "total_value": "75,576.00",
+     "open_value": "75,576.00",
+     "at_risk_orders": 0,
+     "by_status": {
+      "issued": 1
+     },
+     "by_category": {
+      "Developer workstations": 1
+     },
+     "by_supplier": {
+      "Dell Premier Solutions": 1
+     }
+    },
+    "orders": [
+     {
+      "id": 30203,
+      "po-number": "PO-2026-1055",
+      "status": "issued",
+      "total": "75,576.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4103",
+      "supplier": {
+       "name": "Dell Premier Solutions",
+       "number": "SUP-4103"
+      },
+      "created-at": "2026-04-17",
+      "expected-delivery": "2026-05-13",
+      "service-now-request": "REQ0012533",
+      "requested-item": "RITM0018528",
+      "employee": "Aisha Khan",
+      "department": "Platform Engineering",
+      "location": "Bristol",
+      "ship-to": {
+       "city": "Bristol",
+       "country": "GB"
+      },
+      "category": "Developer workstations",
+      "line-count": 3,
+      "lines": [
+       {
+        "item-id": "IT-DEV-LAPTOP",
+        "description": "Developer Laptop",
+        "quantity": 24,
+        "unit-price": "2450.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-MON-34",
+        "description": "34 inch USB-C Monitor",
+        "quantity": 24,
+        "unit-price": "510.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-DOCK-USBC",
+        "description": "USB-C Docking Station",
+        "quantity": 24,
+        "unit-price": "189.00",
+        "received": 0
+       }
+      ],
+      "open-value": "75,576.00",
+      "received-value": "0.00",
+      "days-open": 19,
+      "days-to-delivery": 7,
+      "delivery-risk": "on_track"
+     }
+    ]
+   },
+   {
+    "id": "SUP-4104",
+    "number": "SUP-4104",
+    "name": "OfficeWorks Managed Supply",
+    "status": "active",
+    "category": "Office equipment",
+    "tier": "approved",
+    "risk": "low",
+    "preferred": false,
+    "contract": {
+     "id": "CTR-OFF-2025-11",
+     "expires": "2026-09-30",
+     "rebate": "1.5%"
+    },
+    "address": {
+     "street": "42 Distribution Way",
+     "city": "Birmingham",
+     "postcode": "B24 8DW",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Marcus Lee",
+     "email": "marcus.lee@officeworks.example.com",
+     "phone": "+44 121 555 0190"
+    },
+    "tax-id": "GB441230013",
+    "bank": {
+     "name": "Lloyds",
+     "account": "****0921",
+     "sort-code": "30-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 91,
+     "defect_rate": 1.8,
+     "avg_lead_days": 4,
+     "open_orders": 5,
+     "open_value": 18520.0
+    },
+    "order_summary": {
+     "order_count": 1,
+     "total_value": "7,400.00",
+     "open_value": "0.00",
+     "at_risk_orders": 0,
+     "by_status": {
+      "closed": 1
+     },
+     "by_category": {
+      "Office equipment": 1
+     },
+     "by_supplier": {
+      "OfficeWorks Managed Supply": 1
+     }
+    },
+    "orders": [
+     {
+      "id": 30204,
+      "po-number": "PO-2026-1062",
+      "status": "closed",
+      "total": "7,400.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4104",
+      "supplier": {
+       "name": "OfficeWorks Managed Supply",
+       "number": "SUP-4104"
+      },
+      "created-at": "2026-04-02",
+      "expected-delivery": "2026-04-12",
+      "service-now-request": "REQ0012380",
+      "requested-item": "RITM0018221",
+      "employee": "Oliver Taylor",
+      "department": "People Team",
+      "location": "Edinburgh",
+      "ship-to": {
+       "city": "Edinburgh",
+       "country": "GB"
+      },
+      "category": "Office equipment",
+      "line-count": 2,
+      "lines": [
+       {
+        "item-id": "IT-MON-34",
+        "description": "34 inch USB-C Monitor",
+        "quantity": 12,
+        "unit-price": "510.00",
+        "received": 12
+       },
+       {
+        "item-id": "IT-KBDMOUSE",
+        "description": "Keyboard and Mouse Bundle",
+        "quantity": 20,
+        "unit-price": "64.00",
+        "received": 20
+       }
+      ],
+      "open-value": "0.00",
+      "received-value": "7,400.00",
+      "days-open": 34,
+      "days-to-delivery": -24,
+      "delivery-risk": "on_track"
+     }
+    ]
+   },
+   {
+    "id": "SUP-4105",
+    "number": "SUP-4105",
+    "name": "Insight Enterprise Technology",
+    "status": "active",
+    "category": "Accessories",
+    "tier": "preferred",
+    "risk": "medium",
+    "preferred": true,
+    "contract": {
+     "id": "CTR-ACC-2025-07",
+     "expires": "2026-06-30",
+     "rebate": "3.0%"
+    },
+    "address": {
+     "street": "6 City Exchange",
+     "city": "Manchester",
+     "postcode": "M1 3LD",
+     "country": "GB"
+    },
+    "contact": {
+     "name": "Sofia Evans",
+     "email": "sofia.evans@insight.example.com",
+     "phone": "+44 161 555 0162"
+    },
+    "tax-id": "GB441230014",
+    "bank": {
+     "name": "Santander",
+     "account": "****5528",
+     "sort-code": "09-00-00"
+    },
+    "metrics": {
+     "on_time_rate": 84,
+     "defect_rate": 2.4,
+     "avg_lead_days": 8,
+     "open_orders": 8,
+     "open_value": 33475.0
+    },
+    "order_summary": {
+     "order_count": 1,
+     "total_value": "23,340.00",
+     "open_value": "23,340.00",
+     "at_risk_orders": 0,
+     "by_status": {
+      "supplier_acknowledged": 1
+     },
+     "by_category": {
+      "Accessories": 1
+     },
+     "by_supplier": {
+      "Insight Enterprise Technology": 1
+     }
+    },
+    "orders": [
+     {
+      "id": 30205,
+      "po-number": "PO-2026-1065",
+      "status": "supplier_acknowledged",
+      "total": "23,340.00",
+      "currency": {
+       "code": "GBP"
+      },
+      "supplier-id": "SUP-4105",
+      "supplier": {
+       "name": "Insight Enterprise Technology",
+       "number": "SUP-4105"
+      },
+      "created-at": "2026-04-29",
+      "expected-delivery": "2026-05-16",
+      "service-now-request": "REQ0012707",
+      "requested-item": "RITM0018792",
+      "employee": "Grace Williams",
+      "department": "Customer Success",
+      "location": "Leeds",
+      "ship-to": {
+       "city": "Leeds",
+       "country": "GB"
+      },
+      "category": "Accessories",
+      "line-count": 3,
+      "lines": [
+       {
+        "item-id": "IT-DOCK-USBC",
+        "description": "USB-C Docking Station",
+        "quantity": 60,
+        "unit-price": "189.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-HEADSET",
+        "description": "Teams Certified Headset",
+        "quantity": 75,
+        "unit-price": "96.00",
+        "received": 0
+       },
+       {
+        "item-id": "IT-KBDMOUSE",
+        "description": "Keyboard and Mouse Bundle",
+        "quantity": 75,
+        "unit-price": "64.00",
+        "received": 0
+       }
+      ],
+      "open-value": "23,340.00",
+      "received-value": "0.00",
+      "days-open": 7,
+      "days-to-delivery": 10,
+      "delivery-risk": "on_track"
+     }
+    ]
+   }
+  ],
+  "demand": [
+   {
+    "id": "IT-IPHONE-15",
+    "name": "iPhone 15 128GB",
+    "category": "Mobile devices",
+    "subcategory": "Phones",
+    "unit-price": "699.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4102",
+    "supplier": "Apple Business Reseller UK",
+    "lead-time-days": 7,
+    "contracted": true,
+    "stock": 84,
+    "monthly-demand": 48,
+    "ordered_quantity": 42,
+    "open_quantity": 4,
+    "ordered_value": "29,358.00",
+    "stock_coverage_months": 1.8,
+    "risk": "watch"
+   },
+   {
+    "id": "IT-IPHONE-15P",
+    "name": "iPhone 15 Pro 256GB",
+    "category": "Mobile devices",
+    "subcategory": "Phones",
+    "unit-price": "999.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4102",
+    "supplier": "Apple Business Reseller UK",
+    "lead-time-days": 11,
+    "contracted": true,
+    "stock": 28,
+    "monthly-demand": 34,
+    "ordered_quantity": 16,
+    "open_quantity": 16,
+    "ordered_value": "15,984.00",
+    "stock_coverage_months": 0.8,
+    "risk": "stockout"
+   },
+   {
+    "id": "IT-STD-LAPTOP",
+    "name": "Standard Laptop",
+    "category": "Laptop hardware",
+    "subcategory": "Laptops",
+    "unit-price": "1180.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4101",
+    "supplier": "TechDirect UK Ltd",
+    "lead-time-days": 5,
+    "contracted": true,
+    "stock": 132,
+    "monthly-demand": 72,
+    "ordered_quantity": 53,
+    "open_quantity": 41,
+    "ordered_value": "62,540.00",
+    "stock_coverage_months": 1.8,
+    "risk": "watch"
+   },
+   {
+    "id": "IT-DEV-LAPTOP",
+    "name": "Developer Laptop",
+    "category": "Developer workstations",
+    "subcategory": "Laptops",
+    "unit-price": "2450.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4103",
+    "supplier": "Dell Premier Solutions",
+    "lead-time-days": 6,
+    "contracted": true,
+    "stock": 42,
+    "monthly-demand": 31,
+    "ordered_quantity": 24,
+    "open_quantity": 24,
+    "ordered_value": "58,800.00",
+    "stock_coverage_months": 1.4,
+    "risk": "watch"
+   },
+   {
+    "id": "IT-MON-34",
+    "name": "34 inch USB-C Monitor",
+    "category": "Office equipment",
+    "subcategory": "Monitors",
+    "unit-price": "510.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4104",
+    "supplier": "OfficeWorks Managed Supply",
+    "lead-time-days": 4,
+    "contracted": true,
+    "stock": 76,
+    "monthly-demand": 25,
+    "ordered_quantity": 36,
+    "open_quantity": 24,
+    "ordered_value": "18,360.00",
+    "stock_coverage_months": 3.0,
+    "risk": "healthy"
+   },
+   {
+    "id": "IT-DOCK-USBC",
+    "name": "USB-C Docking Station",
+    "category": "Accessories",
+    "subcategory": "Docks",
+    "unit-price": "189.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4105",
+    "supplier": "Insight Enterprise Technology",
+    "lead-time-days": 8,
+    "contracted": true,
+    "stock": 39,
+    "monthly-demand": 68,
+    "ordered_quantity": 102,
+    "open_quantity": 90,
+    "ordered_value": "19,278.00",
+    "stock_coverage_months": 0.6,
+    "risk": "stockout"
+   },
+   {
+    "id": "IT-HEADSET",
+    "name": "Teams Certified Headset",
+    "category": "Accessories",
+    "subcategory": "Audio",
+    "unit-price": "96.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4105",
+    "supplier": "Insight Enterprise Technology",
+    "lead-time-days": 6,
+    "contracted": true,
+    "stock": 110,
+    "monthly-demand": 45,
+    "ordered_quantity": 117,
+    "open_quantity": 75,
+    "ordered_value": "11,232.00",
+    "stock_coverage_months": 2.4,
+    "risk": "healthy"
+   },
+   {
+    "id": "IT-KBDMOUSE",
+    "name": "Keyboard and Mouse Bundle",
+    "category": "Office equipment",
+    "subcategory": "Peripherals",
+    "unit-price": "64.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4104",
+    "supplier": "OfficeWorks Managed Supply",
+    "lead-time-days": 3,
+    "contracted": true,
+    "stock": 214,
+    "monthly-demand": 83,
+    "ordered_quantity": 95,
+    "open_quantity": 75,
+    "ordered_value": "6,080.00",
+    "stock_coverage_months": 2.6,
+    "risk": "healthy"
+   },
+   {
+    "id": "IT-IPAD-AIR",
+    "name": "iPad Air Wi-Fi 256GB",
+    "category": "Mobile devices",
+    "subcategory": "Tablets",
+    "unit-price": "729.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4102",
+    "supplier": "Apple Business Reseller UK",
+    "lead-time-days": 9,
+    "contracted": true,
+    "stock": 21,
+    "monthly-demand": 18,
+    "ordered_quantity": 8,
+    "open_quantity": 8,
+    "ordered_value": "5,832.00",
+    "stock_coverage_months": 1.2,
+    "risk": "watch"
+   },
+   {
+    "id": "IT-CONF-PHONE",
+    "name": "Teams Desk Phone",
+    "category": "Office equipment",
+    "subcategory": "Phones",
+    "unit-price": "275.00",
+    "currency": "GBP",
+    "supplier-id": "SUP-4104",
+    "supplier": "OfficeWorks Managed Supply",
+    "lead-time-days": 5,
+    "contracted": false,
+    "stock": 36,
+    "monthly-demand": 12,
+    "ordered_quantity": 0,
+    "open_quantity": 0,
+    "ordered_value": "0.00",
+    "stock_coverage_months": 3.0,
+    "risk": "healthy"
+   }
+  ],
+  "alerts": [
+   {
+    "severity": "medium",
+    "title": "PO-2026-1048 due within 3 days",
+    "detail": "Check supplier acknowledgement and receipt plan for London."
+   },
+   {
+    "severity": "high",
+    "title": "PO-2026-1051 is past expected delivery",
+    "detail": "Apple Business Reseller UK order for Sales EMEA is overdue."
+   },
+   {
+    "severity": "high",
+    "title": "iPhone 15 Pro 256GB stock coverage below one month",
+    "detail": "Open demand is 16 units with 28 in stock."
+   },
+   {
+    "severity": "high",
+    "title": "USB-C Docking Station stock coverage below one month",
+    "detail": "Open demand is 90 units with 39 in stock."
+   }
+  ]
+ }
+}

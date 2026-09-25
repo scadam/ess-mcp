@@ -1,7 +1,25 @@
-# Demo Agent - Hosted Agent 365 + ESS-MCP
+# Group Functions Autopilot
 
-This demo is now a Workday and ServiceNow focused autonomous agent designed to
-run as a hosted agent instance with:
+## Manifests and artwork
+
+The current [A365 manifest](manifest/manifest.json) and
+[Teams manifest](appPackage/manifest.json) use Group Functions Autopilot branding
+and the [new compass icon](static/autopilot-icon.svg). See the
+[branding and publication guide](docs/AUTOPILOT_BRANDING.md) for exact paths,
+icon dimensions and the final packaging order. The expired tenant's local
+credentials and packages have been removed; its cloud resources were not touched.
+
+## Compliance Partner demonstration
+
+The revised [Compliance Partner scenario](docs/COMPLIANCE_PARTNER_DEMO.md) is a
+cross-border client-data disclosure investigation for a syndicated refinancing,
+not a simple policy lookup. The [case-resolution skill](skills/compliance-case-resolution.md)
+defines evidence gathering, private requester clarification and confirmed
+Salesforce closure. Scenario and skill definitions are not live deployment proof;
+the document lists the notification, identity and end-to-end acceptance gates.
+
+This Python host combines conversation-scoped memory, approved tool work and an
+authenticated control plane. Its intended hosted integrations include:
 
 - Microsoft Entra Agent ID and an Agent Identity Blueprint
 - Agent 365 / Foundry metadata for registry, map, Purview, and Defender views
@@ -9,22 +27,24 @@ run as a hosted agent instance with:
 - OAuth token acquisition for Workday and ServiceNow bearer-token passthrough
 - OpenTelemetry spans/events for full MCP tool-call observation
 
-The old four-system static-token demo path has been narrowed intentionally.
-Salesforce and Jira are no longer connected by `demo_agent`.
+The web host supports Workday, ServiceNow, Salesforce and Coupa MCP connections.
+The compliance workflow requires separately verified Agent 365 email delivery,
+Work IQ evidence and private Teams communication; do not infer live capability
+from a skill document or offline test.
 
 ## Runtime Flow
 
 ```text
 Skill prompt
   -> GitHub Models or Azure OpenAI
-  -> tool call: workday__* or servicenow__*
+  -> approved Workday, ServiceNow, Salesforce or Coupa tool call
   -> OAuth token provider
   -> AI Gateway MCP endpoint
-  -> ESS-MCP Workday/ServiceNow server
+  -> configured Caldova MCP server
   -> SaaS API
 ```
 
-The ESS-MCP server still uses bearer-token passthrough. The important change is
+The MCP server still uses bearer-token passthrough. The important change is
 that this demo agent can now acquire those bearer tokens at runtime instead of
 requiring fixed `ESS_<SERVER>_TOKEN` values.
 
@@ -52,13 +72,10 @@ Open:
 - `http://localhost:8091/` for the simple run UI
 - `http://localhost:8091/control-plane` for the operations dashboard
 
-## Run the CLI
+## Skills
 
-```powershell
-python -m demo_agent.agent team-review
-```
-
-Available skills:
+Every run is a GitHub Copilot SDK session hosted by `demo_agent.web`; there is no separate CLI loop.
+Skills include:
 
 | Skill | Focus |
 | --- | --- |
@@ -109,7 +126,7 @@ To bootstrap an authorization-code flow without putting access tokens in files:
 
 ```powershell
 python demo_agent/scripts/oauth-bootstrap.py servicenow --print-url
-python demo_agent/scripts/oauth-bootstrap.py servicenow --code <callback-code> --container-app ess-demo-agent
+python demo_agent/scripts/oauth-bootstrap.py servicenow --code <callback-code> --container-app <verified-current-container-app>
 ```
 
 Repeat for `workday` after the Workday OAuth client and redirect URI are

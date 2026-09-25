@@ -1,0 +1,45 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/vdevPreview/MicrosoftTeams.schema.json",
+  "id": "77ae0985-4084-4bc1-bb3c-ab6dd0ad9bde",
+  "name": {
+    "short": "Group Functions Autopilot",
+    "full": "Group Functions Autopilot"
+  },
+  "description": {
+    "short": "An AI teammate for group functions, case investigation and approved work.",
+    "full": "Group Functions Autopilot is an AI teammate for group-function work. It uses conversation-scoped memory, approved skills and authorized tools to investigate questions and report grounded results. Its authenticated control plane shows progress, evidence and human review. Compliance cases remain open until the original requester explicitly confirms resolution. Actions stay within the manager-authorized workflow; other consequential changes require explicit approval."
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#B11F4B",
+  "version": "1.0.0",
+  "manifestVersion": "devPreview",
+  "developer": {
+    "name": "Group Functions Autopilot",
+    "mpnId": "",
+    "websiteUrl": "https://${{AGENT_DOMAIN}}",
+    "privacyUrl": "https://${{AGENT_DOMAIN}}/privacy",
+    "termsOfUseUrl": "https://${{AGENT_DOMAIN}}/terms"
+  },
+  "staticTabs": [
+    {
+      "entityId": "control-plane",
+      "name": "Autopilot Control Plane",
+      "contentUrl": "https://${{AGENT_DOMAIN}}/control-plane",
+      "scopes": [
+        "personal"
+      ]
+    }
+  ],
+  "validDomains": [
+    "${{AGENT_DOMAIN}}"
+  ],
+  "agenticUserTemplates": [
+    {
+      "id": "71795c31-114f-448c-a1f0-d9690f2e7d7a",
+      "file": "agenticUserTemplateManifest.json"
+    }
+  ]
+}

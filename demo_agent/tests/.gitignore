@@ -1,0 +1,2 @@
+# The repository ignores test_*.py globally; keep the agent regression suite.
+!test_*.py

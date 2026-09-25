@@ -1,0 +1,2 @@
+# Build-only artwork dependency; not needed in the deployed runtime.
+Pillow>=11.3,<13

@@ -6,6 +6,7 @@ from fastmcp import FastMCP
 from fastmcp.resources import TextResource
 
 from .resources import SERVICENOW_RESOURCES
+from .second_line import SECOND_LINE_SPECS
 from .tools import SERVICENOW_TOOL_SPECS
 
 
@@ -20,7 +21,7 @@ def build_servicenow_server() -> FastMCP:
     )
 
     # ── Register tools ──────────────────────────────────────────────────
-    for spec in SERVICENOW_TOOL_SPECS:
+    for spec in [*SERVICENOW_TOOL_SPECS, *SECOND_LINE_SPECS]:
         kwargs: dict = {"name": spec["name"], "description": spec["summary"]}
         annotations = spec.get("annotations")
         if annotations:

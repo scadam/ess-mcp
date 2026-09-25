@@ -1,0 +1,259 @@
+/* Shared Clawpilot palette; loaded AFTER each page's existing layout styles. */
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+
+:root {
+  --cp-font: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  --cp-font-mono: Consolas, "Courier New", Courier, monospace;
+  --cp-radius: 0.625rem;
+  --cp-radius-card: 16px;
+  --cp-shadow-card: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+  --cp-success-soft: color-mix(in srgb, var(--cp-success) 10%, var(--cp-surface));
+  --cp-danger-soft: color-mix(in srgb, var(--cp-danger) 10%, var(--cp-surface));
+  --cp-warning-soft: color-mix(in srgb, var(--cp-warning) 10%, var(--cp-surface));
+  --cp-success-border: color-mix(in srgb, var(--cp-success) 40%, var(--cp-border));
+  --cp-danger-border: color-mix(in srgb, var(--cp-danger) 40%, var(--cp-border));
+  --cp-warning-border: color-mix(in srgb, var(--cp-warning) 40%, var(--cp-border));
+  --cp-success-text: color-mix(in srgb, var(--cp-success) 65%, var(--cp-text));
+  --cp-warning-text: color-mix(in srgb, var(--cp-warning) 60%, var(--cp-text));
+
+  /* Compatibility aliases retain the existing UI, layout, and status classes. */
+  --bg: var(--cp-bg);
+  --chrome: var(--cp-bg-elevated);
+  --surface: var(--cp-surface);
+  --surface-2: var(--cp-surface-soft);
+  --border: var(--cp-border);
+  --border-light: var(--cp-border-strong);
+  --text: var(--cp-text);
+  --muted: var(--cp-text-muted);
+  --dim: var(--cp-text-soft);
+  --accent: var(--cp-accent);
+  --accent-soft: var(--cp-accent-soft);
+  --accent-line: var(--cp-accent);
+  --green: var(--cp-success-text);
+  --green-bg: var(--cp-success-soft);
+  --orange: var(--cp-warning-text);
+  --orange-bg: var(--cp-warning-soft);
+  --red: var(--cp-danger);
+  --red-bg: var(--cp-danger-soft);
+  --purple: var(--cp-accent);
+  --purple-bg: var(--cp-accent-soft);
+  --pill-bg: var(--cp-surface-soft);
+  --pill-hover: var(--cp-highlight);
+  --shadow: var(--cp-shadow-card);
+  --radius: var(--cp-radius);
+  --radius-lg: var(--cp-radius-card);
+}
+
+body { font-family: var(--cp-font); background: var(--cp-bg); color: var(--cp-text); }
+button, input, textarea, select { font-family: inherit; }
+textarea, select, input { background: var(--cp-surface); color: var(--cp-text); }
+
+/* Control room follows the page theme. Lamp colours are vivid fills; *-ink colours are readable text. */
+:root {
+  --cr-bg: var(--cp-bg);
+  --cr-panel: var(--cp-surface);
+  --cr-panel-2: var(--cp-surface-soft);
+  --cr-edge: var(--cp-border);
+  --cr-edge-2: color-mix(in srgb, var(--cp-border-strong) 35%, var(--cp-border));
+  --cr-well: var(--cp-surface-soft);
+  --cr-ink: var(--cp-accent-fg);
+  --cr-text: var(--cp-text);
+  --cr-muted: var(--cp-text-muted);
+  --cr-dim: var(--cp-text-soft);
+  --cr-primary: var(--cp-accent);
+  --cr-primary-soft: var(--cp-accent-soft);
+  --cr-green: #16a34a;
+  --cr-amber: #f59e0b;
+  --cr-red: #dc2626;
+  --cr-grey: #9ca3af;
+  --cr-violet: #7c3aed;
+  --cr-cyan: #0078d4;
+  --cr-indigo: #4f46e5;
+  --cr-yellow: #ca8a04;
+  --cr-green-ink: #15803d;
+  --cr-amber-ink: #b45309;
+  --cr-red-ink: #b91c1c;
+  --cr-grey-ink: #6b7280;
+  --cr-violet-ink: #6d28d9;
+  --cr-cyan-ink: #005a9e;
+  --cr-indigo-ink: #4338ca;
+  --cr-yellow-ink: #a16207;
+  --cr-green-glow: rgba(22, 163, 74, 0.35);
+  --cr-amber-glow: rgba(245, 158, 11, 0.35);
+  --cr-red-glow: rgba(220, 38, 38, 0.3);
+  --cr-green-haze: rgba(22, 163, 74, 0.12);
+  --cr-amber-haze: rgba(245, 158, 11, 0.14);
+  --cr-red-haze: rgba(220, 38, 38, 0.12);
+  --cr-green-edge: rgba(22, 163, 74, 0.45);
+  --cr-amber-edge: rgba(217, 119, 6, 0.5);
+  --cr-red-edge: rgba(220, 38, 38, 0.45);
+  --cr-cyan-edge: rgba(0, 120, 212, 0.4);
+  --cr-violet-edge: rgba(124, 58, 237, 0.4);
+  --cr-indigo-edge: rgba(79, 70, 229, 0.4);
+  --cr-yellow-edge: rgba(202, 138, 4, 0.45);
+  --cr-green-wash: rgba(22, 163, 74, 0.05);
+  --cr-amber-wash: rgba(245, 158, 11, 0.08);
+  --cr-red-wash: rgba(220, 38, 38, 0.05);
+  --cr-cyan-wash: rgba(0, 120, 212, 0.06);
+  --cr-cyan-flash: rgba(0, 120, 212, 0.1);
+  --cr-hover: var(--cp-surface-soft);
+  --cr-lamp-ring: rgba(0, 0, 0, 0.06);
+  --cr-tile-bg: var(--cp-surface);
+  --cr-working-bg: color-mix(in srgb, var(--cr-green) 6%, var(--cp-surface));
+  --cr-waiting-bg: color-mix(in srgb, var(--cr-amber) 8%, var(--cp-surface));
+  --cr-issue-bg: color-mix(in srgb, var(--cr-red) 6%, var(--cp-surface));
+  --cr-isolated-bg: repeating-linear-gradient(135deg, var(--cp-surface) 0 10px, var(--cp-surface-soft) 10px 20px);
+  --cr-avatar-bg: var(--cp-accent-soft);
+  --cr-avatar-ink: var(--cp-accent);
+  --cr-avatar-template-bg: var(--cp-surface-soft);
+  --cr-card-shadow: var(--cp-shadow-card);
+  --cr-tile-hover-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+html[data-theme="dark"] {
+  --cr-green: #4ade80;
+  --cr-amber: #fbbf24;
+  --cr-red: #f87171;
+  --cr-grey: #6b7280;
+  --cr-violet: #b197fc;
+  --cr-cyan: #4da6ff;
+  --cr-indigo: #a5b4fc;
+  --cr-yellow: #fcd34d;
+  --cr-green-ink: #4ade80;
+  --cr-amber-ink: #fbbf24;
+  --cr-red-ink: #f87171;
+  --cr-grey-ink: #9ca3af;
+  --cr-violet-ink: #b197fc;
+  --cr-cyan-ink: #4da6ff;
+  --cr-indigo-ink: #a5b4fc;
+  --cr-yellow-ink: #fcd34d;
+  --cr-green-glow: rgba(74, 222, 128, 0.4);
+  --cr-amber-glow: rgba(251, 191, 36, 0.35);
+  --cr-red-glow: rgba(248, 113, 113, 0.4);
+  --cr-green-haze: rgba(74, 222, 128, 0.12);
+  --cr-amber-haze: rgba(251, 191, 36, 0.12);
+  --cr-red-haze: rgba(248, 113, 113, 0.14);
+  --cr-green-edge: rgba(74, 222, 128, 0.45);
+  --cr-amber-edge: rgba(251, 191, 36, 0.45);
+  --cr-red-edge: rgba(248, 113, 113, 0.5);
+  --cr-cyan-edge: rgba(77, 166, 255, 0.45);
+  --cr-violet-edge: rgba(177, 151, 252, 0.45);
+  --cr-indigo-edge: rgba(165, 180, 252, 0.45);
+  --cr-yellow-edge: rgba(252, 211, 77, 0.4);
+  --cr-green-wash: rgba(74, 222, 128, 0.06);
+  --cr-amber-wash: rgba(251, 191, 36, 0.07);
+  --cr-red-wash: rgba(248, 113, 113, 0.07);
+  --cr-cyan-wash: rgba(77, 166, 255, 0.08);
+  --cr-cyan-flash: rgba(77, 166, 255, 0.16);
+  --cr-lamp-ring: rgba(255, 255, 255, 0.06);
+  --cr-tile-hover-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+pre, code, .fleet-ticker, .now-card .now-elapsed, .now-card .now-activity,
+.instance-card .live-strip .ls-text, .instance-card .live-strip .ls-elapsed,
+.server-card .endpoint, .meta-row .value, #governanceDenyInput,
+.gov-active .chip, .gov-list .target, .gov-audit .when,
+.surface-card .surf-portal, .a365-modal .feat-query pre,
+.a365-modal .feat-wired code, .agentic-detail .mono,
+.tool-entry .entry-index, .event-meta { font-family: var(--cp-font-mono); }
+
+/* Hidden is authoritative even on existing flex/grid panels and overlays. */
+[hidden] { display: none !important; }
+html:not([data-auth="ready"]) [data-auth-protected] { display: none !important; }
+:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; }
+
+.auth-panel {
+  margin: 48px auto;
+  padding: 24px;
+  width: min(560px, calc(100% - 32px));
+  align-self: flex-start;
+  background: var(--cp-surface);
+  color: var(--cp-text);
+  border: 1px solid var(--cp-border);
+  border-radius: var(--cp-radius-card);
+  box-shadow: var(--cp-shadow-card);
+}
+.auth-panel h1, .auth-panel h2 { font-size: 20px; line-height: 1.4; margin-bottom: 8px; }
+.auth-panel p { font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: var(--cp-text-muted); }
+.auth-panel .auth-message { color: var(--cp-text); }
+.auth-panel .auth-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.auth-panel button, .auth-session-button, .autopilot-tab {
+  padding: 8px 12px;
+  border: 1px solid var(--cp-border);
+  border-radius: var(--cp-radius);
+  background: var(--cp-surface-soft);
+  color: var(--cp-text);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.auth-panel .auth-sign-in { background: var(--cp-accent); color: var(--cp-accent-fg); border-color: var(--cp-accent); }
+.auth-panel .auth-sign-in:hover { background: var(--cp-accent-hover); }
+.auth-panel button:disabled { cursor: not-allowed; opacity: .6; }
+.auth-panel .auth-note { font-size: 12px; color: var(--cp-text-soft); margin-top: 16px; margin-bottom: 0; }
+.auth-context { color: var(--cp-text-muted); font-size: 11px; overflow-wrap: anywhere; }
+.autopilot-brand { font-size: 13px; font-weight: 700; color: var(--cp-text); }
+.autopilot-tab { font-size: 11px; color: var(--cp-accent); }
+.auth-session-button { font-size: 11px; white-space: nowrap; }
+.topbar { min-height: 52px; height: auto; padding-block: 8px; flex-wrap: wrap; }
+header { flex-wrap: wrap; }
+.sidebar-brand h2 { line-height: 1.4; }
+.auth-noscript { margin: 24px; color: var(--cp-danger); }
+
+.right-rail .rail-card, .server-card, .instance-card, .agentic-card,
+.scenario-card, .run-card, .now-card, .approval-card, .metadata-panel {
+  border-radius: var(--cp-radius-card);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

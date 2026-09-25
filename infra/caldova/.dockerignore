@@ -1,0 +1,28 @@
+# Copy this file to the root of the isolated build context alongside Dockerfile.
+**
+!Dockerfile
+!.dockerignore
+!pyproject.toml
+!README.md
+!constraints.txt
+!src/
+!src/**
+
+# Defense in depth if credential or cache files are accidentally staged under src/.
+**/.env
+**/.env.*
+**/*.env
+**/env
+**/env/**
+**/.git
+**/.git/**
+**/.azure
+**/.azure/**
+**/__pycache__
+**/__pycache__/**
+**/*.py[cod]
+**/*.pem
+**/*.key
+**/*.pfx
+**/*.p12
+**/*.log

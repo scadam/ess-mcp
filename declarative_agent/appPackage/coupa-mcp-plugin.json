@@ -137,7 +137,7 @@
                 "get_servicenow_coupa_flow"
             ],
             "spec": {
-                "url": "https://essmcp-coupa.wittysand-460bf1d9.eastus.azurecontainerapps.io/coupa/mcp",
+                "url": "https://essmcp-caldova-coupa.livelysky-91807d17.eastus2.azurecontainerapps.io/coupa/mcp",
                 "mcp_tool_description": {
                     "tools": [
                         {

@@ -22,6 +22,11 @@ provision:
       manifestPath: ./appPackage/manifest.json
       outputZipPath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
       outputFolder: ./appPackage/build
+  # The platform only accepts sensitivity labels for embedded files or skills.
+  # Preserve the source label; adapt the Caldova upload only when none exist.
+  - uses: script
+    with:
+      run: pwsh -NoProfile -File ./prepare_caldova_package.ps1 -PackagePath ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip -Environment ${{TEAMSFX_ENV}} -ExpectedAppId ${{TEAMS_APP_ID}}
   # Update the app manifest to an existing app in Developer Portal.
   # Will use the app id in manifest file to determine which app to update.
   - uses: teamsApp/update
@@ -50,6 +55,9 @@ publish:
       manifestPath: ./appPackage/manifest.json
       outputZipPath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
       outputFolder: ./appPackage/build
+  - uses: script
+    with:
+      run: pwsh -NoProfile -File ./prepare_caldova_package.ps1 -PackagePath ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip -Environment ${{TEAMSFX_ENV}} -ExpectedAppId ${{TEAMS_APP_ID}}
   # Apply the app manifest to an existing app in
   # Developer Portal.
   # Will use the app id in manifest file to determine which app to update.

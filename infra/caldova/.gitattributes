@@ -1,0 +1,7 @@
+# Keep Linux container instructions and Bicep content LF-normalized in the repository.
+*.bicep text eol=lf
+*.json text eol=lf
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf

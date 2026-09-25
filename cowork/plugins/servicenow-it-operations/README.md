@@ -30,10 +30,10 @@ Skills for IT service-management leaders and on-call teams:
 ## Connector
 
 ```text
-https://essmcp-servicenow.wittysand-460bf1d9.eastus.azurecontainerapps.io/servicenow/mcp
+https://essmcp-caldova-servicenow.livelysky-91807d17.eastus2.azurecontainerapps.io/servicenow/mcp
 ```
 
-Authentication: `OAuthPluginVault` using the same reference id as the declarative agent's ServiceNow MCP plugin. The MCP server is wired to a real ServiceNow tenant — not mock data.
+Authentication: `None` for the requested demo fallback. A supplied ServiceNow bearer token is used directly; otherwise the server obtains a cached token using its stored OAuth client and demo username/password. No-header and valid-bearer reads passed, while invalid supplied tokens returned 401. The dedicated client-credentials flow returned 401, so this deployment uses the verified password grant. The obsolete old-tenant OAuth reference was removed; optional per-user OAuth needs a real new-tenant connection. See [../../AUTHENTICATION.md](../../AUTHENTICATION.md).
 
 ## Demo Prompt
 

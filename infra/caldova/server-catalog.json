@@ -1,0 +1,67 @@
+{
+  "workday": {
+    "name": "essmcp-caldova-workday",
+    "requiredEnv": ["WORKDAY_BASE_URL", "WORKDAY_TENANT", "WORKDAY_OAUTH_CLIENT_ID", "WORKDAY_OAUTH_CLIENT_SECRET", "WORKDAY_OAUTH_REFRESH_TOKEN"],
+    "plainEnv": [
+      "WORKDAY_BASE_URL",
+      "WORKDAY_TENANT",
+      "WORKDAY_SKILLS_REPORT",
+      "WORKDAY_LEARNING_REPORT",
+      "WORKDAY_OAUTH_TOKEN_URL",
+      "WORKDAY_OAUTH_SCOPE",
+      "WORKDAY_OAUTH_AUDIENCE",
+      "WORKDAY_OAUTH_RESOURCE",
+      "WORKDAY_OAUTH_GRANT_TYPE",
+      "WORKDAY_OAUTH_AUTH_METHOD",
+      "WORKDAY_DEFAULT_WORKER_ID",
+      "WORKDAY_DEFAULT_WORKER_SEARCH",
+      "OPENAPI_SERVER_DOMAIN"
+    ],
+    "secretEnv": ["WORKDAY_OAUTH_CLIENT_ID", "WORKDAY_OAUTH_CLIENT_SECRET", "WORKDAY_OAUTH_REFRESH_TOKEN"]
+  },
+  "servicenow": {
+    "name": "essmcp-caldova-servicenow",
+    "requiredEnv": ["SERVICENOW_INSTANCE_URL", "SERVICENOW_OAUTH_CLIENT_ID", "SERVICENOW_OAUTH_CLIENT_SECRET", "SERVICENOW_OAUTH_USERNAME", "SERVICENOW_OAUTH_PASSWORD"],
+    "plainEnv": ["SERVICENOW_INSTANCE_URL", "OPENAPI_SERVER_DOMAIN", "SERVICENOW_OAUTH_TOKEN_URL", "SERVICENOW_OAUTH_GRANT_TYPE", "SERVICENOW_OAUTH_AUTH_METHOD", "SERVICENOW_OAUTH_SCOPE", "SERVICENOW_OAUTH_USERNAME"],
+    "secretEnv": ["SERVICENOW_OAUTH_CLIENT_ID", "SERVICENOW_OAUTH_CLIENT_SECRET", "SERVICENOW_OAUTH_PASSWORD"]
+  },
+  "salesforce": {
+    "name": "essmcp-caldova-salesforce",
+    "requiredEnv": ["SALESFORCE_DOMAIN", "SF_AUTH_MODE", "SF_CLIENT_ID", "SF_CLIENT_SECRET"],
+    "plainEnv": ["SALESFORCE_DOMAIN", "SF_AUTH_MODE", "SF_API_VERSION", "OPENAPI_SERVER_DOMAIN"],
+    "secretEnv": ["SF_CLIENT_ID", "SF_CLIENT_SECRET"]
+  },
+  "jira": {
+    "name": "essmcp-caldova-jira",
+    "requiredEnv": ["JIRA_BASE_URL"],
+    "plainEnv": ["JIRA_BASE_URL", "JIRA_PROJECT_KEY", "OPENAPI_SERVER_DOMAIN"],
+    "secretEnv": []
+  },
+  "sap_sf": {
+    "name": "essmcp-caldova-sap-sf",
+    "requiredEnv": ["SAP_SF_ODATA_URL", "SAP_SF_API_KEY"],
+    "plainEnv": [
+      "SAP_SF_ODATA_URL",
+      "SAP_SF_TOKEN_URL",
+      "SAP_SF_COMPANY_ID",
+      "SAP_SF_CLIENT_ID",
+      "SAP_SF_RESOURCE_URI",
+      "SAP_SF_ENTRA_APP_ID",
+      "SAP_SF_ENTRA_TENANT_ID",
+      "OPENAPI_SERVER_DOMAIN"
+    ],
+    "secretEnv": ["SAP_SF_API_KEY", "SAP_SF_ENTRA_CLIENT_SECRET"]
+  },
+  "ariba": {
+    "name": "essmcp-caldova-ariba",
+    "requiredEnv": ["ARIBA_API_URL", "ARIBA_API_KEY", "ARIBA_REALM"],
+    "plainEnv": ["ARIBA_API_URL", "ARIBA_REALM", "OPENAPI_SERVER_DOMAIN"],
+    "secretEnv": ["ARIBA_API_KEY"]
+  },
+  "coupa": {
+    "name": "essmcp-caldova-coupa",
+    "requiredEnv": [],
+    "plainEnv": ["COUPA_INSTANCE_URL", "COUPA_MOCK", "OPENAPI_SERVER_DOMAIN"],
+    "secretEnv": []
+  }
+}

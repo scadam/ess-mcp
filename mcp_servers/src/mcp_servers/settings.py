@@ -33,8 +33,16 @@ class WorkdaySettings(BaseEnvSettings):
 
 
 class ServiceNowSettings(BaseEnvSettings):
-    """Settings for ServiceNow API access."""
+    """Bearer-first ServiceNow access with configurable server-side OAuth fallback."""
     instance_url: str = Field(..., alias="SERVICENOW_INSTANCE_URL")
+    oauth_token_url: str = Field("", alias="SERVICENOW_OAUTH_TOKEN_URL")
+    oauth_client_id: str = Field("", alias="SERVICENOW_OAUTH_CLIENT_ID")
+    oauth_client_secret: str = Field("", alias="SERVICENOW_OAUTH_CLIENT_SECRET", repr=False)
+    oauth_grant_type: str = Field("client_credentials", alias="SERVICENOW_OAUTH_GRANT_TYPE")
+    oauth_auth_method: str = Field("client_secret_post", alias="SERVICENOW_OAUTH_AUTH_METHOD")
+    oauth_scope: str = Field("", alias="SERVICENOW_OAUTH_SCOPE")
+    oauth_username: str = Field("", alias="SERVICENOW_OAUTH_USERNAME")
+    oauth_password: str = Field("", alias="SERVICENOW_OAUTH_PASSWORD", repr=False)
     openapi_server_domain: Optional[str] = Field(None, alias="OPENAPI_SERVER_DOMAIN")
 
 
@@ -46,8 +54,8 @@ class SalesforceSettings(BaseEnvSettings):
         present, otherwise fall back to the OAuth 2.0 Client Credentials flow
         using ``SF_CLIENT_ID`` / ``SF_CLIENT_SECRET``.
       * ``oauth_bearer`` – require an inbound bearer token.
-      * ``client_credentials`` – always mint a server-side client-credentials
-        token, ignoring any inbound bearer.
+            * ``client_credentials`` – allow client-credentials fallback, but still
+                prefer an inbound bearer token so caller identity is never replaced.
     """
     domain: str = Field(..., alias="SALESFORCE_DOMAIN")
     auth_mode: str = Field("auto", alias="SF_AUTH_MODE")

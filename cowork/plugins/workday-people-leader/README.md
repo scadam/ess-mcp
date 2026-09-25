@@ -30,10 +30,10 @@ Skills for people managers and HR business partners:
 ## Connector
 
 ```text
-https://essmcp-workday.wittysand-460bf1d9.eastus.azurecontainerapps.io/workday/mcp
+https://essmcp-caldova-workday.livelysky-91807d17.eastus2.azurecontainerapps.io/workday/mcp
 ```
 
-> This MCP server is wired to a real Workday tenant — not mock data. Authentication is currently set to `None` for the demo gateway; tighten the auth before broader rollout.
+> This server uses the real Workday demo tenant. With `None` client authentication, the MCP server obtains a token using its Key Vault-backed refresh-token credentials. A supplied bearer token takes precedence; rejected caller tokens are not retried as the stored account. No-header and valid-bearer reads were both verified. No-header calls use the configured default worker and stored account's permissions. See [../../AUTHENTICATION.md](../../AUTHENTICATION.md).
 
 ## Demo Prompt
 

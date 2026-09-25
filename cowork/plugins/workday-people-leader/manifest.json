@@ -37,7 +37,7 @@
       "description": "Workday HR connector covering worker profile, direct reports, inbox tasks, leave balances, time off, learning, goals, feedback, check-ins, org chart and team manager dashboards.",
       "toolSource": {
         "remoteMcpServer": {
-          "mcpServerUrl": "https://essmcp-workday.wittysand-460bf1d9.eastus.azurecontainerapps.io/workday/mcp",
+          "mcpServerUrl": "https://essmcp-caldova-workday.livelysky-91807d17.eastus2.azurecontainerapps.io/workday/mcp",
           "authorization": {
             "type": "None"
           }

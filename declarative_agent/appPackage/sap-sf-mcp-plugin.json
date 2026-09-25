@@ -61,7 +61,7 @@
                 "generate_employment_reference"
             ],
             "spec": {
-                "url": "https://essmcp-sap-sf.wittysand-460bf1d9.eastus.azurecontainerapps.io/sap_sf/mcp",
+                "url": "https://essmcp-caldova-sap-sf.livelysky-91807d17.eastus2.azurecontainerapps.io/sap_sf/mcp",
                 "mcp_tool_description": {
                 "tools": [
                     {

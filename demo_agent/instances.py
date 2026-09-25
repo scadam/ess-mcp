@@ -8,7 +8,7 @@ can be reported back to the manager via Teams.
 
 Discovery strategy (kept deliberately simple for the demo):
 1. List ServicePrincipals whose displayName starts with the configured prefix
-   (default: "ESS AI Teammate for ").
+   (default: "Compliance Partner").
 2. The text after the prefix is the user's displayName; look the user up in
    Microsoft Graph by displayName (best-effort).
 3. Resolve `/users/{id}/manager` for the manager.
@@ -36,7 +36,7 @@ GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 # the blueprint app they were spawned from. That's the authoritative link --
 # name-prefix matching is a legacy fallback for tenants that don't expose the
 # field yet.
-DEFAULT_INSTANCE_PREFIXES = "ESS AI Teammate for ,HR AI Teammate for "
+DEFAULT_INSTANCE_PREFIXES = "Compliance Partner"
 
 
 @dataclass
@@ -97,10 +97,7 @@ class InstanceDirectory:
         # Legacy name-prefix fallback (used if blueprint filter returns 0 or the
         # tenant's Graph endpoint doesn't yet expose agentIdentityBlueprintId).
         raw_prefixes = prefix or os.getenv("AGENTIC_INSTANCE_NAME_PREFIX", DEFAULT_INSTANCE_PREFIXES)
-        self.prefixes = [p.strip() for p in raw_prefixes.split(",") if p.strip()] or [
-            "ESS AI Teammate for ",
-            "HR AI Teammate for ",
-        ]
+        self.prefixes = [p.strip() for p in raw_prefixes.split(",") if p.strip()] or ["Compliance Partner"]
         self.prefix = self.prefixes[0]
         self.cache_ttl = float(cache_ttl if cache_ttl is not None else os.getenv("AGENTIC_INSTANCE_CACHE_TTL", "300"))
         self.timeout = timeout
@@ -169,6 +166,8 @@ class InstanceDirectory:
             # or the tenant's Graph endpoint hasn't surfaced agentIdentityBlueprintId).
             if not instances:
                 instances = await self._discover_by_prefixes(client, self.prefixes)
+            # The blueprint's own principal is never a per-user instance.
+            instances = [i for i in instances if (i.instance_app_id or "").lower() != self.blueprint_app_id.lower()]
 
             # Drop the primary blueprint agent identity itself -- it's the
             # operator/service principal, not a per-user teammate instance.

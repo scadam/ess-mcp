@@ -1,0 +1,19 @@
+# Keep the deployment dependency manifest despite the root *.txt rule.
+!requirements.txt
+!requirements-branding.txt
+
+# Never version local credentials or conversation state.
+.env*
+*.sqlite*
+*.db*
+.autopilot-state/
+autopilot-state/
+
+# Agent 365 credentials and generated package outputs stay out of source control.
+a365.generated.config.json*
+# Override the root MANIFEST rule, which also matches this folder on Windows.
+!manifest/
+!manifest/*.json
+!manifest/*.png
+!manifest/README.md
+manifest/*.zip

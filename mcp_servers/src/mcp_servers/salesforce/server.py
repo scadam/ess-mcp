@@ -6,6 +6,7 @@ from fastmcp import FastMCP
 from fastmcp.resources import TextResource
 
 from .resources import SALESFORCE_RESOURCES
+from .second_line import SECOND_LINE_SPECS
 from .tools import SALESFORCE_TOOL_SPECS
 
 
@@ -20,7 +21,7 @@ def build_salesforce_server() -> FastMCP:
     )
 
     # ── Register tools ──────────────────────────────────────────────────
-    for spec in SALESFORCE_TOOL_SPECS:
+    for spec in [*SALESFORCE_TOOL_SPECS, *SECOND_LINE_SPECS]:
         kwargs: dict = {"name": spec["name"], "description": spec["summary"]}
         annotations = spec.get("annotations")
         if annotations:

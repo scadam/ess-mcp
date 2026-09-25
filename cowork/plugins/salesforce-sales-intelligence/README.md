@@ -32,10 +32,10 @@ Skills for account executives, sales managers and RevOps:
 ## Connector
 
 ```text
-https://essmcp-salesforce.wittysand-460bf1d9.eastus.azurecontainerapps.io/salesforce/mcp
+https://essmcp-caldova-salesforce.livelysky-91807d17.eastus2.azurecontainerapps.io/salesforce/mcp
 ```
 
-> **This MCP server is wired to a real Salesforce tenant — not mock data.** Authentication is set to `OAuthPluginVault`. Before uploading the package, replace the placeholder `REPLACE_WITH_SALESFORCE_OAUTH_REFERENCE_ID` in `manifest.json` with the OAuth reference ID for your registered Salesforce app.
+> **This MCP server uses the real Salesforce demo org.** The manifest declares `None`; the server runs in `auto` mode and acquires a token using its Key Vault-backed client credentials when no bearer is supplied. A supplied bearer token takes precedence, including when it is rejected by Salesforce. Both no-header and valid-bearer reads were verified. No-header calls run with the stored account's permissions. See [../../AUTHENTICATION.md](../../AUTHENTICATION.md).
 
 ## Demo Prompt
 

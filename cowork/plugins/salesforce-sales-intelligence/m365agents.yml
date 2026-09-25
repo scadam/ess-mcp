@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://aka.ms/m365-agents-toolkits/v1.10/yaml.schema.json
+version: v1.10
+environmentFolderPath: ./env
+
+# Rebuild current manifest and every declared skill before updating M365.
+provision:
+  - uses: teamsApp/create
+    with:
+      name: Salesforce Sales Intel
+    writeToEnvironmentFile:
+      teamsAppId: TEAMS_APP_ID
+  - uses: teamsApp/zipAppPackage
+    with:
+      manifestPath: ./manifest.json
+      outputZipPath: ./build/appPackage.${{TEAMSFX_ENV}}.zip
+      outputFolder: ./build
+  - uses: teamsApp/update
+    with:
+      appPackagePath: ./build/appPackage.${{TEAMSFX_ENV}}.zip
+  - uses: teamsApp/extendToM365
+    with:
+      appPackagePath: ./build/appPackage.${{TEAMSFX_ENV}}.zip
+    writeToEnvironmentFile:
+      titleId: M365_TITLE_ID
+      appId: M365_APP_ID
+      shareLink: SHARE_LINK
+
+publish:
+  - uses: teamsApp/zipAppPackage
+    with:
+      manifestPath: ./manifest.json
+      outputZipPath: ./build/appPackage.${{TEAMSFX_ENV}}.zip
+      outputFolder: ./build
+  - uses: teamsApp/update
+    with:
+      appPackagePath: ./build/appPackage.${{TEAMSFX_ENV}}.zip
+  - uses: teamsApp/publishAppPackage
+    with:
+      appPackagePath: ./build/appPackage.${{TEAMSFX_ENV}}.zip
+    writeToEnvironmentFile:
+      publishedAppId: TEAMS_APP_PUBLISHED_APP_ID
+projectId: ba4abbba-4e0f-41d2-bab6-3f8878859f37

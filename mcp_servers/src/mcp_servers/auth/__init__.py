@@ -5,6 +5,7 @@ from .salesforce import (
     reset_salesforce_token_cache,
     resolve_salesforce_token,
 )
+from .servicenow import reset_servicenow_token_cache, resolve_servicenow_token
 
 __all__ = [
     "get_bearer_token",
@@ -12,4 +13,6 @@ __all__ = [
     "SalesforceToken",
     "resolve_salesforce_token",
     "reset_salesforce_token_cache",
+    "resolve_servicenow_token",
+    "reset_servicenow_token_cache",
 ]

@@ -1,0 +1,36 @@
+FROM mcr.microsoft.com/devcontainers/python:3.12-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PORT=8091
+
+USER root
+WORKDIR /app
+ARG OPA_VERSION=1.21.0
+ARG OPA_SHA256=5eef70644868bb04d0556bcc795ee42f2ab379e73f51d1bfa30f83e1305bc9b9
+RUN curl -fsSL -o /usr/local/bin/opa "https://github.com/open-policy-agent/opa/releases/download/v${OPA_VERSION}/opa_linux_amd64_static" \
+    && echo "${OPA_SHA256}  /usr/local/bin/opa" | sha256sum -c - \
+    && chmod 0755 /usr/local/bin/opa
+ENV ACS_OPA_PATH=/usr/local/bin/opa \
+    COPILOT_CLI_EXTRACT_DIR=/opt/copilot-runtime \
+    AUTOPILOT_COPILOT_HOME=/tmp/autopilot-copilot
+COPY demo_agent/requirements.txt demo_agent/constraints.txt /app/
+RUN pip install -r /app/requirements.txt -c /app/constraints.txt
+# The Copilot SDK runtime is staged (checksum-verified) at build time; the running host never downloads it.
+RUN python -m copilot download-runtime && chmod -R a+rX /opt/copilot-runtime
+ENV COPILOT_SKIP_CLI_DOWNLOAD=1
+
+# This is intentionally an explicit allowlist. Do not COPY the whole source
+# directory: it contains an old-tenant .env and A365-generated credentials.
+COPY demo_agent/*.py /app/demo_agent/
+COPY demo_agent/ToolingManifest.json demo_agent/purview-policy.yaml /app/demo_agent/
+COPY demo_agent/skills/ /app/demo_agent/skills/
+COPY demo_agent/guardrail_policy/ /app/demo_agent/guardrail_policy/
+COPY demo_agent/static/ /app/demo_agent/static/
+
+# The MCR devcontainers base provides the non-root vscode account.
+USER vscode
+EXPOSE 8091
+CMD ["python", "-m", "demo_agent.web"]

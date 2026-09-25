@@ -1,6 +1,7 @@
 """Shared Workday helper functions."""
 from __future__ import annotations
 
+import asyncio
 import os
 import time
 from dataclasses import dataclass
@@ -33,6 +34,7 @@ class CachedToken:
 
 
 _TOKEN_CACHE: dict[str, CachedToken] = {}
+_TOKEN_LOCK = asyncio.Lock()
 
 
 def _setting_or_env(setting_value: str, *env_names: str) -> str:
@@ -46,6 +48,12 @@ def _setting_or_env(setting_value: str, *env_names: str) -> str:
 
 
 async def get_workday_fallback_access_token() -> str:
+    """Serialize fallback renewal; inbound caller tokens never use this cache."""
+    async with _TOKEN_LOCK:
+        return await _get_workday_fallback_access_token()
+
+
+async def _get_workday_fallback_access_token() -> str:
     """Acquire a server-side Workday token with the stored refresh-token flow."""
     settings = load_workday_settings()
     token_url = _setting_or_env(settings.oauth_token_url, "ESS_WORKDAY_OAUTH_TOKEN_URL")
