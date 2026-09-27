@@ -243,6 +243,8 @@ class CopilotHarness:
         self._client: Any = None
         self._lock: asyncio.Lock | None = None
         self._session_locks: dict[str, asyncio.Lock] = {}
+        # Told the usage of the short answers that no run owns (the conversation planner and summaries).
+        self.on_usage: Callable[[dict[str, Any]], None] | None = None
 
     @classmethod
     def from_env(cls) -> "CopilotHarness":
@@ -352,10 +354,15 @@ class CopilotHarness:
         client = await self.client()
         from copilot import ToolSet
 
+        def on_event(event: Any) -> None:
+            if self.on_usage is not None and getattr(event.type, "value", str(event.type)) == "assistant.usage":
+                with contextlib.suppress(Exception):
+                    self.on_usage(usage_event(event.data))
+
         session = await client.create_session(
             session_id=f"answer-{uuid.uuid4().hex}", model=model, reasoning_effort=reasoning_effort,
             provider=self.provider(), available_tools=ToolSet(), infinite_sessions={"enabled": False},
-            system_message=system_message(instructions), on_permission_request=_refuse,
+            system_message=system_message(instructions), on_permission_request=_refuse, on_event=on_event,
         )
         try:
             reply = await session.send_and_wait(prompt, timeout=timeout)
@@ -369,6 +376,17 @@ def _refuse(request: Any, _invocation: Any) -> Any:
 
     _logger.warning("Refused an unexpected Copilot permission request (%s)", type(request).__name__)
     return PermissionDecisionReject(feedback="Only the tools this run was given may be used.")
+
+
+def usage_event(data: Any, agent: str = "") -> dict[str, Any]:
+    """One model call's usage; `nano_aiu` is the SDK's own AI-credit figure when it reports one (1e9 = 1 credit)."""
+    copilot_usage = getattr(data, "copilot_usage", None)
+    nano = getattr(copilot_usage, "total_nano_aiu", None) if copilot_usage is not None else None
+    return {"model": getattr(data, "model", "") or "", "agent": agent, "input_tokens": getattr(data, "input_tokens", 0) or 0,
+            "output_tokens": getattr(data, "output_tokens", 0) or 0,
+            "finish_reason": getattr(data, "finish_reason", "") or "",
+            "cached_tokens": getattr(data, "cache_read_tokens", 0) or 0,
+            "nano_aiu": float(nano) if isinstance(nano, (int, float)) and nano >= 0 else None}
 
 
 async def _close(client: Any, session: Any, *, keep: bool = False) -> None:
@@ -530,9 +548,7 @@ class _SessionRun:
                 self._spawn(self._check(self.spec.check_turn, turn, model or self.spec.model, agent))
         elif kind == "assistant.usage":
             self.tokens += (data.input_tokens or 0) + (data.output_tokens or 0)
-            self._emit("usage", {"model": data.model or "", "agent": agent, "input_tokens": data.input_tokens or 0,
-                                 "output_tokens": data.output_tokens or 0, "finish_reason": data.finish_reason or "",
-                                 "cached_tokens": getattr(data, "cache_read_tokens", 0) or 0})
+            self._emit("usage", usage_event(data, agent))
             if self.spec.max_tokens and self.tokens > self.spec.max_tokens:
                 self._halt(RuntimeError(_TOKEN_LIMIT))
         elif kind == "assistant.message_delta" and not agent_id and getattr(data, "delta_content", ""):

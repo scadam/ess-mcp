@@ -78,6 +78,10 @@ from .doc_edit import strip_mentions
 from .case_work import CASE_TOOLS, DOC_TOOLS, IT_TOOLS, CaseWork, tools_for as case_tools_for
 from .run_records import RunRecords, folder_for, link_files
 from .guardrails import GuardrailBlocked, GuardrailEngine, GuardVerdict
+from .analytics import (
+    ASSET_TOOLS, DEFAULT_SETTINGS as ANALYTICS_DEFAULTS, PERIODS as ANALYTICS_PERIODS, AnalyticsLedger,
+    AzureCostSource, asset_fact, price_call,
+)
 
 try:
     from microsoft_agents.activity import (
@@ -1070,6 +1074,7 @@ def _publish_run_event(run_id: str | None, event_type: str, data: dict[str, Any]
         if not any(item.get("id") == data.get("id") for item in approvals if data.get("id")):
             approvals.append(dict(data))
             del approvals[:-40]
+            _analytics_note_approval(run, dict(data))
         if run.get("status") == "awaiting-approval":
             run["status"] = "running"  # A skill run carries on; the proposal waits for a person.
             run["waitingText"] = ""
@@ -1100,6 +1105,9 @@ def _publish_run_event(run_id: str | None, event_type: str, data: dict[str, Any]
         if call_id and call_id in run["toolData"]:
             run["toolData"][call_id]["result"] = data.get("result")
             run["toolData"][call_id]["endedAt"] = stamp
+            call = run["toolData"][call_id]
+            if call.get("server") == "servicenow" and call.get("tool") in ASSET_TOOLS:
+                _analytics_note_asset(run, call)
     elif event_type == "result":
         run["result"] = data.get("content", "")
         run.pop("streamingText", None)
@@ -1150,6 +1158,7 @@ def _publish_run_event(run_id: str | None, event_type: str, data: dict[str, Any]
         if run["status"] == "running":
             run["status"] = "complete"
         run["completedAt"] = int(time.time() * 1000)
+        _analytics_note_run(run)
     try:
         _feed_run_event(run, event_type, data if isinstance(data, dict) else {})
     except Exception:
@@ -1455,6 +1464,7 @@ def _set_case_run_state(run_id: str, status: str, text: str) -> None:
         run["completedAt"] = now
         if status == "error":
             run["error"] = text
+        _analytics_note_run(run)
     if changed:
         _feed(run.get("instanceKey") or TEMPLATE_KEY, "issue" if status == "error" else "case", text,
               status={"waiting": "waiting", "complete": "ok", "error": "error"}.get(status, "info"),
@@ -1629,6 +1639,11 @@ def _sweep(system: str) -> Any:
 
 
 def _project_case(case: dict[str, Any]) -> None:
+    if _analytics is not None:
+        try:
+            _analytics.note_case(case)
+        except Exception:
+            _logger.debug("analytics case projection failed", exc_info=True)
     status = case.get("status", "")
     if _case_status_seen.get(case["key"]) == status:
         return
@@ -1675,6 +1690,159 @@ def _build_run_records() -> None:
         return
     comms = _comms or AgentComms(lambda: _connection_manager, autopilot.configured_tenant())
     _run_records = RunRecords(comms, drive, os.getenv("AUTOPILOT_RUN_RECORDS_URL", "").strip())
+
+
+# ── Analytics: cost, volume, performance and self-service across the fleet ──
+_analytics: AnalyticsLedger | None = None
+_SN_METRICS_TTL = 600.0
+_sn_metrics: dict[int, tuple[float, dict[str, Any]]] = {}
+
+
+def _function_for_run(run: dict[str, Any]) -> str:
+    """Which function's colleague did this work: the case's function, else the colleague's desk binding."""
+    if run.get("caseRun"):
+        return "compliance"
+    actor = run.get("actor") or {}
+    fact = _analytics.cases.get(str(actor.get("caseKey") or "")[:40]) if _analytics and actor.get("caseKey") else None
+    if fact is not None:
+        return fact["fn"]
+    app = str(actor.get("agenticAppClientId") or actor.get("agenticAppId") or "").lower()
+    binding = next((item for item in (_desk.bindings.values() if _desk else ())
+                    if item.instance_app_id and item.instance_app_id == app), None)
+    return binding.function if binding is not None else "platform"
+
+
+def _channel_for_run(run: dict[str, Any]) -> str:
+    if run.get("caseRun"):
+        return "compliance"
+    if run.get("source") == "case-desk" and _analytics is not None:
+        fact = _analytics.cases.get(str((run.get("actor") or {}).get("caseKey") or "")[:40])
+        return fact["src"] if fact else "case-desk"
+    return str(run.get("source") or "")
+
+
+def _analytics_note_run(run: dict[str, Any]) -> None:
+    if _analytics is None:
+        return
+    try:
+        _analytics.note_run(run, function=_function_for_run(run), channel=_channel_for_run(run))
+    except Exception:
+        _logger.debug("analytics run projection failed", exc_info=True)
+
+
+def _analytics_note_approval(run: dict[str, Any], item: dict[str, Any]) -> None:
+    if _analytics is None:
+        return
+    try:
+        _analytics.note_approval(item, run=run, function=_function_for_run(run))
+    except Exception:
+        _logger.debug("analytics approval projection failed", exc_info=True)
+
+
+def _analytics_note_asset(run: dict[str, Any], call: dict[str, Any]) -> None:
+    """A knowledge article or catalog item a colleague created: self-service that takes work off the desk."""
+    if _analytics is None:
+        return
+    actor = run.get("actor") or {}
+    try:
+        fact = asset_fact(str(call.get("tool") or ""), call.get("arguments"), call.get("result"), at=time.time(),
+                          colleague=str((run.get("agenticUser") or {}).get("name") or actor.get("agenticAppName") or ""),
+                          function=_function_for_run(run), run_id=str(run.get("id") or ""),
+                          case=str(actor.get("caseKey") or ""))
+        if fact is not None:
+            _analytics.note_asset(fact)
+    except Exception:
+        _logger.debug("analytics asset projection failed", exc_info=True)
+
+
+def _analytics_note_usage(usage: dict[str, Any]) -> None:
+    if _analytics is not None:
+        _analytics.note_usage(usage)
+
+
+async def _start_analytics() -> None:
+    global _analytics
+    if _analytics is not None:
+        return
+    try:
+        store = create_conversation_store()
+    except Exception:
+        _logger.warning("Analytics storage is unavailable; analytics are disabled")
+        return
+    _analytics = AnalyticsLedger(store, autopilot.configured_tenant(),
+                                 costs=AzureCostSource(os.getenv("AUTOPILOT_COST_SCOPE", "").strip()))
+    _harness.on_usage = _analytics_note_usage
+    try:
+        await _analytics.load()
+    except Exception:
+        _logger.warning("Analytics history could not be restored; new activity is still recorded")
+
+
+async def _stop_analytics() -> None:
+    global _analytics
+    ledger, _analytics = _analytics, None
+    _harness.on_usage = None
+    if ledger is not None:
+        try:
+            await ledger.close()
+        finally:
+            try:
+                await ledger.store.close()
+            except Exception:
+                _logger.warning("Analytics store cleanup failed")
+
+
+async def _servicenow_metrics(days: int) -> dict[str, Any]:
+    """Demand and self-service counts from ServiceNow, read as the IT colleague and cached for ten minutes."""
+    cached = _sn_metrics.get(days)
+    if cached is not None and time.time() - cached[0] < _SN_METRICS_TTL:
+        return cached[1]
+    binding = _desk.bindings.get("it") if _desk else None
+    if binding is None or "servicenow" not in _servers or "get_service_desk_metrics" not in _tool_schemas.get("servicenow", {}):
+        return {"error": "ServiceNow demand figures are unavailable: its MCP server or metrics tool isn't connected."}
+    try:
+        data = await asyncio.wait_for(_desk_read(binding, "servicenow", "get_service_desk_metrics", {"days": days}), 60)
+    except Exception as error:
+        _logger.warning("analytics.servicenow metrics failed reason=%s", type(error).__name__)
+        data = {"error": f"ServiceNow demand figures could not be read ({type(error).__name__})."}
+    if type(data) is not dict:
+        data = {"error": "ServiceNow returned no demand figures."}
+    _sn_metrics[days] = (time.time(), data)
+    return data
+
+
+async def handle_analytics(request: web.Request) -> web.Response:
+    require_operator(request)
+    if _analytics is None:
+        return web.json_response({"available": False, "error": "Analytics are not running on this host."},
+                                 status=503, headers=_NO_STORE)
+    try:
+        days = int(request.query.get("days", "30"))
+    except ValueError:
+        raise web.HTTPBadRequest(text="days must be a number.") from None
+    function = request.query.get("function", "").strip().lower()
+    if days not in ANALYTICS_PERIODS or function not in {"", "it", "hr", "compliance", "supply", "platform"}:
+        raise web.HTTPBadRequest(text="Unsupported period or function.")
+    await _analytics.load()
+    infra, servicenow = await asyncio.gather(_analytics.infrastructure(), _servicenow_metrics(days))
+    backlog = await _desk.list_cases(limit=400) if _desk is not None else []
+    report = _analytics.report(days=days, function=function, infra=infra, servicenow=servicenow, backlog=backlog)
+    return web.json_response({"available": True, **report}, headers=_NO_STORE)
+
+
+async def handle_analytics_settings(request: web.Request) -> web.Response:
+    principal = require_operator(request)
+    if _analytics is None:
+        raise web.HTTPServiceUnavailable(text="Analytics are not running on this host.")
+    if request.method == "PUT":
+        body = await _json_body(request, 16_000)
+        try:
+            await _analytics.save_settings(body)
+        except ValueError as error:
+            raise web.HTTPBadRequest(text=str(error)) from None
+        _feed(TEMPLATE_KEY, "policy", f"{principal.name or 'An operator'} updated the analytics assumptions",
+              status="info")
+    return web.json_response({"settings": _analytics.settings, "defaults": ANALYTICS_DEFAULTS}, headers=_NO_STORE)
 
 
 def _colleague_for_actor(actor: dict[str, Any]) -> Colleague | None:
@@ -1736,6 +1904,8 @@ async def _start_desk() -> None:
         return
     _desk.start()
     resumed = await _desk.resume_pending()
+    if _case_work is not None:
+        resumed += await _case_work.resume()
     names = ", ".join(f"{binding.name} ({binding.function})" for binding in _desk.bindings.values())
     _feed(TEMPLATE_KEY, "lifecycle", "The case desk is listening",
           detail=f"Event-driven second line for {names}; {resumed} case(s) resumed after restart.", status="ok")
@@ -1835,7 +2005,9 @@ async def _desk_on_document(context: Any, notification: Any, product: str) -> bo
     if url and product == "Word":
         try:  # Replies sent in this turn appear under the comment in Word.
             await context.send_activity("On it. I'll make the change in the document as tracked edits you can "
-                                        "accept or reject, and reply here when it's done.")
+                                        "accept or reject, and reply here when it's done. Word can't take my save "
+                                        "while the document is open for editing, so if it's still open then, I'll "
+                                        "save the moment you close it.")
         except Exception:
             _logger.info("document.ack not delivered")
     return True
@@ -2404,10 +2576,15 @@ async def _reset_everything() -> dict[str, int]:
             else:
                 await _drain_background_tasks()
         await _stop_control_room(flush=False)
+        if _analytics is not None:
+            _analytics.close_open_cases("control-room reset")
+            await _analytics.flush()
         store = create_conversation_store()
         try:
             policies = ChatScope(autopilot.configured_tenant(), autopilot.configured_app_id(), "control-room:policies")
-            removed = await store.clear_all(keep=(policies,))
+            # Analytics are the operator's long-term record, so a demo reset keeps them.
+            kept = (policies, *(_analytics.scopes() if _analytics is not None else ()))
+            removed = await store.clear_all(keep=kept)
         finally:
             await store.close()
         _run_ledger.clear()
@@ -3157,9 +3334,10 @@ class _Loop:
     active_subagents: int = 0
 
 
-def _record_usage(stats: dict[str, Any], model: str, role: str, prompt_tokens: int, completion_tokens: int) -> None:
+def _record_usage(stats: dict[str, Any], model: str, role: str, prompt_tokens: int, completion_tokens: int,
+                  cached_tokens: int = 0, nano_aiu: float | None = None) -> None:
     entry = stats.setdefault("models", {}).setdefault(
-        model, {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0, "roles": []})
+        model, {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0, "cached_tokens": 0, "credits": 0.0, "roles": []})
     entry["calls"] += 1
     if role not in entry["roles"]:
         entry["roles"].append(role)
@@ -3167,6 +3345,13 @@ def _record_usage(stats: dict[str, Any], model: str, role: str, prompt_tokens: i
         entry[name] += value
         stats[name] = stats.get(name, 0) + value
     stats["total_tokens"] = stats.get("total_tokens", 0) + prompt_tokens + completion_tokens
+    # GitHub Copilot SDK AI credits: the SDK's own figure when reported, else the tokens at GitHub's model rates.
+    credits, priced = price_call(model, prompt_tokens, completion_tokens, cached_tokens, nano_aiu)
+    entry["cached_tokens"] = entry.get("cached_tokens", 0) + cached_tokens
+    entry["credits"] = round(entry.get("credits", 0.0) + credits, 6)
+    if not priced:
+        entry["unpriced"] = True
+    stats["ai_credits"] = round(stats.get("ai_credits", 0.0) + credits, 6)
 
 
 async def _session_event(loop: _Loop, kind: str, data: dict[str, Any]) -> None:
@@ -3181,7 +3366,8 @@ async def _session_event(loop: _Loop, kind: str, data: dict[str, Any]) -> None:
         await loop.observe("agent.llm", turn=data["turn"], phase="request", model=data.get("model"), agent=agent)
     elif kind == "usage":
         model = data.get("model") or loop.stats.get("model", "")
-        _record_usage(loop.stats, model, role, data.get("input_tokens", 0), data.get("output_tokens", 0))
+        _record_usage(loop.stats, model, role, data.get("input_tokens", 0), data.get("output_tokens", 0),
+                      int(data.get("cached_tokens") or 0), data.get("nano_aiu"))
         loop.stats["cached_tokens"] = loop.stats.get("cached_tokens", 0) + int(data.get("cached_tokens") or 0)
         if not agent:
             loop.stats["model"] = model
@@ -3415,6 +3601,7 @@ def _settle_skill_approval(run: dict[str, Any], request_id: str, status: str, re
             item["status"] = status
             item["result"] = (response or "")[:600]
             item["decidedAt"] = int(time.time() * 1000)
+            _analytics_note_approval(run, item)
             label = item.get("label") or "a change"
             ok = status == "completed"
             _feed(run.get("instanceKey") or TEMPLATE_KEY, "policy",
@@ -5757,6 +5944,9 @@ def create_app(*, control_validator: Any = None) -> web.Application:
     app.router.add_get("/api/case-desk", handle_case_desk)
     app.router.add_get("/api/case-desk/cases/{key}", handle_case_detail)
     app.router.add_post("/api/case-desk/cases/{key}/events", handle_case_event)
+    app.router.add_get("/api/analytics", handle_analytics)
+    app.router.add_get("/api/analytics/settings", handle_analytics_settings)
+    app.router.add_put("/api/analytics/settings", handle_analytics_settings)
     app.router.add_post("/api/events/{source}", event_gateway.handler(lambda: _desk))
     app.router.add_post("/api/messages", handle_bot_messages)
     if _agent_app is not None:
@@ -5869,6 +6059,7 @@ async def init_mcp() -> None:
         _logger.warning("No MCP servers connected; conversation remains available but tasks fail closed")
     _refresh_guardrail_catalog()
     await _start_control_room()
+    await _start_analytics()
     _build_desk()
     _build_run_records()
     await _start_desk()
@@ -5903,6 +6094,10 @@ async def cleanup_mcp(app: web.Application | None = None) -> None:
             await _autopilot.close()  # Conversation jobs -> background/decisions -> store.
         else:
             await _drain_background_tasks()
+        try:
+            await _stop_analytics()
+        except Exception:
+            _logger.warning("Analytics shutdown failed")
     finally:
         await _harness.stop()
         for client in tuple(_servers.values()):

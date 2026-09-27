@@ -232,7 +232,7 @@ class CaseDesk:
                "number": case.get("record", {}).get("number", ""), "system": case.get("record", {}).get("system", ""),
                "requester": case.get("requester", {}).get("name", ""), "updatedAt": case["updatedAt"],
                "createdAt": case["createdAt"], "nextWakeAt": case.get("nextWakeAt") or 0,
-               "waiting": (case.get("waiting") or {}).get("for", "")}
+               "waiting": (case.get("waiting") or {}).get("for", ""), "held": bool(case.get("documentSave"))}
         names = list(aliases)
 
         def transform(state: dict[str, Any]) -> None:

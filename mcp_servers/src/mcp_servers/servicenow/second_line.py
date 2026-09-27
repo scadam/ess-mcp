@@ -395,6 +395,108 @@ async def tool_remove_group_member(group: str, user_name: str, reference: str, c
     return {"removed": True, "group": group, "user_name": user_name, "reference": reference[:60]}
 
 
+_METRIC_ROWS = 2000
+
+
+def _day(value: Any) -> str:
+    text = str(value or "")
+    return text[:10] if re.match(r"\d{4}-\d{2}-\d{2}", text) else ""
+
+
+async def _section(read: Any) -> Dict[str, Any]:
+    """One metrics section; a table this account can't read reports its error instead of failing the rest."""
+    try:
+        return await read()
+    except Exception as exc:  # noqa: BLE001 - reported per section, never raised
+        LOGGER.warning("service_desk_metrics_section_failed", error=type(exc).__name__)
+        return {"error": f"Not readable ({type(exc).__name__})."}
+
+
+async def tool_get_service_desk_metrics(days: int = 30, ctx: Optional[Context] = None) -> Dict[str, Any]:
+    """Service desk demand and self-service use over the last N days, as counts for the Autopilot analytics.
+
+    No people or ticket text: incidents opened per day by channel (contact type) and category, catalog requests per
+    day and per item, knowledge article use per day, and the knowledge articles and catalog items created in the
+    window with their use since.
+
+    Args:
+        days: Window in days (1-120).
+    """
+    days = max(1, min(int(days), 120))
+    window = f"RELATIVEGT@hour@ago@{days * 24}"
+
+    async def rows(table: str, query: str, fields: str, limit: int = _METRIC_ROWS) -> List[Dict[str, Any]]:
+        return await _get(f"/api/now/table/{table}", {
+            "sysparm_query": query, "sysparm_fields": fields, "sysparm_limit": limit,
+            "sysparm_display_value": "false", "sysparm_exclude_reference_link": "true"}, ctx)
+
+    async def count(table: str, query: str) -> int:
+        result = await _get(f"/api/now/stats/{table}", {"sysparm_count": "true", "sysparm_query": query}, ctx)
+        stats = result.get("stats") if isinstance(result, dict) else None
+        return int((stats or {}).get("count") or 0)
+
+    async def incidents() -> Dict[str, Any]:
+        found = await rows("incident", f"opened_at{window}^ORDERBYopened_at",
+                           "opened_at,contact_type,category,state,resolved_at")
+        by_day: Dict[str, Dict[str, int]] = {}
+        by_channel: Dict[str, int] = {}
+        by_category: Dict[str, int] = {}
+        for row in found:
+            channel = str(row.get("contact_type") or "unspecified")
+            day = by_day.setdefault(_day(row.get("opened_at")), {})
+            day[channel] = day.get(channel, 0) + 1
+            by_channel[channel] = by_channel.get(channel, 0) + 1
+            category = str(row.get("category") or "uncategorised")
+            by_category[category] = by_category.get(category, 0) + 1
+        return {"total": len(found), "resolved": sum(1 for row in found if row.get("resolved_at")),
+                "byDay": by_day, "byChannel": by_channel, "byCategory": by_category,
+                "truncated": len(found) >= _METRIC_ROWS}
+
+    async def requests() -> Dict[str, Any]:
+        found = await rows("sc_req_item", f"opened_at{window}^ORDERBYopened_at", "opened_at,cat_item,cat_item.name,state")
+        by_day: Dict[str, int] = {}
+        items: Dict[str, Dict[str, Any]] = {}
+        for row in found:
+            day = _day(row.get("opened_at"))
+            by_day[day] = by_day.get(day, 0) + 1
+            key = str(row.get("cat_item") or "")
+            entry = items.setdefault(key, {"id": key, "name": str(row.get("cat_item.name") or "Unnamed item"), "count": 0})
+            entry["count"] += 1
+        return {"total": len(found), "byDay": by_day,
+                "byItem": sorted(items.values(), key=lambda item: -item["count"])[:25],
+                "truncated": len(found) >= _METRIC_ROWS}
+
+    async def knowledge() -> Dict[str, Any]:
+        uses = await rows("kb_use", f"sys_created_on{window}", "sys_created_on,article")
+        by_day: Dict[str, int] = {}
+        by_article: Dict[str, int] = {}
+        for row in uses:
+            day = _day(row.get("sys_created_on"))
+            by_day[day] = by_day.get(day, 0) + 1
+            by_article[str(row.get("article") or "")] = by_article.get(str(row.get("article") or ""), 0) + 1
+        created = await rows("kb_knowledge", f"sys_created_on{window}^ORDERBYDESCsys_created_on",
+                             "sys_id,number,short_description,workflow_state,sys_created_on,sys_created_by,sys_view_count",
+                             100)
+        return {"published": await count("kb_knowledge", "workflow_state=published"), "uses": len(uses),
+                "usesByDay": by_day, "created": [{
+                    "id": row.get("sys_id"), "number": row.get("number"), "title": row.get("short_description"),
+                    "state": row.get("workflow_state"), "createdOn": row.get("sys_created_on"),
+                    "createdBy": row.get("sys_created_by"), "views": int(row.get("sys_view_count") or 0),
+                    "usesInWindow": by_article.get(str(row.get("sys_id") or ""), 0)} for row in created],
+                "truncated": len(uses) >= _METRIC_ROWS}
+
+    async def catalog() -> Dict[str, Any]:
+        created = await rows("sc_cat_item", f"sys_created_on{window}^ORDERBYDESCsys_created_on",
+                             "sys_id,name,active,sys_created_on,sys_created_by", 100)
+        return {"active": await count("sc_cat_item", "active=true"), "created": [{
+            "id": row.get("sys_id"), "name": row.get("name"), "active": str(row.get("active")).lower() == "true",
+            "createdOn": row.get("sys_created_on"), "createdBy": row.get("sys_created_by")} for row in created]}
+
+    LOGGER.info("servicenow_service_desk_metrics", days=days)
+    return {"days": days, "incidents": await _section(incidents), "requests": await _section(requests),
+            "knowledge": await _section(knowledge), "catalog": await _section(catalog)}
+
+
 SECOND_LINE_SPECS: list[dict] = [
     {"name": "list_group_members", "func": tool_list_group_members, "annotations": {"readOnlyHint": True},
      "summary": "A group's members with active flag, last login, title and manager, the roles it grants and its owner."},
@@ -417,4 +519,7 @@ SECOND_LINE_SPECS: list[dict] = [
     {"name": "reset_account_password", "func": tool_reset_account_password,
      "summary": ("Host-only: reset and unlock a non-privileged local account; the temporary password is emailed to "
                  "the account's registered address only.")},
+    {"name": "get_service_desk_metrics", "func": tool_get_service_desk_metrics, "annotations": {"readOnlyHint": True},
+     "summary": ("Counts for service desk analytics over the last N days: incidents per day by channel and category, "
+                 "catalog requests per item, knowledge use, and the articles and catalog items created, with their use.")},
 ]

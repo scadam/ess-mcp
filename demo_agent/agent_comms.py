@@ -39,7 +39,7 @@ class FileConflict(CommsError):
 
 
 class FileLocked(CommsError):
-    """The file is checked out or exclusively locked; nothing was written."""
+    """The file is open for editing in Word (a co-authoring session holds it) or checked out; nothing was written."""
 
 
 def _download_url(location: str) -> bool:
@@ -268,16 +268,22 @@ class AgentComms:
 
     async def replace_file(self, binding: DeskBinding | Colleague, drive_id: str, item_id: str, data: bytes,
                            etag: str, content_type: str) -> dict[str, Any]:
-        """Save new content only over the exact version that was read (If-Match), even while it is open in Word."""
+        """Save new content only over the exact version that was read (If-Match).
+
+        Graph can only replace the whole file. While anyone has the document open for editing in Word, its
+        co-authoring session holds a shared lock and SharePoint refuses the upload with 423 until the session
+        ends. Graph documents `Prefer: bypass-shared-lock` for deletes only; it does not let an upload through.
+        """
         if not etag:
             raise CommsError("The file's version is unknown, so it was not overwritten.")
         response = await self._send(
             binding, "PUT", f"/drives/{quote(drive_id, safe='!')}/items/{quote(item_id, safe='')}/content",
-            content=data, headers={"Content-Type": content_type, "If-Match": etag, "Prefer": "bypass-shared-lock"})
+            content=data, headers={"Content-Type": content_type, "If-Match": etag})
         if response.status_code == 412:
             raise FileConflict("The document changed after it was read; nothing was saved.")
         if response.status_code == 423:
-            raise FileLocked("The document is checked out or locked for editing, so the change was not saved.")
+            raise FileLocked("The document is open for editing in Word, which holds it until it is closed, so the "
+                             "change was not saved yet.")
         if response.status_code not in (200, 201):
             raise CommsError(f"Graph refused the upload (HTTP {response.status_code}).")
         item = _json(response.content) if response.content else {}

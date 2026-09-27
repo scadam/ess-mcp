@@ -841,6 +841,35 @@
   .gr-diag.bad { color: var(--cr-red-ink); border-color: var(--cr-red-edge); background: var(--cr-red-wash); }
   .gr-diag.good { color: var(--cr-green-ink); border-color: var(--cr-green-edge); }
   .run-back { margin-right: 4px; }
+  /* ═══ Analytics ═══ */
+  .an-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .an-kpi { background: var(--cr-panel); border: 1px solid var(--cr-edge); border-radius: 10px; padding: 10px 12px; box-shadow: var(--cr-card-shadow); min-width: 0; }
+  .an-kpi .v { font-size: 21px; font-weight: 750; letter-spacing: -.02em; font-family: var(--cp-font-mono); white-space: nowrap; }
+  .an-kpi .l { font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--cr-muted); margin-top: 3px; font-weight: 700; }
+  .an-kpi .s { font-size: 11px; color: var(--cr-muted); margin-top: 3px; line-height: 1.35; }
+  .an-kpi.hero { border-color: var(--cr-primary); box-shadow: 0 0 0 2px var(--cr-primary-soft); }
+  .an-kpi.hero .v { color: var(--cr-primary); }
+  .an-good { color: var(--cr-green-ink); font-weight: 700; }
+  .an-bad { color: var(--cr-red-ink); font-weight: 700; }
+  .an-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 12px; margin-bottom: 12px; align-items: start; }
+  .an-grid.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .an-chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .an-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 10.5px; color: var(--cr-muted); margin-top: 6px; }
+  .an-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .an-split { display: flex; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid var(--cr-edge); margin: 6px 0 8px; background: var(--cr-well); }
+  .an-split span { display: block; height: 100%; min-width: 2px; }
+  .an-list { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 12px; font-size: 11.5px; align-items: baseline; }
+  .an-list .n { font-family: var(--cp-font-mono); text-align: right; white-space: nowrap; }
+  .an-note { font-size: 10.5px; color: var(--cr-dim); margin-top: 8px; line-height: 1.5; }
+  .an-warn { font-size: 11px; color: var(--cr-amber-ink); background: var(--cr-amber-wash); border: 1px solid var(--cr-amber-edge); border-radius: 6px; padding: 6px 9px; margin-bottom: 10px; line-height: 1.45; }
+  .an-num { font-family: var(--cp-font-mono); text-align: right; white-space: nowrap; }
+  .an-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px 14px; }
+  .an-form label { font-size: 11px; color: var(--cr-muted); display: flex; flex-direction: column; gap: 3px; }
+  .an-form input { font-size: 12px; padding: 5px 7px; border: 1px solid var(--cr-edge-2); border-radius: 6px; font-family: var(--cp-font-mono); }
+  .an-theme { border: 1px solid var(--cr-edge); border-radius: 8px; padding: 7px 9px; background: var(--cr-well); margin-bottom: 6px; }
+  .an-theme .t { font-weight: 700; font-size: 12px; }
+  .an-theme .x { font-size: 10.5px; color: var(--cr-muted); margin-top: 2px; }
+  @media (max-width: 1100px) { .an-grid, .an-grid.even { grid-template-columns: 1fr; } .an-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 1100px) { .ws-split, .gr-grid { grid-template-columns: 1fr; } }
   @keyframes crPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
   @keyframes crBlink { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
@@ -898,6 +927,7 @@
     <div class="nav-item active" id="navControlRoom" onclick="go('#/control-room')"><span class="icon">C</span> Control Room <span class="badge" id="navColleagueCount">—</span></div>
     <div class="nav-item" id="navRunItem" onclick="go('#/runs')" title="Every task an AI teammate worked, from input to output"><span class="icon">T</span> Telemetry <span class="badge" id="navRunCount">0</span></div>
     <div class="nav-item" id="navCases" onclick="go('#/cases')"><span class="icon">K</span> Cases <span class="badge" id="navCaseCount">—</span></div>
+    <div class="nav-item" id="navAnalytics" onclick="go('#/analytics')" title="What the digital workforce costs, handles and saves"><span class="icon">$</span> Analytics <span class="badge" id="navAnalyticsCost" title="Cost per case">—</span></div>
     <div class="nav-item" id="navApprovals" onclick="go('#/approvals')"><span class="icon">A</span> Approvals <span class="badge" id="navApprovalsCount">0</span></div>
     <div class="nav-group">Govern</div>
     <div class="nav-item" id="navGuardrails" onclick="go('#/guardrails')"><span class="icon">G</span> Guardrails <span class="badge" id="navGuardrailMode">—</span></div>
@@ -939,7 +969,7 @@
         <div class="cr-annunciators" id="crAnnunciators"></div>
         <div class="cr-clock" id="crClock">--:--:--</div>
         <button class="cr-button danger" id="crReset" type="button" onclick="resetControlRoom()"
-                title="Stop everything that is running and clear all history so the next demo starts from zero">Reset</button>
+                title="Stop everything that is running and clear the work history so the next demo starts from zero (analytics keep their history)">Reset</button>
       </header>
       <section class="cr-blueprint" id="crBlueprint" tabindex="0" role="button" aria-label="Open the blueprint every colleague is hired from"></section>
       <section class="cr-wall" id="crWall" aria-live="polite">
@@ -1194,6 +1224,25 @@
         <div class="cr-panel"><div class="ws-list" id="caseList"><div class="cr-empty">Loading cases…</div></div></div>
         <div class="ws-stack" id="caseDetail"><div class="cr-empty">Choose a case to see its timeline, review and runs.</div></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══ Analytics — what the digital workforce costs, handles and saves ═══ -->
+  <div class="content cr-view" id="analyticsView">
+    <div class="cr-console">
+      <header class="ws-head">
+        <div>
+          <div class="cr-title">Analytics</div>
+          <div class="cr-subtitle" id="anSub">What the digital workforce costs per case and per interaction, how much it handles, how well, and how much self-service takes off the desk.</div>
+        </div>
+        <span class="cr-chips" id="anPeriods"></span>
+        <select class="cr-select" id="anFunction" aria-label="Function" onchange="analyticsFunction=this.value;refreshAnalytics().catch(showAnalyticsError)">
+          <option value="">All functions</option><option value="it">IT</option><option value="hr">HR</option>
+          <option value="compliance">Compliance</option><option value="supply">Supply chain</option><option value="platform">Platform</option>
+        </select>
+        <button class="cr-button" id="anAssumptionsButton" type="button" onclick="toggleAnalyticsAssumptions()">Assumptions</button>
+      </header>
+      <div id="anBody"><div class="cr-empty">Loading analytics…</div></div>
     </div>
   </div>
 
@@ -3537,7 +3586,7 @@ function closeDetail() {
 
 // ── Navigation: one view at a time, and every view has a #/ URL ──
 const VIEW_IDS = ['controlRoomView', 'colleagueView', 'dashboardView', 'runView', 'approvalsView', 'runsView',
-  'guardrailsView', 'skillsView', 'serversView', 'casesView'];
+  'guardrailsView', 'skillsView', 'serversView', 'casesView', 'analyticsView'];
 
 function setView(viewId, title, navId, subtitle) {
   for (const id of VIEW_IDS) {
@@ -3571,6 +3620,7 @@ function route() {
   switch (view) {
     case 'runs': return arg ? openRun(arg) : showRuns();
     case 'cases': return showCases(arg);
+    case 'analytics': return showAnalytics();
     case 'approvals': return showApprovals();
     case 'guardrails': return showGuardrails();
     case 'skills': return showSkills(arg);
@@ -4484,6 +4534,337 @@ function caseWhen(seconds) {
   return delta >= 0 ? `${text} ago` : `in ${text}`;
 }
 
+// ── Analytics: what the digital workforce costs, handles and saves ──
+let analyticsDays = 30;
+let analyticsFunction = '';
+let analyticsData = null;
+let analyticsShowAssumptions = false;
+let analyticsTimer = null;
+const AN_PERIODS = [[1, 'Today'], [7, '7 days'], [30, '30 days'], [90, '90 days']];
+const AN_COLORS = { infra: 'var(--cr-grey)', ai: 'var(--cr-violet)', workiq: 'var(--cr-cyan)', people: 'var(--cr-amber)',
+  interactions: 'var(--cr-indigo)', opened: 'var(--cr-cyan)', finished: 'var(--cr-green)', escalated: 'var(--cr-amber)',
+  line: 'var(--cr-primary)', self: 'var(--cr-green)', assisted: 'var(--cr-grey)' };
+window.addEventListener('autopilot-auth-lost', () => { analyticsTimer = null; analyticsData = null; });
+
+function showAnalytics() {
+  setView('analyticsView', 'Analytics', 'navAnalytics', 'cost per case and per interaction, volume, quality and self-service');
+  syncHash('#/analytics');
+  renderAnalyticsControls();
+  refreshAnalytics().catch(showAnalyticsError);
+  if (!analyticsTimer) analyticsTimer = startPolling(() => isViewActive('analyticsView') ? refreshAnalytics() : null, 60000);
+}
+
+function showAnalyticsError(error) {
+  if (!isViewActive('analyticsView')) return;
+  const status = /HTTP (\d+)/.exec(String(error && error.message))?.[1];
+  document.getElementById('anBody').innerHTML = `<div class="cr-empty">${escapeHtml(status === '503'
+    ? 'Analytics are not running on this host.' : 'Analytics could not be loaded. They refresh every minute.')}</div>`;
+}
+
+function renderAnalyticsControls() {
+  document.getElementById('anPeriods').innerHTML = AN_PERIODS.map(([days, label]) =>
+    `<button class="cr-chip${analyticsDays === days ? ' active' : ''}" type="button" onclick="analyticsDays=${days};renderAnalyticsControls();refreshAnalytics().catch(showAnalyticsError)">${escapeHtml(label)}</button>`).join('');
+  document.getElementById('anFunction').value = analyticsFunction;
+  document.getElementById('anAssumptionsButton').classList.toggle('primary', analyticsShowAssumptions);
+}
+
+async function refreshAnalytics() {
+  const params = new URLSearchParams({ days: String(analyticsDays) });
+  if (analyticsFunction) params.set('function', analyticsFunction);
+  const data = await fetchJson('/api/analytics?' + params.toString());
+  analyticsData = data;
+  const badge = document.getElementById('navAnalyticsCost');
+  if (badge) badge.textContent = data.kpis && data.kpis.costPerCase != null ? anUsd(data.kpis.costPerCase) : '—';
+  if (isViewActive('analyticsView')) renderAnalytics();
+}
+
+function toggleAnalyticsAssumptions() {
+  analyticsShowAssumptions = !analyticsShowAssumptions;
+  renderAnalyticsControls();
+  renderAnalytics();
+  if (analyticsShowAssumptions) document.getElementById('anAssumptions')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function anUsd(value) {
+  if (value === null || value === undefined || !isFinite(value)) return '—';
+  const abs = Math.abs(value);
+  const digits = abs >= 1000 ? 0 : abs >= 1 ? 2 : abs >= 0.1 ? 3 : abs === 0 ? 2 : 4;
+  return (value < 0 ? '−$' : '$') + abs.toLocaleString(undefined, { minimumFractionDigits: Math.min(digits, 2), maximumFractionDigits: digits });
+}
+function anPct(ratio) { return ratio === null || ratio === undefined || !isFinite(ratio) ? '—' : `${Math.round(ratio * 100)}%`; }
+function anNum(value) { return value === null || value === undefined ? '—' : Number(value).toLocaleString(); }
+function anMinutes(minutes) {
+  if (minutes === null || minutes === undefined) return '—';
+  if (minutes < 1) return `${Math.round(minutes * 60)} s`;
+  if (minutes < 90) return `${Math.round(minutes)} min`;
+  if (minutes < 2880) return `${(minutes / 60).toFixed(1)} h`;
+  return `${(minutes / 1440).toFixed(1)} d`;
+}
+function anWhen(seconds, hourly) {
+  const date = new Date(seconds * 1000);
+  return hourly ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+}
+function anLegend(items) {
+  return `<div class="an-legend">${items.map(item => `<span><i style="background:${item.color}"></i>${escapeHtml(item.label)}</span>`).join('')}</div>`;
+}
+function anSplit(parts, format) {
+  const total = parts.reduce((sum, part) => sum + (Number(part.value) || 0), 0);
+  if (!total) return '<div class="an-split"></div>';
+  return `<div class="an-split">${parts.filter(part => part.value > 0).map(part =>
+    `<span title="${escapeHtml(`${part.label}: ${format(part.value)} (${anPct(part.value / total)})`)}" style="width:${(part.value / total * 100).toFixed(2)}%;background:${part.color}"></span>`).join('')}</div>`;
+}
+
+// Stacked bars per bucket, with an optional line on its own scale (hover a bar for its values).
+function anBars(series, layers, { height = 150, line = null, hourly = false } = {}) {
+  const width = 640, pad = { l: 44, r: line ? 48 : 8, t: 10, b: 20 };
+  const count = series.length || 1;
+  const innerW = width - pad.l - pad.r, innerH = height - pad.t - pad.b;
+  const max = Math.max(0, ...series.map(point => layers.reduce((sum, layer) => sum + (Number(point[layer.key]) || 0), 0))) || 1;
+  const band = innerW / count;
+  const format = layers[0].format || anNum;
+  let bars = '';
+  series.forEach((point, index) => {
+    const tip = [anWhen(point.at, hourly), ...layers.map(layer => `${layer.label}: ${(layer.format || anNum)(point[layer.key] || 0)}`)];
+    if (line && point[line.key] != null) tip.push(`${line.label}: ${line.format(point[line.key])}`);
+    let y = pad.t + innerH;
+    bars += `<g><title>${escapeHtml(tip.join('\n'))}</title><rect x="${(pad.l + index * band).toFixed(1)}" y="${pad.t}" width="${band.toFixed(1)}" height="${innerH}" style="fill:transparent"></rect>`;
+    for (const layer of layers) {
+      const value = Number(point[layer.key]) || 0;
+      if (!value) continue;
+      const h = value / max * innerH;
+      y -= h;
+      bars += `<rect x="${(pad.l + index * band + band * 0.14).toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(band * 0.72, 1).toFixed(1)}" height="${Math.max(h, 0.8).toFixed(1)}" rx="1.5" style="fill:${layer.color}"></rect>`;
+    }
+    bars += '</g>';
+  });
+  const step = Math.max(1, Math.ceil(count / 8));
+  let labels = '';
+  series.forEach((point, index) => {
+    if (index % step === 0) labels += `<text x="${(pad.l + index * band + band / 2).toFixed(1)}" y="${height - 5}" text-anchor="middle">${escapeHtml(anWhen(point.at, hourly))}</text>`;
+  });
+  let overlay = '';
+  if (line) {
+    const values = series.map(point => point[line.key]).filter(value => value !== null && value !== undefined);
+    const top = Math.max(0, ...values) || 1;
+    const points = series.map((point, index) => point[line.key] === null || point[line.key] === undefined ? null
+      : [pad.l + index * band + band / 2, pad.t + innerH - point[line.key] / top * innerH]).filter(Boolean);
+    if (points.length) {
+      overlay = `<polyline points="${points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')}" style="fill:none;stroke:${line.color};stroke-width:2"></polyline>`
+        + points.map(([x, y]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" style="fill:${line.color}"></circle>`).join('')
+        + `<text x="${width - pad.r + 5}" y="${pad.t + 8}" style="fill:${line.color}">${escapeHtml(line.format(top))}</text>`;
+    }
+  }
+  return `<div class="an-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(layers.map(layer => layer.label).join(', '))} over time" style="font-size:10px;fill:var(--cr-muted)">
+    <line x1="${pad.l}" y1="${pad.t + innerH}" x2="${width - pad.r}" y2="${pad.t + innerH}" style="stroke:var(--cr-edge)"></line>
+    <line x1="${pad.l}" y1="${pad.t}" x2="${width - pad.r}" y2="${pad.t}" style="stroke:var(--cr-edge);stroke-dasharray:3 3"></line>
+    ${bars}${overlay}
+    <text x="${pad.l - 5}" y="${pad.t + 4}" text-anchor="end">${escapeHtml(format(max))}</text>
+    <text x="${pad.l - 5}" y="${pad.t + innerH}" text-anchor="end">0</text>${labels}</svg></div>`;
+}
+
+function anKpi(label, value, sub, hero) {
+  return `<div class="an-kpi${hero ? ' hero' : ''}"><div class="v">${value}</div><div class="l">${escapeHtml(label)}</div><div class="s">${sub || '&nbsp;'}</div></div>`;
+}
+
+function renderAnalytics() {
+  const body = document.getElementById('anBody');
+  const data = analyticsData;
+  if (!body || !data) return;
+  if (data.available === false) { body.innerHTML = `<div class="cr-empty">${escapeHtml(data.error || 'Analytics are not available.')}</div>`; return; }
+  const k = data.kpis, c = data.costs, q = data.quality, s = data.selfService, a = data.assumptions;
+  const hourly = data.bucket === 'hour';
+  const infra = a.infrastructure || {};
+  const period = (AN_PERIODS.find(([days]) => days === data.days) || [0, `${data.days} days`])[1].toLowerCase();
+  document.getElementById('anSub').textContent = `${data.function ? (FUNCTION_LABEL[data.function] || data.function) + ' · ' : ''}`
+    + `${period === 'today' ? 'the last 24 hours' : 'the last ' + period} · recorded since ${new Date(data.coverageSince * 1000).toLocaleDateString()}`
+    + ` · updated ${new Date(data.generatedAt * 1000).toLocaleTimeString()}`;
+  const warnings = [];
+  if (infra.error) warnings.push(`Infrastructure: ${infra.error}${infra.fixedPerDay != null ? '' : ' Its cost is left out until it can be read, or set a daily figure under Assumptions.'}`);
+  if (!s.connected && s.error) warnings.push(`Self-service: ${s.error}`);
+  if ((a.unpricedModels || []).length) warnings.push(`GitHub publishes no AI credit rate for ${a.unpricedModels.join(', ')}, so those calls are priced as GPT-5.4.`);
+
+  const saving = k.saving;
+  const perCase = k.costPerCase != null
+    ? `vs ${anUsd(k.baselineCostPerCase)} by people · <span class="${saving >= 0 ? 'an-good' : 'an-bad'}">${anPct(Math.abs(k.savingRate || 0))} ${saving >= 0 ? 'less' : 'more'}</span>`
+    : `No cases worked yet · people: ${anUsd(k.baselineCostPerCase)}`;
+  const scorecard = [
+    anKpi('Cost per case', anUsd(k.costPerCase), perCase, true),
+    anKpi('Cost per interaction', anUsd(k.costPerInteraction), `${anNum(k.interactions)} interactions · marginal ${anUsd(k.marginalCostPerCase)} a case`),
+    anKpi('Cases worked', anNum(k.casesWorked), `${anNum(k.casesOpened)} opened · ${anNum(k.casesFinished)} finished`),
+    anKpi('Resolved without a person', anPct(k.autonomousRate), `${anNum(q.outcomes.escalated)} escalated to people`),
+    anKpi('Time to resolution', anMinutes(q.resolution.median), `median · first response ${anMinutes(q.firstResponse.median)}`),
+    anKpi('Saving vs people', saving == null ? '—' : anUsd(saving), `${anNum(k.hoursAbsorbed)} h of work absorbed · ${k.fteEquivalent ?? '—'} FTE`),
+    anKpi('Self-service rate', anPct(s.demand.selfServiceRate), s.connected ? `${anNum(s.demand.selfServed)} self-served · ${anNum(s.demand.assisted)} assisted` : 'ServiceNow figures unavailable'),
+    anKpi('Spend', anUsd(k.totalCost), `≈ ${anUsd(k.projectedMonthlyCost)} a month at this rate`),
+  ].join('');
+
+  const parts = [
+    { label: 'Infrastructure (fixed)', value: c.infrastructure, color: AN_COLORS.infra },
+    { label: 'AI · Copilot SDK credits', value: c.ai, color: AN_COLORS.ai },
+    { label: 'Work IQ credits', value: c.workiq, color: AN_COLORS.workiq },
+    { label: 'People in the loop', value: c.people, color: AN_COLORS.people },
+  ];
+  const costPanel = `<div class="cr-panel"><div class="cr-panel-title">Where the money goes <span class="cr-note">${escapeHtml(`${anUsd(k.totalCost)} in the period`)}</span></div>
+    ${anBars(data.series, [
+      { key: 'infra', label: 'Infrastructure', color: AN_COLORS.infra, format: anUsd },
+      { key: 'ai', label: 'AI credits', color: AN_COLORS.ai, format: anUsd },
+      { key: 'workiq', label: 'Work IQ', color: AN_COLORS.workiq, format: anUsd },
+      { key: 'people', label: 'People in the loop', color: AN_COLORS.people, format: anUsd }],
+      { hourly, line: { key: 'costPerInteraction', label: 'Cost per interaction', color: AN_COLORS.line, format: anUsd } })}
+    ${anLegend([...parts, { label: 'Cost per interaction (right scale)', color: AN_COLORS.line }])}
+    </div>`;
+  const breakdown = `<div class="cr-panel"><div class="cr-panel-title">Cost breakdown</div>
+    ${anSplit(parts, anUsd)}
+    <div class="an-list">${parts.map(part => `<span><i style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:${part.color}"></i>${escapeHtml(part.label)}</span><span class="n">${anUsd(part.value)}</span>`).join('')}
+      <span class="ws-dim">AI credits used</span><span class="n ws-dim">${anNum(c.aiCredits)}${c.backgroundAiCredits ? ` (${anNum(c.backgroundAiCredits)} planning)` : ''}</span>
+      <span class="ws-dim">Work IQ calls</span><span class="n ws-dim">${anNum(c.workiqCalls)} · ${anNum(c.workiqCredits)} credits</span></div>
+    <div class="an-note">Infrastructure is ${infra.fixedPerDay != null ? `${anUsd(infra.fixedPerDay)} a day` : 'not known yet'}${infra.source === 'azure' ? ` (Azure Cost Management, ${escapeHtml(infra.from)} to ${escapeHtml(infra.to)})` : infra.source === 'override' ? ' (set under Assumptions)' : ''}, spread over the interactions. People: approvals, reviews and escalations at ${anUsd(a.settings.peopleHourlyUsd)} an hour.</div>
+    </div>`;
+
+  const volume = `<div class="cr-panel"><div class="cr-panel-title">Demand <span class="cr-note">${escapeHtml(`${anNum(k.interactions)} interactions, ${anNum(k.casesOpened)} cases opened`)}</span></div>
+    ${anBars(data.series, [{ key: 'interactions', label: 'Interactions', color: AN_COLORS.interactions }], { hourly, height: 120 })}
+    ${anBars(data.series, [{ key: 'opened', label: 'Cases opened', color: AN_COLORS.opened },
+      { key: 'finished', label: 'Cases finished', color: AN_COLORS.finished }], { hourly, height: 110 })}
+    ${anLegend([{ label: 'Interactions', color: AN_COLORS.interactions }, { label: 'Cases opened', color: AN_COLORS.opened }, { label: 'Cases finished', color: AN_COLORS.finished }])}
+    </div>`;
+  const channels = `<div class="cr-panel"><div class="cr-panel-title">By channel</div>
+    ${data.channels.length ? `<table class="ws-table"><thead><tr><th>Channel</th><th class="an-num">Interactions</th><th class="an-num">Cost</th><th class="an-num">Each</th></tr></thead><tbody>
+    ${data.channels.map(row => `<tr><td>${escapeHtml(row.name)}</td><td class="an-num">${anNum(row.interactions)}</td><td class="an-num">${anUsd(row.cost)}</td><td class="an-num">${anUsd(row.costPerInteraction)}</td></tr>`).join('')}
+    </tbody></table>` : '<div class="cr-empty">No interactions in this period.</div>'}
+    <div class="cr-panel-title sub">Open now</div>
+    <div class="an-list">${Object.entries(data.backlog.ages).map(([age, count]) => `<span>${escapeHtml(age)}</span><span class="n">${anNum(count)}</span>`).join('')}</div>
+    <div class="an-note">${anNum(data.backlog.open)} open cases${Object.keys(data.backlog.waiting).length ? ': ' + escapeHtml(Object.entries(data.backlog.waiting).map(([why, n]) => `${n} ${why}`).join(', ')) : ''}.</div>
+    </div>`;
+
+  const colleagues = `<div class="cr-panel" style="margin-bottom:12px"><div class="cr-panel-title">By colleague</div>
+    ${data.colleagues.length ? `<table class="ws-table"><thead><tr><th>Colleague</th><th class="an-num">Cases</th><th class="an-num">Interactions</th><th class="an-num">Cost</th><th class="an-num">Per case</th><th class="an-num">People would cost</th><th class="an-num">Without a person</th><th class="an-num">Median resolution</th></tr></thead><tbody>
+    ${data.colleagues.map(row => `<tr><td><b>${escapeHtml(row.name)}</b><div class="ws-dim">${escapeHtml(row.functionLabel || '')}${row.conversations ? ` · ${anNum(row.conversations)} conversations` : ''}</div></td>
+      <td class="an-num">${anNum(row.cases)}</td><td class="an-num">${anNum(row.interactions)}</td><td class="an-num">${anUsd(row.cost)}</td>
+      <td class="an-num">${anUsd(row.costPerCase)}</td><td class="an-num">${row.cases ? anUsd(row.baseline) : '—'}</td>
+      <td class="an-num">${anPct(row.autonomousRate)}</td><td class="an-num">${anMinutes(row.resolution.median)}</td></tr>`).join('')}
+    </tbody></table>` : '<div class="cr-empty">No work in this period.</div>'}</div>`;
+
+  const outcomes = q.outcomes;
+  const quality = `<div class="cr-panel"><div class="cr-panel-title">Quality and control</div>
+    ${anSplit([{ label: 'Closed', value: outcomes.closed, color: AN_COLORS.finished }, { label: 'Resolved, awaiting confirmation', value: outcomes.awaitingConfirmation, color: 'var(--cr-cyan)' },
+      { label: 'Escalated to people', value: outcomes.escalated, color: AN_COLORS.escalated }, { label: 'Cancelled', value: outcomes.cancelled, color: AN_COLORS.infra }], anNum)}
+    <div class="an-list">
+      <span>Closed · awaiting confirmation · escalated · cancelled</span><span class="n">${anNum(outcomes.closed)} · ${anNum(outcomes.awaitingConfirmation)} · ${anNum(outcomes.escalated)} · ${anNum(outcomes.cancelled)}</span>
+      <span>First response (median · 90th percentile)</span><span class="n">${anMinutes(q.firstResponse.median)} · ${anMinutes(q.firstResponse.p90)}</span>
+      <span>Resolution (median · 90th percentile)</span><span class="n">${anMinutes(q.resolution.median)} · ${anMinutes(q.resolution.p90)}</span>
+      <span>Reopened after resolution</span><span class="n">${anPct(q.reopenRate)}</span>
+      <span>Model turns per case</span><span class="n">${q.turnsPerCase ?? '—'}</span>
+      <span>Failed interactions</span><span class="n ${q.runFailures ? 'an-bad' : ''}">${anNum(q.runFailures)} (${anPct(q.runFailureRate)})</span>
+      <span>Guardrail blocks · escalations</span><span class="n">${anNum(q.guardrails.deny)} · ${anNum(q.guardrails.escalate)}</span>
+      <span>Approvals asked · approved · rejected</span><span class="n">${anNum(q.approvals.requested)} · ${anNum(q.approvals.approved)} · ${anNum(q.approvals.rejected)}</span>
+      <span>Time to an approval (median)</span><span class="n">${anMinutes(q.approvals.decisionTime.median)}</span>
+    </div></div>`;
+
+  const demand = s.demand;
+  const assets = s.assets || [];
+  const selfService = `<div class="cr-panel"><div class="cr-panel-title">Self-service <span class="cr-note">${escapeHtml(s.connected ? 'ServiceNow demand in the period' : 'ServiceNow figures unavailable')}</span></div>
+    ${s.connected ? `${anSplit([{ label: 'Self-served (catalog requests and knowledge use)', value: demand.selfServed, color: AN_COLORS.self },
+      { label: 'Assisted (incidents and cases)', value: demand.assisted, color: AN_COLORS.assisted }], anNum)}
+    <div class="an-list">
+      <span>Self-service rate</span><span class="n an-good">${anPct(demand.selfServiceRate)}</span>
+      <span>Catalog requests · knowledge article uses</span><span class="n">${anNum(demand.catalogRequests)} · ${anNum(demand.knowledgeUses)}</span>
+      <span>Incidents · raised through self-service</span><span class="n">${anNum(demand.incidents)} · ${anNum(demand.incidentsSelfRaised)}</span>
+      <span>Published articles · active catalog items</span><span class="n">${anNum(demand.publishedArticles)} · ${anNum(demand.activeCatalogItems)}</span>
+      <span>Answered in a conversation, no case needed</span><span class="n">${anNum(s.resolvedInConversation)}</span>
+    </div>` : `<div class="an-list"><span>Answered in a conversation, no case needed</span><span class="n">${anNum(s.resolvedInConversation)}</span></div>`}
+    <div class="cr-panel-title sub">New self-service content <span class="cr-note">${escapeHtml(`${anNum(s.assetsByColleagues)} by the colleagues · ${anNum(s.casesAvoided)} requests handled by it since · ≈ ${anUsd(s.avoidedValueAtBaseline)} of desk work at ${anUsd(a.settings.baselineCostPerCase)} a case`)}</span></div>
+    ${assets.length ? `<table class="ws-table"><thead><tr><th>Article or catalog item</th><th>By</th><th>Created</th><th class="an-num">Used since</th></tr></thead><tbody>
+      ${assets.map(item => `<tr><td>${escapeHtml(item.title || item.number || item.sysId)}<div class="ws-dim">${item.kind === 'knowledge' ? `Knowledge article${item.number ? ' ' + escapeHtml(item.number) : ''} · ${escapeHtml(item.state || 'draft')}` : `Catalog item · ${item.active ? 'published' : 'draft'}`}</div></td>
+        <td>${item.colleague ? `<b>${escapeHtml(item.colleague)}</b>` : '<span class="ws-dim">ServiceNow</span>'}</td><td>${escapeHtml(new Date(item.created * 1000).toLocaleDateString())}</td><td class="an-num">${item.uses === null || item.uses === undefined ? '—' : anNum(item.uses)}</td></tr>`).join('')}
+      </tbody></table>` : '<div class="cr-empty">No new knowledge articles or catalog items in this period.</div>'}
+    <div class="cr-panel-title sub">Recurring themes: candidates for self-service</div>
+    ${(s.themes || []).length ? s.themes.map(theme => `<div class="an-theme"><div class="t">${escapeHtml(theme.theme)} <span class="ws-dim">· ${anNum(theme.cases)} cases</span></div><div class="x">${theme.examples.map(escapeHtml).join(' · ')}</div></div>`).join('')
+      : '<div class="an-note">No theme recurs across two or more cases in this period.</div>'}
+    ${s.connected && (demand.topRequests || []).length ? `<div class="cr-panel-title sub">Most requested catalog items</div><div class="an-list">${demand.topRequests.map(item => `<span>${escapeHtml(item.name)}</span><span class="n">${anNum(item.count)}</span>`).join('')}</div>` : ''}
+    </div>`;
+
+  const topCases = `<div class="cr-panel"><div class="cr-panel-title">Most expensive cases</div>
+    ${data.topCases.length ? `<table class="ws-table"><thead><tr><th>Case</th><th class="an-num">Interactions</th><th class="an-num">AI</th><th class="an-num">Work IQ</th><th class="an-num">Platform</th><th class="an-num">People</th><th class="an-num">Total</th></tr></thead><tbody>
+    ${data.topCases.map(row => `<tr class="click" onclick="go(${jsString('#/cases/' + row.key)})"><td>${escapeHtml(row.number ? row.number + ' · ' : '')}${escapeHtml(row.title)}<div class="ws-dim">${escapeHtml(row.colleague)} · ${escapeHtml(row.status)} · ${anNum(row.turns)} turns</div></td>
+      <td class="an-num">${anNum(row.interactions)}</td><td class="an-num">${anUsd(row.parts.ai)}</td><td class="an-num">${anUsd(row.parts.workiq)}</td><td class="an-num">${anUsd(row.parts.infra)}</td><td class="an-num">${anUsd(row.parts.people)}</td><td class="an-num"><b>${anUsd(row.cost)}</b></td></tr>`).join('')}
+    </tbody></table>` : '<div class="cr-empty">No cases in this period.</div>'}</div>`;
+
+  const models = `<div class="cr-panel"><div class="cr-panel-title">Models</div>
+    ${data.models.length ? `<table class="ws-table"><thead><tr><th>Model</th><th class="an-num">Calls</th><th class="an-num">Tokens in · cached · out</th><th class="an-num">AI credits</th><th class="an-num">Cost</th></tr></thead><tbody>
+    ${data.models.map(row => `<tr><td>${escapeHtml(row.model)}${row.priced ? '' : ' <span class="dec warn" title="No GitHub rate: priced as GPT-5.4">rate?</span>'}${row.background ? '<div class="ws-dim">includes planning and summaries</div>' : ''}</td><td class="an-num">${anNum(row.calls)}</td>
+      <td class="an-num">${anNum(row.in)} · ${anNum(row.cached)} · ${anNum(row.out)}</td><td class="an-num">${anNum(row.credits)}</td><td class="an-num">${anUsd(row.usd)}</td></tr>`).join('')}
+    </tbody></table>` : '<div class="cr-empty">No model calls in this period.</div>'}</div>`;
+
+  body.innerHTML = `${warnings.map(text => `<div class="an-warn">${escapeHtml(text)}</div>`).join('')}
+    <div class="an-kpis">${scorecard}</div>
+    <div class="an-grid">${costPanel}${breakdown}</div>
+    <div class="an-grid">${volume}${channels}</div>
+    ${colleagues}
+    <div class="an-grid even">${quality}${selfService}</div>
+    <div class="an-grid even">${topCases}${models}</div>
+    ${analyticsShowAssumptions ? renderAnalyticsAssumptions(a) : ''}`;
+}
+
+function renderAnalyticsAssumptions(a) {
+  const settings = a.settings || {};
+  const infra = a.infrastructure || {};
+  const field = (key, label, step, value) => `<label>${escapeHtml(label)}<input type="number" min="0" step="${step}" data-an="${escapeHtml(key)}" value="${escapeHtml(value ?? '')}" placeholder="${key === 'dailyInfraUsd' ? escapeHtml(infra.derived != null || infra.fixedPerDay != null ? `derived: ${anUsd(infra.derived ?? infra.fixedPerDay)}` : 'derived from Azure') : ''}"></label>`;
+  const baseline = settings.baselineByFunction || {};
+  const services = (infra.services || []).map(item => `<span>${escapeHtml(item.name)}${item.fixed ? '' : ' <span class="ws-dim">(model tokens: counted as AI credits, not here)</span>'}</span><span class="n">${anUsd(item.perDay)} a day</span>`).join('');
+  const prices = Object.entries(a.prices || {}).map(([model, rate]) => `<span>${escapeHtml(model)}</span><span class="n">$${rate.input} · $${rate.cachedInput} · $${rate.output}${rate.longContextAbove ? ` (above ${anNum(rate.longContextAbove)} input tokens: higher tier)` : ''}</span>`).join('');
+  return `<div class="cr-panel" id="anAssumptions"><div class="cr-panel-title">Assumptions <span class="cr-note">Every figure above is computed from these, and from what the colleagues actually did.</span></div>
+    <div class="an-form">
+      ${field('baselineCostPerCase', 'What a case costs with people today ($)', '0.5', settings.baselineCostPerCase)}
+      ${['it', 'hr', 'compliance', 'supply'].map(fn => `<label>${escapeHtml((FUNCTION_LABEL[fn] || fn) + ' case with people ($, blank = same)')}<input type="number" min="0" step="0.5" data-an-fn="${fn}" value="${escapeHtml(baseline[fn] ?? '')}"></label>`).join('')}
+      ${field('humanHandleMinutes', 'Minutes a person spends on a case', '1', settings.humanHandleMinutes)}
+      ${field('peopleHourlyUsd', 'Loaded hourly rate for people ($)', '1', settings.peopleHourlyUsd)}
+      ${field('approvalMinutes', 'Minutes per approval', '0.5', settings.approvalMinutes)}
+      ${field('escalationMinutes', 'Minutes per escalation', '1', settings.escalationMinutes)}
+      ${field('reviewReplyMinutes', 'Minutes per review reply', '0.5', settings.reviewReplyMinutes)}
+      ${field('workIqCreditsPerCall', 'Work IQ credits per call (estimate)', '0.1', settings.workIqCreditsPerCall)}
+      ${field('dailyInfraUsd', 'Infrastructure per day ($, blank = derive)', '0.01', settings.dailyInfraUsd)}
+    </div>
+    <div class="ws-row" style="margin-top:10px"><button class="cr-button primary" type="button" onclick="saveAnalyticsAssumptions(this)">Save assumptions</button><span class="ws-dim" id="anSaveNote"></span></div>
+    <div class="an-grid even" style="margin-top:12px;margin-bottom:0">
+      <div><div class="cr-panel-title sub">Infrastructure per day <span class="cr-note">${escapeHtml(infra.source === 'azure' || infra.derived != null
+        ? `Azure Cost Management, average of ${infra.days} complete days (${infra.from} to ${infra.to})` : infra.error || 'not derived')}</span></div>
+        <div class="an-list">${services || '<span class="ws-dim">No Azure cost detail.</span><span></span>'}<span><b>Fixed per day</b></span><span class="n"><b>${anUsd(infra.fixedPerDay)}</b></span></div></div>
+      <div><div class="cr-panel-title sub">AI credit rates <span class="cr-note">USD per million tokens: input · cached · output</span></div><div class="an-list">${prices}</div></div>
+    </div>
+    <div class="an-note">AI: GitHub Copilot SDK AI credits at $${a.usdPerCredit} each; the SDK's own figure when it reports one, otherwise each call's tokens at GitHub's published model rates.
+      With your own Azure OpenAI key (BYOK), Azure also bills those tokens as Foundry Models; that meter is left out of the infrastructure figure so tokens aren't counted twice.
+      Work IQ: Copilot Credits at $${a.usdPerCredit} each, estimated per call because Microsoft bills Work IQ by variable usage; check Microsoft 365 admin center, Copilot, Cost management and set the rate you see.
+      A case's cost is its interactions (AI and Work IQ), their share of the fixed infrastructure and background model use, and the people time it needed. Analytics keep their history when the control room is reset.</div>
+    </div>`;
+}
+
+async function saveAnalyticsAssumptions(button) {
+  const panel = document.getElementById('anAssumptions');
+  const note = document.getElementById('anSaveNote');
+  const values = {};
+  for (const input of panel.querySelectorAll('input[data-an]')) {
+    const key = input.dataset.an;
+    if (input.value === '') { if (key === 'dailyInfraUsd') values[key] = null; continue; }
+    values[key] = Number(input.value);
+  }
+  values.baselineByFunction = {};
+  for (const input of panel.querySelectorAll('input[data-an-fn]')) {
+    if (input.value !== '') values.baselineByFunction[input.dataset.anFn] = Number(input.value);
+  }
+  button.disabled = true;
+  note.textContent = 'Saving…';
+  try {
+    const response = await fetch('/api/analytics/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
+    if (!response.ok) throw new Error(await response.text() || `HTTP ${response.status}`);
+    note.textContent = 'Saved.';
+    await refreshAnalytics();
+  } catch (error) {
+    note.textContent = `Not saved: ${String(error.message || error).slice(0, 200)}`;
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function showCases(key) {
   setView('casesView', 'Cases', 'navCases', 'second-line work from every channel, until closed');
   syncHash(key ? `#/cases/${encodeURIComponent(key)}` : '#/cases');
@@ -5147,7 +5528,7 @@ async function restoreColleague(id) {
 
 async function resetControlRoom() {
   if (!window.autopilotAuth?.isAuthenticated()) return;
-  if (!confirm('Reset the control room?\n\nThis stops everything that is running and clears all activity, runs, chat memory, approvals waiting on people and compliance cases. Approved skills and systems, isolation and the tool deny-list are kept. Salesforce records are not deleted.')) return;
+  if (!confirm('Reset the control room?\n\nThis stops everything that is running and clears all activity, runs, chat memory, approvals waiting on people and compliance cases. Approved skills and systems, isolation, the tool deny-list and analytics history are kept. Salesforce records are not deleted.')) return;
   const button = document.getElementById('crReset');
   if (button) button.disabled = true;
   try {

@@ -313,6 +313,18 @@ var acrPull = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 var blobContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 var openaiUser = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 var secretsUser = '4633458b-17de-408a-b874-0445c86b69e6'
+var costReader = '72fafb9e-0641-4937-9268-a91bfd8191a3'
+
+// Analytics derive the fixed daily infrastructure cost from this resource group's Azure Cost Management data.
+resource costManagementReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, identity.id, costReader)
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', costReader)
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+  dependsOn: [guard]
+}
 
 resource stateWriter 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(storage.id, identity.id, blobContributor)
@@ -424,6 +436,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = if (deployApp) {
           { name: 'ENABLE_A365_OBSERVABILITY_EXPORTER', value: 'false' }
           { name: 'AUTOPILOT_COMPLIANCE_BINDINGS', value: complianceBindings }
           { name: 'AUTOPILOT_COMPLIANCE_TEAMS_CHANNEL', value: 'graph' }
+          { name: 'AUTOPILOT_COST_SCOPE', value: resourceGroup().id }
         ], mcpEnvironment, deskEnvironment)
         resources: { cpu: json('1.0'), memory: '2Gi' }
         probes: [
@@ -435,7 +448,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = if (deployApp) {
       terminationGracePeriodSeconds: 60
     }
   }
-  dependsOn: [stateWriter, inferenceUser, imagePull, blueprintCredentialReader, perimeterStorage, perimeterVault, webhookSecretReaders]
+  dependsOn: [stateWriter, inferenceUser, imagePull, blueprintCredentialReader, perimeterStorage, perimeterVault, webhookSecretReaders, costManagementReader]
 }
 
 output identityResourceId string = identity.id

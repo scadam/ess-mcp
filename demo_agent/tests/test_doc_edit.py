@@ -12,10 +12,11 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
+import httpx
 from lxml import etree
 
 from demo_agent import case_work, doc_edit
-from demo_agent.agent_comms import AgentComms, CommsError, FileConflict
+from demo_agent.agent_comms import AgentComms, CommsError, FileConflict, FileLocked
 from demo_agent.case_desk import CaseDesk, CaseEvent, DeskBinding
 from demo_agent.case_work import CaseWork, DOC_TOOLS, tools_for, turn_prompt
 from demo_agent.conversation_memory import SQLiteStore
@@ -232,6 +233,7 @@ class FakeFiles:
         self.data, self.version, self.collisions, self.saves = data, 1, 0, 0
         self.posted: list[tuple[str, str]] = []
         self.refuse_saves = False
+        self.locked = False  # Open for editing in Word: its co-authoring session holds the file.
 
     def available(self, binding: Any) -> bool:
         return True
@@ -246,6 +248,8 @@ class FakeFiles:
     async def replace_file(self, binding: Any, drive: str, item: str, data: bytes, etag: str, content_type: str) -> dict[str, Any]:
         if self.refuse_saves:
             raise CommsError("Graph refused the upload (HTTP 403).")
+        if self.locked:
+            raise FileLocked("The document is open for editing in Word.")
         if self.collisions:
             self.collisions -= 1
             self.data, _ = doc_edit.apply_changes(self.data, author="Compliance Agent", edits=[
@@ -330,8 +334,90 @@ class DocumentCaseTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sent["channel"], "teams")
         self.assertEqual(self.files.posted, [("19:chat", "Which country?")])
 
+    async def test_changes_wait_for_word_to_close_the_document_then_save_with_the_reply(self) -> None:
+        self.files.locked = True
+        edit = {"paragraph": "p1A2B0003", "mode": "insert_after", "text": "Up to 20 working days (W1)."}
+        with patch.object(case_work, "DOC_LOCK_POLL_SECONDS", 0.0):
+            held = await self.work.run_tool("edit_document", {"edits": [edit]})
+            self.assertEqual((held["saved"], held["waitingForWordToClose"]), (False, True))
+            with self.assertRaises(doc_edit.DocumentError):  # A later edit must still apply to the file as it is.
+                await self.work.run_tool("edit_document", {"edits": [{"paragraph": "#99", "mode": "append", "text": "x"}]})
+            result = await self.work.run_tool("resolve", {"resolution": "Added W1.", "message_to_requester": "Added the rules.",
+                                                          "confirm_within_hours": 24})
+            self.assertEqual(result["told_requester_by"], "teams")
+            [(chat, notice)] = self.files.posted
+            self.assertEqual(chat, "19:chat")
+            self.assertIn("open for editing", notice)
+            self.assertIn("Added the rules.", notice)
+            case = await self.desk.get(self.key)
+            self.assertEqual(case["documentSave"]["edits"], [[edit]])
+            self.assertIn("Added the rules.", case["documentSave"]["reply"])
+            self.assertTrue((await self.desk.list_cases())[0]["held"])
+            self.assertEqual(self.files.saves, 0)
+            self.files.locked = False  # The requester closes the document.
+            await asyncio.wait_for(self.work._savers[self.key], 5)
+        self.assertEqual(self.files.saves, 1)  # The changes and the reply go in together.
+        texts = [doc_edit._text(p) for p in part(self.files.data, "word/document.xml").iter(w("p"))]
+        self.assertIn("Up to 20 working days (W1).", texts)
+        reply = part(self.files.data, "word/comments.xml").findall(w("comment"))[-1]
+        self.assertEqual(reply.get(w("author")), "HR Agent")
+        self.assertIn("Added the rules.", "".join(reply.itertext()))
+        case = await self.desk.get(self.key)
+        self.assertNotIn("documentSave", case)
+        self.assertFalse((await self.desk.list_cases())[0]["held"])
+        kinds = [item["kind"] for item in case["timeline"]]
+        self.assertLess(kinds.index("document.waiting"), kinds.index("document.edited"))
+        self.assertTrue(self.files.posted[-1][1].startswith("Saved: my tracked changes are now in Guidelines.docx"))
+
+    async def test_a_held_change_that_no_longer_applies_is_dropped_and_the_requester_told(self) -> None:
+        self.files.locked = True
+        with patch.object(case_work, "DOC_LOCK_POLL_SECONDS", 0.0):
+            await self.work.run_tool("edit_document", {"edits": [{"paragraph": "p1A2B0003", "mode": "replace", "text": "New."}]})
+            # While it was open, someone else changed that paragraph as a tracked change.
+            self.files.data, _ = doc_edit.apply_changes(self.files.data, author="Compliance Agent", edits=[
+                {"paragraph": "p1A2B0003", "mode": "replace", "text": "Other."}])
+            self.files.locked = False
+            await asyncio.wait_for(self.work._savers[self.key], 5)
+        self.assertEqual(self.files.saves, 0)
+        case = await self.desk.get(self.key)
+        self.assertNotIn("documentSave", case)
+        self.assertIn("document.not_saved", [item["kind"] for item in case["timeline"]])
+        self.assertIn("I couldn't save my tracked changes into Guidelines.docx", self.files.posted[-1][1])
+
+    async def test_a_held_save_resumes_after_a_restart(self) -> None:
+        self.files.locked = True
+        await self.work.run_tool("edit_document", {"edits": [
+            {"paragraph": "p1A2B0006", "mode": "append", "text": "Shred them in a bank office (D4)."}]})
+        saver = self.work._savers[self.key]
+        saver.cancel()  # The host stopped while Word held the document.
+        with self.assertRaises(asyncio.CancelledError):
+            await saver
+        self.files.locked = False
+        restarted = CaseWork(object(), self.desk, self.files)  # type: ignore[arg-type]
+        with patch.object(case_work, "DOC_LOCK_POLL_SECONDS", 0.0):
+            self.assertEqual(await restarted.resume(), 1)
+            await asyncio.wait_for(restarted._savers[self.key], 5)
+        self.assertEqual(self.files.saves, 1)
+        self.assertIn("Keep printed documents secure. Shred them in a bank office (D4).",
+                      [doc_edit._text(p) for p in part(self.files.data, "word/document.xml").iter(w("p"))])
+        self.assertEqual(self.files.posted, [])  # Nobody was told it was waiting, so no "saved" notice either.
+
 
 class EventAndCommsTests(unittest.IsolatedAsyncioTestCase):
+    async def test_a_save_word_is_holding_is_reported_as_open_for_editing(self) -> None:
+        comms = AgentComms(lambda: None, TENANT)
+        sent: dict[str, str] = {}
+
+        async def fake_send(binding: Any, method: str, path: str, body: Any = None, headers: Any = None,
+                            content: Any = None) -> httpx.Response:
+            sent.update(headers or {})
+            return httpx.Response(423, json={"error": {"code": "resourceLocked"}})
+
+        comms._send = fake_send  # type: ignore[method-assign]
+        with self.assertRaisesRegex(FileLocked, "open for editing in Word"):
+            await comms.replace_file(HR, "b!drive", "item-1", b"docx", '"v1"', doc_edit.DOCX_TYPE)
+        self.assertEqual(sent["If-Match"], '"v1"')
+
     def test_only_sharepoint_document_links_are_kept_and_a_thread_continues_its_case(self) -> None:
         event = comment_event()
         self.assertEqual(event.channel["documentUrl"], URL)  # Not scrubbed, though the host looks like a token.

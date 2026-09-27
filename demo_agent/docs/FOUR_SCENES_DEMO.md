@@ -207,7 +207,13 @@ anything beyond it comes to you for approval in Teams. Those changes are real, a
    Share with edit access, and post.
 3. Each colleague replies in its comment thread within seconds: *"On it. I'll make the change in the document as
    tracked edits…"*. **Control plane → Cases** shows two document cases.
-4. In 1–3 minutes each colleague finishes and replies in its comment thread with what it changed and why:
+4. **Close the document** (close the tab, or go back to the OneDrive folder) and keep **Control plane → Cases** on
+   screen. *"Live co-authoring is something Office apps do with each other. The colleagues work through Microsoft
+   Graph, which saves whole files, and Microsoft 365 won't let anything save over a document someone has open for
+   editing. So they queue their tracked changes and save the moment I let go."* If a colleague finishes while the
+   document is still open, its case timeline says it's waiting for Word, and it tells you in Teams.
+5. In 1–3 minutes each colleague saves its tracked changes and its reply in the comment thread (if it had to wait,
+   shortly after Microsoft 365 releases the closed document; it checks every 15 seconds):
    - **HR Agent** inserts the rules under section 4 as tracked changes, from the policy (W1–W9):
      - Up to 20 working days in 12 months with manager agreement.
      - 21–60 days needs the exception panel; over 60 days isn't permitted.
@@ -217,10 +223,10 @@ anything beyond it comes to you for approval in Teams. Those changes are real, a
    - **Compliance Agent** makes these tracked changes in section 5:
      - It replaces the personal-email sentence (a data-protection breach) with the compliant route.
      - It inserts the missing client data and conduct requirements, each citing its rule (D1–D9).
-5. **Refresh** the browser tab (or close and reopen the document) to load the colleagues' saved version. Open
-   **Review → Tracked changes**: the insertions and deletions are attributed to *HR Agent* and *Compliance Agent*.
-   Accept the HR changes, and accept or reject the compliance changes one by one. *"The human stays the author and
-   the approver; the colleagues do the drafting and the checking."*
+6. **Reopen** the document when both case timelines show *tracked change(s) in …*. Open **Review → Tracked
+   changes**: the insertions and deletions are attributed to *HR Agent* and *Compliance Agent*, and each colleague
+   has replied in its comment thread. Accept the HR changes, and accept or reject the compliance changes one by one.
+   *"The human stays the author and the approver; the colleagues do the drafting and the checking."*
 
 ---
 
@@ -230,6 +236,12 @@ anything beyond it comes to you for approval in Teams. Those changes are real, a
   and document reads and edits), with the linked ServiceNow, Salesforce or document record.
 - **Control plane → Runs**: every turn as a run, with the model, tools, sub-agents, duration and outcome. Filed runs
   link to their evidence in the records library.
+- **Control plane → Analytics**: what the work cost and what it saved. Cost per case and per interaction against what a
+  case costs with people today; spend split into the fixed daily infrastructure (derived from Azure Cost Management),
+  Copilot SDK AI credits, Work IQ credits and people-in-the-loop time. Also demand by channel, quality (resolved
+  without a person, response and resolution times, escalations, approvals) and self-service: the ServiceNow demand
+  mix, and the knowledge articles and catalog items the colleagues created, with their use since. Choose **Today**
+  to show just this demo; the history is kept when you reset.
 - **The systems of record**: ServiceNow work notes and resolution, Salesforce case comments, and Word tracked changes
   and comment replies.
 - **Microsoft 365**: each colleague acts as its own Entra agent identity, so Entra sign-in logs, Purview and the
@@ -240,8 +252,13 @@ anything beyond it comes to you for approval in Teams. Those changes are real, a
 - **Word notifications are the newest path.** Scene D depends on Word delivering comment @mentions to Agent 365
   agents in this tenant. Rehearse it: if no "On it" reply arrives within a minute, check the comment used a real
   @mention (a name chip, not plain text) and that the file is shared with the colleague with edit access.
-- **Changes appear after a refresh.** Word for the web doesn't redraw a version saved by someone else while you
-  have the file open.
+- **The colleagues can't save into a document that's open for editing.** Live co-authoring works between Office apps
+  (Word for the web, desktop and mobile), which sync small changes with each other. The colleagues work through
+  Microsoft Graph, which can only replace the whole file, and Microsoft 365 refuses that with *423 Locked* while
+  anyone has the file open for editing. Reviewing mode is still editing, and switching to Viewing doesn't release
+  the file straight away. The colleagues queue their changes and replies, check every 15 seconds (every minute after
+  the first ten), save as soon as Microsoft 365 releases the file, and keep trying for two hours before telling you
+  in Teams that they couldn't. The release is usually quick after you close the tab, but it can take a few minutes.
 - **Pre-fill depends on the model.** Copilot usually pre-fills the incident caller and the "Raised by" field from the
   signed-in user; check them before submitting. With the current plugin settings (no user sign-in), a blank caller
   would default to the ServiceNow integration account, and the IT Service Agent then couldn't find Aadi in Teams.
@@ -256,7 +273,7 @@ anything beyond it comes to you for approval in Teams. Those changes are real, a
 | The IT Service Agent writes on the ticket instead of Teams | The caller isn't *Aadi Kapoor*, so there was no one to find in the directory. (The colleague creates the Teams chat itself; none needs to exist.) |
 | The Compliance Agent doesn't message Aisha | The form's *Raised by* and *Work email* were blank. Raise it again with them filled in. |
 | No reply in the group chat | The message didn't contain a real @mention of the colleague. |
-| Word: "On it" arrives but no changes | The colleague replies in the thread if it can't save (for example, the file was moved). Refresh first; saves retry automatically when the file changed underneath. |
+| Word: "On it" arrives but no changes | The document is still open for editing somewhere: another tab, Word desktop or another person. Close every copy; the case timeline says the colleague is waiting for Word until then, and it saves once Microsoft 365 releases the file. If it can't save at all (for example, the file was moved), it tells you in Teams. |
 
 ## Reset between runs
 
@@ -265,11 +282,12 @@ anything beyond it comes to you for approval in Teams. Those changes are real, a
 ```
 
 Then upload a fresh copy of the Word draft. Teams chats can stay; the colleagues' chat memory is cleared by the
-reset.
+reset. Analytics keep their history, so use the **Today** period to show only the current run.
 
 ## Short version (12 minutes)
 
 1. Scene A to the Teams clarification and the fix (4 min).
 2. Scene B to the clearance message (3 min).
 3. Scene D with the HR comment only (4 min).
-4. Close on the control plane's case timelines and the records library (1 min).
+4. Close on the control plane's case timelines, **Analytics** (cost per case against people) and the records library
+   (1 min).

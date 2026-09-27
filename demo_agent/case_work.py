@@ -15,7 +15,7 @@ import time
 from typing import Any, Callable
 
 from . import doc_edit
-from .agent_comms import AgentComms, CommsError, FileConflict
+from .agent_comms import AgentComms, CommsError, FileConflict, FileLocked
 from .case_desk import FINAL_STATES, FUNCTION_LABELS, CaseDesk, CaseEvent, DeskBinding
 
 _logger = logging.getLogger("group-functions-autopilot.case-work")
@@ -106,11 +106,15 @@ DOC_TOOLS: tuple[dict[str, Any], ...] = (
           "paragraphs; **bold** is allowed), replace swaps that paragraph's text (or only the exact `find` words in "
           "it) and shows the old text as deleted, append adds text at its end. Change only what the comment asks "
           "for, in the document's own voice and formatting. Then tell the requester what you changed with "
-          "case__resolve; your message appears as your reply to their comment.",
+          "case__resolve; your message appears as your reply to their comment. If Word has the document open for "
+          "editing, the result says the save is waiting for it to close: that is handled for you, so don't retry.",
           {"edits": {"type": "array", "minItems": 1, "maxItems": 12, "items": _EDIT}}, ("edits",)),
 )
 DOC_LIMIT = 20 * 1024 * 1024
 DOC_RETRY_SECONDS = 8.0
+DOC_LOCK_POLL_SECONDS = 15.0  # How often a save held off by Word is retried; slower after the first ten minutes.
+DOC_LOCK_WAIT_SECONDS = 2 * HOUR
+DOC_HELD_BATCHES = 6
 
 
 def _document_case(case: dict[str, Any] | None) -> bool:
@@ -154,8 +158,10 @@ def turn_prompt(case: dict[str, Any], events: list[dict[str, Any]], binding: Des
         lines.append(f"This is a Word comment on the document {_fence(channel.get('document') or 'the document')}: "
                      "read it with doc__read_document, make the change it asks for in place with doc__edit_document "
                      "(tracked changes the requester accepts), then case__resolve. Your messages to the requester "
-                     "are posted as replies to their comment. Document work needs no new system-of-record entry "
-                     "unless your playbook says the matter itself does.")
+                     "are posted as replies to their comment (while Word has the document open for editing, they "
+                     "are saved with your changes when it closes, and the requester is told in Teams meanwhile). "
+                     "Document work needs no new system-of-record entry unless your playbook says the matter "
+                     "itself does.")
     if case.get("resolution"):
         lines.append(f"Resolution already given: {case['resolution'][:400]}")
     if case.get("review"):
@@ -188,6 +194,7 @@ class CaseWork:
         self.host = host
         self.desk = desk
         self.comms = comms
+        self._savers: dict[str, asyncio.Task[Any]] = {}
 
     # ── the turn ──
     async def work(self, case: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
@@ -240,15 +247,25 @@ class CaseWork:
             return "salesforce"
         return ""
 
-    async def _deliver(self, key: str, binding: DeskBinding, case: dict[str, Any], message: str) -> str:
+    async def _deliver(self, key: str, binding: DeskBinding, case: dict[str, Any], message: str, *,
+                       in_document: bool = True) -> str:
         """Reach the requester where they are; returns the channel used."""
         requester = case.get("requester") or {}
         origin = case["origin"]["channel"]
         who = requester.get("aadObjectId") or requester.get("email") or requester.get("name") or ""
-        if _document_case(case) and self.comms.available(binding):
+        if in_document and _document_case(case) and self.comms.available(binding):
             try:
+                if case.get("documentSave"):
+                    raise FileLocked("Earlier changes are still waiting for Word to close the document.")
                 await self._reply_in_document(binding, case, message)
                 return "document"
+            except FileLocked:
+                # The reply goes into the comment thread with the held changes; the requester hears now in Teams.
+                await self._hold_for_word(key, binding, reply=message, told=True)
+                name = origin.get("document") or "the document"
+                message = (f"Word has {name} open for editing, which holds the file until it's closed, so my tracked "
+                           f"changes and this reply will be saved into it as soon as it closes. Close it when you're "
+                           f"ready and reopen it a minute later to review them.\n\n{message}")
             except (CommsError, doc_edit.DocumentError) as error:
                 _logger.info("case.document reply fell back to Teams: %s", type(error).__name__)
         if origin.get("kind") == "email" and origin.get("messageId") and self.comms.available(binding):
@@ -463,13 +480,30 @@ class CaseWork:
         if view["target"] is None:
             view["note"] = ("The comment that asked you is not in the saved file yet or was resolved; use the case "
                             "events for what was asked, and the paragraph refs as they are now.")
+        if case.get("documentSave"):
+            view["held"] = ("Your earlier changes are queued until Word closes the document, so they are not in this "
+                            "read yet; don't make them again.")
         return {"document": item["name"], "link": item["webUrl"], **view}
 
     async def _edit_document(self, key: str, binding: DeskBinding, case: dict[str, Any],
                              args: dict[str, Any]) -> dict[str, Any]:
         document = self._document(case)
-        item, summary = await self._write_document(
-            binding, document, lambda data: doc_edit.apply_changes(data, author=binding.name, edits=args["edits"]))
+        edits = args["edits"]
+        try:
+            if case.get("documentSave"):
+                # Queue behind the held changes, once these are known to apply to the file as it is now.
+                _item, data = await self._load_document(binding, document)
+                doc_edit.apply_changes(data, author=binding.name, edits=edits)
+                raise FileLocked("Earlier changes are still waiting for Word to close the document.")
+            item, summary = await self._write_document(
+                binding, document, lambda data: doc_edit.apply_changes(data, author=binding.name, edits=edits))
+        except FileLocked:
+            await self._hold_for_word(key, binding, edits=edits)
+            return {"saved": False, "waitingForWordToClose": True, "author": binding.name, "note": (
+                "Word has the document open for editing, and Microsoft 365 refuses any other save until it is "
+                "closed. Your tracked changes apply cleanly and are queued: they are saved automatically as soon as "
+                "it closes. Carry on with case__resolve; your message goes under their comment with the changes, and "
+                "the requester is told in Teams straight away.")}
         await self._timeline(key, "document.edited", f"{len(summary['applied'])} tracked change(s) in {item['name']}",
                              binding.name)
         return {"saved": True, "document": item["name"], "link": item["webUrl"], "trackedChanges": summary["applied"],
@@ -485,6 +519,141 @@ class CaseWork:
             return doc_edit.apply_changes(data, author=binding.name, reply_to=target, reply=message)
 
         await self._write_document(binding, document, reply)
+
+    # ── saves Word holds off while the document is open for editing ──
+    async def _hold_for_word(self, key: str, binding: DeskBinding, *, edits: list[dict[str, Any]] | None = None,
+                             reply: str = "", told: bool = False) -> None:
+        """Queue changes on the case file (so a restart keeps them) and make sure a saver waits for Word to close."""
+        started: list[bool] = []
+
+        def hold(case: dict[str, Any]) -> None:
+            started.clear()  # The store may retry this transform.
+            pending = case.get("documentSave")
+            if not pending:
+                pending = case["documentSave"] = {"edits": [], "reply": "", "since": time.time(), "told": False}
+                started.append(True)
+            if edits:
+                if len(pending["edits"]) >= DOC_HELD_BATCHES:
+                    raise doc_edit.DocumentError("Too many changes are already waiting for Word to close the document.")
+                pending["edits"] = [*pending["edits"], list(edits)]
+            if reply:
+                pending["reply"] = reply
+            pending["told"] = pending["told"] or told
+
+        await self.desk.update(key, hold)
+        if started:
+            await self._timeline(key, "document.waiting", "Word has the document open for editing, which holds it; "
+                                 "my changes will be saved as soon as it is closed", binding.name)
+        self._start_saver(key)
+
+    def _start_saver(self, key: str) -> None:
+        task = self._savers.get(key)
+        if task is None or task.done():
+            task = asyncio.get_running_loop().create_task(self._save_when_closed(key))
+            self._savers[key] = task
+            self.desk._track(task)
+
+    async def resume(self) -> int:
+        """After a restart, go back to waiting on every document whose save Word was still holding off."""
+        rows = [row for row in await self.desk.list_cases(limit=400) if row.get("held")]
+        for row in rows:
+            self._start_saver(row["key"])
+        return len(rows)
+
+    async def _save_when_closed(self, key: str) -> None:
+        """Model-free: retry the held save until Word lets go of the document, then tell the requester."""
+        failures = 0
+        while True:
+            case = await self.desk.get(key)
+            pending = (case or {}).get("documentSave")
+            binding = self.desk.bindings.get((case or {}).get("function", ""))
+            if not pending or binding is None or not _document_case(case):
+                return
+            waited = time.time() - pending["since"]
+            if waited > DOC_LOCK_WAIT_SECONDS:
+                await self._drop_held_save(key, binding, case, "it stayed open for editing in Word for "
+                                           f"{DOC_LOCK_WAIT_SECONDS / HOUR:g} hours.")
+                return
+            await asyncio.sleep(DOC_LOCK_POLL_SECONDS if waited < 600 else 4 * DOC_LOCK_POLL_SECONDS)
+            case = await self.desk.get(key)
+            pending = (case or {}).get("documentSave")
+            if not pending:
+                return
+            document = self._document(case)
+            batches, reply = [list(batch) for batch in pending["edits"]], pending["reply"]
+
+            def change(data: bytes) -> tuple[bytes, dict[str, Any]]:
+                summary: dict[str, Any] = {"applied": [], "reply": ""}
+                for batch in batches:
+                    data, done = doc_edit.apply_changes(data, author=binding.name, edits=batch)
+                    summary["applied"] += done["applied"]
+                target = self._target(data, binding, document)["target"] if reply else None
+                if target is not None:
+                    data, done = doc_edit.apply_changes(data, author=binding.name, reply_to=target, reply=reply)
+                    summary["reply"] = done["reply"]
+                return data, summary
+
+            try:
+                item, summary = await self._write_document(binding, document, change)
+            except FileLocked:
+                continue
+            except doc_edit.DocumentError as error:
+                await self._drop_held_save(key, binding, case, f"the document changed while it was open ({error})")
+                return
+            except CommsError as error:
+                failures += 1
+                if failures < 5:
+                    continue
+                await self._drop_held_save(key, binding, case, str(error))
+                return
+            failures = 0
+            await self._after_held_save(key, binding, pending, batches, reply, item, summary)
+
+    async def _after_held_save(self, key: str, binding: DeskBinding, pending: dict[str, Any],
+                               batches: list[list[dict[str, Any]]], reply: str, item: dict[str, Any],
+                               summary: dict[str, Any]) -> None:
+        def saved(case: dict[str, Any]) -> None:
+            current = case.get("documentSave") or {}
+            left = current.get("edits", [])[len(batches):]
+            later_reply = current.get("reply", "") if current.get("reply") != reply else ""
+            if left or later_reply:
+                current["edits"], current["reply"] = left, later_reply  # Queued while this save was in flight.
+            else:
+                case.pop("documentSave", None)
+
+        case = await self.desk.update(key, saved)
+        waited = max(1, round((time.time() - pending["since"]) / 60))
+        if summary["applied"]:
+            await self._timeline(key, "document.edited", f"{len(summary['applied'])} tracked change(s) in {item['name']}, "
+                                 f"saved when Word closed it (held for about {waited} min)", binding.name)
+        if summary["reply"]:
+            await self._timeline(key, "colleague.message", f"To requester by document: {reply}", binding.name)
+        if not pending.get("told"):
+            return
+        text = (f"Saved: my tracked changes are now in {item['name']}"
+                + (" with my reply under your comment" if summary["reply"] else "")
+                + ". Open it and use Review → Tracked changes to accept or reject them"
+                + (f": {item['webUrl']}" if item.get("webUrl") else "."))
+        if reply and not summary["reply"]:
+            text += f"\n\nYour comment has gone, so here is my reply:\n\n{reply}"
+        try:
+            await self._deliver(key, binding, case, text, in_document=False)
+        except CommsError:
+            _logger.info("case.document saved notice not delivered")
+
+    async def _drop_held_save(self, key: str, binding: DeskBinding, case: dict[str, Any], reason: str) -> None:
+        def drop(item: dict[str, Any]) -> None:
+            item.pop("documentSave", None)
+
+        case = await self.desk.update(key, drop)
+        await self._timeline(key, "document.not_saved", f"My held changes were not saved: {reason}", binding.name)
+        name = case["origin"]["channel"].get("document") or "the document"
+        try:
+            await self._deliver(key, binding, case, f"I couldn't save my tracked changes into {name}: {reason} Reply "
+                                "to your comment and @mention me once it's closed, and I'll make them again.",
+                                in_document=False)
+        except CommsError:
+            _logger.info("case.document not-saved notice not delivered")
 
     # ── inbound routing ──
     async def requester_reply(self, binding: DeskBinding, sender_aad: str, text: str, message_id: str,

@@ -120,7 +120,26 @@ class HarnessTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.deleted, [config["session_id"]])
         self.assertIn(("turn", {"turn": 1, "model": "gpt-5.4", "agent": ""}), events)
         self.assertIn(("usage", {"model": "gpt-5.4", "agent": "", "input_tokens": 120, "output_tokens": 8,
-                                 "finish_reason": "stop", "cached_tokens": 0}), events)
+                                 "finish_reason": "stop", "cached_tokens": 0, "nano_aiu": None}), events)
+
+    async def test_the_sdks_own_ai_credit_figure_is_passed_on_and_short_answers_report_usage(self) -> None:
+        async def script(session: FakeSession, prompt: str) -> Any:
+            session.emit(event("assistant.usage", model="gpt-5.4", input_tokens=50, output_tokens=5, finish_reason="stop",
+                               copilot_usage=SimpleNamespace(total_nano_aiu=2_500_000_000.0)))
+            return reply("Done.")
+
+        client = FakeClient(script)
+        spec, events, _calls = self.spec()
+        await self.run_spec(client, spec)
+        usage = next(data for kind, data in events if kind == "usage")
+        self.assertEqual(usage["nano_aiu"], 2_500_000_000.0)
+        harness = CopilotHarness("https://example.openai.azure.com/", token=lambda: asyncio.sleep(0, "token"))
+        harness._client = client
+        seen: list[dict[str, Any]] = []
+        harness.on_usage = seen.append
+        self.assertEqual(await harness.complete("Plan.", "Hello", model="gpt-5.4-mini"), "Done.")
+        self.assertEqual([(item["model"], item["input_tokens"], item["nano_aiu"]) for item in seen],
+                         [("gpt-5.4", 50, 2_500_000_000.0)])
 
     async def test_sub_agents_are_custom_agents_and_their_calls_are_attributed(self) -> None:
         async def script(session: FakeSession, prompt: str) -> Any:

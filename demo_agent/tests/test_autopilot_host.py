@@ -390,10 +390,43 @@ class HostTests(unittest.IsolatedAsyncioTestCase):
     async def test_reader_cannot_fetch_full_runs_or_evidence(self) -> None:
         self.validator.validate.return_value = self.reader
         client = await self.client()
-        for path in ("/api/runs", "/api/runs/run-secret/evidence", "/api/governance", "/api/skills", "/api/agentic-instances"):
+        for path in ("/api/runs", "/api/runs/run-secret/evidence", "/api/governance", "/api/skills", "/api/agentic-instances",
+                     "/api/analytics", "/api/analytics/settings"):
             response = await client.get(path, headers=AUTH)
             with self.subTest(path=path):
                 self.assertEqual(response.status, 403)
+
+    async def test_analytics_costs_every_finished_run_and_the_operator_sets_the_assumptions(self) -> None:
+        ledger = host.AnalyticsLedger(MemoryStore(), TENANT, flush_delay=0)
+        ledger.since = time.time() - 8 * 86400  # Recording for longer than the period.
+        self.addAsyncCleanup(ledger.close)
+        with patch.multiple(host, _analytics=ledger, _desk=None):
+            with self.scoped():
+                self.record("run-costed")
+            stats: dict[str, Any] = {}
+            host._record_usage(stats, "gpt-5.4", "orchestrator", 100_000, 2_000, 40_000)
+            host._publish_run_event("run-costed", "tool_call", {"id": "w1", "server": "workiq", "tool": "fetch"})
+            host._publish_run_event("run-costed", "stats", stats)
+            host._publish_run_event("run-costed", "done", {})
+            self.assertAlmostEqual(stats["ai_credits"], 19.0)
+            client = await self.client()
+            response = await client.get("/api/analytics?days=7", headers=AUTH)
+            self.assertEqual(response.status, 200)
+            report = await response.json()
+            self.assertEqual((report["kpis"]["interactions"], report["costs"]["workiqCalls"]), (1, 1))
+            self.assertAlmostEqual(report["costs"]["ai"], 0.19)
+            self.assertEqual(report["assumptions"]["infrastructure"]["source"], "unconfigured")
+            self.assertFalse(report["selfService"]["connected"])
+            self.assertIn("ServiceNow", report["selfService"]["error"])
+            self.assertEqual((await client.get("/api/analytics?days=5", headers=AUTH)).status, 400)
+            self.assertEqual((await client.get("/api/analytics?function=finance", headers=AUTH)).status, 400)
+            saved = await client.put("/api/analytics/settings", headers=AUTH, json={"baselineCostPerCase": 55, "dailyInfraUsd": 4})
+            self.assertEqual(saved.status, 200)
+            self.assertEqual((await saved.json())["settings"]["baselineCostPerCase"], 55.0)
+            self.assertEqual((await client.put("/api/analytics/settings", headers=AUTH, json={"nope": 1})).status, 400)
+            again = await (await client.get("/api/analytics?days=7", headers=AUTH)).json()
+            self.assertEqual((again["assumptions"]["infrastructure"]["source"], again["costs"]["infrastructure"]),
+                             ("override", 28.0))
 
     async def test_public_config_health_and_only_exact_assets(self) -> None:
         # Requires the coordinated control_auth public /app-config update.
