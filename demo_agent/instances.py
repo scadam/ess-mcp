@@ -22,6 +22,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import time
 import urllib.parse
 from dataclasses import dataclass, field, asdict
@@ -37,6 +38,8 @@ GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 # name-prefix matching is a legacy fallback for tenants that don't expose the
 # field yet.
 DEFAULT_INSTANCE_PREFIXES = "Compliance Partner"
+PHOTO_TYPES = frozenset({"image/jpeg", "image/png", "image/gif", "image/webp"})
+PHOTO_MAX_BYTES = 1_048_576
 
 
 @dataclass
@@ -56,6 +59,7 @@ class AgenticInstance:
     manager_email: str = ""
     discovered_at: float = field(default_factory=time.time)
     notes: str = ""
+    photo_version: str = ""  # changes whenever an admin sets a new profile photo; "" when there is none
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -104,6 +108,7 @@ class InstanceDirectory:
         self._cache: list[AgenticInstance] = []
         self._cache_at: float = 0.0
         self._lock = asyncio.Lock()
+        self._photos: dict[str, tuple[str, tuple[bytes, str] | None]] = {}
 
     @property
     def enabled(self) -> bool:
@@ -140,6 +145,34 @@ class InstanceDirectory:
     async def invalidate(self) -> None:
         self._cache = []
         self._cache_at = 0.0
+
+    async def photo(self, instance: AgenticInstance) -> tuple[bytes, str] | None:
+        """The colleague's profile photo (bytes, content type), read once per photo version; None if it has none."""
+        if not self.enabled or not instance.user_id or not instance.photo_version:
+            return None
+        cached = self._photos.get(instance.user_id)
+        if cached is not None and cached[0] == instance.photo_version:
+            return cached[1]
+        user = urllib.parse.quote(instance.user_id, safe="")
+        found: tuple[bytes, str] | None = None
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            for path in (f"/users/{user}/photos/96x96/$value", f"/users/{user}/photo/$value"):
+                try:
+                    resp = await client.get(GRAPH_BASE + path, headers={"Authorization": f"Bearer {self._token()}"})
+                except Exception as exc:
+                    logger.info("Profile photo read failed: %s", type(exc).__name__)
+                    return None  # Transient: try again on the next request.
+                if resp.status_code == 404:
+                    continue  # Entra-only photos have no sized copies.
+                if resp.status_code != 200:
+                    logger.info("Profile photo read failed (HTTP %s)", resp.status_code)
+                    return None
+                content_type = resp.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+                if content_type in PHOTO_TYPES and 0 < len(resp.content) <= PHOTO_MAX_BYTES:
+                    found = (resp.content, content_type)
+                break
+        self._photos[instance.user_id] = (instance.photo_version, found)
+        return found
 
     # ---- Internals ------------------------------------------------------
 
@@ -378,6 +411,19 @@ class InstanceDirectory:
             inst.manager_display_name = manager.get("displayName", "")
             inst.manager_upn = manager.get("userPrincipalName", "") or ""
             inst.manager_email = manager.get("mail", "") or inst.manager_upn
+        inst.photo_version = await self._photo_version(client, inst.user_id)
+
+    async def _photo_version(self, client: httpx.AsyncClient, user_id: str) -> str:
+        """Version of the profile photo an admin set (for example in the Microsoft 365 admin center)."""
+        try:
+            data = await self._graph_get(client, f"{GRAPH_BASE}/users/{urllib.parse.quote(user_id, safe='')}/photo")
+        except Exception as exc:
+            logger.info("Profile photo metadata read failed: %s", type(exc).__name__)
+            return ""
+        if not data:
+            return ""
+        version = str(data.get("@odata.mediaEtag") or f"{data.get('width')}x{data.get('height')}")
+        return re.sub(r"[^A-Za-z0-9]", "", version)[:40] or "photo"
 
     async def _lookup_user(self, client: httpx.AsyncClient, name_or_upn: str) -> dict[str, Any] | None:
         # Try UPN/email first if it looks like one.

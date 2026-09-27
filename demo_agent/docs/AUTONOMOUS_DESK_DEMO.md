@@ -8,6 +8,9 @@ governed and every file it creates is filed as evidence.
 
 Full run: about 25 minutes. Short version: 12 minutes (see the end).
 
+For the Copilot, Teams and Word version (a crash incident, a share-dealing question, showcase skills in chats and
+tracked-change edits in a Word draft), see [FOUR_SCENES_DEMO.md](FOUR_SCENES_DEMO.md).
+
 Control plane: <https://ca-autopilot-caldova-78f0.livelysky-91807d17.eastus2.azurecontainerapps.io/control-plane#/cases>
 
 ---
@@ -34,8 +37,9 @@ records library <https://caldova74201480.sharepoint.com/sites/autopilot-records>
 ### ServiceNow sign-ins for the demo people
 
 `infra/demo/New-ServiceNowInstance.ps1` (or a setup run) gives these ServiceNow users one demo password and the roles
-every MCP tool's REST calls need (`itil`, `approver_user`, `knowledge`, `catalog_admin`, `asset`), through the group
-*Autopilot Demo Users*. None is privileged, so the IT desk will still reset them and the access review ignores them.
+every MCP tool's REST calls need (`itil`, `approver_user`, `knowledge`, `catalog_admin`, `asset`,
+`snc_platform_rest_api_access`), through the group *Autopilot Demo Users*. None is privileged, so the IT desk will
+still reset them and the access review ignores them. Each setup run also unlocks them (except Aisha).
 
 `kian.lambert`, `aisha.west`, `colin.ballinger`, `karin.blair`, `daisy.phillips`, `elvia.atkins`, `kadji.bell`,
 `kenvin.sturis`. The password is printed by `New-ServiceNowInstance.ps1` and kept in Key Vault as
@@ -51,20 +55,23 @@ every MCP tool's REST calls need (`itil`, `approver_user`, `knowledge`, `catalog
 ## If the ServiceNow instance was reclaimed (about 10 minutes)
 
 1. Create a new developer instance at developer.servicenow.com and note its name (`dev123456`) and `admin` password.
-2. Run:
+2. Sign in to it as `admin` and create the OAuth client (developer instances refuse REST basic auth, so the script
+   can't create it for you): **System OAuth > Application Registry > New > Create an OAuth API endpoint for external
+   clients**, name *Group Functions Autopilot*, redirect URL `https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect`.
+   Save, reopen it, and copy the client ID and secret.
+3. Run:
 
    ```powershell
    .\infra\demo\New-ServiceNowInstance.ps1 -Instance dev123456
    ```
 
-   It asks for the admin password and a password for the demo people (Enter generates one), then:
-   creates the OAuth client (password grant for the MCP server, authorization code for the declarative agent in
-   Teams), stores the credentials in Key Vault, points the ServiceNow MCP server at the new instance, and runs the
-   provisioning job: support groups and owners, the demo people with sign-in passwords and roles, Kian's and Aisha's
-   laptops with warranty data, the loaner catalog item, outbound email, and the signed webhook business rule.
-   It ends by listing the sign-ins and the OAuth details for the declarative agent (`-RevealOAuthSecret` prints the
-   client secret once, if you register the plugin with OAuth).
-3. If the declarative agent's ServiceNow plugin uses OAuth, update its registration in the Teams Developer Portal
+   It asks for the client ID and secret, the admin password and a password for the demo people (Enter generates
+   one). It checks the client issues an admin token, stores the credentials in Key Vault, points the ServiceNow MCP
+   server at the new instance, and runs the provisioning job: support groups and owners, the demo people with
+   sign-in passwords and roles, Kian's and Aisha's laptops with warranty data, the loaner catalog item, outbound
+   email, and the signed webhook business rule. It ends by listing the sign-ins and the OAuth details for the
+   declarative agent.
+4. If the declarative agent's ServiceNow plugin uses OAuth, update its registration in the Teams Developer Portal
    with the new client ID, secret and URLs.
 
 ## 15 minutes before
@@ -76,15 +83,15 @@ every MCP tool's REST calls need (`itil`, `approver_user`, `knowledge`, `catalog
    .\infra\demo\Reset-Demo.ps1
    ```
 
-   About ten minutes. It restarts Coupa's simulated data, resets the control room (cases, runs, activity, approvals;
-   approved skills stay), closes last run's demo incidents and cases, restores the ServiceNow people, lock-out and
-   laptops, and raises fresh records. The colleagues start at once.
+   About ten minutes. It closes last run's demo incidents and cases, restarts Coupa's simulated data, resets the
+   control room (cases, runs, activity, approvals; approved skills stay), restores the ServiceNow people, lock-out
+   and laptops, and raises fresh records. The colleagues start at once.
 3. Open **Cases**. Before you start you should see, all worked with nobody touching them:
 
    | Case | Colleague | Where it should be |
    |---|---|---|
    | *Laptop shuts down on battery after about 20 minutes* (Kian) | IT Agent | Waiting for the vendor: replacement ordered, deskside swap booked |
-   | *Pre-approval: Wimbledon debenture seats from TechDirect* (Colin) | Compliance Agent | Waiting for Colin: four questions sent in Teams |
+   | *Pre-approval: Wimbledon debenture seats from TechDirect* (Colin) | Compliance Agent | Waiting for Colin: questions sent in Teams |
    | *Pre-clearance: buy 500 Northbridge Renewables shares* (Aisha) | Compliance Agent | Resolved: declined, Aisha told |
    | *Invoice INV-TD-88213 from TechDirect UK Ltd is ap_hold…* (Colin) | Supply Chain Agent | Waiting for Colin: was the price rise agreed? |
    | *Invoice INV-INS-4471 from Insight Enterprise Technology is pending_receipt…* (Karin) | Supply Chain Agent | Waiting for Karin: did the other 8 arrive? |
@@ -104,8 +111,8 @@ on that queue picked it up. Let's look at one."
 notes. It read the attached battery report and ran its diagnostic script: full-charge capacity 26,904 mWh against a
 57,000 mWh design (47.2%), 912 cycles, a critical shutdown at 4%. It matched the serial number (7GHX2Z3) to Kian's
 Dell Latitude 7440, found the warranty ended on 30 June 2026, so policy says replace rather than repair. It ordered
-the standard laptop through the ServiceNow catalog, booked a deskside swap with data transfer, told Kian on the
-ticket, and set itself a 48-hour follow-up.
+the standard laptop through the ServiceNow catalog (and usually a loaner, because Kian travels to clients), booked a
+deskside swap with data transfer, told Kian on the ticket in plain English, and set itself a 48-hour follow-up.
 
 **Do:** open the incident in ServiceNow: the work notes, Kian's update, the request (REQ…) and the task (TASK…).
 
@@ -140,10 +147,12 @@ treats a lock-out from an unknown location as a possible compromise for Security
 seats worth about £420. The Compliance Agent checked Coupa, found TechDirect is an active supplier with a contract
 to March 2027, and asked Colin only what the records couldn't tell it."
 
-**Do:** in Colin's Teams, show the Compliance Agent's four questions, then reply:
+**Do:** in Colin's Teams, show the Compliance Agent's questions (one message: the date, his role, who the second seat
+is for, travel, anything else from TechDirect this year), then reply:
 
-> It's just me: the second seat is for TechDirect's account director. Only the seats and lunch, no travel or hotel.
-> Nothing else from TechDirect in the last 12 months, and they're not in any live tender.
+> 3 July 2027. I'm the Sourcing and Procurement Manager. It's just me: the second seat is for TechDirect's account
+> director. Only the seats and lunch, no travel or hotel. Nothing else from TechDirect in the last 12 months, and
+> they're not in any live tender or renewal.
 
 **Expect:** the colleague screens the facts with its script: above £250 is within its own pre-approval authority,
 but above £100 needs Colin's line manager. It opens a Teams review chat with **Isaac Fielder** and posts a brief.

@@ -79,14 +79,16 @@ dates you have not checked. Internal reasoning, evidence and handover detail go 
    - Book the deskside swap with `servicenow__create_incident_task` (Deskside Support), including data transfer.
    If there is no report, ask the caller to run the vendor diagnostic (how is in the policy) and attach the report;
    wait for it.
-5. Tell the caller the plan and realistic timing in one message, then `case__wait` for the vendor or the delivery
-   with a follow-up that matches the lead time. When the swap is done, `case__resolve`.
+5. Message the caller with `case__message_requester` (expects_reply false): what is wrong, what you ordered or
+   booked, and realistic timing, in one short message. Then `case__wait` for the vendor or the delivery with a
+   follow-up that matches the lead time. When the swap is done, `case__resolve`.
 
 ## Runbook C — software, access or equipment request that the portal did not satisfy
 
 Find the catalog item (`servicenow__list_catalog_items`), check the policy's entitlement rules, and order it on the
-caller's behalf. ServiceNow runs the manager or owner approval itself; `case__wait` for approval and resolve once
-fulfilled. If nothing in the catalog fits, say so and escalate to the service owner with the business need.
+caller's behalf. Tell the caller what you ordered with `case__message_requester` (expects_reply false); ServiceNow
+runs the manager or owner approval itself, so `case__wait` for approval and resolve once fulfilled. If nothing in
+the catalog fits, say so and escalate to the service owner with the business need.
 
 ## Runbook D — outages, security and anything beyond the desk
 
@@ -95,7 +97,31 @@ Suspected phishing, account compromise, malware or data loss: escalate immediate
 one exists (`servicenow__list_problems`) and escalate to the resolver group. Anything needing hands, a change or a
 judgement you do not have: escalate with the diagnosis complete so nobody has to ask the caller again.
 
+## Runbook E — crashes, blue screens, freezes and "out of memory" errors
+
+1. Gather the facts yourself first: `servicenow__get_user_devices` for the caller (model, warranty, and the
+   configuration item's notes: build, BIOS and driver versions), `servicenow__list_problems` for a known error on
+   that model or driver, and `servicenow__search_knowledge` for the matching article, which lists what to ask.
+   `servicenow__list_incidents` with the symptoms shows whether colleagues had the same thing and how it was fixed.
+2. Ask the caller, in one warm message with `case__message_requester` (expects_reply true), only what the records
+   cannot tell you: the stop code on the blue screen, when it started and whether that was after an update, how
+   often and with which apps, and whether the Dell diagnostic (F12 at start-up) shows an error code. Say what you
+   already found (for example "your laptop had a graphics driver update on 18 September") so they see why you ask.
+3. When they answer, decide:
+   - **Known error matches** (same model and driver, the symptoms the problem describes, diagnostics pass or not
+     run): apply the problem's workaround. For the Latitude 7440 graphics driver, order **Remote remediation:
+     graphics driver rollback** with `servicenow__order_catalog_item` (requested_for the caller). Write the problem
+     number, the evidence and the order in a `case__note`. Tell the caller exactly what will happen and what to do
+     (two restarts when prompted) and `case__resolve` with a 24-hour confirmation window, asking them to reply if it
+     crashes again.
+   - **Memory hardware fault** (ePSA 2000-0122 to 2000-0126, or Windows Memory Diagnostic found problems): save
+     their answer as `data/diagnostic.txt`, run `diagnose_device.py` on it and follow Runbook B.
+   - **Neither**: escalate to End User Computing with everything you found and the caller's answers.
+4. If they reply that it still crashes after the fix, reopen the diagnosis: ask for the Dell diagnostic result and
+   follow Runbook B, or escalate.
+
 ## After a fix without a knowledge article
 
 If the fix is likely to recur and `servicenow__search_knowledge` finds no article, draft one with
-`servicenow__create_knowledge_article` so first line can deflect it next time.
+`servicenow__create_knowledge_article` so first line can deflect it next time. Skip this when a known-error problem
+already documents the workaround: link the problem instead.

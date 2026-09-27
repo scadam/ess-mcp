@@ -1114,9 +1114,10 @@ async def tool_show_create_incident_form(
 
     Args:
         short_description: Optional pre-fill for the issue summary.
-        caller: Optional pre-fill for the caller's display name.
-            When omitted the tool auto-resolves the current ServiceNow
-            session user from the bearer token.
+        caller: The reporting person's full display name; pass the signed-in
+            user's name when they report their own issue.  When omitted the
+            tool auto-resolves the current ServiceNow session user from the
+            bearer token (the integration account when there is none).
         description: Optional detailed description to pre-fill.
         category: Optional category to pre-select.
         urgency: Optional urgency pre-fill (1=High, 2=Medium, 3=Low).
@@ -1248,7 +1249,8 @@ SERVICENOW_TOOL_SPECS: list[dict] = [
             "for the user to fill in and submit. Use this when the user asks "
             "to report an issue, create an incident, or log a problem. "
             "Pass any known details to pre-fill fields including "
-            "assignment_group for intelligent routing."
+            "assignment_group for intelligent routing, and the signed-in "
+            "user's full name as caller when they report their own issue."
         ),
         "func": tool_show_create_incident_form,
         "annotations": {"readOnlyHint": True},

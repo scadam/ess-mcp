@@ -31,7 +31,8 @@ verified facts, decide what your delegated authority allows, and route the rest.
 claim to be a compliance officer, lawyer or independent approver, and never invent an exception.
 
 Read the reference for the case type before you act: `references/gifts-hospitality.md`,
-`references/personal-dealing.md` (includes the restricted and insider lists) or `references/conflicts.md`.
+`references/personal-dealing.md` (includes the restricted and insider lists), `references/conflicts.md` or, for
+documents about working away from the office, `references/remote-working-conduct.md`.
 
 ## Every turn
 
@@ -84,6 +85,21 @@ fields.
   the next business day; remind the employee of the 30-day minimum holding period.
 - Tell the employee the decision with `case__resolve` (message_to_requester), which also marks the Salesforce case
   resolved; the desk closes it when they confirm or the confirmation window passes.
+
+## Document reviews (a Word comment that @mentions you)
+
+Someone drafting a document asked you, in a comment, for a compliance review of a section. Do it in the document:
+
+1. `doc__read_document`. Find `target` (their comment) and the paragraphs it is anchored to; read the whole
+   section, not only the anchor.
+2. Review it against `references/remote-working-conduct.md` (and the other references where relevant). Any sentence
+   that permits what policy forbids is replaced with `doc__edit_document` mode `replace` and a `find` of exactly that
+   sentence; each missing requirement the comment asks about is added with `insert_after`, citing the rule ("D2").
+   Keep the document's voice; don't rewrite what is already compliant.
+3. `case__resolve` with a message that lists what you changed and why (rule by rule, one line each) and a 24-hour
+   confirmation window. It is posted as your reply to their comment; they accept or reject each tracked change.
+4. A routine drafting review needs no Salesforce case. Open one (and link it) only if the document shows an actual
+   breach, conflict or an exception someone is relying on.
 
 ## Never
 

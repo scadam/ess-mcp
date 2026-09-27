@@ -22,24 +22,39 @@ function Get-DemoOperatorToken {
   $token
 }
 
-function Get-DemoVaultSecretUri([string] $Name) {
-  "https://management.azure.com/subscriptions/$DemoSubscription/resourceGroups/$DemoResourceGroup/providers/" +
-  "Microsoft.KeyVault/vaults/$DemoVault/secrets/$($Name)?api-version=2023-07-01"
+function Invoke-DemoArm {
+  # Direct Resource Manager calls: the containerapp CLI extension can stall silently on job commands.
+  param([string] $Method = 'Get', [Parameter(Mandatory)][string] $Path, $Body)
+  if (-not $script:DemoArmToken -or ((Get-Date) - $script:DemoArmTokenAt).TotalMinutes -gt 30) {
+    $script:DemoArmToken = az account get-access-token --resource 'https://management.azure.com/' --query accessToken -o tsv
+    $script:DemoArmTokenAt = Get-Date
+  }
+  $request = @{ Method = $Method; Uri = "https://management.azure.com$Path"; TimeoutSec = 120
+                Headers = @{ Authorization = "Bearer $script:DemoArmToken" } }
+  if ($null -ne $Body) { $request.ContentType = 'application/json'; $request.Body = $Body | ConvertTo-Json -Depth 20 -Compress }
+  Invoke-RestMethod @request
+}
+
+function Get-DemoAppPath([string] $App) {
+  "/subscriptions/$DemoSubscription/resourceGroups/$DemoResourceGroup/providers/Microsoft.App/containerApps/$($App)?api-version=2024-03-01"
+}
+
+function Get-DemoApp([string] $App) { Invoke-DemoArm -Path (Get-DemoAppPath $App) }
+
+function Get-DemoVaultSecretPath([string] $Name) {
+  "/subscriptions/$DemoSubscription/resourceGroups/$DemoResourceGroup/providers/Microsoft.KeyVault/vaults/$DemoVault/" +
+  "secrets/$($Name)?api-version=2023-07-01"
 }
 
 function Set-DemoVaultSecret {
   # Through Azure Resource Manager: the vault's data plane is closed to public networks.
   param([Parameter(Mandatory)][ValidatePattern('^[a-z0-9-]+$')][string] $Name, [Parameter(Mandatory)][string] $Value)
-  $token = az account get-access-token --resource 'https://management.azure.com/' --query accessToken -o tsv
-  $body = @{ properties = @{ value = $Value } } | ConvertTo-Json -Compress
-  Invoke-RestMethod -Method Put -Uri (Get-DemoVaultSecretUri $Name) -Headers @{ Authorization = "Bearer $token" } `
-    -ContentType 'application/json' -Body $body | Out-Null
+  Invoke-DemoArm -Method Put -Path (Get-DemoVaultSecretPath $Name) -Body @{ properties = @{ value = $Value } } | Out-Null
 }
 
 function Test-DemoVaultSecret([string] $Name) {
-  $token = az account get-access-token --resource 'https://management.azure.com/' --query accessToken -o tsv
   try {
-    Invoke-RestMethod -Uri (Get-DemoVaultSecretUri $Name) -Headers @{ Authorization = "Bearer $token" } | Out-Null
+    Invoke-DemoArm -Path (Get-DemoVaultSecretPath $Name) | Out-Null
     $true
   } catch {
     if ($_.Exception.Response.StatusCode.value__ -eq 404) { $false } else { throw }
@@ -51,8 +66,7 @@ function Wait-DemoApp {
   param([Parameter(Mandatory)][string] $App, [int] $TimeoutSeconds = 600)
   $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
   while ((Get-Date) -lt $deadline) {
-    $state = az containerapp show -n $App -g $DemoResourceGroup -o json |
-      ConvertFrom-Json
+    $state = Get-DemoApp $App
     $fqdn = $state.properties.configuration.ingress.fqdn
     if ($state.properties.latestReadyRevisionName -eq $state.properties.latestRevisionName) {
       try {
@@ -64,6 +78,36 @@ function Wait-DemoApp {
     Start-Sleep -Seconds 10
   }
   throw "$App did not become healthy within $TimeoutSeconds seconds."
+}
+
+function Start-DemoJob {
+  # Creates or updates a manual Container Apps job from a definition, starts it and waits for the execution.
+  param([Parameter(Mandatory)][string] $Job, [Parameter(Mandatory)][hashtable] $Definition, [string] $Label = $Job,
+        [int] $TimeoutMinutes = 20)
+  $path = "/subscriptions/$DemoSubscription/resourceGroups/$DemoResourceGroup/providers/Microsoft.App/jobs/$Job"
+  Invoke-DemoArm -Method Put -Path "$($path)?api-version=2024-03-01" -Body $Definition | Out-Null
+  foreach ($i in 1..60) {
+    $state = (Invoke-DemoArm -Path "$($path)?api-version=2024-03-01").properties.provisioningState
+    if ($state -eq 'Succeeded') { break }
+    if ($state -in 'Failed', 'Canceled') { throw "The $Job job definition ended $state." }
+    Start-Sleep -Seconds 5
+  }
+  $execution = (Invoke-DemoArm -Method Post -Path "$path/start?api-version=2024-03-01" -Body @{}).name
+  if (-not $execution) { throw "The $Job job did not start." }
+  Write-Host "$Label -> $execution" -NoNewline
+  $status = ''
+  $deadline = (Get-Date).AddMinutes($TimeoutMinutes)
+  while ((Get-Date) -lt $deadline) {
+    Start-Sleep -Seconds 10
+    $status = (Invoke-DemoArm -Path "$path/executions/$($execution)?api-version=2024-03-01").properties.status
+    if ($status -in 'Succeeded', 'Failed', 'Stopped', 'Degraded') { break }
+    Write-Host '.' -NoNewline
+  }
+  Write-Host " $status"
+  if ($status -ne 'Succeeded') {
+    throw "$Job execution $execution ended '$status'. Its log is in Log Analytics (ContainerAppConsoleLogs, ContainerGroupName startswith '$execution')."
+  }
+  $execution
 }
 
 function New-DemoSecret([int] $Length = 40) {

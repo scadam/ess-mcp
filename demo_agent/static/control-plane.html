@@ -41,12 +41,18 @@
 
   /* Main */
   .main { flex: 1; min-width: 0; overflow-y: auto; }
-  .topbar { height: 42px; padding: 0 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--chrome); }
-  .topbar h3 { font-size: 13px; font-weight: 700; color: var(--cp-text); }
-  .topbar h3::after { content: attr(data-subtitle); display: block; font-size: 10px; font-weight: 500; color: var(--muted); margin-top: 1px; }
+  .main > .topbar { height: 40px; min-height: 40px; padding: 0 14px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; background: var(--chrome); }
+  .topbar .crumbs { display: flex; align-items: center; gap: 7px; min-width: 0; }
+  .topbar .crumbs .autopilot-tab { padding: 0; border: 0; background: none; font-size: 12px; font-weight: 650; flex-shrink: 0; }
+  .topbar .crumbs .autopilot-tab:hover { text-decoration: underline; }
+  .topbar .crumb-sep { color: var(--dim); font-size: 12px; }
+  .topbar h3 { font-size: 12.5px; font-weight: 700; color: var(--cp-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .topbar .spacer { flex: 1; }
-  .server-dots { display: flex; gap: 8px; align-items: center; }
-  .server-dot { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); padding: 3px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); text-transform: capitalize; }
+  .topbar .auth-context { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; font-weight: 600; color: var(--cp-text); }
+  .topbar .auth-session-button { padding: 4px 10px; font-size: 11px; }
+  .server-dots { display: flex; gap: 2px; align-items: center; padding: 3px 6px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); cursor: pointer; flex-shrink: 0; }
+  .server-dots:hover { border-color: var(--accent); }
+  .server-dot { display: flex; align-items: center; gap: 4px; font-size: 9.5px; font-weight: 700; letter-spacing: .03em; color: var(--muted); padding: 0 4px; font-family: var(--cp-font-mono); }
   .server-dot .dot { width: 6px; height: 6px; border-radius: 50%; }
   .server-dot .dot.on { background: var(--green); box-shadow: 0 0 0 3px var(--cp-success-soft); }
   .server-dot .dot.off { background: var(--dim); }
@@ -476,7 +482,7 @@
   .cr-ann.lit.issue .n, .cr-ann.lit.issue .l { color: var(--cr-red-ink); }
   .cr-ann.lit.isolated .n, .cr-ann.lit.isolated .l { color: var(--cr-violet-ink); }
   .cr-ann.lit.idle .n { color: var(--cr-text); }
-  .cr-wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .cr-wall { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 12px; }
   .cr-empty { color: var(--cr-muted); font-size: 12px; padding: 18px; text-align: center; border: 1px dashed var(--cr-edge-2); border-radius: 10px; grid-column: 1 / -1; }
   .cr-tile { --lamp: var(--cr-grey); --lamp-ink: var(--cr-grey-ink); position: relative; background: var(--cr-tile-bg); border: 1px solid var(--cr-edge); border-top: 3px solid var(--lamp); border-radius: 12px; padding: 12px 13px 11px; cursor: pointer; transition: transform .12s, box-shadow .12s, border-color .12s; min-width: 0; box-shadow: var(--cr-card-shadow); }
   .cr-tile:hover { transform: translateY(-2px); box-shadow: var(--cr-tile-hover-shadow), 0 0 0 1px var(--lamp) inset; }
@@ -486,12 +492,12 @@
   .cr-tile.state-issue { --lamp: var(--cr-red); --lamp-ink: var(--cr-red-ink); background: var(--cr-issue-bg); box-shadow: 0 0 0 1px var(--cr-red-edge), 0 8px 22px var(--cr-red-haze); }
   .cr-tile.state-isolated { --lamp: var(--cr-violet); --lamp-ink: var(--cr-violet-ink); background: var(--cr-isolated-bg); }
   .cr-tile.template { border-style: dashed; border-top-style: solid; }
-  .cr-tile-top { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .cr-tile-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .cr-lamp { width: 14px; height: 14px; border-radius: 50%; background: var(--lamp); flex-shrink: 0; box-shadow: 0 0 0 3px var(--cr-lamp-ring); }
   .state-working .cr-lamp { box-shadow: 0 0 0 4px var(--cr-green-haze), 0 0 12px var(--cr-green-glow); animation: crPulse 1.6s ease-in-out infinite; }
   .state-waiting .cr-lamp { box-shadow: 0 0 0 4px var(--cr-amber-haze), 0 0 12px var(--cr-amber-glow); animation: crBlink 2.4s ease-in-out infinite; }
   .state-issue .cr-lamp { box-shadow: 0 0 0 4px var(--cr-red-haze), 0 0 14px var(--cr-red-glow); animation: crAlarm 1s ease-in-out infinite; }
-  .cr-avatar, .cl-avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 750; font-size: 13px; color: var(--cr-avatar-ink); background: var(--cr-avatar-bg); flex-shrink: 0; border: 2px solid var(--lamp, var(--cr-grey)); }
+  .cr-avatar, .cl-avatar { position: relative; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 750; font-size: 13px; color: var(--cr-avatar-ink); background: var(--cr-avatar-bg); flex-shrink: 0; border: 2px solid var(--lamp, var(--cr-grey)); }
   .cr-tile.template .cr-avatar { background: var(--cr-avatar-template-bg); }
   .cr-ident { min-width: 0; flex: 1; }
   .cr-name { font-size: 14px; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -499,7 +505,7 @@
   .cr-state { font-family: var(--cp-font-mono); font-size: 9.5px; letter-spacing: .14em; color: var(--lamp-ink, var(--lamp)); border: 1px solid var(--lamp); border-radius: 4px; padding: 2px 6px; flex-shrink: 0; background: var(--cr-panel); }
   .cr-now { font-size: 12px; line-height: 1.4; min-height: 34px; color: var(--cr-text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .cr-now .since { color: var(--cr-muted); font-size: 10.5px; }
-  .cr-meter { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; align-items: end; height: 26px; margin: 9px 0 8px; padding: 3px; background: var(--cr-well); border: 1px solid var(--cr-edge); border-radius: 5px; }
+  .cr-meter { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; align-items: end; height: 22px; margin: 8px 0 7px; padding: 3px; background: var(--cr-well); border: 1px solid var(--cr-edge); border-radius: 5px; }
   .cr-meter span { background: var(--lamp); opacity: .85; border-radius: 1px; min-height: 2px; }
   .cr-meter span.zero { background: var(--cr-edge-2); opacity: .6; }
   .cr-stats { display: flex; gap: 10px; flex-wrap: wrap; font-size: 10.5px; color: var(--cr-muted); font-family: var(--cp-font-mono); }
@@ -569,16 +575,16 @@
   .cr-button.primary:hover:not(:disabled) { background: var(--cp-accent-hover); border-color: var(--cp-accent-hover); }
   .cr-button.danger { color: var(--cr-red-ink); border-color: var(--cr-red-edge); }
   .cr-select { background: var(--cr-panel); color: var(--cr-text); border: 1px solid var(--cr-edge-2); border-radius: 6px; padding: 6px 8px; font-size: 11px; font-family: var(--cp-font); max-width: 240px; }
-  .cl-header { --lamp: var(--cr-grey); --lamp-ink: var(--cr-grey-ink); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--cr-edge); margin-bottom: 12px; }
+  .cl-header { --lamp: var(--cr-grey); --lamp-ink: var(--cr-grey-ink); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--cr-edge); margin-bottom: 8px; }
   .cl-header.state-working { --lamp: var(--cr-green); --lamp-ink: var(--cr-green-ink); --halo: var(--cr-green-haze); }
   .cl-header.state-waiting { --lamp: var(--cr-amber); --lamp-ink: var(--cr-amber-ink); --halo: var(--cr-amber-haze); }
   .cl-header.state-issue { --lamp: var(--cr-red); --lamp-ink: var(--cr-red-ink); --halo: var(--cr-red-haze); }
   .cl-header.state-isolated { --lamp: var(--cr-violet); --lamp-ink: var(--cr-violet-ink); }
-  .cl-avatar { width: 54px; height: 54px; font-size: 17px; border-width: 3px; box-shadow: 0 0 0 5px var(--halo, var(--cr-lamp-ring)); }
-  .cl-ident { flex: 1; min-width: 240px; }
-  .cl-name { font-size: 20px; font-weight: 750; }
-  .cl-meta { font-size: 11px; color: var(--cr-muted); margin-top: 2px; }
-  .cl-presence { margin-top: 6px; font-size: 12.5px; display: flex; align-items: center; gap: 8px; }
+  .cl-avatar { width: 44px; height: 44px; font-size: 15px; border-width: 3px; box-shadow: 0 0 0 4px var(--halo, var(--cr-lamp-ring)); }
+  .cl-ident { flex: 1; min-width: 220px; }
+  .cl-name { font-size: 17px; font-weight: 750; }
+  .cl-meta { font-size: 11px; color: var(--cr-muted); margin-top: 1px; }
+  .cl-presence { margin-top: 3px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
   .cl-presence .cr-state { font-size: 9.5px; }
   .cl-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .cl-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 12px; }
@@ -606,6 +612,186 @@
   .cl-issue .t { color: var(--cr-red-ink); }
   .cl-issue .w { font-family: var(--cp-font-mono); font-size: 10px; color: var(--cr-dim); }
   .cl-issue .d { color: var(--cr-muted); font-size: 10.5px; margin-top: 2px; overflow-wrap: anywhere; }
+
+  /* Blueprint strip: the template every colleague is hired from, above the wall of hires */
+  .cr-blueprint { --lamp: var(--cr-primary); --lamp-ink: var(--cr-primary); display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 6px 12px; margin-bottom: 10px; border: 1px dashed var(--cr-edge-2); border-radius: 10px; background: var(--cr-panel); cursor: pointer; font-size: 11px; color: var(--cr-muted); transition: border-color .12s; }
+  .cr-blueprint:empty { display: none; }
+  .cr-blueprint:hover { border-color: var(--cr-primary); }
+  .cr-blueprint:focus-visible { outline: 2px solid var(--cr-primary); outline-offset: 2px; }
+  .cr-blueprint.state-working { --lamp: var(--cr-green); border-style: solid; border-color: var(--cr-green-edge); background: var(--cr-working-bg); }
+  .cr-blueprint.state-waiting { --lamp: var(--cr-amber); border-style: solid; border-color: var(--cr-amber-edge); background: var(--cr-waiting-bg); }
+  .cr-blueprint.state-issue { --lamp: var(--cr-red); border-style: solid; border-color: var(--cr-red-edge); background: var(--cr-issue-bg); }
+  .cr-blueprint .bp-mark { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; }
+  .cr-blueprint .bp-kind { font-family: var(--cp-font-mono); font-size: 9px; letter-spacing: .14em; color: var(--cr-muted); border: 1px solid var(--cr-edge-2); border-radius: 4px; padding: 1px 6px; flex-shrink: 0; }
+  .cr-blueprint .bp-name { font-size: 12.5px; font-weight: 750; color: var(--cr-text); white-space: nowrap; }
+  .cr-blueprint .bp-text { flex: 1; min-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cr-blueprint .cr-meter { width: 104px; height: 18px; margin: 0; padding: 2px; flex-shrink: 0; }
+  .cr-blueprint .bp-counts { font-family: var(--cp-font-mono); font-size: 10.5px; white-space: nowrap; }
+  .cr-blueprint .bp-counts b { color: var(--cr-text); font-weight: 700; }
+  .cr-blueprint .bp-counts .bad b { color: var(--cr-red-ink); }
+  .cr-blueprint .bp-open { color: var(--cr-primary); font-weight: 700; white-space: nowrap; }
+
+  /* Compact colleague tiles: presence badge on the avatar, gauges instead of a wrapping stat line */
+  .cr-avatar .cr-lamp { position: absolute; right: -4px; bottom: -3px; width: 12px; height: 12px; border: 2px solid var(--cr-panel); }
+  .cr-avatar img, .cl-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  .cr-role { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .cr-role .cr-state { font-size: 8.5px; padding: 1px 5px; letter-spacing: .12em; }
+  .cr-role .txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cr-gauges { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; text-align: center; }
+  .cr-gauges div { min-width: 0; }
+  .cr-gauges b { display: block; font-family: var(--cp-font-mono); font-size: 13px; font-weight: 700; color: var(--cr-text); line-height: 1.15; }
+  .cr-gauges span { display: block; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--cr-muted); overflow: hidden; text-overflow: ellipsis; }
+  .cr-gauges .bad b { color: var(--cr-red-ink); }
+  .cr-tile .cr-caps { margin-top: 7px; }
+
+  /* Colleague desk header: one band, a grouped skill launcher and a one-line 24h tally */
+  .cl-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .cl-title .cl-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cl-title .cr-state:empty { display: none; }
+  .cl-run { display: grid; grid-template-columns: auto minmax(140px, 1fr) auto auto; gap: 4px 8px; align-items: center; padding: 5px 8px; border: 1px solid var(--cr-edge); border-radius: 8px; background: var(--cr-panel); max-width: 560px; min-width: 0; }
+  .cl-run-label { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--cr-muted); font-weight: 750; white-space: nowrap; }
+  .cl-run .cr-select { max-width: none; width: 100%; min-width: 0; }
+  .cl-run .cl-skill-detail { grid-column: 1 / -1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+  .cl-run .cl-skill-detail:empty { display: none; }
+  .cl-tally { display: flex; align-items: baseline; gap: 4px 16px; flex-wrap: wrap; font-size: 11px; color: var(--cr-muted); margin: 0 2px 10px; }
+  .cl-tally .k { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; font-weight: 750; color: var(--cr-dim); }
+  .cl-tally b { font-family: var(--cp-font-mono); font-size: 12.5px; color: var(--cr-text); margin-right: 4px; }
+  .cl-tally .bad b { color: var(--cr-red-ink); }
+
+  /* Lane tones shared by the trace, steps and platform */
+  .tone-violet { --tone: var(--cr-violet); --tone-ink: var(--cr-violet-ink); }
+  .tone-green { --tone: var(--cr-green); --tone-ink: var(--cr-green-ink); }
+  .tone-cyan { --tone: var(--cr-cyan); --tone-ink: var(--cr-cyan-ink); }
+  .tone-amber { --tone: var(--cr-amber); --tone-ink: var(--cr-amber-ink); }
+  .tone-yellow { --tone: var(--cr-yellow); --tone-ink: var(--cr-yellow-ink); }
+  .tone-indigo { --tone: var(--cr-indigo); --tone-ink: var(--cr-indigo-ink); }
+  .tone-primary { --tone: var(--cr-primary); --tone-ink: var(--cr-primary); }
+  .tone-grey { --tone: var(--cr-grey); --tone-ink: var(--cr-grey-ink); }
+  .tone-red { --tone: var(--cr-red); --tone-ink: var(--cr-red-ink); }
+
+  /* ═══ Telemetry: one task from input to output ═══ */
+  .run-meta { display: flex; gap: 4px 14px; flex-wrap: wrap; font-size: 11px; color: var(--cr-muted); margin: -2px 0 10px; }
+  .run-meta .ws-mono { color: var(--cr-dim); font-size: 10.5px; }
+  .run-header .run-status.waiting { background: var(--cr-amber-wash); color: var(--cr-amber-ink); }
+  .run-header .run-status.error { background: var(--cr-red-wash); color: var(--cr-red-ink); }
+  .tl-flow { display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1.2fr) 20px minmax(0, 1fr); align-items: stretch; margin-bottom: 10px; }
+  .tl-card { background: var(--cr-panel); border: 1px solid var(--cr-edge); border-top: 3px solid var(--tone, var(--cr-primary)); border-radius: 12px; padding: 9px 12px; min-width: 0; box-shadow: var(--cr-card-shadow); display: flex; flex-direction: column; gap: 6px; }
+  .tl-k { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 9.5px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; color: var(--tone-ink, var(--cr-muted)); }
+  .tl-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 650; letter-spacing: 0; text-transform: none; color: var(--cr-text); }
+  .tl-card .tl-text { font-size: 12px; line-height: 1.45; color: var(--cr-text); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 6.6em; overflow: hidden; cursor: pointer; }
+  .tl-card .tl-text.open { max-height: 360px; overflow-y: auto; }
+  .tl-card .tl-text:empty { display: none; }
+  .tl-placeholder { font-size: 11.5px; color: var(--cr-muted); font-style: italic; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 6.6em; overflow: hidden; }
+  .tl-placeholder:empty { display: none; }
+  .tl-arrow { display: grid; place-items: center; color: var(--cr-dim); font-size: 15px; }
+  .tl-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+  .tl-kpi { background: var(--cr-well); border: 1px solid var(--cr-edge); border-radius: 7px; padding: 4px 6px; min-width: 0; }
+  .tl-kpi .value { display: block; font-family: var(--cp-font-mono); font-size: 14px; font-weight: 700; color: var(--cr-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-kpi .l { display: block; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--cr-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-card .model-chips { justify-content: flex-start; }
+  .tl-card .running-bar { margin: 0; padding: 5px 8px; font-size: 11px; }
+  .tr { --tr-label: 158px; position: relative; display: flex; flex-direction: column; gap: 3px; }
+  .tr-row { display: grid; grid-template-columns: var(--tr-label) minmax(0, 1fr); gap: 8px; align-items: center; }
+  .tr-label { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; font-weight: 650; color: var(--cr-text); }
+  .tr-label .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tr-label .n { margin-left: auto; font-family: var(--cp-font-mono); font-size: 10px; font-weight: 600; color: var(--cr-muted); }
+  .tr-row.axis .tr-label .nm { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--cr-dim); }
+  .tr-icon { display: inline-grid; place-items: center; min-width: 24px; height: 16px; padding: 0 3px; border-radius: 4px; border: 1px solid var(--tone, var(--cr-edge-2)); color: var(--tone-ink, var(--cr-muted)); font-family: var(--cp-font-mono); font-size: 8.5px; font-weight: 800; flex-shrink: 0; }
+  .tr-track { position: relative; height: 20px; background: var(--cr-well); border: 1px solid var(--cr-edge); border-radius: 5px; overflow: hidden; }
+  .tr-row.axis .tr-track { height: 15px; background: none; border-color: transparent; overflow: visible; }
+  .tr-tick { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--cp-font-mono); font-size: 9.5px; color: var(--cr-dim); white-space: nowrap; }
+  .tr-tick:first-child { transform: none; }
+  .tr-gap-label { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--cp-font-mono); font-size: 9.5px; font-weight: 700; color: var(--cr-amber-ink); white-space: nowrap; cursor: help; }
+  .tr-bar { position: absolute; top: 3px; bottom: 3px; min-width: 4px; border-radius: 3px; background: var(--tone, var(--cr-primary)); opacity: .9; cursor: pointer; transform-origin: left center; }
+  .tr-bar.new { animation: trGrow .45s ease-out both; }
+  .tr-bar:hover { opacity: 1; box-shadow: 0 0 0 2px var(--cr-text); z-index: 1; }
+  .tr-bar.pending { opacity: .55; }
+  .soft .tr-bar:not(:hover) { opacity: .5; }
+  .tr-bar.error { background: var(--cr-red); }
+  .tr-bar.approval { background: var(--cr-amber); }
+  .tr-mark { position: absolute; top: 5px; width: 9px; height: 9px; margin-left: -4px; transform: rotate(45deg); border-radius: 1px; background: var(--tone, var(--cr-green)); }
+  .tr-mark[onclick] { cursor: pointer; }
+  .tr-mark.new { animation: trPop .3s ease-out both; }
+  .tr-over { position: absolute; top: 0; bottom: 0; pointer-events: none; }
+  .tr-over.gap { border-left: 1px dashed var(--cr-amber-edge); border-right: 1px dashed var(--cr-amber-edge); background: var(--cr-amber-wash); opacity: .6; }
+  .tr-over.now { width: 2px; margin-left: -1px; background: var(--cr-green); box-shadow: 0 0 8px var(--cr-green-glow); animation: crPulse 1.4s ease-in-out infinite; }
+  @keyframes trGrow { from { transform: scaleX(0); opacity: 0; } to { transform: scaleX(1); } }
+  @keyframes trPop { from { opacity: 0; transform: rotate(45deg) scale(.2); } to { transform: rotate(45deg) scale(1); } }
+  .st-list { display: flex; flex-direction: column; max-height: 560px; overflow-y: auto; padding-right: 4px; }
+  .st { border-bottom: 1px solid var(--cr-edge); border-radius: 5px; transition: background .3s; }
+  .st:last-child { border-bottom: 0; }
+  .st.sel { background: var(--cr-primary-soft); }
+  .st-row { display: grid; grid-template-columns: 52px 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 4px; border-radius: 5px; }
+  .st.expandable .st-row { cursor: pointer; }
+  .st.expandable .st-row:hover { background: var(--cr-hover); }
+  .st-t { font-family: var(--cp-font-mono); font-size: 10.5px; color: var(--cr-dim); }
+  .st-main { min-width: 0; }
+  .st-title { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .st-title .srv { font-family: var(--cp-font-mono); font-size: 10px; color: var(--cr-muted); margin-right: 6px; }
+  .st-title .by { font-size: 10px; color: var(--cr-muted); margin-left: 6px; }
+  .st-title .dec { margin-right: 6px; }
+  .st-sub { font-size: 10.5px; color: var(--cr-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--cp-font-mono); }
+  .st-end { display: flex; align-items: center; gap: 6px; font-family: var(--cp-font-mono); font-size: 10px; color: var(--cr-muted); white-space: nowrap; }
+  .st-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cr-green); }
+  .st-dot.pending { background: var(--cr-amber); animation: pulse 1.2s ease-in-out infinite; }
+  .st-dot.error { background: var(--cr-red); }
+  .st-dot.approval { background: var(--cr-amber); }
+  .st-body { display: none; padding: 0 4px 10px 94px; }
+  .st.open .st-body { display: block; }
+  .st-k { display: flex; align-items: center; gap: 8px; margin: 6px 0 3px; font-size: 9px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; color: var(--cr-muted); }
+  .st-body pre { font-family: var(--cp-font-mono); font-size: 10.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--cr-well); border: 1px solid var(--cr-edge); border-radius: 6px; padding: 8px 10px; max-height: 300px; overflow: auto; color: var(--cr-text); }
+  .st-body .st-prose { font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--cr-text); }
+
+  /* ═══ Platform: how it is built, with links to go deeper ═══ */
+  .pf-flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px; margin-bottom: 10px; }
+  .pf-stage { position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; background: var(--cr-panel); border: 1px solid var(--cr-edge); border-top: 3px solid var(--tone, var(--cr-primary)); border-radius: 12px; padding: 10px 12px; box-shadow: var(--cr-card-shadow); }
+  .pf-stage:not(:last-child)::after { content: '→'; position: absolute; right: -18px; top: 44%; color: var(--cr-dim); font-size: 16px; }
+  .pf-step { font-family: var(--cp-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--tone-ink, var(--cr-muted)); }
+  .pf-stage h4 { font-size: 13px; font-weight: 750; color: var(--cr-text); }
+  .pf-stage p { font-size: 11px; line-height: 1.45; color: var(--cr-muted); }
+  .pf-items { display: flex; flex-direction: column; gap: 3px; }
+  .pf-item { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; }
+  .pf-item .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cr-grey); flex-shrink: 0; }
+  .pf-item .dot.on { background: var(--cr-green); }
+  .pf-item .dot.warn { background: var(--cr-amber); }
+  .pf-item .dot.off { background: var(--cr-red); }
+  .pf-item .dot.info { background: var(--cr-cyan); }
+  .pf-item .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pf-item .ct { margin-left: auto; font-family: var(--cp-font-mono); font-size: 10px; color: var(--cr-muted); white-space: nowrap; }
+  .pf-links { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; padding-top: 4px; }
+  .pf-links:empty { display: none; }
+  .pf-link { font-family: var(--cp-font); font-size: 10.5px; font-weight: 700; color: var(--cr-primary); background: none; border: 1px solid var(--cr-edge-2); border-radius: 999px; padding: 2px 8px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .pf-link:hover { border-color: var(--cr-primary); background: var(--cr-primary-soft); }
+  .pf-band { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; padding: 8px 12px; margin-bottom: 12px; border: 1px dashed var(--cr-edge-2); border-radius: 10px; background: var(--cr-well); font-size: 11px; color: var(--cr-muted); }
+  .pf-band .k { font-size: 9.5px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; color: var(--cr-text); }
+  .pf-band .pf-links { margin: 0 0 0 auto; padding: 0; }
+  .pf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; align-items: start; }
+  .pf-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 6px 2px; border-bottom: 1px solid var(--cr-edge); }
+  .pf-row:last-child { border-bottom: 0; }
+  .pf-row.click { cursor: pointer; border-radius: 6px; }
+  .pf-row.click:hover { background: var(--cr-hover); }
+  .pf-row .cr-avatar { width: 30px; height: 30px; font-size: 10.5px; }
+  .pf-row .nm { font-size: 12px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pf-row .s { font-size: 10.5px; color: var(--cr-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pf-row .endpoint { font-family: var(--cp-font-mono); font-size: 9.5px; color: var(--cr-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pf-row .ct { font-family: var(--cp-font-mono); font-size: 10.5px; color: var(--cr-text); white-space: nowrap; }
+  .lamp-working { --lamp: var(--cr-green); --lamp-ink: var(--cr-green-ink); }
+  .lamp-waiting { --lamp: var(--cr-amber); --lamp-ink: var(--cr-amber-ink); }
+  .lamp-issue { --lamp: var(--cr-red); --lamp-ink: var(--cr-red-ink); }
+  .lamp-isolated { --lamp: var(--cr-violet); --lamp-ink: var(--cr-violet-ink); }
+  .lamp-template { --lamp: var(--cr-primary); --lamp-ink: var(--cr-primary); }
+  .pf-details { margin-top: 8px; }
+  .pf-details summary { cursor: pointer; font-size: 10.5px; font-weight: 700; color: var(--cr-muted); margin-bottom: 4px; }
+  #surfacesCard .surfaces-grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  @media (max-width: 1250px) {
+    .pf-flow { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .pf-stage::after { display: none; }
+  }
+  @media (max-width: 1100px) {
+    .pf-grid, .tl-flow { grid-template-columns: 1fr; }
+    .tl-arrow { display: none; }
+    .tr { --tr-label: 110px; }
+  }
   /* ═══ Workspace views: runs, guardrails, skills, MCP servers ═══ */
   .ws-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--cr-edge); margin-bottom: 12px; }
   .ws-head .cr-title { flex: 1; min-width: 240px; }
@@ -710,7 +896,7 @@
   <div class="sidebar-nav">
     <div class="nav-group">Operate</div>
     <div class="nav-item active" id="navControlRoom" onclick="go('#/control-room')"><span class="icon">C</span> Control Room <span class="badge" id="navColleagueCount">—</span></div>
-    <div class="nav-item" id="navRunItem" onclick="go('#/runs')"><span class="icon">R</span> Runs <span class="badge" id="navRunCount">0</span></div>
+    <div class="nav-item" id="navRunItem" onclick="go('#/runs')" title="Every task an AI teammate worked, from input to output"><span class="icon">T</span> Telemetry <span class="badge" id="navRunCount">0</span></div>
     <div class="nav-item" id="navCases" onclick="go('#/cases')"><span class="icon">K</span> Cases <span class="badge" id="navCaseCount">—</span></div>
     <div class="nav-item" id="navApprovals" onclick="go('#/approvals')"><span class="icon">A</span> Approvals <span class="badge" id="navApprovalsCount">0</span></div>
     <div class="nav-group">Govern</div>
@@ -728,13 +914,15 @@
 <!-- Main -->
 <div class="main" data-auth-protected hidden inert>
   <div class="topbar">
-    <span class="autopilot-brand">Group Functions Autopilot</span>
-    <a class="autopilot-tab" href="/control-plane" aria-current="page">Control Plane</a>
-    <h3 id="topbarTitle" data-subtitle="every AI teammate at a glance">Control Room</h3>
+    <nav class="crumbs" aria-label="Location">
+      <a class="autopilot-tab" href="/control-plane" aria-current="page">Control Plane</a>
+      <span class="crumb-sep" aria-hidden="true">›</span>
+      <h3 id="topbarTitle" data-subtitle="every AI teammate at a glance">Control Room</h3>
+    </nav>
     <div class="spacer"></div>
+    <div class="server-dots" id="serverDots" role="link" tabindex="0" title="Connected systems: open MCP servers" onclick="go('#/servers')" onkeydown="if(event.key==='Enter'){go('#/servers');}"></div>
     <span class="auth-context" id="autopilotContext"></span>
-    <button class="auth-session-button" id="autopilotLock" type="button">Lock / change account</button>
-    <div class="server-dots" id="serverDots"></div>
+    <button class="auth-session-button" id="autopilotLock" type="button" title="Lock this page or sign in with a different account">Lock</button>
   </div>
 
   <!-- ═══ Control Room View — the wall of digital colleagues ═══ -->
@@ -753,6 +941,7 @@
         <button class="cr-button danger" id="crReset" type="button" onclick="resetControlRoom()"
                 title="Stop everything that is running and clear all history so the next demo starts from zero">Reset</button>
       </header>
+      <section class="cr-blueprint" id="crBlueprint" tabindex="0" role="button" aria-label="Open the blueprint every colleague is hired from"></section>
       <section class="cr-wall" id="crWall" aria-live="polite">
         <div class="cr-empty">Connecting to the control room…</div>
       </section>
@@ -775,16 +964,16 @@
   <div class="content cr-view" id="colleagueView">
     <div class="cr-console">
       <header class="cl-header">
-        <button class="cr-back" onclick="showControlRoom()">← Control room</button>
+        <button class="cr-back" onclick="showControlRoom()" title="Back to the control room">← Back</button>
         <div class="cl-avatar" id="clAvatar">AI</div>
         <div class="cl-ident">
-          <div class="cl-name" id="clName">—</div>
+          <div class="cl-title"><span class="cl-name" id="clName">—</span><span class="cr-state" id="clState"></span></div>
           <div class="cl-meta" id="clMeta"></div>
           <div class="cl-presence" id="clPresence"></div>
         </div>
         <div class="cl-actions" id="clActions"></div>
       </header>
-      <div class="cl-stats" id="clStats"></div>
+      <div class="cl-tally" id="clStats"></div>
       <div class="cl-grid">
         <div class="cr-panel cl-activity">
           <div class="cr-panel-title">What I've been doing
@@ -817,157 +1006,101 @@
     </div>
   </div>
 
-  <!-- ═══ Dashboard View ═══ -->
-  <div class="content dashboard-view hidden" id="dashboardView">
-
-    <div class="dashboard-main">
-
-      <!-- Fleet activity ticker — what's happening across the workforce -->
-      <div class="fleet-ticker" id="fleetTicker">
-        <span class="pulse idle" id="fleetPulse"></span>
-        <span class="ticker-label">Fleet</span>
-        <span class="ticker-stream" id="fleetStream">All instances idle. Launch a scenario to see activity.</span>
+  <!-- ═══ Platform — how it is built, with links to go deeper ═══ -->
+  <div class="content cr-view" id="dashboardView">
+    <div class="cr-console">
+      <header class="ws-head">
+        <div>
+          <div class="cr-title">Platform</div>
+          <div class="cr-subtitle">How Group Functions Autopilot is put together: who each colleague is, where it runs, what it can reach and how every step is governed. Each stage links to the page that goes deeper.</div>
+        </div>
+      </header>
+      <section class="pf-flow" id="pfFlow" aria-label="Architecture, from request to system of record"></section>
+      <div class="pf-band" id="pfBand"></div>
+      <div class="pf-grid">
+        <div class="cr-panel" id="pfIdentityCard">
+          <div class="cr-panel-title">Identity <span class="cr-note">Agent 365 and Entra Agent ID: one blueprint, one agentic user per hire</span></div>
+          <div id="pfInstances"></div>
+          <details class="pf-details">
+            <summary>Identifiers</summary>
+            <div class="meta-list" id="identityMeta">
+              <div class="meta-row"><span class="label">Status</span><span class="value">Loading…</span></div>
+            </div>
+          </details>
+        </div>
+        <div class="cr-panel">
+          <div class="cr-panel-title">Runtime and models <span class="cr-note">Azure Container Apps · GitHub Copilot SDK</span></div>
+          <div class="pill-row" id="runtimePills"></div>
+          <div id="pfModels" style="margin-top:8px"></div>
+          <details class="pf-details">
+            <summary>Runtime signals</summary>
+            <div class="meta-list" id="runtimeMeta"></div>
+          </details>
+        </div>
+        <div class="cr-panel">
+          <div class="cr-panel-title">Integrations <span class="cr-note">MCP servers; a colleague is only offered the tools it is approved for</span></div>
+          <div id="pfIntegrations"></div>
+        </div>
+        <div class="cr-panel" id="surfacesCard">
+          <div class="cr-panel-title">Microsoft 365 governance surfaces <span class="cr-note">same tools, same teams</span></div>
+          <div class="surfaces-grid" id="surfacesGrid"></div>
+        </div>
       </div>
-
-      <!-- KPIs -->
-      <div class="kpi-row" id="kpiRow">
-        <div class="kpi accent"><div class="value" id="kpiServers">—</div><div class="label">MCP Servers</div><div class="sub" id="kpiServersDetail">connecting…</div></div>
-        <div class="kpi green"><div class="value" id="kpiTools">—</div><div class="label">Tools Available</div><div class="sub">across all servers</div></div>
-        <div class="kpi orange"><div class="value" id="kpiScenarios">—</div><div class="label">Scenarios</div><div class="sub">ready to execute</div></div>
-        <div class="kpi purple"><div class="value" id="kpiResources">—</div><div class="label">Widget Resources</div><div class="sub" id="kpiResourcesDetail">per-server UI components</div></div>
-      </div>
-
-      <!-- Now Running — only active runs, prominent so you can watch the workforce live -->
-      <div class="section-title">Now Running <span class="count" id="nowRunningCount">(0)</span></div>
-      <div class="active-now" id="activeNow">
-        <div class="empty">No agents are running right now. Launch a scenario on an instance below.</div>
-      </div>
-
-      <!-- AI Teammate Instances — the operating consoles for each agent in the workforce -->
-      <div class="section-title">AI Teammate Instances <span class="count" id="instanceCount">(0)</span>
-        <button class="section-action" id="instanceRefreshBtn" onclick="refreshInstances(true)">Refresh from Entra</button>
-        <button class="section-action" id="instanceLaunchAllBtn" onclick="launchAllInstances()" style="margin-left:6px">Run scenario on all</button>
-      </div>
-      <div class="instance-grid" id="instanceGrid">
-        <div class="run-history-empty">Loading instances from Microsoft Graph…</div>
-      </div>
-
-      <div class="section-title">Agentic User Sessions <span class="count" id="agenticUserCount">(0)</span></div>
-      <div class="agentic-grid" id="agenticUserGrid">
-        <div class="run-history-empty">No agentic-user sessions yet.</div>
-      </div>
-
-      <!-- Connected MCP Servers -->
-      <div class="section-title">Connected MCP Servers</div>
-      <div class="server-grid" id="serverGrid">
-        <div class="server-card"><div style="text-align:center;padding:20px;color:var(--dim)">Loading servers…</div></div>
-      </div>
-
-      <!-- Scenarios -->
-      <div class="section-title">Active Workflows <span class="count" id="scenarioCount"></span></div>
-      <div class="scenario-grid" id="scenarioGrid">
-        <div class="scenario-card"><div style="text-align:center;padding:20px;color:var(--dim)">Loading scenarios…</div></div>
-      </div>
-
-      <!-- Recent activity — demoted: small scrollable strip behind expand toggle -->
-      <div class="section-title" id="runHistoryTitle">Recent Runs <span class="count" id="runHistoryCount">(0)</span><button class="section-action" onclick="resetRuns()">Reset stale runs</button></div>
-      <div class="recent-runs" id="runHistory">
-        <div class="run-history-empty">No runs yet. Launch a scenario to build the audit trail.</div>
+      <div class="cr-panel" id="a365ValueCard">
+        <div class="cr-panel-title">Agent 365 value <span class="cr-note" id="a365ValueSubtitle">loading…</span></div>
+        <div class="a365-summary" id="a365ValueSummary"></div>
+        <div id="a365ValueCategories"></div>
+        <div class="a365-foot">Each capability shows the data flowing in, the value it unlocks, and copy-paste KQL / PowerShell ready for the linked portal. Catalogue mirrors the Agent 365 SDK matrix narrowed to HIGH-value items for this agent.</div>
       </div>
     </div>
-
-    <!-- Right rail — static identity + runtime metadata kept out of the way -->
-    <aside class="right-rail">
-      <details class="rail-card" open>
-        <summary>Entra Agent Identity</summary>
-        <div class="rail-body">
-          <div class="meta-list" id="identityMeta">
-            <div class="meta-row"><span class="label">Status</span><span class="value">Loading…</span></div>
-          </div>
-        </div>
-      </details>
-      <details class="rail-card">
-        <summary>Runtime Signals</summary>
-        <div class="rail-body">
-          <div class="pill-row" id="runtimePills"></div>
-          <div class="meta-list" id="runtimeMeta" style="margin-top:8px"></div>
-        </div>
-      </details>
-      <details class="rail-card" open id="governanceCard">
-        <summary>Control Plane Enforcement <span class="count" id="governanceCount">(0)</span></summary>
-        <div class="rail-body">
-          <div class="gov-section">
-            <div class="gov-section-title">Tool deny-list <span class="gov-sub">applies to every run, every agent</span></div>
-            <textarea id="governanceDenyInput" rows="3" placeholder="One pattern per line — e.g. workday.terminate_*, servicenow.delete_*, coupa.*"></textarea>
-            <div class="gov-actions">
-              <button class="gov-apply" onclick="applyToolDenylist()">Apply deny-list</button>
-              <button class="gov-clear" onclick="clearToolDenylist()">Clear</button>
-            </div>
-            <div class="gov-active" id="governanceActiveRules"></div>
-          </div>
-          <div class="gov-section">
-            <div class="gov-section-title">Isolated agent identities</div>
-            <div class="gov-list" id="governanceDisabledList">
-              <div class="gov-empty">No agents isolated. Use the Isolate button on any instance card to kill-switch a single agent identity in real time.</div>
-            </div>
-          </div>
-          <div class="gov-section">
-            <div class="gov-section-title">Audit ledger <span class="gov-sub">latest first · evidence for investigations</span></div>
-            <div class="gov-audit" id="governanceAudit">
-              <div class="gov-empty">No enforcement events yet.</div>
-            </div>
-          </div>
-        </div>
-      </details>
-      <details class="rail-card" open id="a365ValueCard">
-        <summary>Agent 365 value <span class="gov-sub" id="a365ValueSubtitle">loading…</span></summary>
-        <div class="rail-body">
-          <div class="a365-summary" id="a365ValueSummary"></div>
-          <div id="a365ValueCategories"></div>
-          <div class="a365-foot">Each capability shows the data flowing in, the value it unlocks, and copy-paste KQL / PowerShell ready for the linked portal. Catalogue mirrors the Agent 365 SDK matrix narrowed to HIGH-value items for this agent.</div>
-        </div>
-      </details>
-      <details class="rail-card" open id="surfacesCard">
-        <summary>Microsoft 365 governance surfaces <span class="gov-sub">same tools, same teams</span></summary>
-        <div class="rail-body">
-          <div class="surfaces-grid" id="surfacesGrid">
-            <!-- populated by renderSurfaces() -->
-          </div>
-        </div>
-      </details>
-    </aside>
   </div>
 
   <!-- ═══ Run View ═══ -->
   <div class="content run-view" id="runView">
     <div class="run-header">
-      <button class="back-link run-back" onclick="go('#/runs')">← All runs</button>
+      <button class="back-link run-back" onclick="go('#/runs')">← All telemetry</button>
       <h2 id="runTitle">—</h2>
       <span class="run-status running" id="runStatus">Running</span>
       <button class="evidence-btn" id="evidenceBtn" onclick="downloadEvidence(activeRunId)" title="Download a complete evidence pack for this run — identity, prompts, tool calls, sensitivity labels, governance enforcement, timestamps. Suitable for compliance investigations.">⬇ Evidence pack</button>
       <button class="evidence-btn" id="lookupPurviewBtn" onclick="lookupRunInPurview(activeRunId)" title="Open Purview DSPM Activity Explorer in a new tab and copy the User-participant + Timestamp filter values needed to find this run's rows. DSPM-for-AI does not support per-teammate URL filters today; you'll paste the values into the filter panel.">🛡 Look up in Purview</button>
       <button class="evidence-btn" id="lookupDefenderBtn" onclick="lookupRunInDefender(activeRunId)" title="Open Defender Advanced Hunting in a new tab with a CloudAppEvents query pre-filtered to this run's actor and time window.">🔎 Look up in Defender</button>
     </div>
+    <div class="run-meta" id="runMeta"></div>
 
-    <div class="running-bar" id="runningBar">
-      <span class="spinner"></span>
-      <span id="runningText">Starting agent…</span>
-    </div>
+    <section class="tl-flow" aria-label="The task from input to output">
+      <div class="tl-card tone-indigo">
+        <div class="tl-k">Input <span class="tl-who" id="runInputWho"></span></div>
+        <div class="tl-text" id="runInputText" onclick="this.classList.toggle('open')" title="Select to show all of it"></div>
+      </div>
+      <div class="tl-arrow" aria-hidden="true">→</div>
+      <div class="tl-card tone-violet">
+        <div class="tl-k">Agent <span class="tl-who" id="runAgentWho"></span></div>
+        <div class="tl-kpis" id="statsPanel">
+          <div class="tl-kpi"><span class="value" id="runStatDuration">—</span><span class="l">Duration</span></div>
+          <div class="tl-kpi"><span class="value" id="runStatTurns">—</span><span class="l">Turns</span></div>
+          <div class="tl-kpi"><span class="value" id="runStatCalls">—</span><span class="l">Tool calls</span></div>
+          <div class="tl-kpi"><span class="value" id="runStatPrompt">—</span><span class="l">Tokens in</span></div>
+          <div class="tl-kpi"><span class="value" id="runStatComp">—</span><span class="l">Tokens out</span></div>
+        </div>
+        <div class="model-chips" id="runStatModel"></div>
+        <div class="running-bar" id="runningBar">
+          <span class="spinner"></span>
+          <span id="runningText">Starting agent…</span>
+        </div>
+      </div>
+      <div class="tl-arrow" aria-hidden="true">→</div>
+      <div class="tl-card tone-green" id="resultPanel">
+        <div class="tl-k">Output</div>
+        <div class="tl-text" id="runResultContent" onclick="this.classList.toggle('open')" title="Select to show all of it"></div>
+        <div class="tl-placeholder" id="runResultPlaceholder"></div>
+      </div>
+    </section>
 
     <div class="run-grid">
       <div>
-        <!-- Tool call timeline -->
-        <div class="timeline-panel">
-          <h4>Tool Calls <span class="count" id="runToolCount">0</span></h4>
-          <div id="toolTimeline">
-            <div class="timeline-empty">Waiting for agent to start calling tools…</div>
-          </div>
-        </div>
-
-        <!-- Result -->
-        <div class="result-panel" id="resultPanel" style="display:none">
-          <h4>Agent Result</h4>
-          <div class="result-content" id="runResultContent"></div>
+        <div class="cr-panel" style="margin-bottom:8px">
+          <div class="cr-panel-title">Trace <span class="cr-note" id="traceNote">every model turn, tool call and check on one clock</span></div>
+          <div class="tr" id="traceWaterfall"><div class="cr-empty">The trace fills in as soon as the agent starts working.</div></div>
         </div>
 
         <div class="human-panel" id="humanPanel" style="display:none">
@@ -983,20 +1116,14 @@
             <button class="run-btn" onclick="sendManagerReply()">Send Manager Reply And Resume</button>
           </div>
         </div>
+
+        <div class="cr-panel">
+          <div class="cr-panel-title">Steps <span class="cr-note"><span id="runToolCount">0</span> tool calls · select a step to see the real JSON it sent and got back</span></div>
+          <div class="st-list" id="toolTimeline"><div class="timeline-empty">Waiting for the agent to take its first step…</div></div>
+        </div>
       </div>
 
       <div>
-        <!-- Stats -->
-        <div class="stats-panel" id="statsPanel" style="display:none">
-          <h4>Run Statistics</h4>
-          <div class="stat-row"><span class="label">Duration</span><span class="value" id="runStatDuration">—</span></div>
-          <div class="stat-row"><span class="label">Turns</span><span class="value" id="runStatTurns">—</span></div>
-          <div class="stat-row"><span class="label">Tool Calls</span><span class="value" id="runStatCalls">—</span></div>
-          <div class="stat-row"><span class="label">Prompt Tokens</span><span class="value" id="runStatPrompt">—</span></div>
-          <div class="stat-row"><span class="label">Completion Tokens</span><span class="value" id="runStatComp">—</span></div>
-          <div class="stat-row"><span class="label">Model</span><span class="value model-chips" id="runStatModel">—</span></div>
-        </div>
-
         <div class="servers-used-panel" id="approvalPanel" style="display:none">
           <h4>Waiting for a go-ahead <span class="count" id="approvalCount"></span></h4>
           <div id="approvalList"></div>
@@ -1018,24 +1145,15 @@
           <div id="artifactList"></div>
         </div>
 
-        <!-- Servers used -->
-        <div class="servers-used-panel">
-          <h4>Servers Used</h4>
-          <div id="serversUsed">
-            <div style="font-size:12px;color:var(--dim);padding:8px 0">No tool calls yet</div>
-          </div>
-        </div>
-
-        <!-- Agent 365 events -->
         <div class="event-panel">
-          <h4>Fleet Manager Event Stream <span class="count" id="agentEventCount">0</span></h4>
+          <h4>OpenTelemetry events <span class="count" id="agentEventCount">0</span></h4>
           <div class="event-stream" id="agentEventStream">
             <div class="event-empty">Waiting for LLM, tool, and telemetry events…</div>
           </div>
         </div>
 
         <div class="event-panel">
-          <h4>Logged Tool Observations <span class="count" id="loggedEventCount">0</span></h4>
+          <h4>Agent 365 observability records <span class="count" id="loggedEventCount">0</span></h4>
           <div class="event-stream" id="loggedEventStream">
             <div class="event-empty">Tool-call observation records will appear here.</div>
           </div>
@@ -1083,13 +1201,16 @@
   <div class="content cr-view" id="runsView">
     <div class="cr-console">
       <header class="ws-head">
-        <div class="cr-title">Runs</div>
+        <div>
+          <div class="cr-title">Telemetry</div>
+          <div class="cr-subtitle">Every task an AI teammate worked, from input to output: model turns, tool calls, checks and OpenTelemetry events.</div>
+        </div>
         <span class="cr-chips" id="runsFilters"></span>
         <input class="cr-select" id="runsSearch" type="search" placeholder="Filter by title, teammate or skill" oninput="renderRunsList()">
         <button class="cr-button" onclick="resetRuns()">Reset stale runs</button>
       </header>
       <div class="cr-panel"><table class="ws-table">
-        <thead><tr><th>Started</th><th>Run</th><th>Teammate / source</th><th>Status</th><th>Tools</th><th>Guardrails</th><th>Duration</th></tr></thead>
+        <thead><tr><th>Started</th><th>Task</th><th>Teammate / source</th><th>Status</th><th>Tools</th><th>Guardrails</th><th>Duration</th></tr></thead>
         <tbody id="runsTable"></tbody>
       </table></div>
     </div>
@@ -1153,6 +1274,30 @@
           <div class="cr-panel">
             <div class="cr-panel-title">Engine</div>
             <div class="ws-dim" id="grEngine"></div>
+          </div>
+          <div class="cr-panel" id="governanceCard">
+            <div class="cr-panel-title">Control plane enforcement <span class="cr-note" id="governanceCount">(0)</span></div>
+            <div class="gov-section">
+              <div class="gov-section-title">Tool deny-list <span class="gov-sub">applies to every run, every agent</span></div>
+              <textarea id="governanceDenyInput" rows="3" placeholder="One pattern per line — e.g. workday.terminate_*, servicenow.delete_*, coupa.*"></textarea>
+              <div class="gov-actions">
+                <button class="gov-apply" onclick="applyToolDenylist()">Apply deny-list</button>
+                <button class="gov-clear" onclick="clearToolDenylist()">Clear</button>
+              </div>
+              <div class="gov-active" id="governanceActiveRules"></div>
+            </div>
+            <div class="gov-section">
+              <div class="gov-section-title">Isolated agent identities</div>
+              <div class="gov-list" id="governanceDisabledList">
+                <div class="gov-empty">No agents isolated. Use Isolate on a colleague's desk to kill-switch a single agent identity in real time.</div>
+              </div>
+            </div>
+            <div class="gov-section">
+              <div class="gov-section-title">Audit ledger <span class="gov-sub">latest first · evidence for investigations</span></div>
+              <div class="gov-audit" id="governanceAudit">
+                <div class="gov-empty">No enforcement events yet.</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1290,17 +1435,14 @@ async function init() {
   startPolling(refreshGuardrailBadge, 15000);
   startPolling(refreshCaseDesk, 5000);
   startPolling(async () => crTick(), 1000);
-  // Live elapsed-counter tick — keep the control room "alive" even between server polls.
-  // We only re-render the lightweight ticker + Now Running cards every second; the
-  // instance grid is heavier and re-rendering it tears down any open <select>.
+  // Keep a live trace moving between server polls: the clock, the growing bars and the now line.
   startPolling(() => {
-    const dash = document.getElementById('dashboardView');
-    if (!dash || dash.classList.contains('hidden')) return;
-    renderActiveNow();
-    renderFleetTicker();
-    // Only re-render the instance grid if the user isn't currently interacting
-    // with one of its inputs (otherwise the open <select> dropdown collapses).
-    if (!isInteractingWithInstanceGrid()) renderInstances();
+    if (!isViewActive('runView')) return;
+    const run = getRun();
+    if (run && isActiveStatus(run.status)) {
+      renderTrace(run);
+      renderRunKpis(run);
+    }
   }, 1000);
   // Lightweight approvals refresh — keeps the nav badge live regardless of view.
   startPolling(() => { renderApprovalsBadge(); }, 2000);
@@ -1331,7 +1473,7 @@ function startPolling(callback, delay) {
     busy = true;
     try { await callback(); }
     catch (_) {
-      if (window.autopilotAuth.isAuthenticated()) document.getElementById('fleetStream').textContent = 'Updates are temporarily unavailable. Reload to reconnect.';
+      if (window.autopilotAuth.isAuthenticated()) document.getElementById('crLive')?.classList.add('stale');
     } finally { busy = false; }
   }, delay);
   pollingTimers.add(timer);
@@ -1357,14 +1499,20 @@ window.addEventListener('autopilot-auth-lost', () => {
   activeColleague = null;
   clPolicyDraft = null;
   openFeedIds.clear();
+  for (const entry of photoCache.values()) if (entry.url) URL.revokeObjectURL(entry.url);
+  photoCache.clear();
+  traceSeen.clear();
+  openSteps.clear();
+  stepsSig = '';
   for (const key of Object.keys(instanceState)) delete instanceState[key];
   for (const key of Object.keys(instanceScenarioSelection)) delete instanceScenarioSelection[key];
   for (const id of [
-    'crWall', 'crFleetFeed', 'crSystems', 'crAnnunciators', 'clFeed', 'clCases', 'clSkills', 'clServers', 'clIssues',
-    'clActions', 'clStats', 'clPresence', 'clMeta', 'clName', 'clPolicySource',
-    'serverDots', 'serverGrid', 'scenarioGrid', 'runHistory', 'instanceGrid', 'agenticUserGrid',
-    'identityMeta', 'runtimeMeta', 'runtimePills', 'activeNow', 'fleetStream', 'toolTimeline',
-    'serversUsed', 'agentEventStream', 'loggedEventStream', 'runResultContent', 'teamsThread',
+    'crWall', 'crBlueprint', 'crFleetFeed', 'crSystems', 'crAnnunciators', 'clFeed', 'clCases', 'clSkills', 'clServers', 'clIssues',
+    'clActions', 'clStats', 'clPresence', 'clMeta', 'clName', 'clState', 'clAvatar', 'clPolicySource',
+    'serverDots', 'pfFlow', 'pfBand', 'pfInstances', 'pfModels', 'pfIntegrations', 'surfacesGrid',
+    'identityMeta', 'runtimeMeta', 'runtimePills', 'toolTimeline', 'traceWaterfall', 'runMeta',
+    'runInputWho', 'runInputText', 'runAgentWho', 'runStatModel', 'runResultPlaceholder',
+    'agentEventStream', 'loggedEventStream', 'runResultContent', 'teamsThread',
     'approvalsPending', 'approvalsCompleted', 'governanceActiveRules', 'governanceDisabledList',
     'governanceAudit', 'a365ValueSummary', 'a365ValueCategories', 'a365ModalBg',
     'detailTitle', 'detailInput', 'detailOutput', 'runTitle', 'runningText', 'humanMessage',
@@ -1544,97 +1692,14 @@ function safeText(value, fallback = 'not configured') {
 
 function renderDashboard() {
   const totalTools = servers.reduce((n, s) => n + s.tools, 0);
-
-  // KPIs
-  document.getElementById('kpiServers').textContent = servers.length || '0';
-  document.getElementById('kpiServersDetail').textContent = servers.length
-    ? servers.map(s => s.name).join(', ')
-    : 'no servers connected';
-  document.getElementById('kpiTools').textContent = totalTools || '0';
-  document.getElementById('kpiScenarios').textContent = skills.length || '0';
   document.getElementById('navToolCount').textContent = totalTools || '—';
-
-  // Widget resource count — known per-server resource counts
-  const RESOURCE_COUNTS = { workday: 14, servicenow: 12, coupa: 9, salesforce: 9 };
   const connectedNames = new Set(servers.map(s => s.name));
-  const totalResources = servers.reduce((n, s) => n + (RESOURCE_COUNTS[s.name] || 0), 0);
-  document.getElementById('kpiResources').textContent = totalResources || '—';
-  document.getElementById('kpiResourcesDetail').textContent = totalResources
-    ? `across ${servers.length} server${servers.length !== 1 ? 's' : ''}`
-    : 'connect servers to see resources';
-
-  // Server dots in topbar
   document.getElementById('serverDots').innerHTML = ALL_SERVER_NAMES.map(name => {
     const on = connectedNames.has(name);
-    return `<span class="server-dot"><span class="dot ${on ? 'on' : 'off'}"></span>${name}</span>`;
-  }).join('') + '<span class="server-dot" title="Delegated per AI teammate instance"><span class="dot on"></span>workiq</span>';
-
-  // Server cards
-  document.getElementById('serverGrid').innerHTML = ALL_SERVER_NAMES.map(name => {
-    const srv = servers.find(s => s.name === name);
-    const icon = SERVER_ICONS[name] || '🔌';
-    const desc = SERVER_DESCS[name] || '';
-    if (srv) {
-      return `
-        <div class="server-card">
-          <div class="server-header">
-            <span class="server-icon">${icon}</span>
-            <span class="server-name">${name}</span>
-            <span class="server-status connected">Connected</span>
-          </div>
-          <div class="tool-count">${escapeHtml(srv.tools)}</div>
-          <div class="tool-label">tools available${srv.gateway ? ' through gateway' : ''}</div>
-          <div class="tool-types">${desc}</div>
-          <div class="endpoint">${escapeHtml(srv.url || '')}</div>
-        </div>`;
-    }
-    return `
-      <div class="server-card">
-        <div class="server-header">
-          <span class="server-icon">${icon}</span>
-          <span class="server-name">${name}</span>
-          <span class="server-status disconnected">Not connected</span>
-        </div>
-        <div class="tool-count" style="color:var(--dim)">—</div>
-        <div class="tool-label">configure the ${name} MCP gateway</div>
-        <div class="tool-types">${desc}</div>
-      </div>`;
-  }).join('') + `
-      <div class="server-card">
-        <div class="server-header">
-          <span class="server-icon">${SERVER_ICONS.workiq}</span>
-          <span class="server-name">workiq</span>
-          <span class="server-status connected">Delegated</span>
-        </div>
-        <div class="tool-count">M365</div>
-        <div class="tool-label">connected per AI teammate with its agentic-user token</div>
-        <div class="tool-types">${SERVER_DESCS.workiq}</div>
-        <div class="endpoint">https://workiq.svc.cloud.microsoft/mcp</div>
-      </div>`;
-
+    return `<span class="server-dot" title="${escapeHtml(SERVER_LABELS[name] || name)}: ${on ? 'connected' : 'not connected'}"><span class="dot ${on ? 'on' : 'off'}"></span>${escapeHtml(SERVER_ICONS[name] || name)}</span>`;
+  }).join('') + `<span class="server-dot" title="Work IQ: delegated per AI teammate"><span class="dot on"></span>${SERVER_ICONS.workiq}</span>`;
   renderIdentity();
-  renderAgenticUsers();
-
-  // Scenario cards
-  const scenarioCount = skills.length;
-  document.getElementById('scenarioCount').textContent = `(${scenarioCount})`;
-  document.getElementById('scenarioGrid').innerHTML = skills.map((s, i) => {
-    const meta = SCENARIO_META[s.name] || { icon: (s.domain || 'skill').toUpperCase(), desc: s.summary || s.description || 'Run this skill against connected MCP servers.', tags: s.servers || [] };
-    const title = s.title || s.name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const tags = meta.tags.map(t => {
-      const connected = t === 'workiq' || servers.some(srv => srv.name === t);
-      return `<span class="server-tag" style="${connected ? '' : 'opacity:.4'}">${escapeHtml(SERVER_ICONS[t] || '')} ${escapeHtml(t)}</span>`;
-    }).join('');
-    return `
-      <div class="scenario-card" id="scenario-${i}">
-        <div class="scenario-icon">${escapeHtml(meta.icon)}</div>
-        <h3>${escapeHtml(title)}</h3>
-        <div class="scenario-desc">${escapeHtml(meta.desc)}</div>
-        <div class="scenario-servers">${tags}</div>
-        <button class="run-btn" onclick="event.stopPropagation();runScenario(${i})">▶ Run Scenario</button>
-      </div>`;
-  }).join('');
-
+  renderPlatform();
   renderRunHistory();
 }
 
@@ -1745,7 +1810,8 @@ async function refreshInstances(force) {
     const url = '/api/agentic-instances' + (force ? '?refresh=1' : '');
     const res = await fetchJson(url);
     instances = res.instances || [];
-    document.getElementById('instanceCount').textContent = `(${instances.length})`;
+    const count = document.getElementById('instanceCount');
+    if (count) count.textContent = `(${instances.length})`;
     renderInstances();
   } catch (e) {
     if (grid && window.autopilotAuth.isAuthenticated()) grid.textContent = 'Could not load instances. Select Refresh from Entra to retry.';
@@ -2307,7 +2373,8 @@ function renderRunHistory() {
   const count = runs.length;
   const activeCount = runs.filter(run => isActiveStatus(run.status)).length;
   document.getElementById('navRunCount').textContent = activeCount || count || '0';
-  document.getElementById('runHistoryCount').textContent = `(${count})`;
+  const countEl = document.getElementById('runHistoryCount');
+  if (countEl) countEl.textContent = `(${count})`;
   renderRunsList();
   renderAgenticUsers();
   renderInstances();
@@ -2579,6 +2646,104 @@ function renderSurfaces() {
   `).join('') + `<div class="surfaces-foot">Deep links scoped to this tenant. Sign in once; every tile opens the right blade for agent identity <code style="font-family:inherit">${escapeHtml((agentAppId || '').slice(0, 8))}…</code></div>`;
 }
 
+// ── Platform: how it is built, with links to go deeper ──
+function renderPlatform() {
+  const flow = document.getElementById('pfFlow');
+  if (!flow || !isViewActive('dashboardView')) return;
+  const room = controlRoom || { instances: [], servers: [], skills: [] };
+  const hired = [...(room.instances || [])].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const mcp = (room.servers || []).filter(server => !server.delegated);
+  const delegated = (room.servers || []).filter(server => server.delegated);
+  const tiers = (identity && identity.modelRoutes && identity.modelRoutes.tiers) || {};
+  const desk = caseDesk || {};
+  const openCases = (desk.cases || []).filter(item => CASE_OPEN.has(item.status)).length;
+  const mode = guardrails ? guardrails.mode : '';
+  const item = (dot, name, count = '') => `<div class="pf-item"><span class="dot ${dot}"></span><span class="nm">${escapeHtml(name)}</span>${count !== '' ? `<span class="ct">${escapeHtml(count)}</span>` : ''}</div>`;
+  const link = (hash, label) => `<button class="pf-link" onclick="go(${jsString(hash)})">${escapeHtml(label)} →</button>`;
+  const stage = (step, tone, title, text, items, links) => `
+    <div class="pf-stage tone-${tone}">
+      <div class="pf-step">${step}</div>
+      <h4>${escapeHtml(title)}</h4>
+      <p>${escapeHtml(text)}</p>
+      <div class="pf-items">${items.join('')}</div>
+      <div class="pf-links">${links.join('')}</div>
+    </div>`;
+  const lampDot = tile => ({ working: 'on', waiting: 'warn', issue: 'off', isolated: 'off' }[(tile.presence || {}).state] || '');
+  const connected = name => mcp.some(server => server.name === name && server.connected);
+  flow.innerHTML = [
+    stage('1 · Signals', 'indigo', 'People and systems ask',
+      'Work arrives the way people already work. Nobody has to open a tool to hand it over.', [
+        item('on', 'Teams chats and @mentions'), item('on', 'Email to each colleague'), item('on', 'Document comments'),
+        item(desk.configured ? 'on' : '', 'Record webhooks', desk.configured ? 'signed' : 'not configured'),
+      ], [link('#/cases', 'Cases'), link('#/approvals', 'Approvals')]),
+    stage('2 · Identity', 'primary', 'Agent 365 · Entra Agent ID',
+      'One blueprint; every hire is an agentic user with its own mailbox, Teams presence, manager and token.', [
+        item('info', 'Blueprint (agent template)', '1'),
+        ...hired.slice(0, 4).map(tile => item(lampDot(tile), brandText(tile.name), CR_STATE_LABEL[(tile.presence || {}).state] || 'IDLE')),
+        hired.length > 4 ? item('', `${hired.length - 4} more hired`) : '',
+      ], [link('#/control-room', 'Control room')]),
+    stage('3 · Runtime', 'violet', 'Autopilot host',
+      'Azure Container Apps running GitHub Copilot SDK sessions: skills plan the work, sub-agents gather evidence and the case desk keeps work going until it is closed.', [
+        item('on', 'Skills', (room.skills || skills).length),
+        item('on', 'Model routes', Object.keys(tiers).length ? `${Object.keys(tiers).length} tiers` : (identity && identity.model) || ''),
+        item(mode === 'enforce' ? 'on' : mode ? 'warn' : '', 'Guardrails', GR_MODE_LABEL[mode] || '—'),
+        item(desk.configured ? 'on' : '', 'Case desk', desk.configured ? `${openCases} open` : 'off'),
+      ], [link('#/skills', 'Skills'), link('#/guardrails', 'Guardrails'), link('#/runs', 'Telemetry')]),
+    stage('4 · Integrations', 'cyan', 'MCP servers',
+      'Every system is reached through an MCP server. A colleague is only offered the tools it is approved for.', [
+        ...mcp.map(server => item(server.connected ? 'on' : 'off', SERVER_LABELS[server.name] || server.name, server.connected ? `${server.tools} tools` : 'down')),
+        ...delegated.map(server => item('info', SERVER_LABELS[server.name] || server.name, 'delegated')),
+      ], [link('#/servers', 'MCP servers')]),
+    stage('5 · Systems of record', 'green', 'Where the work lands',
+      'Changes are made in the systems people already trust, as the colleague, and stay visible there.', [
+        ...ALL_SERVER_NAMES.map(name => item(connected(name) ? 'on' : 'off', SERVER_LABELS[name] || name)),
+        item('info', 'Microsoft 365 (mail, Teams, files)'),
+      ], []),
+  ].join('');
+  document.getElementById('pfBand').innerHTML = `
+    <span class="k">Governed and evidenced at every step</span>
+    <span>Guardrails check each model call, tool call and answer before it happens</span><span>·</span>
+    <span>Agent 365 observability records every turn and tool as OpenTelemetry</span><span>·</span>
+    <span>Purview, Defender and Entra see the same activity</span><span>·</span>
+    <span>One evidence pack per task</span>
+    <span class="pf-links">${link('#/guardrails', 'Guardrails')}${link('#/runs', 'Telemetry')}<button class="pf-link" onclick="document.getElementById('surfacesCard').scrollIntoView({ behavior: 'smooth' })">Portals ↓</button></span>`;
+  const template = room.template;
+  const people = [...(template ? [template] : []), ...hired];
+  document.getElementById('pfInstances').innerHTML = people.length ? people.map(tile => {
+    const state = tile.kind === 'template' ? 'template' : ((tile.presence || {}).state || 'idle');
+    const sub = tile.kind === 'template'
+      ? `Blueprint${tile.blueprint && tile.blueprint.clientId ? ` · app ${tile.blueprint.clientId}` : ''} · ${tile.hiredCount || 0} hired`
+      : [tile.user && tile.user.upn, tile.manager && tile.manager.name ? `reports to ${tile.manager.name}` : ''].filter(Boolean).join(' · ');
+    return `
+      <div class="pf-row click lamp-${escapeHtml(state)}" onclick="showColleague(${jsString(tile.key)})" title="Open this colleague's desk">
+        <div class="cr-avatar">${avatarHtml(tile)}</div>
+        <div style="min-width:0"><div class="nm">${escapeHtml(brandText(tile.name))}</div><div class="s">${escapeHtml(sub)}</div></div>
+        <span class="cr-state">${escapeHtml(CR_STATE_LABEL[state] || 'IDLE')}</span>
+      </div>`;
+  }).join('') : '<div class="cr-empty">Loading the blueprint and its hires…</div>';
+  const routes = Object.entries(tiers);
+  document.getElementById('pfModels').innerHTML = [
+    ...routes.map(([tier, model]) => `<div class="pf-row"><span class="tr-icon tone-violet">AI</span><div style="min-width:0"><div class="nm">${escapeHtml(model)}</div><div class="s">${escapeHtml(tier)} tier</div></div><span class="ct"></span></div>`),
+    routes.length ? '' : `<div class="pf-row"><span class="tr-icon tone-violet">AI</span><div style="min-width:0"><div class="nm">${escapeHtml((identity && identity.model) || 'Model')}</div><div class="s">${escapeHtml((identity && identity.llmBackend) || '')}</div></div><span class="ct"></span></div>`,
+    `<div class="pf-row"><span class="tr-icon tone-grey">DB</span><div style="min-width:0"><div class="nm">Activity history</div><div class="s">${room.persistence ? 'Azure Blob storage, managed identity' : 'Memory on this host'}</div></div><span class="ct"></span></div>`,
+  ].join('');
+  document.getElementById('pfIntegrations').innerHTML = ALL_SERVER_NAMES.map(name => {
+    const srv = servers.find(server => server.name === name);
+    const [icon, tone] = LANE_META[name] || [SERVER_ICONS[name] || name, 'grey'];
+    return `
+      <div class="pf-row click" onclick="go(${jsString('#/servers/' + name)})" title="Browse its tools and schemas">
+        <span class="tr-icon tone-${tone}">${escapeHtml(icon)}</span>
+        <div style="min-width:0"><div class="nm">${escapeHtml(SERVER_LABELS[name] || name)}</div><div class="s">${escapeHtml(SERVER_DESCS[name] || '')}</div>${srv ? `<div class="endpoint">${escapeHtml(srv.url || '')}</div>` : ''}</div>
+        <span class="ct">${srv ? `${escapeHtml(srv.tools)} tools` : 'not connected'}</span>
+      </div>`;
+  }).join('') + `
+      <div class="pf-row">
+        <span class="tr-icon tone-indigo">WIQ</span>
+        <div style="min-width:0"><div class="nm">Work IQ</div><div class="s">${escapeHtml(SERVER_DESCS.workiq)}</div><div class="endpoint">https://workiq.svc.cloud.microsoft/mcp</div></div>
+        <span class="ct">delegated</span>
+      </div>`;
+}
+
 // ── Run scenario ──
 async function runScenario(index, resumeText = '', parentRunId = null) {
   if (!window.autopilotAuth?.isAuthenticated()) return;
@@ -2673,42 +2838,376 @@ async function runScenario(index, resumeText = '', parentRunId = null) {
 function renderRun(run) {
   if (!run || !window.autopilotAuth?.isAuthenticated()) return;
   activeRunId = run.id;
-  document.getElementById('runTitle').textContent = run.title;
-  if (isViewActive('runView')) document.getElementById('topbarTitle').textContent = run.title;
-  document.getElementById('runStatus').textContent = runStatusLabel(run.status);
-  document.getElementById('runStatus').className = `run-status ${run.status === 'complete' ? 'complete' : 'running'}`;
+  document.getElementById('runTitle').textContent = brandText(run.title);
+  if (isViewActive('runView')) document.getElementById('topbarTitle').textContent = brandText(run.title);
+  const status = document.getElementById('runStatus');
+  status.textContent = runStatusLabel(run.status);
+  status.className = `run-status ${['complete', 'waiting', 'error'].includes(run.status) ? run.status : 'running'}`;
   document.getElementById('runningBar').classList.toggle('hidden', run.status !== 'running');
   document.getElementById('runningText').textContent = run.error ? `Error: ${run.error}` : (run.runningText || 'Starting agent...');
   document.getElementById('runToolCount').textContent = Object.keys(run.toolData || {}).length;
-  renderToolTimeline(run);
-  renderServersUsed(run);
+  renderRunInput(run);
+  renderRunKpis(run);
+  renderSteps(run, renderTrace(run));
   renderEventStream('agentEventStream', run.agentEvents || []);
   renderEventStream('loggedEventStream', run.loggedEvents || []);
   document.getElementById('agentEventCount').textContent = (run.agentEvents || []).length;
   document.getElementById('loggedEventCount').textContent = (run.loggedEvents || []).length;
 
-  document.getElementById('resultPanel').style.display = run.result ? '' : 'none';
   // Safe plain-text Markdown fallback: model output is never interpreted as HTML.
   document.getElementById('runResultContent').textContent = run.result || '';
-
-  if (run.stats) {
-    document.getElementById('statsPanel').style.display = '';
-    document.getElementById('runStatDuration').textContent = run.stats.duration + 's';
-    document.getElementById('runStatTurns').textContent = run.stats.turns;
-    document.getElementById('runStatCalls').textContent = run.stats.tool_calls;
-    document.getElementById('runStatPrompt').textContent = (run.stats.prompt_tokens || 0).toLocaleString();
-    document.getElementById('runStatComp').textContent = (run.stats.completion_tokens || 0).toLocaleString();
-    const models = Object.entries(run.stats.models || {});
-    document.getElementById('runStatModel').innerHTML = models.length
-      ? models.map(([name, usage]) => `<span class="cr-cap on" title="${escapeHtml((usage.roles || []).join(', '))}: ${escapeHtml(usage.calls)} calls, ${escapeHtml((usage.prompt_tokens || 0) + (usage.completion_tokens || 0))} tokens">${escapeHtml(name)} · ${escapeHtml((usage.roles || []).join('+'))}</span>`).join('')
-      : escapeHtml(run.stats.model || '—');
-  } else {
-    document.getElementById('statsPanel').style.display = 'none';
-  }
+  document.getElementById('runResultPlaceholder').textContent = run.result ? '' : runOutputPlaceholder(run);
 
   renderSkillWork(run);
   renderHumanPanel(run);
   renderRunHistory();
+}
+
+// ── Telemetry: one task from input to output ──
+const RUN_SOURCE_LABEL = { 'teams-chat': 'Teams chat', 'control-plane': 'Control plane', 'instance-launch': 'Control plane', 'case-desk': 'Case desk' };
+const LANE_META = {
+  servicenow: ['SN', 'green'], salesforce: ['SF', 'cyan'], workday: ['WD', 'amber'], coupa: ['CP', 'yellow'],
+  workiq: ['WIQ', 'indigo'], graph: ['MG', 'indigo'], case: ['CASE', 'grey'], it: ['IT', 'grey'],
+  code: ['PY', 'grey'], workspace: ['WS', 'grey'], skill: ['SK', 'grey'],
+};
+const LANE_LABELS = { graph: 'Microsoft Graph', case: 'Case desk', it: 'IT desk', code: 'Python sandbox', workspace: 'Workspace files', skill: 'Skill files' };
+const GUARD_TONE = { allow: 'green', allowed: 'green', deny: 'red', blocked: 'red', escalate: 'amber', approval: 'amber', transform: 'cyan', warn: 'yellow' };
+const traceSeen = new Map();   // run id -> step ids already drawn, so only new bars animate in
+const openSteps = new Set();
+let stepsSig = '';
+let stepsRun = '';
+
+function fmtSpan(ms) {
+  const seconds = Math.max(0, ms) / 1000;
+  if (seconds < 10) return `${seconds.toFixed(1)}s`;
+  if (seconds < 60) return `${Math.floor(seconds)}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ${String(Math.floor(seconds % 60)).padStart(2, '0')}s`;
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+}
+
+function fmtOffset(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor(total / 60) % 60;
+  return `+${hours ? `${hours}:${String(minutes).padStart(2, '0')}` : minutes}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function fmtTick(ms) {
+  const seconds = Math.round(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return seconds % 60 ? `${minutes}m ${seconds % 60}s` : `${minutes}m`;
+  return minutes % 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${Math.floor(minutes / 60)}h`;
+}
+
+function compactNumber(value) {
+  const n = Number(value) || 0;
+  return n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e4 ? `${Math.round(n / 1e3)}k` : n.toLocaleString();
+}
+
+function prettyJson(value) {
+  if (value === undefined || value === null) return '';
+  if (typeof value !== 'string') return JSON.stringify(value, null, 2);
+  try { return JSON.stringify(JSON.parse(value), null, 2); } catch (_) { return value; }
+}
+
+function runInstanceName(run) {
+  if (run.instanceKey && crTile(run.instanceKey)) return instanceLabel(run.instanceKey);
+  return brandText(run.instanceLabel || run.instanceDisplayName || (run.agenticUser && run.agenticUser.name) || 'Group Functions Autopilot');
+}
+
+function renderRunInput(run) {
+  const actor = run.actor || {};
+  const source = RUN_SOURCE_LABEL[run.source] || run.source || 'Control plane';
+  const who = actor.name || (run.agenticUser && run.agenticUser.actorName) || 'Control plane operator';
+  const agent = runInstanceName(run);
+  document.getElementById('runInputWho').textContent = `${brandText(who)} · ${source}`;
+  document.getElementById('runInputText').textContent = run.prompt || run.title || '';
+  document.getElementById('runAgentWho').textContent = agent;
+  document.getElementById('runMeta').innerHTML = [
+    escapeHtml(agent), escapeHtml(source),
+    run.startedAt ? `started ${escapeHtml(new Date(run.startedAt).toLocaleString())}` : '',
+    run.skillTitle ? `skill ${escapeHtml(run.skillTitle)}` : '',
+    `<span class="ws-mono" title="Run and trace identifier">${escapeHtml(run.id)}</span>`,
+  ].filter(Boolean).map(part => `<span>${part}</span>`).join('');
+}
+
+function renderRunKpis(run) {
+  const stats = run.stats || {};
+  const end = isActiveStatus(run.status) ? Date.now() : (run.completedAt || run.updatedAt || 0);
+  const wall = run.startedAt && end ? end - run.startedAt : Number(stats.duration || 0) * 1000;
+  document.getElementById('runStatDuration').textContent = wall ? fmtSpan(wall) : '—';
+  document.getElementById('runStatTurns').textContent = stats.turns || (run.turns || []).length || '—';
+  document.getElementById('runStatCalls').textContent = stats.tool_calls ?? Object.keys(run.toolData || {}).length;
+  document.getElementById('runStatPrompt').textContent = stats.prompt_tokens ? compactNumber(stats.prompt_tokens) : '—';
+  document.getElementById('runStatComp').textContent = stats.completion_tokens ? compactNumber(stats.completion_tokens) : '—';
+  const models = Object.entries(stats.models || {});
+  document.getElementById('runStatModel').innerHTML = models.length
+    ? models.map(([name, usage]) => `<span class="cr-cap on" title="${escapeHtml((usage.roles || []).join(', '))}: ${escapeHtml(usage.calls)} calls, ${escapeHtml((usage.prompt_tokens || 0) + (usage.completion_tokens || 0))} tokens">${escapeHtml(name)} · ${escapeHtml((usage.roles || []).join('+'))}</span>`).join('')
+    : (stats.model ? `<span class="cr-cap on">${escapeHtml(stats.model)}</span>` : '');
+}
+
+function runOutputPlaceholder(run) {
+  if (run.status === 'error') return run.error ? `Stopped: ${run.error}` : 'The task stopped with an error.';
+  if (run.status === 'waiting' || run.status === 'awaiting-approval') return run.waitingText || 'Waiting for a person before carrying on.';
+  if (isActiveStatus(run.status)) return run.streamingText ? String(run.streamingText).slice(-700) : 'Working… the answer appears here when the agent finishes.';
+  return 'No written answer for this task.';
+}
+
+function toolOutcome(tool, live) {
+  if (tool.result === undefined || tool.result === null) return live ? 'pending' : 'error';
+  const head = String(tool.result).slice(0, 400);
+  if (/^Error:|"status":\s*"(?:error|blocked)"/.test(head)) return 'error';
+  if (/"requires_?[aA]pproval"/.test(head)) return 'approval';
+  return 'ok';
+}
+
+function traceModel(run) {
+  const now = Date.now();
+  const live = isActiveStatus(run.status);
+  const t0 = run.startedAt || now;
+  const t1 = Math.max(t0 + 1000, live ? now : (run.completedAt || run.updatedAt || now));
+  const lanes = new Map();
+  const lane = (key, label, icon, tone) => {
+    if (!lanes.has(key)) lanes.set(key, { key, label, icon, tone, items: [] });
+    return lanes.get(key);
+  };
+  const turns = Array.isArray(run.turns) ? run.turns : [];
+  turns.forEach((turn, i) => {
+    if (!turn.start) return;
+    lane('model', 'Model', 'AI', 'violet').items.push({ id: `turn-${i}`, kind: 'turn', start: turn.start,
+      end: turn.end || (live ? now : turn.start), status: turn.end || !live ? 'ok' : 'pending', data: turn });
+  });
+  const tools = Object.entries(run.toolData || {}).map(([id, data]) => ({ ...data, id }));
+  if (tools.length && !turns.length && !tools.some(tool => tool.startedAt)) {
+    // Recorded before the host kept a clock: keep the order, not the timing.
+    tools.sort((a, b) => (a.index || 0) - (b.index || 0));
+    const slot = (t1 - t0) / tools.length;
+    tools.forEach((tool, i) => {
+      tool.startedAt = t0 + i * slot;
+      if (tool.result !== undefined && tool.result !== null) tool.endedAt = tool.startedAt + slot * 0.7;
+    });
+  }
+  tools.sort((a, b) => ((a.startedAt || 0) - (b.startedAt || 0)) || ((a.index || 0) - (b.index || 0)));
+  for (const tool of tools) {
+    if (!tool.startedAt) continue;
+    const [icon, tone] = LANE_META[tool.server] || [String(tool.server || '?').slice(0, 3).toUpperCase(), 'grey'];
+    const status = toolOutcome(tool, live);
+    lane(`srv:${tool.server}`, SERVER_LABELS[tool.server] || LANE_LABELS[tool.server] || tool.server || 'Tools', icon, tone).items.push({
+      id: tool.id, kind: 'tool', start: tool.startedAt, end: tool.endedAt || (status === 'pending' ? now : tool.startedAt), status, data: tool });
+  }
+  (run.subagents || []).forEach((agent, i) => {
+    if (!agent.startedAt) return;
+    lane(i < 5 ? `sub:${i}` : 'sub:more', i < 5 ? (agent.name || `Sub-agent ${i + 1}`) : 'More sub-agents', 'SUB', 'violet soft').items.push({
+      id: `sub-${i}`, kind: 'subagent', start: agent.startedAt, end: agent.completedAt || (live ? now : agent.startedAt),
+      status: agent.status === 'error' ? 'error' : agent.status === 'running' && live ? 'pending' : 'ok', data: agent });
+  });
+  (run.scripts || []).forEach((script, i) => {
+    if (!script.at) return;
+    lane('scripts', 'Scripts and code', 'PY', 'grey').items.push({ id: `script-${i}`, kind: 'script',
+      start: script.at - (Number(script.durationMs) || 0), end: script.at, status: Number(script.exitCode) === 0 ? 'ok' : 'error', data: script });
+  });
+  (run.guardrails || []).forEach((guard, i) => {
+    if (!guard.at) return;
+    lane('guard', 'Guardrail checks', 'GR', 'green').items.push({ id: `guard-${i}`, kind: 'guard', start: guard.at, end: guard.at,
+      status: ['deny', 'blocked'].includes(guard.decision) ? 'error' : 'ok', tone: GUARD_TONE[guard.decision] || 'grey', data: guard });
+  });
+  return { t0, t1, now, live, lanes: [...lanes.values()] };
+}
+
+// Long quiet stretches (waiting on a person, a case asleep until it wakes) fold to a fixed width so the busy parts stay readable.
+function traceScale(items, t0, t1) {
+  const fold = Math.max(20000, (t1 - t0) * 0.1);
+  const spans = items.map(item => [Math.max(t0, item.start), Math.min(t1, Math.max(item.start, item.end || item.start))])
+    .filter(([a, b]) => b >= a).sort((x, y) => x[0] - y[0]);
+  const busy = [];
+  for (const [a, b] of spans) {
+    const last = busy[busy.length - 1];
+    if (last && a - last[1] <= fold) last[1] = Math.max(last[1], b);
+    else busy.push([a, b]);
+  }
+  const pieces = [];
+  const add = (a, b, gap) => {
+    if (b <= a) return;
+    const last = pieces[pieces.length - 1];
+    if (last && !gap && !last.gap) last.b = b;
+    else pieces.push({ a, b, gap });
+  };
+  let at = t0;
+  for (const [a, b] of busy) {
+    add(at, a, a - at > fold);
+    add(Math.max(at, a), b, false);
+    at = Math.max(at, b);
+  }
+  add(at, t1, t1 - at > fold);
+  if (!pieces.length) pieces.push({ a: t0, b: t1, gap: false });
+  const gaps = pieces.filter(piece => piece.gap);
+  const gapWidth = gaps.length ? Math.min(6, 30 / gaps.length) : 0;
+  const linear = pieces.filter(piece => !piece.gap).reduce((n, piece) => n + (piece.b - piece.a), 0);
+  const room = 100 - gapWidth * gaps.length;
+  const linearCount = pieces.length - gaps.length || 1;
+  let x = 0;
+  for (const piece of pieces) {
+    piece.x = x;
+    piece.w = piece.gap ? gapWidth : (linear ? (piece.b - piece.a) / linear * room : room / linearCount);
+    x += piece.w;
+  }
+  const map = t => {
+    if (t <= t0) return 0;
+    for (const piece of pieces) {
+      if (t <= piece.b) return piece.x + (piece.b > piece.a ? (t - piece.a) / (piece.b - piece.a) : 0) * piece.w;
+    }
+    return 100;
+  };
+  return { map, pieces, gaps, active: linear, waited: gaps.reduce((n, piece) => n + (piece.b - piece.a), 0) };
+}
+
+function traceTicks(scale, t0) {
+  const steps = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200].map(seconds => seconds * 1000);
+  const step = steps.find(value => scale.active / value <= 7) || steps[steps.length - 1];
+  const ticks = [[0, '0s']];
+  for (const piece of scale.pieces) {
+    if (piece.gap) continue;
+    for (let k = Math.ceil((piece.a - t0) / step); t0 + k * step <= piece.b; k++) {
+      const x = scale.map(t0 + k * step);
+      if (x - ticks[ticks.length - 1][0] >= 7 && x <= 96) ticks.push([x, fmtTick(k * step)]);
+    }
+  }
+  return ticks;
+}
+
+function traceTip(item) {
+  const data = item.data || {};
+  const took = item.end > item.start ? ` · ${fmtSpan(item.end - item.start)}` : '';
+  const state = item.status === 'pending' ? ' · running' : item.status === 'error' ? ' · failed' : item.status === 'approval' ? ' · needs approval' : '';
+  if (item.kind === 'turn') return `Model turn ${data.turn ?? ''} · ${data.model || 'model'}${took}${data.finish ? ` · ${data.finish}` : ''}${state}`;
+  if (item.kind === 'tool') return `${data.server} · ${data.tool}${data.agent ? ` · by ${data.agent}` : ''}${took}${state}`;
+  if (item.kind === 'subagent') return `Sub-agent ${data.name || ''} · ${data.model || ''}${took}${state}`;
+  if (item.kind === 'script') return `${data.kind === 'code' ? (data.purpose || 'Model-written Python') : data.script} · exit ${data.exitCode}${took}`;
+  return `Guardrail ${data.decision} · ${data.tool || String(data.point || '').replace(/_/g, ' ')}${data.reason ? ` · ${data.reason}` : ''}`;
+}
+
+function traceItemHtml(item, scale, seen, firstPaint) {
+  const x = scale.map(item.start);
+  const fresh = !seen.has(item.id) ? ' new' : '';
+  const delay = firstPaint ? `animation-delay:${Math.round(x * 9)}ms;` : '';
+  const focusable = item.kind !== 'guard' || !['allow', 'allowed'].includes(item.data.decision);
+  const action = focusable ? ` onclick="traceFocus(${jsString(item.id)})"` : '';
+  const tip = escapeHtml(traceTip(item));
+  if (item.kind === 'guard') {
+    return `<span class="tr-mark tone-${escapeHtml(item.tone)}${fresh}" style="left:${x.toFixed(2)}%;${delay}" title="${tip}"${action}></span>`;
+  }
+  const width = Math.max(0, scale.map(item.end) - x);
+  return `<span class="tr-bar ${escapeHtml(item.status)}${fresh}" style="left:${x.toFixed(2)}%;width:${width.toFixed(2)}%;${delay}" title="${tip}"${action}></span>`;
+}
+
+function renderTrace(run) {
+  const model = traceModel(run);
+  const el = document.getElementById('traceWaterfall');
+  const note = document.getElementById('traceNote');
+  const items = model.lanes.flatMap(item => item.items);
+  if (!el) return model;
+  if (!items.length) {
+    el.innerHTML = `<div class="cr-empty">${model.live ? 'The trace fills in as the agent works: every model turn, tool call and check on one clock.' : 'No steps were recorded for this task.'}</div>`;
+    if (note) note.textContent = 'every model turn, tool call and check on one clock';
+    return model;
+  }
+  const scale = traceScale(items, model.t0, model.t1);
+  const firstPaint = !traceSeen.has(run.id);
+  const seen = traceSeen.get(run.id) || new Set();
+  traceSeen.set(run.id, seen);
+  const inTrack = value => `calc(var(--tr-label) + 8px + (100% - var(--tr-label) - 8px) * ${(value / 100).toFixed(4)})`;
+  const trackWidth = value => `calc((100% - var(--tr-label) - 8px) * ${(value / 100).toFixed(4)})`;
+  const ticks = traceTicks(scale, model.t0).map(([x, label]) => `<span class="tr-tick" style="left:${x.toFixed(2)}%">${escapeHtml(label)}</span>`).join('');
+  const gapLabels = scale.gaps.map(piece => `<span class="tr-gap-label" style="left:${(piece.x + piece.w / 2).toFixed(2)}%" title="Nothing ran for ${escapeHtml(fmtSpan(piece.b - piece.a))}; folded so the busy parts stay readable">⋯ ${escapeHtml(fmtSpan(piece.b - piece.a))}</span>`).join('');
+  const rows = model.lanes.map(item => `
+    <div class="tr-row tone-${escapeHtml(item.tone)}">
+      <div class="tr-label" title="${escapeHtml(brandText(item.label))}"><span class="tr-icon">${escapeHtml(item.icon)}</span><span class="nm">${escapeHtml(brandText(item.label))}</span><span class="n">${item.items.length}</span></div>
+      <div class="tr-track">${item.items.map(step => traceItemHtml(step, scale, seen, firstPaint)).join('')}</div>
+    </div>`).join('');
+  const overlays = scale.gaps.map(piece => `<div class="tr-over gap" style="left:${inTrack(piece.x)};width:${trackWidth(piece.w)}"></div>`).join('')
+    + (model.live ? `<div class="tr-over now" style="left:${inTrack(scale.map(model.now))}" title="Now"></div>` : '');
+  el.innerHTML = `<div class="tr-row axis"><div class="tr-label"><span class="nm">Elapsed</span></div><div class="tr-track">${ticks}${gapLabels}</div></div>${rows}${overlays}`;
+  for (const item of items) seen.add(item.id);
+  if (note) note.textContent = `active ${fmtSpan(scale.active)}${scale.waited ? ` · waited ${fmtSpan(scale.waited)}, folded` : ''} · select a bar to open its step`;
+  return model;
+}
+
+function traceFocus(id) {
+  const el = [...document.querySelectorAll('#toolTimeline .st')].find(node => node.dataset.step === id);
+  if (!el) return;
+  if (el.classList.contains('expandable')) {
+    el.classList.add('open');
+    openSteps.add(id);
+  }
+  el.classList.add('sel');
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  setTimeout(() => el.classList.remove('sel'), 1800);
+}
+
+function toggleStep(el) {
+  el.classList.toggle('open');
+  if (el.classList.contains('open')) openSteps.add(el.dataset.step); else openSteps.delete(el.dataset.step);
+}
+
+function stepHtml(item, lane, t0) {
+  const data = item.data || {};
+  const took = item.status === 'pending' ? 'running…' : item.end > item.start ? fmtSpan(item.end - item.start) : '';
+  let title = '';
+  let sub = '';
+  let body = '';
+  if (item.kind === 'tool') {
+    title = `<span class="srv">${escapeHtml(lane.label)}</span><b>${escapeHtml(data.tool)}</b>${data.agent ? `<span class="by">by ${escapeHtml(data.agent)}</span>` : ''}`;
+    sub = escapeHtml(JSON.stringify(data.arguments || {}).slice(0, 180));
+    body = `<div class="st-k">Arguments <button class="cr-chip" onclick="event.stopPropagation();showToolDetail(${jsString(data.id)})">Open in a window</button></div><pre>${escapeHtml(prettyJson(data.arguments || {}))}</pre>`
+      + `<div class="st-k">Result</div><pre>${escapeHtml(data.result === undefined || data.result === null ? '(waiting for the result…)' : prettyJson(data.result))}</pre>`;
+  } else if (item.kind === 'turn') {
+    title = `<b>Model turn ${escapeHtml(data.turn ?? '')}</b>`;
+    sub = escapeHtml([data.model, data.tools ? `${data.tools} tools offered` : '', data.finish].filter(Boolean).join(' · '));
+  } else if (item.kind === 'subagent') {
+    title = `<b>Sub-agent · ${escapeHtml(data.name || '')}</b>`;
+    sub = escapeHtml([data.model, data.status, data.turns ? `${data.turns} turns` : '', data.tool_calls ? `${data.tool_calls} tool calls` : ''].filter(Boolean).join(' · '));
+    const text = data.summary || data.output || data.instructions || '';
+    if (text) body = `<div class="st-k">${data.summary || data.output ? 'What it found' : 'What it was asked'}</div><div class="st-prose">${escapeHtml(text)}</div>`;
+  } else if (item.kind === 'script') {
+    title = `<b>${escapeHtml(data.kind === 'code' ? (data.purpose || 'Model-written Python') : data.script)}</b>`;
+    sub = escapeHtml([`exit ${data.exitCode}`, (data.files || []).join(', ')].filter(Boolean).join(' · '));
+    body = (data.code ? `<div class="st-k">Program</div><pre>${escapeHtml(data.code)}</pre>` : '')
+      + (data.output ? `<div class="st-k">Output</div><pre>${escapeHtml(data.output)}</pre>` : '');
+  } else {
+    title = `<span class="dec ${escapeHtml(data.decision)}">${escapeHtml(data.decision)}</span><b>${escapeHtml(data.tool || String(data.point || '').replace(/_/g, ' '))}</b>`;
+    sub = escapeHtml([data.enforced === false ? 'shadow' : '', data.message, data.reason].filter(Boolean).join(' · '));
+  }
+  const open = body && openSteps.has(item.id) ? ' open' : '';
+  return `
+    <div class="st${body ? ' expandable' : ''}${open}" data-step="${escapeHtml(item.id)}">
+      <div class="st-row"${body ? ' onclick="toggleStep(this.parentElement)"' : ''}>
+        <span class="st-t">${escapeHtml(fmtOffset(item.start - t0))}</span>
+        <span class="tr-icon tone-${escapeHtml(item.tone || lane.tone)}">${escapeHtml(lane.icon)}</span>
+        <div class="st-main"><div class="st-title">${title}</div>${sub ? `<div class="st-sub">${sub}</div>` : ''}</div>
+        <span class="st-end">${escapeHtml(took)}<span class="st-dot ${escapeHtml(item.status)}"></span></span>
+      </div>${body ? `<div class="st-body">${body}</div>` : ''}
+    </div>`;
+}
+
+function renderSteps(run, model) {
+  const el = document.getElementById('toolTimeline');
+  if (!el) return;
+  if (stepsRun !== run.id) {
+    stepsRun = run.id;
+    stepsSig = '';
+    openSteps.clear();
+  }
+  const rows = model.lanes.flatMap(lane => lane.items.map(item => ({ item, lane })))
+    .filter(({ item }) => item.kind !== 'guard' || !['allow', 'allowed'].includes(item.data.decision))
+    .sort((a, b) => a.item.start - b.item.start);
+  const signature = rows.map(({ item }) => `${item.id}:${item.status}`).join('|');
+  if (signature === stepsSig && el.childElementCount) return;
+  stepsSig = signature;
+  el.innerHTML = rows.length
+    ? rows.map(({ item, lane }) => stepHtml(item, lane, model.t0)).join('')
+    : `<div class="timeline-empty">${isActiveStatus(run.status) ? 'Waiting for the agent to take its first step…' : 'No steps were recorded for this task.'}</div>`;
 }
 
 function renderSkillWork(run) {
@@ -2794,33 +3293,9 @@ async function downloadArtifact(runId, path) {
   }
 }
 
-function renderToolTimeline(run) {
-  const timeline = document.getElementById('toolTimeline');
-  const entries = Object.entries(run.toolData || {});
-  if (!entries.length) {
-    timeline.innerHTML = '<div class="timeline-empty">Waiting for agent to start calling tools...</div>';
-    return;
-  }
-  timeline.innerHTML = entries.map(([id, data]) => {
-    const argsPreview = JSON.stringify(data.arguments || {}).slice(0, 80);
-    const state = data.result ? 'done' : 'pending';
-    return `
-      <div class="tool-entry" id="entry-${escapeHtml(id)}" onclick="showToolDetail(${jsString(id)})">
-        <span class="entry-dot ${state}"></span>
-        <div class="entry-body">
-          <div class="entry-header">
-            <span class="entry-server">${escapeHtml(data.server)}</span>
-            <span class="entry-tool">${escapeHtml(data.tool)}</span>
-            <span class="entry-index">#${escapeHtml(data.index || '')}</span>
-          </div>
-          <div class="entry-preview">${escapeHtml(argsPreview)}</div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
 function renderServersUsed(run) {
   const el = document.getElementById('serversUsed');
+  if (!el) return;
   const entries = Object.entries(run.serverCallCounts || {}).sort((a, b) => b[1] - a[1]);
   if (!entries.length) {
     el.innerHTML = '<div style="font-size:12px;color:var(--dim);padding:8px 0">No tool calls yet</div>';
@@ -2866,6 +3341,13 @@ function handleRunEvent(runId, type, data) {
 
     case 'turn':
       addAgentEvent(run, { event: `agent.llm.${data.phase}`, attributes: data });
+      run.turns = run.turns || [];
+      if (data.phase === 'starting') {
+        run.turns.push({ turn: data.turn, model: data.model, tools: data.tools, start: Date.now() });
+      } else {
+        const current = [...run.turns].reverse().find(item => !item.end);
+        if (current) Object.assign(current, { end: Date.now(), finish: data.finish_reason, model: current.model || data.model });
+      }
       run.runningText = data.phase === 'starting'
         ? `Turn ${data.turn}: asking ${data.model || 'the model'} with ${data.tools} tools…`
         : `Turn ${data.turn}: model response received (${data.finish_reason || 'complete'})`;
@@ -2874,13 +3356,14 @@ function handleRunEvent(runId, type, data) {
     case 'subagent': {
       run.subagents = run.subagents || [];
       let entry = run.subagents.find(item => item.index === data.index && item.name === data.name && item.status === 'running');
-      if (!entry) { entry = { index: data.index, name: data.name, status: 'running' }; run.subagents.push(entry); }
+      if (!entry) { entry = { index: data.index, name: data.name, status: 'running', startedAt: Date.now() }; run.subagents.push(entry); }
       Object.assign(entry, data, { status: data.phase === 'finished' ? 'complete' : data.phase === 'failed' ? 'error' : 'running' });
+      if (entry.status !== 'running') entry.completedAt = Date.now();
       break;
     }
 
     case 'script':
-      run.scripts = [...(run.scripts || []), data].slice(-40);
+      run.scripts = [...(run.scripts || []), { ...data, at: Date.now() }].slice(-40);
       break;
 
     case 'artifact':
@@ -2916,7 +3399,7 @@ function handleRunEvent(runId, type, data) {
     }
 
     case 'tool_call': {
-      run.toolData[data.id] = { server: data.server, tool: data.tool, arguments: data.arguments, result: null, index: data.index };
+      run.toolData[data.id] = { server: data.server, tool: data.tool, arguments: data.arguments, result: null, index: data.index, agent: data.agent || '', startedAt: Date.now() };
 
       // Track server usage
       run.serverCallCounts[data.server] = (run.serverCallCounts[data.server] || 0) + 1;
@@ -2927,6 +3410,7 @@ function handleRunEvent(runId, type, data) {
     case 'tool_result': {
       if (run.toolData[data.id]) {
         run.toolData[data.id].result = data.result;
+        run.toolData[data.id].endedAt = Date.now();
       }
       break;
     }
@@ -3025,8 +3509,8 @@ function showEventDetail(elementId, index) {
 
 function updateServersUsed() {
   const run = getRun();
-  if (!run) return;
   const el = document.getElementById('serversUsed');
+  if (!run || !el) return;
   const entries = Object.entries(run.serverCallCounts || {}).sort((a, b) => b[1] - a[1]);
   el.innerHTML = entries.map(([name, count]) => `
     <div class="server-used-item">
@@ -3058,9 +3542,7 @@ const VIEW_IDS = ['controlRoomView', 'colleagueView', 'dashboardView', 'runView'
 function setView(viewId, title, navId, subtitle) {
   for (const id of VIEW_IDS) {
     const el = document.getElementById(id);
-    if (!el) continue;
-    if (id === 'dashboardView') el.classList.toggle('hidden', id !== viewId);
-    else el.classList.toggle('active', id === viewId);
+    if (el) el.classList.toggle('active', id === viewId);
   }
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.id === navId));
   const heading = document.getElementById('topbarTitle');
@@ -3101,14 +3583,14 @@ function route() {
 window.addEventListener('popstate', () => { if (window.autopilotAuth?.isAuthenticated()) route(); });
 
 function showDashboard() {
-  setView('dashboardView', 'Platform', 'navDashboard', 'identity, instances, runtime signals and Agent 365 value');
+  setView('dashboardView', 'Platform', 'navDashboard', 'how it is built, and where to go deeper');
   syncHash('#/platform');
-  renderRunHistory();
+  renderDashboard();
 }
 
 function showRunView() {
   const run = getRun();
-  setView('runView', run ? run.title : 'Run', 'navRunItem', 'one run, step by step');
+  setView('runView', run ? brandText(run.title) : 'Telemetry', 'navRunItem', 'one task from input to output: model turns, tool calls and checks');
   if (run) {
     renderRun(run);
     syncHash(`#/runs/${encodeURIComponent(run.id)}`);
@@ -3192,7 +3674,7 @@ function approvalCardHtml(run, isCompleted) {
           <span class="ac-scenario">${escapeHtml(scenario)}</span>
           <span class="ac-recipient">${escapeHtml(recipient)}</span>
           ${askedAt ? `<span class="ac-time">asked ${escapeHtml(askedAt)}</span>` : ''}
-          <button class="ac-open" onclick="openRun(${jsString(run.id)})">open run</button>
+          <button class="ac-open" onclick="openRun(${jsString(run.id)})">view telemetry</button>
         </div>
         <div class="ac-question"><strong>Agent asked:</strong> ${escapeHtml(question)}</div>
         <div class="ac-reply"><strong>${escapeHtml(recipient)} replied:</strong> ${escapeHtml(run.managerReply)}</div>
@@ -3216,7 +3698,7 @@ function approvalCardHtml(run, isCompleted) {
           <button onclick="quickApproval(${jsId},'no')">no</button>
           <button onclick="quickApproval(${jsId},'hold')">hold</button>
         </div>
-        <button class="ac-open" onclick="openRun(${jsId})">open run</button>
+        <button class="ac-open" onclick="openRun(${jsId})">view telemetry</button>
         <button class="ac-send" onclick="sendApprovalReply(${jsId})">Send reply &amp; resume</button>
       </div>
     </div>`;
@@ -3624,7 +4106,7 @@ let runsFilter = 'all';
 const RUN_FILTERS = [['all', 'All'], ['active', 'Live'], ['waiting', 'Waiting'], ['complete', 'Finished'], ['error', 'Failed'], ['guarded', 'Guardrail hits']];
 
 function showRuns() {
-  setView('runsView', 'Runs', 'navRunItem', 'every run across the fleet, live and finished');
+  setView('runsView', 'Telemetry', 'navRunItem', 'every task an AI teammate worked, from input to output');
   syncHash('#/runs');
   renderRunsList();
 }
@@ -3903,7 +4385,7 @@ async function refreshGuardrailDecisions() {
       <span class="dec ${escapeHtml(item.decision)}">${escapeHtml(item.decision)}</span>
       <div class="fe-body"><div class="fe-title">${escapeHtml(item.tool || String(item.point).replace(/_/g, ' '))}${item.enforced === false ? '<span class="srv">shadow</span>' : ''}${item.agent ? `<span class="srv">${escapeHtml(item.agent)}</span>` : ''}</div>
         <div class="fe-detail">${escapeHtml([item.reason, item.message].filter(Boolean).join(' — ') || 'allowed')} · ${escapeHtml(item.ms)} ms · v${escapeHtml(item.version)}</div>
-        ${item.runId && getRun(item.runId) ? `<span class="fe-link" onclick="openRun(${jsString(item.runId)})">open run</span>` : ''}</div><span></span>
+        ${item.runId && getRun(item.runId) ? `<span class="fe-link" onclick="openRun(${jsString(item.runId)})">view telemetry</span>` : ''}</div><span></span>
     </div>`).join('') : '<div class="cr-empty">No decisions yet. Start a run to see every step checked.</div>';
 }
 
@@ -4075,7 +4557,7 @@ async function openCase(key, quiet) {
       ${review ? `<div class="cr-panel-title sub">Review: ${escapeHtml(review.topic)}</div>
         <div class="ws-dim">${(review.participants || []).map(person => escapeHtml(person.name)).join(', ')}</div>
         ${(review.replies || []).slice(-8).map(reply => `<div style="font-size:12px;margin-top:4px"><b>${escapeHtml(reply.name)}</b>: ${escapeHtml(reply.text)}</div>`).join('')}` : ''}
-      ${(item.runDetails || []).length ? `<div class="cr-panel-title sub">Runs</div><div class="cr-caps">${item.runDetails.map(run =>
+      ${(item.runDetails || []).length ? `<div class="cr-panel-title sub">Telemetry</div><div class="cr-caps">${item.runDetails.map(run =>
         `<button class="cr-chip" onclick="go(${jsString('#/runs/' + run.id)})">${escapeHtml(run.status)} · ${escapeHtml(run.title.slice(0, 40))}</button>`).join('')}</div>` : ''}
     </div>
     <div class="cr-panel">
@@ -4179,6 +4661,7 @@ async function refreshControlRoom() {
   crLastOk = Date.now();
   document.getElementById('navColleagueCount').textContent = String(data.instances.length);
   if (isViewActive('controlRoomView')) renderControlRoom();
+  if (isViewActive('dashboardView')) renderPlatform();
   if (isViewActive('colleagueView')) {
     renderColleagueHeader();
     renderColleaguePolicy(false);
@@ -4230,8 +4713,81 @@ function renderControlRoom() {
     ['working', 'Working'], ['waiting', 'Waiting'], ['issue', 'Attention'], ['idle', 'Idle'], ['isolated', 'Isolated'],
   ].map(([key, label]) => `<div class="cr-ann ${key}${(fleet[key] || 0) > 0 ? ' lit' : ''}"><div class="n">${fleet[key] || 0}</div><div class="l">${label}</div></div>`).join('');
   const tiles = [...controlRoom.instances].sort((a, b) => String(a.name).localeCompare(String(b.name)));
-  document.getElementById('crWall').innerHTML = [...tiles, controlRoom.template].map(crTileHtml).join('');
+  const blueprint = document.getElementById('crBlueprint');
+  const template = controlRoom.template;
+  const templateState = (template.presence && template.presence.state) || 'template';
+  blueprint.className = `cr-blueprint state-${CR_STATE_LABEL[templateState] ? templateState : 'template'}`;
+  blueprint.innerHTML = crBlueprintHtml(template);
+  blueprint.onclick = () => showColleague(template.key);
+  blueprint.onkeydown = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showColleague(template.key); } };
+  document.getElementById('crWall').innerHTML = tiles.length
+    ? tiles.map(crTileHtml).join('')
+    : '<div class="cr-empty">No colleagues hired yet. Hire an instance (for example “Compliance Agent”) from Microsoft 365 admin center → Agents. It lights up here automatically.</div>';
   renderSystems();
+}
+
+// ── Profile photos set in the Microsoft 365 admin center, read through Graph by the host ──
+const photoCache = new Map();  // `${key}:${photo version}` -> { url }
+const PHOTO_TYPES = /^image\/(?:jpeg|png|gif|webp)$/;
+
+function tilePhoto(tile) {
+  if (!tile || !tile.photo || tile.kind === 'template') return '';
+  const id = `${tile.key}:${tile.photo}`;
+  const entry = photoCache.get(id);
+  if (entry) return entry.url;
+  for (const [other, old] of photoCache) {
+    if (other.startsWith(`${tile.key}:`)) {
+      if (old.url) URL.revokeObjectURL(old.url);
+      photoCache.delete(other);
+    }
+  }
+  photoCache.set(id, { url: '' });
+  loadPhoto(tile.key, id);
+  return '';
+}
+
+async function loadPhoto(key, id) {
+  try {
+    const response = await fetch(`/api/control-room/instances/${encodeURIComponent(key)}/photo`);
+    if (!response.ok || !window.autopilotAuth.isAuthenticated()) return;
+    const blob = await response.blob();
+    const entry = photoCache.get(id);
+    if (!entry || !PHOTO_TYPES.test(blob.type)) return;
+    entry.url = URL.createObjectURL(blob);
+    if (isViewActive('controlRoomView')) renderControlRoom();
+    if (isViewActive('colleagueView')) renderColleagueHeader();
+    if (isViewActive('dashboardView')) renderPlatform();
+  } catch (_) { /* Initials stay in place. */ }
+}
+
+function avatarHtml(tile) {
+  if (tile.kind === 'template') return '<img src="/static/autopilot-icon.svg" alt="">';
+  const url = tilePhoto(tile);
+  return url ? `<img src="${escapeHtml(url)}" alt="">` : escapeHtml(actorInitials(tile.name));
+}
+
+function crMeterBars(meter) {
+  const peak = Math.max(1, ...meter);
+  return meter.map(value => `<span class="${value ? '' : 'zero'}" style="height:${value ? Math.max(14, Math.round(value / peak * 100)) : 8}%"></span>`).join('');
+}
+
+function crBlueprintHtml(tile) {
+  const summary = tile.summary || {};
+  const counts = summary.counts || {};
+  const policy = tile.policy || { skills: [], servers: [] };
+  const hired = tile.hiredCount || 0;
+  const state = (tile.presence && tile.presence.state) || 'template';
+  const text = state !== 'template' && state !== 'idle' ? presenceSentence(tile)
+    : hired ? `Template for ${hired} hired colleague${hired === 1 ? '' : 's'} · ${policy.skills.length} skills · ${policy.servers.length} systems`
+    : 'No colleagues hired yet. Hire one from Microsoft 365 admin center → Agents.';
+  return `
+    <img class="bp-mark" src="/static/autopilot-icon.svg" alt="">
+    <span class="bp-kind">BLUEPRINT</span>
+    <span class="bp-name">${escapeHtml(brandText(tile.name))}</span>
+    <span class="bp-text" title="${escapeHtml(brandText(presenceSentence(tile)))}">${escapeHtml(brandText(text))}</span>
+    <div class="cr-meter" title="Activity across the fleet in the last hour, five-minute slots">${crMeterBars(summary.meter || [])}</div>
+    <span class="bp-counts" title="Across every hired colleague, last 24 hours">Fleet 24h · Teams <b>${escapeHtml(counts.teams || 0)}</b> · Email <b>${escapeHtml(counts.email || 0)}</b> · Tools <b>${escapeHtml(counts.tool || 0)}</b> · <span class="${counts.issue ? 'bad' : ''}">Issues <b>${escapeHtml(counts.issue || 0)}</b></span></span>
+    <span class="bp-open">Open ›</span>`;
 }
 
 function crTileHtml(tile) {
@@ -4239,39 +4795,29 @@ function crTileHtml(tile) {
   const state = CR_STATE_LABEL[presence.state] ? presence.state : 'idle';
   const summary = tile.summary || {};
   const counts = summary.counts || {};
-  const meter = summary.meter || [];
-  const peak = Math.max(1, ...meter);
-  const bars = meter.map(value => `<span class="${value ? '' : 'zero'}" style="height:${value ? Math.max(14, Math.round(value / peak * 100)) : 8}%"></span>`).join('');
-  const isTemplate = tile.kind === 'template';
-  const role = isTemplate
-    ? `Agent template (blueprint) · ${tile.hiredCount || 0} hired`
-    : [tile.manager && tile.manager.name ? `AI teammate · reports to ${tile.manager.name}` : 'AI teammate',
-       tile.kind === 'configured' ? 'configured for compliance cases' : ''].filter(Boolean).join(' · ');
+  const role = [tile.manager && tile.manager.name ? `reports to ${tile.manager.name}` : 'AI teammate',
+    tile.kind === 'configured' ? 'configured for compliance cases' : ''].filter(Boolean).join(' · ');
   const policy = tile.policy || { skills: [], servers: [] };
   const caps = (policy.servers || []).map(name => `<span class="cr-cap on" title="${escapeHtml(SERVER_LABELS[name] || name)} approved">${escapeHtml(SERVER_ICONS[name] || name)}</span>`).join('')
     + `<span class="cr-cap">${policy.skills.length} skill${policy.skills.length === 1 ? '' : 's'}</span>`
     + (tile.compliance ? `<span class="cr-cap on">${tile.cases.open} open case${tile.cases.open === 1 ? '' : 's'}</span>` : '');
-  const callout = isTemplate && !tile.hiredCount
-    ? '<div class="cr-callout">No colleagues hired yet. Hire an instance (for example “Compliance Agent”) from Microsoft 365 admin center → Agents. It lights up here automatically.</div>'
-    : '';
+  const gauges = [['Teams', counts.teams], ['Email', counts.email], ['Tools', counts.tool], ['Skills', counts.skill], ['Issues', counts.issue, true]]
+    .map(([label, value, bad]) => `<div class="${bad && value ? 'bad' : ''}"><b>${escapeHtml(value || 0)}</b><span>${label}</span></div>`).join('');
   const key = jsString(tile.key);
   return `
-    <div class="cr-tile state-${state}${isTemplate ? ' template' : ''}" tabindex="0" role="button" aria-label="${escapeHtml(tile.name)}: ${escapeHtml(CR_STATE_LABEL[state])}"
+    <div class="cr-tile state-${state}" tabindex="0" role="button" aria-label="${escapeHtml(tile.name)}: ${escapeHtml(CR_STATE_LABEL[state])}"
          onclick="showColleague(${key})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showColleague(${key});}">
       <div class="cr-tile-top">
-        <span class="cr-lamp"></span>
-        <div class="cr-avatar">${escapeHtml(actorInitials(tile.name))}</div>
-        <div class="cr-ident"><div class="cr-name">${escapeHtml(brandText(tile.name))}</div><div class="cr-role">${escapeHtml(role)}</div></div>
-        <span class="cr-state">${CR_STATE_LABEL[state]}</span>
+        <div class="cr-avatar">${avatarHtml(tile)}<span class="cr-lamp"></span></div>
+        <div class="cr-ident">
+          <div class="cr-name">${escapeHtml(brandText(tile.name))}</div>
+          <div class="cr-role"><span class="cr-state">${CR_STATE_LABEL[state]}</span><span class="txt">${escapeHtml(role)}</span></div>
+        </div>
       </div>
-      <div class="cr-now">${escapeHtml(brandText(presenceSentence(tile)))}${presence.since && !['idle', 'template'].includes(state) ? ` <span class="since">· ${escapeHtml(crAgo(presence.since))}</span>` : ''}</div>
-      <div class="cr-meter" title="${isTemplate ? 'All hired colleagues' : 'Activity'} in the last hour, five-minute slots">${bars}</div>
-      <div class="cr-stats">${isTemplate ? '<span>Fleet</span>' : ''}
-        <span>Teams <b>${counts.teams || 0}</b></span><span>Email <b>${counts.email || 0}</b></span>
-        <span>Tools <b>${counts.tool || 0}</b></span><span>Skills <b>${counts.skill || 0}</b></span>
-        <span class="${counts.issue ? 'bad' : ''}">Issues <b>${counts.issue || 0}</b></span>
-      </div>
-      <div class="cr-caps">${caps}</div>${callout}
+      <div class="cr-now">${escapeHtml(brandText(presenceSentence(tile)))}${presence.since && state !== 'idle' ? ` <span class="since">· ${escapeHtml(crAgo(presence.since))}</span>` : ''}</div>
+      <div class="cr-meter" title="Activity in the last hour, five-minute slots">${crMeterBars(summary.meter || [])}</div>
+      <div class="cr-gauges" title="Last 24 hours">${gauges}</div>
+      <div class="cr-caps">${caps}</div>
     </div>`;
 }
 
@@ -4309,7 +4855,7 @@ function feedItemHtml(event, withWho, fresh) {
   const detail = event.detail ? `<div class="fe-detail">${escapeHtml(event.detail)}</div>` : '';
   const result = event.result ? `<div class="fe-result">${escapeHtml(event.result)}</div>` : '';
   const link = event.runId && getRun(event.runId)
-    ? `<span class="fe-link" onclick="event.stopPropagation();openRun(${jsString(event.runId)})">Open the run</span>` : '';
+    ? `<span class="fe-link" onclick="event.stopPropagation();openRun(${jsString(event.runId)})">View telemetry</span>` : '';
   const who = withWho ? `<span class="who">${escapeHtml(instanceLabel(event.instance))}</span>` : '';
   return `
     <div class="fe st-${escapeHtml(event.status)} cat-${escapeHtml(event.category)}${fresh ? ' new' : ''}${openFeedIds.has(event.id) ? ' open' : ''}"
@@ -4379,9 +4925,16 @@ function renderColleagueHeader() {
     return;
   }
   const presence = tile.presence || {};
-  document.querySelector('#colleagueView .cl-header').className = `cl-header state-${presence.state || 'idle'}`;
-  document.getElementById('clAvatar').textContent = actorInitials(tile.name);
+  const state = presence.state || 'idle';
+  document.querySelector('#colleagueView .cl-header').className = `cl-header state-${state}`;
+  const avatar = document.getElementById('clAvatar');
+  const face = avatarHtml(tile);
+  if (avatar.dataset.face !== face) {
+    avatar.innerHTML = face;
+    avatar.dataset.face = face;
+  }
   document.getElementById('clName').textContent = brandText(tile.name);
+  document.getElementById('clState').textContent = CR_STATE_LABEL[state] || 'IDLE';
   document.getElementById('topbarTitle').textContent = brandText(tile.name);
   const meta = tile.kind === 'template'
     ? ['Agent template (blueprint)', tile.blueprint && tile.blueprint.clientId ? `app ${tile.blueprint.clientId}` : '', `${tile.hiredCount || 0} hired`]
@@ -4389,9 +4942,8 @@ function renderColleagueHeader() {
        tile.kind === 'configured' ? 'configured for compliance cases' : ''];
   document.getElementById('clMeta').textContent = meta.filter(Boolean).join(' · ');
   document.getElementById('clPresence').innerHTML =
-    `<span class="cr-state" style="color:var(--lamp);border-color:var(--lamp)">${CR_STATE_LABEL[presence.state] || 'IDLE'}</span>`
-    + `<span>${escapeHtml(brandText(presenceSentence(tile)))}</span>`
-    + (presence.since && presence.state !== 'idle' ? `<span class="cr-note">since ${escapeHtml(crAgo(presence.since))}</span>` : '');
+    `<span>${escapeHtml(brandText(presenceSentence(tile)))}</span>`
+    + (presence.since && !['idle', 'template'].includes(state) ? `<span class="cr-note">since ${escapeHtml(crAgo(presence.since))}</span>` : '');
   renderColleagueActions(tile);
   renderColleagueStats(tile);
   renderColleagueCases(tile);
@@ -4407,9 +4959,10 @@ function renderColleagueActions(tile) {
   const options = approved.map(slug => `<option value="${escapeHtml(slug)}">${escapeHtml(skillCard(slug)?.title || titleCase(slug))}</option>`).join('');
   const governanceId = tile.instanceId || tile.key;
   element.innerHTML = (runnable && approved.length
-      ? `<select class="cr-select" id="clSkillSelect" aria-label="Approved skill" onchange="renderSkillDetail()">${options}</select>`
+      ? `<div class="cl-run"><span class="cl-run-label">Run a skill</span>`
+        + `<select class="cr-select" id="clSkillSelect" aria-label="Approved skill" onchange="renderSkillDetail()">${options}</select>`
         + `<label class="cl-dry" title="Plan, read and analyse everything, but change nothing and queue nothing"><input type="checkbox" id="clDryRun"> Dry run</label>`
-        + `<button class="cr-button primary" onclick="runColleagueSkill()">Run skill</button><div class="cl-skill-detail" id="clSkillDetail"></div>`
+        + `<button class="cr-button primary" onclick="runColleagueSkill()">▶ Run</button><div class="cl-skill-detail" id="clSkillDetail"></div></div>`
       : `<span class="cr-note">${runnable ? 'No approved skills to run.' : 'Runs start once this instance is discovered in Entra.'}</span>`)
     + (tile.kind === 'template' ? '' : isolated
       ? `<button class="cr-button" onclick="restoreColleague(${jsString(governanceId)})">Restore</button>`
@@ -4434,6 +4987,7 @@ function renderSkillDetail() {
   detail.textContent = [card.summary, card.version ? `v${card.version}` : '',
     card.legacy ? '' : `Plans on ${route('orchestrator')}, sub-agents on ${route('subagents')}.`, autonomy,
     (card.files || []).length ? `${card.files.length} bundled files.` : ''].filter(Boolean).join(' ');
+  detail.title = detail.textContent;
 }
 
 function renderColleagueStats(tile) {
@@ -4442,8 +4996,8 @@ function renderColleagueStats(tile) {
     ['Teams messages', counts.teams], ['Emails', counts.email], ['Notifications', counts.notification],
     ['Tool calls', counts.tool], ['Skills run', counts.skill], ['Case steps', counts.case], ['Issues', counts.issue, true],
   ];
-  document.getElementById('clStats').innerHTML = items.map(([label, value, bad]) =>
-    `<div class="cl-stat${bad && value ? ' bad' : ''}"><div class="n">${value || 0}</div><div class="l">${label} · 24h</div></div>`).join('');
+  document.getElementById('clStats').innerHTML = `<span class="k">${tile.kind === 'template' ? 'Fleet, last 24 hours' : 'Last 24 hours'}</span>`
+    + items.map(([label, value, bad]) => `<span class="${bad && value ? 'bad' : ''}"><b>${escapeHtml(value || 0)}</b>${label}</span>`).join('');
 }
 
 function renderColleagueCases(tile) {

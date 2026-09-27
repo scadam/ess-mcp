@@ -8,11 +8,12 @@ are single-attempt with bounded responses; an unknown outcome is reported, never
 from __future__ import annotations
 
 import asyncio
+import base64
 import html
 import re
 from dataclasses import dataclass
 from typing import Any, Callable
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import httpx
 
@@ -31,6 +32,20 @@ _MAIL_SELECT = ("$select=id,conversationId,receivedDateTime,from,sender,toRecipi
 
 class CommsError(RuntimeError):
     """A payload-free failure; a write's outcome may be unknown."""
+
+
+class FileConflict(CommsError):
+    """The file changed after it was read (its eTag moved on); nothing was written."""
+
+
+class FileLocked(CommsError):
+    """The file is checked out or exclusively locked; nothing was written."""
+
+
+def _download_url(location: str) -> bool:
+    parts = urlsplit(location)
+    host = (parts.hostname or "").lower()
+    return parts.scheme == "https" and not parts.username and host.endswith(".sharepoint.com")
 
 
 @dataclass(frozen=True)
@@ -64,18 +79,22 @@ class AgentComms:
             raise CommsError("The agentic-user token exchange returned no token.")
         return token
 
-    async def _call(self, binding: DeskBinding | Colleague, method: str, path: str, body: dict | None = None,
-                    expected: tuple[int, ...] = (200,), headers: dict[str, str] | None = None,
-                    content: bytes | None = None) -> dict[str, Any]:
+    async def _send(self, binding: DeskBinding | Colleague, method: str, path: str, body: dict | None = None,
+                    headers: dict[str, str] | None = None, content: bytes | None = None) -> httpx.Response:
         token = await self._token(binding)
         try:
             async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=False, trust_env=False,
                                          transport=httpx.AsyncHTTPTransport(retries=0)) as client:
-                response = await client.request(method, GRAPH + path, json=body if content is None else None,
-                                                content=content, headers={
+                return await client.request(method, GRAPH + path, json=body if content is None else None,
+                                            content=content, headers={
                     "Authorization": f"Bearer {token}", "Accept": "application/json", **(headers or {})})
         except Exception:
             raise CommsError("The Graph request failed or its outcome is unknown; it was not retried.") from None
+
+    async def _call(self, binding: DeskBinding | Colleague, method: str, path: str, body: dict | None = None,
+                    expected: tuple[int, ...] = (200,), headers: dict[str, str] | None = None,
+                    content: bytes | None = None) -> dict[str, Any]:
+        response = await self._send(binding, method, path, body, headers, content)
         if response.status_code not in expected:
             raise CommsError(f"Graph refused the request (HTTP {response.status_code}).")
         if response.status_code == 202 or not response.content:
@@ -86,10 +105,10 @@ class AgentComms:
         return data
 
     async def user(self, binding: DeskBinding, who: str) -> dict[str, Any] | None:
-        """A tenant user by object id, UPN or email; None when not found."""
+        """A tenant user by object id, UPN, email or exact unique display name; None when not found."""
         who = (who or "").strip()
         if not (_GUID.fullmatch(who) or _EMAIL.fullmatch(who)):
-            return None
+            return await self._user_by_name(binding, who)
         cached = self._users.get(who.lower())
         if cached is not None:
             return cached
@@ -105,6 +124,27 @@ class AgentComms:
         for key in (who.lower(), person["aadObjectId"].lower(), person["email"]):
             if key:
                 self._users[key] = person
+        return person
+
+    async def _user_by_name(self, binding: DeskBinding, name: str) -> dict[str, Any] | None:
+        """Only an exact display name that matches exactly one account (a form's "raised by" field)."""
+        name = " ".join(name.split())
+        if not 3 <= len(name) <= 120 or not re.fullmatch(r"[^\W\d_](?:[^\W\d_]|[ .'-])*", name):
+            return None
+        cached = self._users.get("name:" + name.casefold())
+        if cached is not None:
+            return cached
+        query = quote("displayName eq '" + name.replace("'", "''") + "'", safe="")
+        try:
+            data = await self._call(binding, "GET", f"/users?$filter={query}&$select=id&$top=2")
+        except CommsError:
+            return None
+        matches = [item.get("id", "") for item in (data.get("value") or []) if isinstance(item, dict)]
+        if len(matches) != 1 or not _GUID.fullmatch(matches[0]):
+            return None
+        person = await self.user(binding, matches[0])
+        if person is not None:
+            self._users["name:" + name.casefold()] = person
         return person
 
     @staticmethod
@@ -193,3 +233,53 @@ class AgentComms:
         await self._call(binding, "POST", f"/drives/{quote(drive_id, safe='!')}/items/{quote(item_id, safe='')}/invite", {
             "recipients": [{"objectId": user_id} for user_id in dict.fromkeys(user_ids)], "roles": ["read"],
             "requireSignIn": True, "sendInvitation": False}, expected=(200,))
+
+    async def shared_item(self, binding: DeskBinding | Colleague, url: str) -> dict[str, Any]:
+        """The drive item behind a SharePoint or OneDrive document address the colleague can open."""
+        share = "u!" + base64.urlsafe_b64encode(url.encode("utf-8")).decode("ascii").rstrip("=")
+        data = await self._call(binding, "GET", f"/shares/{share}/driveItem?$select=id,name,eTag,webUrl,size,file,"
+                                                "parentReference")
+        drive = (data.get("parentReference") or {}).get("driveId") or ""
+        if not data.get("id") or not drive or "file" not in data:
+            raise CommsError("That link is not a file this colleague can open.")
+        return {"id": data["id"], "driveId": drive, "name": data.get("name") or "", "webUrl": data.get("webUrl") or ""}
+
+    async def file_content(self, binding: DeskBinding | Colleague, drive_id: str, item_id: str,
+                           limit: int) -> tuple[bytes, str]:
+        """The file's bytes and the eTag they belong to (read first, so a race can only make the save refuse)."""
+        path = f"/drives/{quote(drive_id, safe='!')}/items/{quote(item_id, safe='')}"
+        meta = await self._call(binding, "GET", path + "?$select=id,eTag,size")
+        if int(meta.get("size") or 0) > limit:
+            raise CommsError("The file is too large to edit here.")
+        response = await self._send(binding, "GET", path + "/content")
+        if response.status_code in (301, 302, 303, 307, 308):
+            location = response.headers.get("Location", "")
+            if not _download_url(location):
+                raise CommsError("Graph redirected the download somewhere unexpected.")
+            try:
+                # The redirect target is a short-lived pre-authenticated URL: no bearer token is sent there.
+                async with httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=False, trust_env=False) as client:
+                    response = await client.get(location)
+            except Exception:
+                raise CommsError("The file download failed.") from None
+        if response.status_code != 200 or len(response.content) > limit:
+            raise CommsError(f"The file could not be downloaded (HTTP {response.status_code}).")
+        return response.content, meta.get("eTag") or ""
+
+    async def replace_file(self, binding: DeskBinding | Colleague, drive_id: str, item_id: str, data: bytes,
+                           etag: str, content_type: str) -> dict[str, Any]:
+        """Save new content only over the exact version that was read (If-Match), even while it is open in Word."""
+        if not etag:
+            raise CommsError("The file's version is unknown, so it was not overwritten.")
+        response = await self._send(
+            binding, "PUT", f"/drives/{quote(drive_id, safe='!')}/items/{quote(item_id, safe='')}/content",
+            content=data, headers={"Content-Type": content_type, "If-Match": etag, "Prefer": "bypass-shared-lock"})
+        if response.status_code == 412:
+            raise FileConflict("The document changed after it was read; nothing was saved.")
+        if response.status_code == 423:
+            raise FileLocked("The document is checked out or locked for editing, so the change was not saved.")
+        if response.status_code not in (200, 201):
+            raise CommsError(f"Graph refused the upload (HTTP {response.status_code}).")
+        item = _json(response.content) if response.content else {}
+        item = item if type(item) is dict else {}
+        return {"eTag": item.get("eTag") or "", "webUrl": item.get("webUrl") or ""}

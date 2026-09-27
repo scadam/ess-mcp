@@ -46,7 +46,9 @@ Read `references/p2p-policy.md` before acting.
 
 ## Price variance (status `ap_hold`, `price_variance`)
 
-- Ask the requester or buyer whether a price increase was agreed (contract amendment, quote, surcharge).
+- Ask the requester or buyer first whether a price increase was agreed (contract amendment, quote, surcharge),
+  quoting the order and billed prices. Coupa rarely records an agreement made by email or phone, so an empty record
+  is not evidence either way: don't dispute before they answer, or before the follow-up passes without an answer.
 - Not agreed, or no evidence: `coupa__dispute_invoice` with `INCORRECT_PRICE` and a comment quoting the order
   price, the billed price and the contract, asking the supplier for a credit note or a corrected invoice. Tell the
   requester, then `case__wait` for the supplier (follow up in 5 working days; chase with

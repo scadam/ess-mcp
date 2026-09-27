@@ -380,7 +380,8 @@ class AutopilotRuntime:
             raise PermissionError("The admitted job lost its original chat scope.")
         await self.ensure_effect_scope(scope, actor, "teams-chat")
         with self.host._run_context(scope, actor, source="teams-chat", run_id=actor["runId"]):
-            return await self.host.run_text_task(prompt, source="teams-chat", actor=actor)
+            return await self.host.run_text_task(prompt, source="teams-chat", actor=actor,
+                                                 dry_run=actor.get("dryRun") is True)
 
     async def _execute_approved(self, server: str, tool: str, args: dict[str, Any], identity: dict[str, Any]) -> str:
         scope = CURRENT_CHAT_SCOPE.get()

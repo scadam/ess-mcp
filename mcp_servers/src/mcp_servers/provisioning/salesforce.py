@@ -375,6 +375,10 @@ async def reset(org: Org) -> None:
         for row in await org.query(f"SELECT Id, CaseNumber FROM Case WHERE Subject = '{subject}' AND IsClosed = false"):
             await org.request("PATCH", f"/services/data/v{API}/sobjects/Case/{row['Id']}", json={"Status": "Closed"})
             _report("case", number=row["CaseNumber"], state="closed")
+    # Cases people raised through the Copilot agent during the last run.
+    for row in await org.query("SELECT Id, CaseNumber FROM Case WHERE Origin = 'Copilot' AND IsClosed = false"):
+        await org.request("PATCH", f"/services/data/v{API}/sobjects/Case/{row['Id']}", json={"Status": "Closed"})
+        _report("case", number=row["CaseNumber"], state="closed", origin="Copilot")
 
 
 async def main(mode: str) -> None:

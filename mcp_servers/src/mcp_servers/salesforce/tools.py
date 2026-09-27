@@ -955,6 +955,8 @@ async def tool_show_compliance_case_form(
     compliance_type: Optional[str] = None,
     description: Optional[str] = None,
     priority: Optional[str] = None,
+    requester_name: Optional[str] = None,
+    requester_email: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Show the compliance case creation form widget.
 
@@ -968,6 +970,8 @@ async def tool_show_compliance_case_form(
             "Fraud Investigation", "Data Privacy").
         description: Optional detailed description to pre-fill.
         priority: Optional priority pre-fill (High, Medium, Low).
+        requester_name: The signed-in user's full name, so the compliance desk can reply to them.
+        requester_email: The signed-in user's work email, if known.
     """
     prefill: Dict[str, Any] = {}
     if subject:
@@ -978,6 +982,10 @@ async def tool_show_compliance_case_form(
         prefill["description"] = description
     if priority:
         prefill["priority"] = priority
+    if requester_name:
+        prefill["requester_name"] = requester_name[:80]
+    if requester_email and "@" in requester_email:
+        prefill["requester_email"] = requester_email.strip()[:80]
 
     return {
         "_widget_hint": "The form is ready. Acknowledge with one short sentence (e.g. 'Here is the compliance case form.').",
@@ -2958,7 +2966,9 @@ SALESFORCE_TOOL_SPECS: list[dict] = [
             "Create a new compliance case — opens the interactive creation form "
             "for the user to fill in and submit. Use this when the user asks to "
             "raise a compliance concern, create a case, or log a compliance matter. "
-            "Pass any known details to pre-fill fields."
+            "Pass any known details to pre-fill fields, including the signed-in "
+            "user's full name as requester_name (and work email as requester_email "
+            "if known) so the compliance desk can follow up with them."
         ),
         "annotations": {"readOnlyHint": True},
         "meta": {

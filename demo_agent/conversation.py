@@ -89,6 +89,12 @@ _DELEGATION = re.compile(
     r"|approved)\b",
     re.IGNORECASE,
 )
+# Asking for a dry run is honoured from the requester's own words (it can only reduce what the run may do).
+_DRY_RUN = re.compile(
+    r"\b(?:dry[\s-]?run|read[\s-]only|(?:don['’]?t|do\s+not)\s+(?:change|update)\s+anything"
+    r"|without\s+(?:changing|updating)\s+anything)\b",
+    re.IGNORECASE,
+)
 _PERSONA = (
     "You are a capable AI teammate working with colleagues in Teams. Talk like a helpful colleague, "
     "not a chatbot: be concise by default and detailed when asked, use the person's first name when "
@@ -815,6 +821,7 @@ class ConversationService:
         if type(suggestion) is dict:
             suggestion = suggestion.get("prompt")
         run_actor["delegated"] = plan.get("delegated") is True and _DELEGATION.search(text) is not None
+        run_actor["dryRun"] = _DRY_RUN.search(text) is not None
         context: dict[str, Any] = {"memory": _memory_data(state), "originalRequest": {"senderId": _guid(actor.get("aadObjectId")), "text": text}}
         if isinstance(suggestion, str):
             context["plannerSuggestion"] = _safe(suggestion)

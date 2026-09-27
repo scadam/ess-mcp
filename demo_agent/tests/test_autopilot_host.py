@@ -1287,5 +1287,36 @@ class HostTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(order, ["conversation-jobs", "background-jobs", "store", "mcp"])
 
 
+class WordCommentNotificationTests(unittest.IsolatedAsyncioTestCase):
+    """A Word @mention becomes a desk case that knows its document, comment and thread, acknowledged in the thread."""
+
+    URL = "https://caldova74201480.sharepoint.com/sites/hr/Shared%20Documents/Guidelines.docx"
+
+    def context(self, url: str) -> Any:
+        activity = SimpleNamespace(
+            attachments=[SimpleNamespace(content_url=url, name="Guidelines.docx")], id="act-1",
+            text="<at>HR Agent</at> please add our rules for working abroad\n",
+            from_property=SimpleNamespace(name="Scott Adams", aad_object_id=OPERATOR))
+        return SimpleNamespace(activity=activity, send_activity=AsyncMock())
+
+    async def test_the_case_carries_the_document_and_the_comment_and_the_thread_gets_an_acknowledgement(self) -> None:
+        desk = SimpleNamespace(submit=AsyncMock(return_value="case-key"))
+        binding = SimpleNamespace(function="hr")
+        notification = SimpleNamespace(wpx_comment=SimpleNamespace(comment_id="c-1", parent_comment_id=None, document_id="d-1"))
+        with patch.object(host, "_desk", desk), patch.object(host, "_binding_for_activity", return_value=binding):
+            context = self.context(self.URL)
+            self.assertTrue(await host._desk_on_document(context, notification, "Word"))
+            event = desk.submit.await_args.args[0]
+            self.assertEqual((event.source, event.function, event.event_id), ("document", "hr", "doc:c-1"))
+            self.assertEqual(event.channel["documentUrl"], self.URL)
+            self.assertEqual(event.channel["comment"], "please add our rules for working abroad")
+            self.assertEqual((event.channel["threadId"], event.actor["aadObjectId"]), ("c-1", OPERATOR))
+            context.send_activity.assert_awaited_once()
+            other = self.context("https://example.com/Guidelines.docx")
+            await host._desk_on_document(other, notification, "Word")
+            self.assertNotIn("documentUrl", desk.submit.await_args.args[0].channel)
+            other.send_activity.assert_not_awaited()
+
+
 if __name__ == "__main__":
     unittest.main()

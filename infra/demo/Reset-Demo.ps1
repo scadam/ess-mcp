@@ -11,32 +11,36 @@ $ErrorActionPreference = 'Stop'
 Assert-DemoSubscription
 $provision = Join-Path $PSScriptRoot 'Invoke-Provisioning.ps1'
 
-# 1. Coupa keeps its simulated state in memory, so a restart returns the invoices to their seeded exceptions.
+# 1. Close last run's demo incidents and cases first, as the integration account: the desk's first sweep after the
+#    reset skips records the integration account changed last, so they can't come back as new cases.
+& $provision -System servicenow -Mode reset
+& $provision -System salesforce -Mode reset
+Write-Host "1/5 Last run's demo incidents and cases closed."
+
+# 2. Coupa keeps its simulated state in memory, so a restart returns the invoices to their seeded exceptions.
 $coupa = 'essmcp-caldova-coupa'
-$revision = az containerapp show -n $coupa -g $DemoResourceGroup --query properties.latestReadyRevisionName -o tsv
-az containerapp revision restart -n $coupa -g $DemoResourceGroup --revision $revision -o none
-if ($LASTEXITCODE -ne 0) { throw "Could not restart $coupa." }
+$revision = (Get-DemoApp $coupa).properties.latestReadyRevisionName
+Invoke-DemoArm -Method Post -Path ("/subscriptions/$DemoSubscription/resourceGroups/$DemoResourceGroup/providers/" +
+  "Microsoft.App/containerApps/$coupa/revisions/$revision/restart?api-version=2024-03-01") | Out-Null
 Start-Sleep -Seconds 20
 Wait-DemoApp $coupa | Out-Null
-Write-Host '1/4 Coupa is back to its seeded invoices.'
+Write-Host '2/5 Coupa is back to its seeded invoices.'
 
-# 2. Clears cases, runs, activity, chat memory and waiting approvals (approved skills stay); the desk restarts and
+# 3. Clears cases, runs, activity, chat memory and waiting approvals (approved skills stay); the desk restarts and
 #    its first sweep, about 30 seconds later, finds the Coupa invoice exceptions on its own.
 $token = Get-DemoOperatorToken
 $result = Invoke-RestMethod -Method Post "$DemoHostUrl/api/control-room/reset" -Headers @{ Authorization = "Bearer $token" } `
   -ContentType 'application/json' -Body '{"confirm":"RESET"}' -TimeoutSec 180
 $token = $null
-Write-Host "2/4 Control room reset ($($result.removedRecords) stored records cleared)."
+Write-Host "3/5 Control room reset ($($result.removedRecords) stored records cleared)."
 
-# 3. ServiceNow: close last run's demo incidents, restore the people, lock-out and devices, raise Kian's incident.
-& $provision -System servicenow -Mode reset
+# 4. ServiceNow: restore the people, lock-out and devices, then raise Kian's incident.
 & $provision -System servicenow -Mode setup
 if (-not $NoSeed) { & $provision -System servicenow -Mode demo -Scenario battery }
-Write-Host '3/4 ServiceNow ready.'
+Write-Host '4/5 ServiceNow ready.'
 
-# 4. Salesforce: close last run's demo cases and raise fresh ones.
-& $provision -System salesforce -Mode reset
+# 5. Salesforce: raise fresh demo cases.
 if (-not $NoSeed) { & $provision -System salesforce -Mode demo }
-Write-Host '4/4 Salesforce ready.'
+Write-Host '5/5 Salesforce ready.'
 Write-Host "`nWatch the colleagues pick the cases up: $DemoHostUrl/control-plane#/cases"
 exit 0

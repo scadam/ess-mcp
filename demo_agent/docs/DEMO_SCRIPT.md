@@ -1,5 +1,8 @@
 # Group Functions Autopilot — Demo Script
 
+For the event-driven case desk (second-line colleagues working ServiceNow, Salesforce and Coupa cases to closure),
+use [AUTONOMOUS_DESK_DEMO.md](AUTONOMOUS_DESK_DEMO.md).
+
 Control plane: <https://ca-autopilot-caldova-78f0.livelysky-91807d17.eastus2.azurecontainerapps.io/control-plane>
 
 ## 0. Before you start (2 minutes)

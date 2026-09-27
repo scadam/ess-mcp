@@ -309,10 +309,10 @@ class ControlPlaneAssetTests(unittest.TestCase):
         markup = PageMarkup(self.pages["control-plane.html"])
         ids = {attrs.get("id") for _, attrs in markup.tags}
         for element_id in (
-            "dashboardView", "runView", "approvalsView", "fleetTicker", "activeNow",
-            "instanceGrid", "agenticUserGrid", "serverGrid", "scenarioGrid", "runHistory",
-            "governanceCard", "a365ValueCard", "surfacesCard", "evidenceBtn", "lookupPurviewBtn",
-            "lookupDefenderBtn", "humanPanel", "toolTimeline", "loggedEventStream",
+            "dashboardView", "runView", "approvalsView", "crBlueprint", "crWall", "pfFlow", "pfInstances",
+            "pfIntegrations", "traceWaterfall", "runInputText", "runResultContent", "governanceCard",
+            "a365ValueCard", "surfacesCard", "evidenceBtn", "lookupPurviewBtn", "lookupDefenderBtn",
+            "humanPanel", "toolTimeline", "agentEventStream", "loggedEventStream",
         ):
             self.assertIn(element_id, ids)
 

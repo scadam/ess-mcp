@@ -31,6 +31,9 @@ param blueprintSecretName string = ''
 @minLength(1)
 param operatorObjectId string = '3ef6fe2c-3605-4f77-aeff-fb9e084e3a0d'
 
+@description('Object IDs (comma separated) of people who may start tasks from Teams chats. Empty means the operator only.')
+param taskUserIds string = ''
+
 @description('Optional already-reviewed nonsecret per-server HTTPS MCP URLs, keyed by server name. Do not populate from old-tenant endpoints.')
 param mcpUrls object = {}
 
@@ -415,7 +418,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = if (deployApp) {
           { name: 'AUTOPILOT_CONTROL_PLANE_AUDIENCE', value: controlPlaneAudience }
           { name: 'AUTOPILOT_CONTROL_PLANE_SCOPE', value: controlPlaneScope }
           { name: 'AUTOPILOT_OPERATOR_IDS', value: operatorObjectId }
-          { name: 'AUTOPILOT_TASK_USER_IDS', value: operatorObjectId }
+          { name: 'AUTOPILOT_TASK_USER_IDS', value: empty(taskUserIds) ? operatorObjectId : taskUserIds }
           { name: 'ESS_OBSERVE_TOOL_PAYLOADS', value: 'false' }
           { name: 'A365_CAPTURE_PROMPTS', value: 'false' }
           { name: 'ENABLE_A365_OBSERVABILITY_EXPORTER', value: 'false' }

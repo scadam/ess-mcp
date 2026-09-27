@@ -145,7 +145,8 @@
     if (panel) panel.hidden = document.documentElement.dataset.auth === 'ready';
     if (context) {
       const app = getAppContext();
-      context.textContent = [app.host, app.userName, app.tenantId ? `Tenant: ${app.tenantId}` : ''].filter(Boolean).join(' · ');
+      context.textContent = app.userName;
+      context.title = [app.userName, app.host, app.tenantId ? `Tenant ${app.tenantId}` : ''].filter(Boolean).join(' · ');
     }
   }
 

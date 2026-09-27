@@ -73,8 +73,9 @@ from .copilot_harness import AgentSpec, CopilotHarness, FinishRun, RunSpec, skil
 from . import event_gateway
 from . import teams_format
 from .agent_comms import AgentComms, Colleague, CommsError
-from .case_desk import CaseDesk, CaseEvent, load_bindings as load_desk_bindings
-from .case_work import CASE_TOOLS, IT_TOOLS, CaseWork, tools_for as case_tools_for
+from .case_desk import CaseDesk, CaseEvent, document_url, load_bindings as load_desk_bindings
+from .doc_edit import strip_mentions
+from .case_work import CASE_TOOLS, DOC_TOOLS, IT_TOOLS, CaseWork, tools_for as case_tools_for
 from .run_records import RunRecords, folder_for, link_files
 from .guardrails import GuardrailBlocked, GuardrailEngine, GuardVerdict
 
@@ -1006,7 +1007,7 @@ def _publish_run_event(run_id: str | None, event_type: str, data: dict[str, Any]
     if not run_id or run_id not in _run_ledger:
         return
     run = _run_ledger[run_id]
-    run["updatedAt"] = int(time.time() * 1000)
+    run["updatedAt"] = stamp = int(time.time() * 1000)
     if event_type == "delta":
         run["streamingText"] = (run.get("streamingText", "") + str(data.get("text", "")))[-8000:]
         return
@@ -1021,6 +1022,15 @@ def _publish_run_event(run_id: str | None, event_type: str, data: dict[str, Any]
         run["agentEvents"] = run["agentEvents"][:40]
         phase = attrs.get("phase")
         on = f" on {attrs['model']}" if attrs.get("model") else ""
+        turns = run.setdefault("turns", [])
+        if phase == "starting":
+            turns.append({"turn": attrs.get("turn"), "model": attrs.get("model"), "tools": attrs.get("tools"),
+                          "start": stamp})
+            del turns[:-80]
+        else:
+            current = next((item for item in reversed(turns) if "end" not in item), None)
+            if current is not None:
+                current.update(end=stamp, finish=attrs.get("finish_reason"), model=current.get("model") or attrs.get("model"))
         if phase == "starting":
             run["runningText"] = f"Turn {attrs.get('turn')}: asking the model{on} with {attrs.get('tools')} tools..."
         else:
@@ -1043,8 +1053,8 @@ def _publish_run_event(run_id: str | None, event_type: str, data: dict[str, Any]
             run["runningText"] = f"Sub-agent “{data.get('name')}” is gathering evidence on {data.get('model')}"
     elif event_type == "script":
         scripts = run.setdefault("scripts", [])
-        scripts.append({key: data.get(key) for key in ("script", "args", "exitCode", "durationMs", "files", "agent",
-                                                      "output", "kind", "purpose", "code")})
+        scripts.append({**{key: data.get(key) for key in ("script", "args", "exitCode", "durationMs", "files", "agent",
+                                                         "output", "kind", "purpose", "code")}, "at": stamp})
         del scripts[:-40]
     elif event_type == "guardrail":
         decisions = run.setdefault("guardrails", [])
@@ -1078,6 +1088,8 @@ def _publish_run_event(run_id: str | None, event_type: str, data: dict[str, Any]
                 "arguments": data.get("arguments"),
                 "result": None,
                 "index": data.get("index"),
+                "agent": data.get("agent") or "",
+                "startedAt": stamp,
             }
         server = data.get("server")
         if server:
@@ -1087,6 +1099,7 @@ def _publish_run_event(run_id: str | None, event_type: str, data: dict[str, Any]
         call_id = data.get("id")
         if call_id and call_id in run["toolData"]:
             run["toolData"][call_id]["result"] = data.get("result")
+            run["toolData"][call_id]["endedAt"] = stamp
     elif event_type == "result":
         run["result"] = data.get("content", "")
         run.pop("streamingText", None)
@@ -1523,7 +1536,7 @@ async def run_case_turn(case: dict[str, Any], binding: Any, prompt: str) -> dict
         answer = await run_text_task(
             prompt, source="case-desk", actor=actor, skill_hint=skill,
             title_override=f"{record.get('number') or 'Case'} · {case['title'][:100]}",
-            session_id=case["sessionId"], extra_tools=case_tools_for(binding), details=details)
+            session_id=case["sessionId"], extra_tools=case_tools_for(binding, case), details=details)
     finally:
         _current_chat_scope.reset(token)
     if details.get("approvals"):
@@ -1792,21 +1805,39 @@ async def _desk_on_email(context: Any) -> bool:
 
 
 async def _desk_on_document(context: Any, notification: Any, product: str) -> bool:
-    binding = _binding_for_activity(context.activity)
+    """A comment @mentioning a colleague in Word becomes a case about that document, worked where it was asked."""
+    activity = context.activity
+    binding = _binding_for_activity(activity)
     if binding is None or _desk is None:
         return False
     comment = getattr(notification, "wpx_comment", None)
-    document = str(getattr(comment, "document_name", None) or getattr(comment, "file_name", None)
-                   or getattr(comment, "document_id", None) or "a document")
-    text = str(getattr(comment, "comment_text", None) or getattr(comment, "text", None)
-               or getattr(context.activity, "text", "") or "")
-    sender = _activity_field(context.activity, "from_property", "from")
+    url, document = "", ""
+    for attachment in _activity_field(activity, "attachments") or []:
+        candidate = document_url(_activity_field(attachment, "content_url", "contentUrl"))
+        if candidate:
+            url, document = candidate, str(_activity_field(attachment, "name") or "")
+            break
+    document = document or str(getattr(comment, "document_name", None) or getattr(comment, "file_name", None)
+                               or "a document")
+    text = strip_mentions(str(getattr(comment, "comment_text", None) or getattr(comment, "text", None)
+                              or getattr(activity, "text", "") or ""))
+    sender = _activity_field(activity, "from_property", "from")
     actor = {"name": str(_activity_field(sender, "name") or ""),
              "aadObjectId": str(_activity_field(sender, "aad_object_id", "aadObjectId") or "")}
-    comment_id = str(getattr(comment, "comment_id", None) or getattr(context.activity, "id", "") or uuid.uuid4().hex)
-    await _desk.submit(CaseEvent(source="document", kind="mention", function=binding.function,
-                                 title=f"{product} comment on {document}"[:200], text=text, actor=actor,
-                                 channel={"kind": "document", "document": document}, event_id=f"doc:{comment_id}"))
+    comment_id = str(getattr(comment, "comment_id", None) or getattr(activity, "id", "") or uuid.uuid4().hex)
+    thread = str(getattr(comment, "parent_comment_id", None) or comment_id)
+    await _desk.submit(CaseEvent(
+        source="document", kind="mention", function=binding.function, title=f"{product} comment on {document}"[:200],
+        text=text, actor=actor, event_id=f"doc:{comment_id}",
+        channel={"kind": "document", "document": document, "documentUrl": url, "commentId": comment_id,
+                 "threadId": thread, "documentId": str(getattr(comment, "document_id", None) or ""),
+                 "comment": text, "commenter": actor["name"]}))
+    if url and product == "Word":
+        try:  # Replies sent in this turn appear under the comment in Word.
+            await context.send_activity("On it. I'll make the change in the document as tracked edits you can "
+                                        "accept or reject, and reply here when it's done.")
+        except Exception:
+            _logger.info("document.ack not delivered")
     return True
 
 
@@ -1969,6 +2000,7 @@ def _tile(key: str, *, kind: str, name: str, runs: list[dict[str, Any]], cases: 
             instanceId=instance.instance_id, appId=instance.instance_app_id,
             user={"name": instance.user_display_name, "upn": instance.user_upn},
             manager={"name": instance.manager_display_name, "upn": instance.manager_upn or instance.manager_email},
+            photo=getattr(instance, "photo_version", "") or None,
         )
     return tile
 
@@ -2060,6 +2092,22 @@ async def handle_control_room_activity(request: web.Request) -> web.Response:
     categories = [value for value in (request.query.get("categories") or "").split(",") if value]
     events = _activity.events(instance, after=after, limit=limit, categories=categories or None)
     return web.json_response({"revision": _activity.revision, "events": events}, headers={"Cache-Control": "no-store"})
+
+
+async def handle_instance_photo(request: web.Request) -> web.Response:
+    """A hired colleague's Microsoft 365 profile photo, read through Graph for a directory-listed instance only."""
+    require_operator(request)
+    key = (request.match_info.get("key") or "").lower()
+    if not _FEED_KEY.fullmatch(key):
+        raise web.HTTPBadRequest(text="Unknown instance key.")
+    instance = next((item for item in await _instance_directory.list_instances()
+                     if (item.instance_app_id or item.instance_id).lower() == key), None)
+    photo = await _instance_directory.photo(instance) if instance is not None else None
+    if photo is None:
+        raise web.HTTPNotFound(text="No profile photo.")
+    body, content_type = photo
+    return web.Response(body=body, content_type=content_type,
+                        headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"})
 
 
 async def handle_instance_policy(request: web.Request) -> web.Response:
@@ -3065,7 +3113,7 @@ _SKILL_TOOLS: tuple[ChatCompletionToolParam, ...] = (
                     "args": {"type": "array", "maxItems": 16, "items": {"type": "string", "maxLength": 500}}},
                    ("script",)),
 )
-_LOCAL_SERVERS = frozenset({"workspace", "skill", "code", "case", "it"})
+_LOCAL_SERVERS = frozenset({"workspace", "skill", "code", "case", "it", "doc"})
 _CODE_TOOL = _function_tool(
     "code__run_python",
     "Write and run your own Python 3.12 program (standard library only; no network, no subprocesses) on a copy "
@@ -3084,7 +3132,7 @@ _TASK_TOOL = _function_tool(
     "own context. Several can run in parallel; each returns its findings.",
     {"agent_type": {"type": "string"}, "prompt": {"type": "string"}, "description": {"type": "string"}}, ("prompt",))
 _LOCAL_SCHEMAS = {tool["function"]["name"]: tool["function"]["parameters"]
-                  for tool in (*_SKILL_TOOLS, _CODE_TOOL, *CASE_TOOLS, *IT_TOOLS)}
+                  for tool in (*_SKILL_TOOLS, _CODE_TOOL, *CASE_TOOLS, *IT_TOOLS, *DOC_TOOLS)}
 _RESULT_INLINE_LIMIT = 6000
 _RESULT_PREVIEW = 2500
 _WRITE_INLINE_LIMIT = 1500  # Change confirmations: the saved copy keeps the full record and journal.
@@ -3409,14 +3457,15 @@ async def _run_local_tool(loop: _Loop, server: str, tool: str, args: dict[str, A
         except GuardrailBlocked as blocked:
             return _guardrail_refusal(blocked.verdict)
     try:
-        if server in {"case", "it"}:
+        if server in {"case", "it", "doc"}:
             if _case_work is None:
                 return json.dumps({"status": "error", "error": "The case desk is not running."})
             try:
                 result = await _case_work.run_tool(tool, args)
             except (CommsError, PermissionError, RuntimeError, KeyError) as error:
                 return json.dumps({"status": "error", "error": str(error)[:300] or "The step failed."})
-            await loop.emit("status", {"message": f"Case step: {tool.replace('_', ' ')}"})
+            await loop.emit("status", {"message": f"{'Document' if server == 'doc' else 'Case'} step: "
+                                                  f"{tool.replace('_', ' ')}"})
             return json.dumps(result, ensure_ascii=False, default=str)
         if server == "code" and tool == "run_python":
             result = await run_code(args["code"], session.workspace, timeout=args.get("timeout_seconds", 30))
@@ -5690,6 +5739,7 @@ def create_app(*, control_validator: Any = None) -> web.Application:
     app.router.add_get("/api/control-room/activity", handle_control_room_activity)
     app.router.add_get("/api/control-room/instances/{key}/policy", handle_instance_policy)
     app.router.add_put("/api/control-room/instances/{key}/policy", handle_instance_policy)
+    app.router.add_get("/api/control-room/instances/{key}/photo", handle_instance_photo)
     app.router.add_post("/api/control-room/reset", handle_control_room_reset)
     app.router.add_post("/api/runs/reset", handle_runs_reset)
     app.router.add_post("/api/run", handle_run)

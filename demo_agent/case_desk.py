@@ -15,6 +15,7 @@ import hashlib
 import heapq
 import json
 import logging
+import re
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any, Awaitable, Callable, Iterable
@@ -46,6 +47,15 @@ def _clean(value: Any, limit: int = 300) -> str:
 
 def case_key(*parts: str) -> str:
     return hashlib.sha256(json.dumps([str(part) for part in parts], separators=(",", ":")).encode()).hexdigest()[:40]
+
+
+def document_url(value: Any) -> str:
+    """A SharePoint or OneDrive document address, or "" (never scrubbed: the scrubber would mangle OneDrive hosts)."""
+    text = value.strip() if isinstance(value, str) else ""
+    if len(text) > 2000 or not text.isprintable() or any(ch in text for ch in " <>\"'`"):
+        return ""
+    match = re.match(r"https://([a-z0-9-]{1,63})\.sharepoint\.com(?:/|$)", text, re.IGNORECASE)
+    return text if match else ""
 
 
 @dataclass(frozen=True)
@@ -133,9 +143,14 @@ class CaseEvent:
         self.text = _clean(self.text, MAX_TEXT)
         self.actor = {key: _clean(value, 200) for key, value in (self.actor or {}).items()
                       if key in {"name", "email", "aadObjectId", "systemUserId", "userName", "external"} and value}
-        self.channel = {key: _clean(value, 400) for key, value in (self.channel or {}).items()
+        raw_channel = self.channel or {}
+        self.channel = {key: _clean(value, 1200 if key == "comment" else 400) for key, value in raw_channel.items()
                         if key in {"kind", "chatId", "messageId", "conversationId", "subject", "document",
-                                   "instanceAppId", "skill"} and value}
+                                   "instanceAppId", "skill", "documentId", "commentId", "threadId", "comment",
+                                   "commenter"} and value}
+        url = document_url(raw_channel.get("documentUrl"))
+        if url:
+            self.channel["documentUrl"] = url
         self.event_id = _clean(self.event_id, 200) or case_key(self.source, self.kind, self.record_id,
                                                                self.text, str(self.at))
 
@@ -147,6 +162,9 @@ class CaseEvent:
             names.append(f"email:{self.channel['conversationId']}")
         if self.channel.get("kind") == "teams-group" and self.channel.get("chatId"):
             names.append(f"chat:{self.channel['chatId']}")
+        if self.channel.get("kind") == "document" and self.channel.get("threadId"):
+            document = self.channel.get("documentId") or case_key(self.channel.get("documentUrl", ""))
+            names.append(f"doc:{document}:{self.channel['threadId']}")
         return names
 
     def to_dict(self) -> dict[str, Any]:
